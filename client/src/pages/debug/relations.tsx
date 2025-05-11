@@ -292,16 +292,16 @@ function RelationsDebugPage() {
                                       (c) => c.id === contact.id
                                     ) ? (
                                       <Badge variant="outline" className="bg-green-100">
-                                        <Check className="h-3 w-3 mr-1" /> Bidirezionale
+                                        <Check className="h-3 w-3 mr-1" /> Bidirectional
                                       </Badge>
                                     ) : (
                                       <Badge variant="outline" className="bg-amber-100">
-                                        <AlertTriangle className="h-3 w-3 mr-1" /> Solo contatto → azienda
+                                        <AlertTriangle className="h-3 w-3 mr-1" /> Contact → Company only
                                       </Badge>
                                     )
                                   ) : (
                                     <Badge variant="outline" className="bg-red-100">
-                                      <AlertTriangle className="h-3 w-3 mr-1" /> Azienda non collegata
+                                      <AlertTriangle className="h-3 w-3 mr-1" /> Company not linked
                                     </Badge>
                                   )}
                                 </div>
@@ -311,7 +311,7 @@ function RelationsDebugPage() {
                         </ul>
                       ) : (
                         <div className="text-gray-500">
-                          Nessuna area di attività associata a questo contatto
+                          No areas of activity associated with this contact
                         </div>
                       )}
                     </CardContent>
@@ -324,18 +324,18 @@ function RelationsDebugPage() {
           <TabsContent value="companies">
             <div className="grid grid-cols-1 gap-4">
               {companiesLoading ? (
-                <div>Caricamento aziende...</div>
+                <div>Loading companies...</div>
               ) : (
                 companies?.map((company) => (
                   <Card key={company.id}>
                     <CardHeader>
                       <CardTitle>{company.name}</CardTitle>
                       <CardDescription>
-                        {company.email || "Nessuna email aziendale"}
+                        {company.email || "No company email"}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <h3 className="font-medium mb-2">Contatti Associati:</h3>
+                      <h3 className="font-medium mb-2">Associated Contacts:</h3>
                       {companyRelationships[company.id]?.length ? (
                         <ul className="space-y-2">
                           {companyRelationships[company.id].map((contact) => {
@@ -353,24 +353,24 @@ function RelationsDebugPage() {
                                     <div className="font-medium">
                                       {contact.firstName} {contact.lastName}
                                       {area?.isPrimary && (
-                                        <Badge className="ml-2">Primaria</Badge>
+                                        <Badge className="ml-2">Primary</Badge>
                                       )}
                                     </div>
                                     <div className="text-sm text-gray-500">
-                                      Ruolo: {area?.role || "Non specificato"}
+                                      Role: {area?.role || "Not specified"}
                                     </div>
                                     <div className="text-sm text-gray-500">
-                                      Email: {contact.companyEmail || "Non specificata"}
+                                      Email: {contact.companyEmail || "Not specified"}
                                     </div>
                                   </div>
                                   <div>
                                     {area ? (
                                       <Badge variant="outline" className="bg-green-100">
-                                        <Check className="h-3 w-3 mr-1" /> Bidirezionale
+                                        <Check className="h-3 w-3 mr-1" /> Bidirectional
                                       </Badge>
                                     ) : (
                                       <Badge variant="outline" className="bg-amber-100">
-                                        <AlertTriangle className="h-3 w-3 mr-1" /> Solo azienda → contatto
+                                        <AlertTriangle className="h-3 w-3 mr-1" /> Company → Contact only
                                       </Badge>
                                     )}
                                   </div>
@@ -381,7 +381,7 @@ function RelationsDebugPage() {
                         </ul>
                       ) : (
                         <div className="text-gray-500">
-                          Nessun contatto associato a questa azienda
+                          No contacts associated with this company
                         </div>
                       )}
                     </CardContent>
