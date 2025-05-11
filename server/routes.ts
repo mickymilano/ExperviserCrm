@@ -1512,29 +1512,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Endpoint per correggere le relazioni tra contatti e aziende
+  // Endpoint to correct relationships between contacts and companies
   apiRouter.post("/maintenance/fix-contacts-relationships", async (req: Request, res: Response) => {
     try {
-      console.log("Esecuzione dello script per la correzione delle relazioni tra contatti e aziende...");
+      console.log("Executing script to correct relationships between contacts and companies...");
       const success = await fixContactsRelationships();
       
       if (success) {
         res.json({ 
           success: true, 
-          message: "Le relazioni tra contatti e aziende sono state corrette con successo." 
+          message: "Relationships between contacts and companies were successfully corrected." 
         });
       } else {
         res.status(500).json({ 
           success: false, 
-          message: "Si sono verificati errori durante la correzione delle relazioni." 
+          message: "Errors occurred while correcting relationships." 
         });
       }
     } catch (error) {
-      console.error("Errore durante l'esecuzione dello script:", error);
+      console.error("Error executing the script:", error);
       res.status(500).json({ 
         success: false, 
-        message: "Si è verificato un errore durante la correzione delle relazioni", 
-        error: error instanceof Error ? error.message : "Errore sconosciuto"
+        message: "An error occurred while correcting relationships", 
+        error: error instanceof Error ? error.message : "Unknown error"
       });
     }
   });
@@ -1542,13 +1542,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize super admin user on server startup
   await initializeSuperAdmin();
   
-  // Esegui lo script di fissaggio delle relazioni all'avvio del server
+  // Execute the relationship fixing script at server startup
   try {
-    console.log("Esecuzione automatica dello script di correzione delle relazioni all'avvio...");
+    console.log("Automatically running the relationship correction script at startup...");
     await fixContactsRelationships();
-    console.log("Script di correzione delle relazioni completato all'avvio.");
+    console.log("Relationship correction script completed at startup.");
   } catch (error) {
-    console.error("Errore durante l'esecuzione dello script all'avvio:", error);
+    console.error("Error executing the script at startup:", error);
   }
   
   // Debug endpoints for relationship testing

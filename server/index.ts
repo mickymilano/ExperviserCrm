@@ -94,13 +94,13 @@ app.use((req, res, next) => {
     console.error("Failed to create/update test user:", error);
   }
   
-  // Esegue automaticamente lo script di fix delle relazioni all'avvio
-  console.log("Esecuzione automatica dello script di correzione delle relazioni all'avvio...");
+  // Automatically run the relationship fix script at startup
+  console.log("Automatically running the relationship correction script at startup...");
   try {
     await fixContactsRelationships();
-    console.log("Script di correzione delle relazioni completato all'avvio.");
+    console.log("Relationship correction script completed at startup.");
   } catch (error) {
-    console.error("Errore nell'esecuzione dello script di correzione delle relazioni:", error);
+    console.error("Error executing the relationship correction script:", error);
   }
   
   const server = await registerRoutes(app);
