@@ -252,19 +252,8 @@ export class PostgresStorage implements IStorage {
 
   // CONTACTS
   async getContacts(): Promise<Contact[]> {
-    return await db.query.contacts.findMany({
-      with: {
-        areasOfActivity: {
-          with: {
-            company: true
-          }
-        }
-      },
-      orderBy: [
-        (contacts) => contacts.firstName,
-        (contacts) => contacts.lastName
-      ]
-    });
+    // Simplified query without relational features to prevent 'map' errors
+    return await db.select().from(contacts).orderBy(contacts.firstName, contacts.lastName);
   }
 
   async getContactsByCompany(companyId: number): Promise<Contact[]> {
