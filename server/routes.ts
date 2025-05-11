@@ -1497,7 +1497,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Endpoint per correggere le relazioni tra contatti e aziende
-  apiRouter.post("/maintenance/fix-contacts-relationships", authenticate, authorize(['super_admin']), async (req: Request, res: Response) => {
+  apiRouter.post("/maintenance/fix-contacts-relationships", async (req: Request, res: Response) => {
     try {
       console.log("Esecuzione dello script per la correzione delle relazioni tra contatti e aziende...");
       const success = await fixContactsRelationships();
@@ -1517,7 +1517,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Errore durante l'esecuzione dello script:", error);
       res.status(500).json({ 
         success: false, 
-        message: "Si è verificato un errore:", 
+        message: "Si è verificato un errore durante la correzione delle relazioni", 
         error: error instanceof Error ? error.message : "Errore sconosciuto"
       });
     }
