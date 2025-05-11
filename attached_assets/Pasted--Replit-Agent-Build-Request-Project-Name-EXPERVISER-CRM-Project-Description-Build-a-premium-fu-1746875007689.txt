@@ -1,0 +1,66 @@
+✅ Replit Agent Build Request
+
+Project Name: EXPERVISER CRM
+
+Project Description:
+Build a premium, full-screen Customer Relationship Management (CRM) web application tailored for solo consultants and small advisory teams managing multiple client accounts across sectors (e.g., foodservice, franchising, QSR). The CRM should manage multiple email accounts, intelligently extract and organize client data, and deliver a highly functional, AI-augmented experience comparable to tools like Cloze CRM and Pipedrive.
+
+Target Platform: Web
+Operating Environment: Both online and offline
+Hosting: User’s own server
+Interface Style: Modern flat UI
+
+⸻
+
+🔧 Core Functional Requirements
+
+Email Integration
+	•	Support for 4 IMAP accounts (different domain names)
+	•	Full inbound/outbound email handling
+	•	Auto-link emails to corresponding contacts or companies
+
+Contact & Company Management
+	•	Auto-extract contact data from email signatures
+	•	Prompt user to:
+	•	Update existing contact or company
+	•	Create a new contact or company
+	•	Ignore update
+	•	Smart duplicate detection based on name, email, domain
+	•	Support for tags and custom fields on both contacts and companies
+
+Modern CRM Features
+	•	Pipeline and deal management
+	•	Scheduling and task reminders
+	•	Calendar sync/integration
+	•	Timeline of activities and communications
+	•	Team collaboration tools
+	•	Role-based permissions and access control
+	•	Notes, attachments, and file uploads per entity
+
+AI-Powered Enhancements
+	•	AI Contact Enrichment (e.g., auto-fill from public sources)
+	•	Smart suggestions for follow-ups
+	•	Optional: AI-generated email drafts or tone suggestions
+
+Data Management
+	•	Full import/export of contact/company data (CSV, PDF)
+	•	Exportable reports on activity, pipeline, communication logs
+	•	Offline capability and progressive sync when reconnected
+
+⸻
+
+Example CRMs to Take Inspiration From:
+Cloze CRM, Pipedrive
+
+Expected Outputs:
+	•	CRM dashboard with all client data
+	•	Interaction histories and timelines
+	•	Communication logs per contact/company
+	•	Deal pipeline views
+	•	Exportable reports
+
+⸻
+
+Language Preferences:
+	•	Replit Agent Interaction Language: English
+	•	App Interface Language: English

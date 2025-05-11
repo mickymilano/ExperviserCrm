@@ -1,0 +1,61 @@
+Ecco un elenco ordinato e dettagliato dei bug-fix e delle feature da implementare in Replit, in modo che tutte le operazioni vengano eseguite “in autonomia” senza richiedere test intermedi o consumare crediti non necessari:
+
+⸻
+
+1. Collegamenti tra tabelle
+
+1.1 Verificare e correggere le relazioni SQLAlchemy/ORM tra:
+	•	Company ↔︎ Contact
+	•	Contact ↔︎ Task
+	•	Deal ↔︎ Company e Deal ↔︎ Contact
+
+1.2 Assicurarsi che, quando un contatto è associato a un’azienda, questa associazione compaia nella scheda del contatto e nella scheda azienda.
+
+⸻
+
+2. Fake Contacts
+
+2.1 Individuare tutti i record “fake” in Contact creati per test.
+2.2 Rimuovere i link fake → azienda, ma non cancellare i contatti.
+2.3 Per ogni azienda priva di contatti reali, associare un contatto “fake” fino a garantirne almeno uno in elenco.
+
+⸻
+
+3. Icone e placeholder frontend
+
+3.1 Verificare che ogni icona (es. calendario, task, email) richiami la funzione corretta:
+	•	Controllare <i> o component mapping in React/HTML
+	•	Sostituire eventuali placeholder con i link alle route effettive
+
+3.2 Per tutti i link ancora non attivi (ad es. calendario in dashboard), creare il routing o il dummy handler che mostri la UI senza errore 404.
+
+⸻
+
+4. Dashboard – Visualizzazione Deals
+
+4.1 Aggiungere in dashboard una card “Deals” con un selector (dropdown o toggle) per scegliere:
+	•	“Top 20 Recent Deals”
+	•	“Top 20 Oldest Deals”
+
+4.2 Implementare la query SQL corrispondente e il binding del selector in UI.
+
+⸻
+
+5. AI Suggestions
+
+5.1 Attivare la sezione “AI Suggestions” in dashboard (ora nascosta/inattiva).
+5.2 Creare i bottoni e i listener necessari (ad es. “Genera idea”, “Analizza deal”).
+5.3 Collegare il frontend al backend: endpoint /api/ai/suggestions (mock o reale).
+
+⸻
+
+6. Flusso di lavoro autonomo
+	•	Per ogni punto sopra:
+	•	Scrivere e testare localmente le modifiche senza promptare l’utente.
+	•	Verificare automaticamente (unit test o smoke test) che non ci siano regressioni.
+	•	Solo al termine di tutte le implementazioni, notificare l’utente che può procedere al test completo.
+
+⸻
+
+Ruoli richiesti: opera come team di senior backend developer + senior frontend developer.
+Obiettivo: zero richieste di testing parziali, piena autonomia, massima efficienza su crediti Replit.
