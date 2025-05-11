@@ -2,13 +2,13 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import AreasOfActivityManager from "@/components/forms/AreasOfActivityManager";
 import { InsertAreaOfActivity } from "@shared/schema";
@@ -52,15 +52,35 @@ export default function ContactModal({ open, onOpenChange, initialData }: Contac
   const queryClient = useQueryClient();
   const isEditing = !!initialData;
   
-  // Prepara i tag iniziali se esistono
+  // Get company information from URL context
+  const [location] = useLocation();
+  const hasCompanyContext = location.includes("/companies/");
+  const companyIdFromUrl = hasCompanyContext 
+    ? parseInt(location.split("/companies/")[1]) 
+    : undefined;
+  
+  // Get company name if we have a company ID
+  const { data: companyData } = useQuery({
+    queryKey: ["/api/companies", companyIdFromUrl],
+    enabled: !!companyIdFromUrl
+  });
+  const companyName = companyData?.name;
+  
+  // Prepare initial tags if they exist
   const initialTags = initialData?.tags ? initialData.tags.join(", ") : "";
   const [tagsInput, setTagsInput] = useState(initialTags);
   
-  // Prepara le aree di attività iniziali se esistono
+  // Prepare initial areas of activity if they exist
   const initialAreas = initialData?.areasOfActivity || [];
   const [areasOfActivity, setAreasOfActivity] = useState<Partial<InsertAreaOfActivity>[]>(initialAreas);
   
-  // Debug: log initialData per vedere se arriva correttamente
+  // Check if any area has company ID
+  const hasAreaWithCompany = areasOfActivity.some(area => area.companyId);
+  const selectedCompanyId = hasAreaWithCompany 
+    ? areasOfActivity.find(area => area.companyId)?.companyId 
+    : companyIdFromUrl;
+  
+  // Debug: log initialData
   console.log("ContactModal initialData:", initialData);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<ContactFormData>({
@@ -90,7 +110,7 @@ export default function ContactModal({ open, onOpenChange, initialData }: Contac
     }
   });
   
-  // Aggiorniamo il form quando cambiano i dati iniziali
+  // Update form when initial data changes
   useEffect(() => {
     if (initialData) {
       reset({
@@ -117,20 +137,16 @@ export default function ContactModal({ open, onOpenChange, initialData }: Contac
         areasOfActivity: initialData.areasOfActivity || [],
       });
       
-      // Aggiorniamo anche i tag e le aree di attività
+      // Update tags and areas of activity
       setTagsInput(initialData.tags ? initialData.tags.join(", ") : "");
       setAreasOfActivity(initialData.areasOfActivity || []);
     }
   }, [initialData, reset]);
 
-  // Verifichiamo se abbiamo un'azienda specifica per cui creare il contatto
-  const hasCompanyContext = areasOfActivity.some(area => area.companyId);
-  const companyId = hasCompanyContext ? areasOfActivity.find(area => area.companyId)?.companyId : null;
-  
-  // Mutazione per la creazione di un nuovo contatto, potenzialmente associato a un'azienda
+  // Mutation for creating a new contact, potentially associated with a company
   const createContact = useMutation({
     mutationFn: async (data: ContactFormData) => {
-      // Prepariamo i dati per la creazione del contatto
+      // Prepare data for contact creation
       const contactData = { ...data };
       
       // Convert tags string to array if provided
@@ -140,7 +156,7 @@ export default function ContactModal({ open, onOpenChange, initialData }: Contac
         contactData.tags = [];
       }
       
-      // Rimuovi il campo areasOfActivity poiché non fa parte dello schema
+      // Remove areasOfActivity field since it's not part of the schema
       if ('areasOfActivity' in contactData) {
         delete contactData.areasOfActivity;
       }
@@ -148,23 +164,23 @@ export default function ContactModal({ open, onOpenChange, initialData }: Contac
       try {
         let response;
         
-        // Se abbiamo un contesto di azienda, utilizziamo l'endpoint specifico
-        if (hasCompanyContext && companyId) {
-          // Creiamo il contatto direttamente associato all'azienda
-          response = await fetch(`/api/companies/${companyId}/contacts`, {
+        // If we have a company context, use the specific endpoint
+        if (hasCompanyContext && companyIdFromUrl) {
+          // Create the contact directly associated with the company
+          response = await fetch(`/api/companies/${companyIdFromUrl}/contacts`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               ...contactData,
-              // Passiamo anche il ruolo e la descrizione per l'associazione
-              role: areasOfActivity.find(area => area.companyId)?.role || 'Employee',
-              jobDescription: areasOfActivity.find(area => area.companyId)?.jobDescription || 
-                `Works at ${areasOfActivity.find(area => area.companyId)?.companyName}`
+              // Pass role and job description for the association
+              role: areasOfActivity.find(area => area.companyId === companyIdFromUrl)?.role || 'Employee',
+              jobDescription: areasOfActivity.find(area => area.companyId === companyIdFromUrl)?.jobDescription || 
+                `Works at ${companyName || 'the company'}`
             }),
             credentials: "include"
           });
         } else {
-          // Utilizziamo l'endpoint standard per i contatti
+          // Use the standard endpoint for contacts
           response = await fetch("/api/contacts", {
             method: "POST", 
             headers: { "Content-Type": "application/json" },
@@ -180,26 +196,43 @@ export default function ContactModal({ open, onOpenChange, initialData }: Contac
         
         const newContact = await response.json();
         
-        // Se non abbiamo usato l'endpoint specifico dell'azienda ma abbiamo aree di attività,
-        // le creiamo manualmente
-        if (!hasCompanyContext && areasOfActivity.length > 0 && newContact.id) {
-          // Crea ogni area di attività per il contatto
-          const areaPromises = areasOfActivity.map(area => 
-            fetch("/api/areas-of-activity", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                ...area,
-                contactId: newContact.id
-              }),
-              credentials: "include"
-            }).then(res => {
-              if (!res.ok) throw new Error(`${res.status}: ${res.statusText}`);
-              return res.json();
-            })
-          );
+        // Handle areas of activity
+        if (newContact.id) {
+          let areasToCreate = [...areasOfActivity];
           
-          await Promise.all(areaPromises);
+          // If contact was created from a company but doesn't have areas for this company,
+          // automatically add the area for the current company
+          if (hasCompanyContext && companyIdFromUrl && 
+              !areasOfActivity.some(area => area.companyId === companyIdFromUrl)) {
+            areasToCreate.push({
+              contactId: newContact.id,
+              companyId: companyIdFromUrl,
+              companyName: companyName || '',
+              role: 'Employee',
+              jobDescription: `Works at ${companyName || 'the company'}`,
+              isPrimary: true
+            });
+          }
+          
+          // Create all areas of activity
+          if (areasToCreate.length > 0) {
+            const areaPromises = areasToCreate.map(area => 
+              fetch("/api/areas-of-activity", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  ...area,
+                  contactId: newContact.id
+                }),
+                credentials: "include"
+              }).then(res => {
+                if (!res.ok) throw new Error(`${res.status}: ${res.statusText}`);
+                return res.json();
+              })
+            );
+            
+            await Promise.all(areaPromises);
+          }
         }
         
         return newContact;
@@ -225,14 +258,14 @@ export default function ContactModal({ open, onOpenChange, initialData }: Contac
       queryClient.invalidateQueries({ queryKey: ["/api/areas-of-activity"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
       
-      // Se creato da una pagina azienda, invalida anche quella cache specifica
-      if (hasCompanyContext && companyId) {
-        queryClient.invalidateQueries({ queryKey: [`/api/companies/${companyId}/contacts`] });
-        queryClient.invalidateQueries({ queryKey: ["/api/companies", companyId] });
+      // If created from a company page, invalidate that specific cache
+      if (hasCompanyContext && companyIdFromUrl) {
+        queryClient.invalidateQueries({ queryKey: [`/api/companies/${companyIdFromUrl}/contacts`] });
+        queryClient.invalidateQueries({ queryKey: ["/api/companies", companyIdFromUrl] });
         queryClient.invalidateQueries({ queryKey: ["/api/companies"] });
       }
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         title: "Error",
         description: `Failed to create contact: ${error.message}`,
@@ -241,17 +274,17 @@ export default function ContactModal({ open, onOpenChange, initialData }: Contac
     }
   });
   
-  // Mutazione per l'aggiornamento di un contatto esistente
+  // Mutation for updating an existing contact
   const updateContact = useMutation({
     mutationFn: async (data: ContactFormData) => {
-      // Controllo se siamo in modalità modifica ma senza ID
-      // Questo può accadere quando si aggiunge un nuovo contatto da una pagina di azienda
+      // Check if we are in edit mode but without ID
+      // This can happen when adding a new contact from a company page
       if (isEditing && (!initialData || !initialData.id)) {
-        // In questo caso, creiamo un nuovo contatto invece di aggiornare
+        // In this case, create a new contact instead of updating
         return createContact.mutate(data);
       }
       
-      // Prepariamo i dati per l'aggiornamento del contatto
+      // Prepare data for contact update
       const contactData = { ...data };
       
       // Convert tags string to array if provided
@@ -261,13 +294,13 @@ export default function ContactModal({ open, onOpenChange, initialData }: Contac
         contactData.tags = [];
       }
       
-      // Rimuovi il campo areasOfActivity poiché non fa parte dello schema
+      // Remove areasOfActivity field since it's not part of the schema
       if ('areasOfActivity' in contactData) {
         delete contactData.areasOfActivity;
       }
       
       try {
-        // Effettua la request con il formato corretto per apiRequest
+        // Make the request with the correct format for apiRequest
         const response = await fetch(`/api/contacts/${initialData.id}`, {
           method: "PATCH", 
           headers: { "Content-Type": "application/json" },
@@ -282,8 +315,8 @@ export default function ContactModal({ open, onOpenChange, initialData }: Contac
         
         const updatedContact = await response.json();
         
-        // Aggiorniamo le aree di attività
-        // Prima otteniamo quelle esistenti
+        // Update areas of activity
+        // First get existing areas
         const existingAreasResponse = await fetch(`/api/contacts/${initialData.id}/areas-of-activity`, {
           credentials: "include"
         });
@@ -293,8 +326,8 @@ export default function ContactModal({ open, onOpenChange, initialData }: Contac
         } else {
           const existingAreas = await existingAreasResponse.json();
           
-          // Rimuoviamo tutte le aree esistenti
-          // Questo approccio è più semplice rispetto a calcolare le differenze
+          // Remove all existing areas
+          // This approach is simpler than calculating differences
           const deletePromises = existingAreas.map((area: any) => 
             fetch(`/api/areas-of-activity/${area.id}`, {
               method: "DELETE",
@@ -308,7 +341,7 @@ export default function ContactModal({ open, onOpenChange, initialData }: Contac
             console.warn("Some areas could not be deleted:", error);
           }
           
-          // Ora creiamo tutte le nuove aree
+          // Now create all new areas
           if (areasOfActivity.length > 0) {
             const createPromises = areasOfActivity.map(area => 
               fetch("/api/areas-of-activity", {
@@ -350,7 +383,7 @@ export default function ContactModal({ open, onOpenChange, initialData }: Contac
       queryClient.invalidateQueries({ queryKey: ["/api/areas-of-activity"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         title: "Error",
         description: `Failed to update contact: ${error.message}`,
@@ -361,10 +394,10 @@ export default function ContactModal({ open, onOpenChange, initialData }: Contac
 
   const onSubmit = (data: ContactFormData) => {
     if (isEditing && initialData && initialData.id) {
-      // Solo se abbiamo un ID valido, eseguiamo l'aggiornamento
+      // Only if we have a valid ID, perform update
       updateContact.mutate(data);
     } else {
-      // Altrimenti, creiamo un nuovo contatto
+      // Otherwise, create a new contact
       createContact.mutate(data);
     }
   };
@@ -411,16 +444,16 @@ export default function ContactModal({ open, onOpenChange, initialData }: Contac
             <h3 className="text-md font-medium mb-3">Contact Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div className="space-y-2">
-                <Label htmlFor="companyEmail">Company Email</Label>
-                <Input id="companyEmail" type="email" {...register("companyEmail")} />
+                <Label htmlFor="companyEmail">Work Email</Label>
+                <Input id="companyEmail" {...register("companyEmail")} />
                 {errors.companyEmail && (
                   <p className="text-xs text-destructive">{errors.companyEmail.message}</p>
                 )}
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="privateEmail">Private Email</Label>
-                <Input id="privateEmail" type="email" {...register("privateEmail")} />
+                <Label htmlFor="privateEmail">Personal Email</Label>
+                <Input id="privateEmail" {...register("privateEmail")} />
                 {errors.privateEmail && (
                   <p className="text-xs text-destructive">{errors.privateEmail.message}</p>
                 )}
@@ -437,7 +470,7 @@ export default function ContactModal({ open, onOpenChange, initialData }: Contac
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="privatePhone">Private Phone</Label>
+                <Label htmlFor="privatePhone">Home Phone</Label>
                 <Input id="privatePhone" {...register("privatePhone")} />
               </div>
             </div>
@@ -471,52 +504,53 @@ export default function ContactModal({ open, onOpenChange, initialData }: Contac
           
           {/* Areas of Activity */}
           <div className="mb-6">
-            <AreasOfActivityManager 
-              initialAreas={initialAreas}
+            <h3 className="text-md font-medium mb-3">Company Affiliations</h3>
+            <AreasOfActivityManager
+              contactId={initialData?.id}
+              initialAreas={areasOfActivity}
               onChange={setAreasOfActivity}
             />
           </div>
           
-          {/* Other Information */}
+          {/* Additional Information */}
           <div className="mb-6">
             <h3 className="text-md font-medium mb-3">Additional Information</h3>
-            <div className="space-y-2 mb-4">
-              <Label htmlFor="tags">Tags</Label>
-              <Input 
-                id="tags" 
-                placeholder="Separate tags with commas" 
-                value={tagsInput}
-                onChange={(e) => setTagsInput(e.target.value)}
-              />
-            </div>
-            
-            <div className="space-y-2 mb-4">
-              <Label htmlFor="notes">Notes</Label>
-              <Textarea id="notes" {...register("notes")} />
+            <div className="grid grid-cols-1 gap-4 mb-4">
+              <div className="space-y-2">
+                <Label htmlFor="tags">Tags (comma separated)</Label>
+                <Input 
+                  id="tags" 
+                  value={tagsInput}
+                  onChange={(e) => setTagsInput(e.target.value)}
+                  placeholder="e.g. vip, influencer, prospect"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="notes">Notes</Label>
+                <Textarea 
+                  id="notes" 
+                  {...register("notes")} 
+                  className="min-h-[100px]" 
+                  placeholder="Add any additional notes about this contact..."
+                />
+              </div>
             </div>
           </div>
           
-          <DialogFooter className="mt-6">
+          <DialogFooter>
             <Button
               type="button"
               variant="outline"
-              onClick={() => {
-                reset();
-                setAreasOfActivity([]);
-                setTagsInput("");
-                onOpenChange(false);
-              }}
+              onClick={() => onOpenChange(false)}
             >
               Cancel
             </Button>
             <Button 
-              type="submit" 
+              type="submit"
               disabled={createContact.isPending || updateContact.isPending}
             >
-              {isEditing
-                ? (updateContact.isPending ? 'Updating...' : 'Update Contact')
-                : (createContact.isPending ? 'Adding...' : 'Add Contact')
-              }
+              {createContact.isPending || updateContact.isPending ? 'Saving...' : isEditing ? 'Update Contact' : 'Create Contact'}
             </Button>
           </DialogFooter>
         </form>
