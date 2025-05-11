@@ -510,16 +510,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   apiRouter.get("/contacts", async (req: Request, res: Response) => {
     try {
       const companyId = req.query.companyId ? Number(req.query.companyId) : undefined;
+      const includeAreas = req.query.includeAreas === 'true';
       
+      let contacts;
       if (companyId) {
         // If companyId is provided, filter contacts by company
-        const contacts = await storage.getCompanyContacts(companyId);
-        res.json(contacts);
+        contacts = await storage.getCompanyContacts(companyId);
       } else {
         // Otherwise, get all contacts
-        const contacts = await storage.getContacts();
-        res.json(contacts);
+        contacts = await storage.getContacts();
       }
+      
+      // If includeAreas flag is set, add areas of activity data to each contact
+      if (includeAreas && contacts && contacts.length > 0) {
+        // Fetch areas of activity for all contacts in a single batch
+        const contactsWithAreas = await Promise.all(
+          contacts.map(async (contact) => {
+            const areasOfActivity = await storage.getAreasOfActivity(contact.id);
+            return {
+              ...contact,
+              areasOfActivity,
+            };
+          })
+        );
+        return res.json(contactsWithAreas);
+      }
+      
+      res.json(contacts);
     } catch (error) {
       res.status(500).json({ message: "Failed to get contacts", error: error.message });
     }

@@ -13,9 +13,10 @@ export const useContacts = (options?: UseContactsOptions) => {
   const { companyId } = options || {};
 
   // Build the API URL with query parameters if filters are provided
+  // Add includeAreas=true to get contacts with their areas of activity in a single request
   const apiUrl = companyId 
-    ? `/api/contacts?companyId=${companyId}` 
-    : '/api/contacts';
+    ? `/api/contacts?companyId=${companyId}&includeAreas=true` 
+    : '/api/contacts?includeAreas=true';
 
   const {
     data: contacts,
@@ -24,27 +25,6 @@ export const useContacts = (options?: UseContactsOptions) => {
     error,
   } = useQuery<Contact[]>({
     queryKey: [apiUrl],
-    select: async (contacts) => {
-      // For each contact, fetch their areas of activity
-      return await Promise.all(
-        contacts.map(async (contact) => {
-          try {
-            const areasOfActivityResponse = await fetch(`/api/contacts/${contact.id}/areas-of-activity`);
-            if (areasOfActivityResponse.ok) {
-              const areasOfActivity = await areasOfActivityResponse.json();
-              return {
-                ...contact,
-                areasOfActivity,
-              };
-            }
-            return contact;
-          } catch (error) {
-            console.error(`Failed to fetch areas of activity for contact ${contact.id}:`, error);
-            return contact;
-          }
-        })
-      );
-    }
   });
 
   const createContact = useMutation({
@@ -145,12 +125,5 @@ export const useContactCompanies = (contactId: number) => {
   return useQuery({
     queryKey: [`/api/contacts/${contactId}/companies`],
     enabled: !!contactId,
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: `Failed to load contact companies: ${error.message}`,
-        variant: "destructive",
-      });
-    },
   });
 };
