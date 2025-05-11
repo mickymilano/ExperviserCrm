@@ -1529,32 +1529,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Endpoint to correct relationships between contacts and companies
-  apiRouter.post("/maintenance/fix-contacts-relationships", async (req: Request, res: Response) => {
-    try {
-      console.log("Executing script to correct relationships between contacts and companies...");
-      const success = await fixContactsRelationships();
-      
-      if (success) {
-        res.json({ 
-          success: true, 
-          message: "Relationships between contacts and companies were successfully corrected." 
-        });
-      } else {
-        res.status(500).json({ 
-          success: false, 
-          message: "Errors occurred while correcting relationships." 
-        });
-      }
-    } catch (error) {
-      console.error("Error executing the script:", error);
-      res.status(500).json({ 
-        success: false, 
-        message: "An error occurred while correcting relationships", 
-        error: error instanceof Error ? error.message : "Unknown error"
-      });
-    }
-  });
+  // Endpoint for fixing contact-company relationships removed
+  // The fixContactsRelationships function is still used at startup
+  // but is no longer exposed via an API endpoint
 
   // Initialize super admin user on server startup
   await initializeSuperAdmin();
