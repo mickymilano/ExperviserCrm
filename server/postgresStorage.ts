@@ -274,6 +274,42 @@ export class PostgresStorage implements IStorage {
   async getCompanyContacts(companyId: number): Promise<Contact[]> {
     return this.getContactsByCompany(companyId);
   }
+  
+  // Ottieni le aziende associate ad un contatto attraverso le aree di attività
+  async getContactCompanies(contactId: number): Promise<Company[]> {
+    // Trova tutte le aree di attività per questo contatto
+    const areas = await db
+      .select()
+      .from(areasOfActivity)
+      .where(
+        and(
+          eq(areasOfActivity.contactId, contactId),
+          isNotNull(areasOfActivity.companyId)
+        )
+      );
+    
+    if (areas.length === 0) {
+      return [];
+    }
+    
+    // Ottieni gli ID delle aziende (rimuovi i duplicati)
+    const companyIds = [...new Set(areas.map(area => area.companyId).filter(Boolean))];
+    
+    // Interroga le aziende corrispondenti
+    const companiesData = await db
+      .select()
+      .from(companies)
+      .where(inArray(companies.id, companyIds as number[]));
+    
+    // Aggiungi le informazioni delle aree di attività a ciascuna azienda
+    return companiesData.map(company => {
+      const area = areas.find(a => a.companyId === company.id);
+      return {
+        ...company,
+        areaOfActivity: area
+      };
+    });
+  }
 
   async getContact(id: number): Promise<Contact | undefined> {
     const [contact] = await db.select().from(contacts).where(eq(contacts.id, id));

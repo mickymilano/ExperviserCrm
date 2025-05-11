@@ -510,11 +510,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   apiRouter.get("/contacts/:id", async (req: Request, res: Response) => {
-    const contact = await storage.getContact(Number(req.params.id));
-    if (!contact) {
-      return res.status(404).json({ message: "Contact not found" });
+    try {
+      const id = Number(req.params.id);
+      const contact = await storage.getContact(id);
+      
+      if (!contact) {
+        return res.status(404).json({ message: "Contact not found" });
+      }
+      
+      // Otteniamo le aree di attività per questo contatto
+      const areasOfActivity = await storage.getAreasOfActivity(id);
+      
+      // Restituiamo il contatto con le sue aree di attività
+      res.json({
+        ...contact,
+        areasOfActivity
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get contact", error: error.message });
     }
-    res.json(contact);
   });
   
   // Get companies associated with a contact
@@ -574,13 +588,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   apiRouter.post("/contacts", async (req: Request, res: Response) => {
     try {
-      // Modifichiamo la request per rimuovere campi che non fanno parte dello schema
-      const requestData = { ...req.body };
-      
-      // Rimuoviamo il campo areasOfActivity poiché è gestito separatamente
-      if (requestData.areasOfActivity) {
-        delete requestData.areasOfActivity;
-      }
+      // Separiamo i dati principali del contatto dalle relazioni
+      const { areasOfActivity, ...requestData } = req.body;
       
       // Utilizziamo safe parse per avere più informazioni sull'errore
       const result = insertContactSchema.safeParse(requestData);
@@ -592,7 +601,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      // Creiamo il contatto
       const contact = await storage.createContact(result.data);
+      
+      // Se sono presenti aree di attività, le creiamo
+      if (areasOfActivity && Array.isArray(areasOfActivity)) {
+        // Creiamo le aree di attività per il contatto
+        for (const area of areasOfActivity) {
+          await storage.createAreaOfActivity({
+            ...area,
+            contactId: contact.id
+          });
+        }
+        
+        // Otteniamo le aree di attività create
+        const createdAreas = await storage.getAreasOfActivity(contact.id);
+        
+        // Restituiamo il contatto con le aree di attività
+        return res.status(201).json({
+          ...contact,
+          areasOfActivity: createdAreas
+        });
+      }
+      
       res.status(201).json(contact);
     } catch (error) {
       console.error("Error creating contact:", error);
@@ -603,13 +634,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
   apiRouter.patch("/contacts/:id", async (req: Request, res: Response) => {
     try {
       const id = Number(req.params.id);
-      const contactData = insertContactSchema.partial().parse(req.body);
-      const contact = await storage.updateContact(id, contactData);
+      
+      // Separiamo i dati principali del contatto dalle relazioni
+      const { areasOfActivity, ...contactData } = req.body;
+      
+      // Validiamo i dati del contatto
+      const validContactData = insertContactSchema.partial().parse(contactData);
+      
+      // Aggiorniamo prima il contatto base
+      const contact = await storage.updateContact(id, validContactData);
       if (!contact) {
         return res.status(404).json({ message: "Contact not found" });
       }
+      
+      // Se sono presenti aree di attività, le gestiamo
+      if (areasOfActivity && Array.isArray(areasOfActivity)) {
+        // Prima otteniamo le aree di attività attuali
+        const currentAreas = await storage.getAreasOfActivity(id);
+        
+        // Eliminiamo tutte le aree di attività esistenti
+        for (const area of currentAreas) {
+          await storage.deleteAreaOfActivity(area.id);
+        }
+        
+        // Creiamo le nuove aree di attività
+        for (const area of areasOfActivity) {
+          await storage.createAreaOfActivity({
+            ...area,
+            contactId: id
+          });
+        }
+        
+        // Ricarichiamo il contatto con le nuove aree di attività
+        const updatedContact = await storage.getContact(id);
+        // Otteniamo le aree di attività aggiornate
+        const updatedAreas = await storage.getAreasOfActivity(id);
+        
+        // Restituiamo il contatto con le aree di attività
+        return res.json({
+          ...updatedContact,
+          areasOfActivity: updatedAreas
+        });
+      }
+      
       res.json(contact);
     } catch (error) {
+      console.error("Error updating contact:", error);
       res.status(400).json({ message: "Invalid contact data", error: error.message });
     }
   });
