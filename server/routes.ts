@@ -508,8 +508,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Contacts
   apiRouter.get("/contacts", async (req: Request, res: Response) => {
-    const contacts = await storage.getContacts();
-    res.json(contacts);
+    try {
+      const companyId = req.query.companyId ? Number(req.query.companyId) : undefined;
+      
+      if (companyId) {
+        // If companyId is provided, filter contacts by company
+        const contacts = await storage.getCompanyContacts(companyId);
+        res.json(contacts);
+      } else {
+        // Otherwise, get all contacts
+        const contacts = await storage.getContacts();
+        res.json(contacts);
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get contacts", error: error.message });
+    }
   });
 
   apiRouter.get("/contacts/:id", async (req: Request, res: Response) => {
