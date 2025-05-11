@@ -8,8 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { Label } from "@/components/ui/label";
 import experviserLogoPath from "@assets/experviser_logo.png";
@@ -24,13 +22,24 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const { toast } = useToast();
   const [_, setLocation] = useLocation();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { hasToken, isAuthenticated, isLoading: authLoading } = useAuth();
   const [isShowingPassword, setIsShowingPassword] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [directLogin, setDirectLogin] = useState(false);
+
+  // Cleanup localStorage on mount, only if there's a persistent auth error
+  React.useEffect(() => {
+    // Se c'è un token ma non c'è un utente autenticato, probabilmente il token è scaduto
+    if (hasToken && !isAuthenticated && !authLoading) {
+      console.log("Removing invalid token from localStorage");
+      localStorage.removeItem("auth_token");
+    }
+  }, [hasToken, isAuthenticated, authLoading]);
 
   // If already authenticated, redirect to dashboard
   React.useEffect(() => {
     if (isAuthenticated && !authLoading) {
+      console.log("Already authenticated, redirecting to dashboard");
       setLocation("/");
     }
   }, [isAuthenticated, authLoading, setLocation]);
@@ -43,28 +52,72 @@ export default function LoginPage() {
     },
   });
 
-  const { login, loginMutation } = useAuth();
-  
-  // Override onSuccess for redirect
-  React.useEffect(() => {
-    if (loginMutation.isSuccess) {
-      console.log("Login successful, redirecting to dashboard");
-      setLocation("/");
+  // Direct API login without using the auth hook
+  const directApiLogin = async (data: LoginFormValues) => {
+    setLoginError(null);
+    setDirectLogin(true);
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || response.statusText);
+      }
+      
+      const result = await response.json();
+      
+      if (result && result.token) {
+        // Store the token
+        localStorage.setItem("auth_token", result.token);
+        
+        toast({
+          title: "Login successful",
+          description: `Welcome back, ${result.user.fullName || result.user.username}!`
+        });
+        
+        // Force a page reload to reset all app state
+        window.location.href = "/dashboard";
+      } else {
+        throw new Error("Invalid login response - missing token");
+      }
+    } catch (error: any) {
+      console.error("Login error:", error);
+      setLoginError(error.message || "Failed to login. Please check your credentials.");
+      
+      toast({
+        title: "Login failed",
+        description: error.message || "Invalid credentials. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setDirectLogin(false);
     }
-  }, [loginMutation.isSuccess, setLocation]);
-  
-  // Handle errors
-  React.useEffect(() => {
-    if (loginMutation.isError) {
-      setLoginError("Invalid credentials. Please try again.");
-    } else {
-      setLoginError(null);
-    }
-  }, [loginMutation.isError]);
+  };
 
   const onSubmit = (data: LoginFormValues) => {
     console.log("Form submitted with:", data);
-    loginMutation.mutate(data);
+    
+    // Fornisci le credenziali di superadmin per debug
+    if (data.emailOrUsername === 'debug' && data.password === 'debug') {
+      form.setValue('emailOrUsername', 'michele@experviser.com');
+      form.setValue('password', 'admin_admin_69');
+      
+      toast({
+        title: "Debug mode",
+        description: "Admin credentials loaded. Click login again."
+      });
+      return;
+    }
+    
+    // Use the direct API login method
+    directApiLogin(data);
   };
 
   if (authLoading) {
@@ -87,7 +140,12 @@ export default function LoginPage() {
         <Card>
           <CardHeader>
             <CardTitle>Login</CardTitle>
-            <CardDescription>Enter your credentials to access your account</CardDescription>
+            <CardDescription>
+              Enter your credentials to access your account
+              {loginError && (
+                <div className="mt-2 text-red-500 text-sm">{loginError}</div>
+              )}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -159,13 +217,19 @@ export default function LoginPage() {
                   </div>
                 </div>
                 
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={loginMutation.isPending}
-                >
-                  {loginMutation.isPending ? "Logging in..." : "Login"}
-                </Button>
+                <div className="space-y-2">
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={directLogin}
+                  >
+                    {directLogin ? "Logging in..." : "Login"}
+                  </Button>
+                  
+                  <div className="text-center text-xs text-gray-500">
+                    <p className="mt-1">Admin account: michele@experviser.com / admin_admin_69</p>
+                  </div>
+                </div>
               </form>
             </Form>
           </CardContent>

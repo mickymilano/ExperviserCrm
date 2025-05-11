@@ -33,15 +33,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication middleware
   const authenticate = async (req: Request, res: Response, next: NextFunction) => {
     try {
+      // Try to get token from the Authorization header
+      let token = "";
       const authHeader = req.headers.authorization;
       
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        console.log("Authentication failed: No Bearer token in header");
-        return res.status(401).json({ error: 'Authentication required' });
+      if (authHeader?.startsWith('Bearer ')) {
+        token = authHeader.split(' ')[1];
+        console.log("Authentication attempt with token from header:", token.substring(0, 10) + "...");
+      } 
+      // Try to get token from query parameter (for debugging only)
+      else if (req.query.auth_token) {
+        token = req.query.auth_token as string;
+        console.log("Authentication attempt with token from query:", token.substring(0, 10) + "...");
       }
       
-      const token = authHeader.split(' ')[1];
-      console.log("Authentication attempt with token:", token.substring(0, 10) + "...");
+      if (!token) {
+        console.log("Authentication failed: No token found");
+        return res.status(401).json({ error: 'Authentication required' });
+      }
       
       const user = await authService.getUserByToken(token);
       
@@ -50,7 +59,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: 'Invalid or expired token' });
       }
       
-      console.log("Authentication successful for user:", user.username);
+      console.log("Authentication successful for user:", user.username, ", ID:", user.id);
       
       // Attach user to request object
       (req as any).user = user;
@@ -127,19 +136,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  apiRouter.post("/auth/logout", authenticate, async (req: Request, res: Response) => {
+  apiRouter.post("/auth/logout", async (req: Request, res: Response) => {
     try {
+      // Tentativo di ottenere il token anche senza autenticazione riuscita
+      let token = "";
       const authHeader = req.headers.authorization;
-      const token = authHeader!.split(' ')[1];
-      const user = (req as any).user;
+      
+      if (authHeader?.startsWith('Bearer ')) {
+        token = authHeader.split(' ')[1];
+      } else if (req.body.token) {
+        token = req.body.token;
+      } else if (req.query.auth_token) {
+        token = req.query.auth_token as string;
+      }
+      
+      if (!token) {
+        console.log("Logout without token - assumed already logged out");
+        return res.status(200).json({ message: 'Already logged out' });
+      }
       
       const ip = req.ip;
-      const userAgent = req.headers['user-agent'] || '';
+      const userAgent = req.headers['user-agent'] || null;
       
-      await authService.logout(token, user.id, ip, userAgent);
+      // Trova l'utente associato al token (anche se la sessione è già scaduta)
+      const session = await storage.getUserSessionByToken(token);
+      const userId = session?.userId || 0;
+      
+      // Tenta di eseguire il logout e ignorare i fallimenti
+      try {
+        await authService.logout(token, userId, ip, userAgent);
+        console.log(`Logout successful for token: ${token.substring(0, 10)}...`);
+      } catch (err) {
+        console.warn(`Failed to process logout, but continuing:`, err);
+      }
+      
+      // Elimina comunque la sessione se esiste
+      if (session) {
+        await storage.deleteUserSession(token);
+      }
+      
+      // Sempre restituisci successo per il client
       res.status(200).json({ message: 'Logged out successfully' });
     } catch (error) {
-      res.status(500).json({ error: 'Logout failed' });
+      console.error("Logout error:", error);
+      // Consideriamo il logout come successo anche se fallisce sul server
+      res.status(200).json({ message: 'Logged out successfully' });
     }
   });
   
