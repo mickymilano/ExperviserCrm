@@ -37,11 +37,28 @@ export interface StageSummary {
 export interface Contact {
   id: number;
   firstName: string;
+  middleName?: string | null;
   lastName: string;
-  email: string;
-  phone: string | null;
-  jobTitle: string | null;
-  companyId: number | null;
+  
+  // Contact information
+  mobilePhone?: string | null;
+  companyEmail?: string | null;
+  privateEmail?: string | null;
+  officePhone?: string | null;
+  privatePhone?: string | null;
+  
+  // Social profiles
+  linkedin?: string | null;
+  facebook?: string | null;
+  instagram?: string | null;
+  tiktok?: string | null;
+  
+  // For backward compatibility with existing code
+  email?: string;
+  phone?: string | null;
+  jobTitle?: string | null;
+  companyId?: number | null;
+  
   tags: string[] | null;
   notes: string | null;
   customFields: Record<string, any> | null;
