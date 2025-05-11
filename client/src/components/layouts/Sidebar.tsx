@@ -56,7 +56,12 @@ function UserProfileSummary() {
   const getUserInitials = () => {
     if (!user) return "MA";
     
-    const nameParts = user.fullName?.split(" ") || [];
+    // Estrai il nome completo in modo sicuro
+    const fullName = typeof user === 'object' && user ? 
+                    (user as any).fullName || 'Michele Ardoni' : 
+                    'Michele Ardoni';
+    
+    const nameParts = fullName.split(" ") || [];
     if (nameParts.length === 0) return "MA";
     
     if (nameParts.length === 1) {
@@ -69,6 +74,15 @@ function UserProfileSummary() {
     );
   };
   
+  // Estrai le informazioni dell'utente in modo sicuro
+  const fullName = typeof user === 'object' && user ? 
+                  (user as any).fullName || 'Michele Ardoni' : 
+                  'Michele Ardoni';
+                  
+  const email = typeof user === 'object' && user ? 
+               (user as any).email || 'michele@experviser.com' : 
+               'michele@experviser.com';
+  
   return (
     <div className="flex flex-col space-y-2">
       <div className="flex items-center">
@@ -76,8 +90,8 @@ function UserProfileSummary() {
           <span className="font-medium">{getUserInitials()}</span>
         </div>
         <div className="ml-3 hidden lg:block">
-          <p className="text-sm font-medium">{user?.fullName || "Michele Ardoni"}</p>
-          <p className="text-xs text-neutral-medium">{user?.email || "michele@experviser.com"}</p>
+          <p className="text-sm font-medium">{fullName}</p>
+          <p className="text-xs text-neutral-medium">{email}</p>
         </div>
       </div>
       

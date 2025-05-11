@@ -25,9 +25,10 @@ import LoginPage from "@/pages/auth/login";
 import { useAuth } from "@/hooks/useAuth";
 
 // Protected route component
-function ProtectedRoute({ component: Component }) {
-  const { user, isAuthenticated, isLoading } = useAuth();
+function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
+  // IMPORTANTE: mantenere l'ordine degli hooks sempre uguale
   const [location, setLocation] = useLocation();
+  const { user, isAuthenticated, isLoading } = useAuth();
   
   console.log("Protected route auth status:", { 
     isAuthenticated, 
@@ -79,9 +80,9 @@ function PublicRoutes() {
 
 // Protected routes that require authentication
 function ProtectedRoutes() {
-  // Simple authentication check for the whole layout rather than each route
-  const { isAuthenticated, isLoading } = useAuth();
+  // IMPORTANTE: mantenere l'ordine degli hooks sempre uguale
   const [location, setLocation] = useLocation();
+  const { isAuthenticated, isLoading } = useAuth();
   const token = localStorage.getItem("auth_token");
   
   console.log("ProtectedRoutes root:", { isAuthenticated, isLoading, hasToken: !!token });
@@ -93,7 +94,7 @@ function ProtectedRoutes() {
     }
   }, [isLoading, token, setLocation]);
   
-  // If loading or we have a token, render the layout
+  // Se stiamo caricando o abbiamo un token, renderizziamo il layout
   if (isLoading || token) {
     return (
       <AppLayout>
@@ -122,7 +123,7 @@ function ProtectedRoutes() {
     );
   }
   
-  // If not authenticated and not loading, show loading message
+  // Se non siamo autenticati e non stiamo caricando, mostriamo un messaggio di caricamento
   return <div className="flex items-center justify-center h-screen">Verifica delle credenziali...</div>;
 }
 

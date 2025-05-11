@@ -43,39 +43,24 @@ export default function LoginPage() {
     },
   });
 
-  const { login } = useAuth();
+  const { login, loginMutation } = useAuth();
   
-  const loginMutation = useMutation({
-    mutationFn: async (data: LoginFormValues) => {
-      setLoginError(null);
-      console.log("Attempting login with:", data.emailOrUsername);
-      try {
-        const result = await login(data.emailOrUsername, data.password);
-        console.log("Login result:", result);
-        return result;
-      } catch (error) {
-        console.error("Login error:", error);
-        setLoginError("Invalid credentials. Please try again.");
-        throw error;
-      }
-    },
-    onSuccess: (data) => {
-      toast({
-        title: "Login successful",
-        description: "Welcome back!",
-      });
-      
-      // Redirect to dashboard
+  // Override onSuccess for redirect
+  React.useEffect(() => {
+    if (loginMutation.isSuccess) {
+      console.log("Login successful, redirecting to dashboard");
       setLocation("/");
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Login failed",
-        description: error.message || "Invalid credentials. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
+    }
+  }, [loginMutation.isSuccess, setLocation]);
+  
+  // Handle errors
+  React.useEffect(() => {
+    if (loginMutation.isError) {
+      setLoginError("Invalid credentials. Please try again.");
+    } else {
+      setLoginError(null);
+    }
+  }, [loginMutation.isError]);
 
   const onSubmit = (data: LoginFormValues) => {
     console.log("Form submitted with:", data);
