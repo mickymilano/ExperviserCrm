@@ -1,0 +1,55 @@
+You need to update the Company pages and form to show and edit these core fields directly in the list and detail views, and to capture them in the modal:
+
+**Fields to Surface in List View (`client/src/pages/companies/index.tsx`):**  
+- Sector (company.industry)  
+- Subsector (company.subsector)  
+- Country (company.country)  
+- Region (company.region)  
+- Province (company.province)  
+- City (company.city)  
+
+**Changes in List View:**  
+1. Under the company name/industry, add a new line with:  
+   • <MapPin /> {company.city}, {company.province} – {company.region}, {company.country}  
+2. Above the badge list, show Sector/Subsector as tags:  
+   • Badge variant="secondary" for sector  
+   • Badge variant="outline" for subsector  
+
+---
+
+**Fields & Layout in Detail View (`client/src/pages/companies/[id].tsx`):**  
+- Name  
+- Sector & Subsector (as badges)  
+- Country, Region, Province, City, Address  
+- Website, Email, Phone  
+- “Team” section (areas_of_activity) remains below  
+
+**Detail View Changes:**  
+- In the header under the title, render sector/subsector badges.  
+- In the “Main Info” card/section, display a two-column grid:  
+  • Left column: Country, Region, Province, City  
+  • Right column: Address, Website, Email, Phone  
+- Collapse less-used fields (fiscal code, VAT, employees, revenue) into an “Advanced” collapsible at the bottom.
+
+---
+
+**Form Changes (`client/src/components/forms/CompanyEditForm.tsx`):**  
+Add inputs bound via your React Hook Form (or equivalent):
+
+```tsx
+<Select label="Country" name="country" options={countryList} />
+<Autocomplete label="Region" name="region" source="regions" />
+<Autocomplete label="Province" name="province" source="provinces" />
+<Input label="City" name="city" />
+<Textarea label="Address" name="address" />
+<CheckboxGroup
+  label="Business Type"
+  name="businessTypes"
+  options={[
+    { value: "Production", label: "Production" },
+    { value: "Distribution", label: "Distribution" },
+    { value: "Retail", label: "Retail" },
+    { value: "Services", label: "Services" },
+  ]}
+/>
+<Autocomplete label="Subsector" name="subsector" source="subsectors" />
