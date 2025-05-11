@@ -39,10 +39,12 @@ export default function Contacts() {
     if (!searchTerm) return true;
     const searchTermLower = searchTerm.toLowerCase();
     return (
-      contact.firstName.toLowerCase().includes(searchTermLower) ||
-      contact.lastName.toLowerCase().includes(searchTermLower) ||
-      contact.email.toLowerCase().includes(searchTermLower) ||
-      (contact.jobTitle && contact.jobTitle.toLowerCase().includes(searchTermLower))
+      (contact.firstName?.toLowerCase() || "").includes(searchTermLower) ||
+      (contact.lastName?.toLowerCase() || "").includes(searchTermLower) ||
+      (contact.companyEmail?.toLowerCase() || "").includes(searchTermLower) ||
+      (contact.privateEmail?.toLowerCase() || "").includes(searchTermLower) ||
+      (contact.mobilePhone?.toLowerCase() || "").includes(searchTermLower) ||
+      (contact.officePhone?.toLowerCase() || "").includes(searchTermLower)
     );
   });
 
@@ -130,8 +132,8 @@ export default function Contacts() {
                       </div>
                     </div>
                   </td>
-                  <td className="py-3 px-4 text-sm">{contact.email}</td>
-                  <td className="py-3 px-4 text-sm">{formatPhoneNumber(contact.phone) || "-"}</td>
+                  <td className="py-3 px-4 text-sm">{contact.companyEmail || contact.privateEmail || "-"}</td>
+                  <td className="py-3 px-4 text-sm">{formatPhoneNumber(contact.mobilePhone || contact.officePhone || contact.privatePhone) || "-"}</td>
                   <td className="py-3 px-4 text-sm">{getCompanyName(contact.companyId)}</td>
                   <td className="py-3 px-4">
                     <div className="flex flex-wrap gap-1">

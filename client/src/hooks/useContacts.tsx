@@ -110,13 +110,13 @@ export const useContact = (id: number) => {
 };
 
 /**
- * Hook per recuperare le aziende associate a un contatto
- * Questo hook recupera le aziende con le relative informazioni sull'area di attività,
- * consentendo di visualizzare il ruolo del contatto in ciascuna azienda e altre informazioni
- * sulla relazione.
+ * Hook to retrieve companies associated with a contact
+ * This hook retrieves companies with their related activity area information,
+ * allowing you to view the contact's role in each company and other information
+ * about the relationship.
  * 
- * @param contactId ID del contatto di cui recuperare le aziende associate
- * @returns Lista delle aziende associate con dettagli sulla relazione, stato di caricamento ed eventuali errori
+ * @param contactId ID of the contact whose associated companies to retrieve
+ * @returns List of associated companies with relationship details, loading state and any errors
  */
 export const useContactCompanies = (contactId: number) => {
   const { toast } = useToast();
