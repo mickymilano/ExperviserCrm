@@ -798,9 +798,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (areasOfActivity && Array.isArray(areasOfActivity)) {
         // Creiamo le aree di attività per il contatto
         for (const area of areasOfActivity) {
+          // Verifica se dobbiamo creare un'azienda per quest'area
+          let companyId = area.companyId;
+          const companyName = area.companyName;
+          
+          // Se abbiamo un nome azienda ma nessun ID azienda, dobbiamo creare l'azienda
+          if (companyName && !companyId) {
+            console.log(`Creating new company during contact creation: ${companyName}`);
+            
+            try {
+              const newCompany = await storage.createCompany({
+                name: companyName
+              });
+              
+              companyId = newCompany.id;
+              console.log(`Created new company with ID ${companyId}`);
+            } catch (err) {
+              console.error("Failed to create new company during contact creation:", err);
+              // Continua comunque, anche se la creazione dell'azienda fallisce
+            }
+          }
+          
           await storage.createAreaOfActivity({
             ...area,
-            contactId: contact.id
+            contactId: contact.id,
+            companyId: companyId // Usa l'ID dell'azienda appena creata, se disponibile
           });
         }
         
@@ -854,9 +876,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Creiamo le nuove aree di attività
         for (const area of areasOfActivity) {
+          // Verifica se dobbiamo creare un'azienda per quest'area
+          let companyId = area.companyId;
+          const companyName = area.companyName;
+          
+          // Se abbiamo un nome azienda ma nessun ID azienda, dobbiamo creare l'azienda
+          if (companyName && !companyId) {
+            console.log(`Creating new company during contact update: ${companyName}`);
+            
+            try {
+              const newCompany = await storage.createCompany({
+                name: companyName
+              });
+              
+              companyId = newCompany.id;
+              console.log(`Created new company with ID ${companyId}`);
+            } catch (err) {
+              console.error("Failed to create new company during contact update:", err);
+              // Continua comunque, anche se la creazione dell'azienda fallisce
+            }
+          }
+          
           await storage.createAreaOfActivity({
             ...area,
-            contactId: id
+            contactId: id,
+            companyId: companyId // Usa l'ID dell'azienda appena creata, se disponibile
           });
         }
         
@@ -996,6 +1040,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(404).json({ message: "Company not found" });
     }
     res.status(204).send();
+  });
+  
+  // Creazione di un contatto direttamente per un'azienda
+  apiRouter.post("/companies/:companyId/contacts", async (req: Request, res: Response) => {
+    try {
+      const companyId = parseInt(req.params.companyId);
+      
+      // Verifica che l'azienda esista
+      const company = await storage.getCompany(companyId);
+      if (!company) {
+        return res.status(404).json({ message: "Company not found" });
+      }
+      
+      // Crea il contatto
+      const contactData = req.body;
+      
+      // Utilizziamo safe parse per avere più informazioni sull'errore
+      const result = insertContactSchema.safeParse(contactData);
+      
+      if (!result.success) {
+        return res.status(400).json({
+          message: "Validation error",
+          details: result.error.format()
+        });
+      }
+      
+      // Creiamo il contatto
+      const contact = await storage.createContact(result.data);
+      
+      // Creiamo automaticamente un'area di attività per collegare il contatto all'azienda
+      const role = contactData.role || 'Employee'; // Usa il ruolo dal body o un default
+      const jobDescription = contactData.jobDescription || `Works at ${company.name}`;
+      
+      await storage.createAreaOfActivity({
+        contactId: contact.id,
+        companyId: companyId,
+        companyName: company.name,
+        role: role,
+        jobDescription: jobDescription,
+        isPrimary: true
+      });
+      
+      // Otteniamo le aree di attività create
+      const createdAreas = await storage.getAreasOfActivity(contact.id);
+      
+      // Restituiamo il contatto con le aree di attività
+      res.status(201).json({
+        ...contact,
+        areasOfActivity: createdAreas
+      });
+    } catch (error) {
+      console.error("Error creating contact for company:", error);
+      res.status(500).json({ message: "Failed to create contact for company", error: error.message });
+    }
   });
 
   // Pipeline Stages
