@@ -5,7 +5,10 @@ import { Company } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Filter, Eye, Trash, Edit, Globe, Phone, Mail, MapPin } from "lucide-react";
+import { 
+  Plus, Search, Filter, Eye, Trash, Edit, Globe, Phone, Mail, MapPin,
+  Calendar, Hash, Building, Flag, Users
+} from "lucide-react";
 import CompanyModal from "@/components/modals/CompanyModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -93,7 +96,18 @@ export default function Companies() {
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="text-lg font-semibold mb-1">{company.name}</h3>
-                    <p className="text-sm text-muted-foreground mb-3">{company.industry || "No industry specified"}</p>
+                    <div className="flex items-center">
+                      {company.industry && (
+                        <Badge variant="outline" className="mr-2">
+                          {company.industry}
+                        </Badge>
+                      )}
+                      {company.customFields?.size && (
+                        <Badge variant="secondary" className="text-xs">
+                          {company.customFields.size}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -115,43 +129,74 @@ export default function Companies() {
                   </DropdownMenu>
                 </div>
 
-                <div className="space-y-2 mb-4">
-                  {company.website && (
-                    <div className="flex items-center text-sm">
-                      <Globe className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <a
-                        href={company.website.startsWith('http') ? company.website : `https://${company.website}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline"
-                      >
-                        {company.website}
-                      </a>
+                <div className="mt-4 border-t border-border pt-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                    <div className="space-y-2">
+                      {company.website && (
+                        <div className="flex items-center text-sm">
+                          <Globe className="h-4 w-4 mr-2 text-muted-foreground" />
+                          <a
+                            href={company.website.startsWith('http') ? company.website : `https://${company.website}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline truncate max-w-[200px]"
+                          >
+                            {company.website}
+                          </a>
+                        </div>
+                      )}
+                      {company.email && (
+                        <div className="flex items-center text-sm">
+                          <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
+                          <a
+                            href={`mailto:${company.email}`}
+                            className="hover:underline truncate max-w-[200px]"
+                          >
+                            {company.email}
+                          </a>
+                        </div>
+                      )}
+                      {company.phone && (
+                        <div className="flex items-center text-sm">
+                          <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                          <span>{formatPhoneNumber(company.phone)}</span>
+                        </div>
+                      )}
                     </div>
-                  )}
-                  {company.email && (
-                    <div className="flex items-center text-sm">
-                      <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <a
-                        href={`mailto:${company.email}`}
-                        className="hover:underline"
-                      >
-                        {company.email}
-                      </a>
+                    
+                    <div className="space-y-2">
+                      {company.customFields?.country && (
+                        <div className="flex items-center text-sm">
+                          <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
+                          {company.customFields.city 
+                            ? <span>{company.customFields.city}, {company.customFields.country}</span>
+                            : <span>{company.customFields.country}</span>
+                          }
+                        </div>
+                      )}
+                      
+                      {company.address && !company.customFields?.country && (
+                        <div className="flex items-center text-sm">
+                          <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
+                          <span className="truncate max-w-[200px]">{company.address}</span>
+                        </div>
+                      )}
+                      
+                      {company.customFields?.vatNumber && (
+                        <div className="flex items-center text-sm">
+                          <Hash className="h-4 w-4 mr-2 text-muted-foreground" />
+                          <span className="truncate max-w-[200px]">VAT: {company.customFields.vatNumber}</span>
+                        </div>
+                      )}
+                      
+                      {company.customFields?.yearFounded && (
+                        <div className="flex items-center text-sm">
+                          <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
+                          <span>Founded: {company.customFields.yearFounded}</span>
+                        </div>
+                      )}
                     </div>
-                  )}
-                  {company.phone && (
-                    <div className="flex items-center text-sm">
-                      <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <span>{formatPhoneNumber(company.phone)}</span>
-                    </div>
-                  )}
-                  {company.address && (
-                    <div className="flex items-center text-sm">
-                      <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <span>{company.address}</span>
-                    </div>
-                  )}
+                  </div>
                 </div>
 
                 {company.tags && company.tags.length > 0 && (

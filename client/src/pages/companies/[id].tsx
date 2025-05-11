@@ -162,63 +162,195 @@ export default function CompanyDetail() {
                   Company Details
                 </CardTitle>
               </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  {company.email && (
+              
+              {/* Basic Information Section */}
+              <CardContent>
+                <h3 className="text-md font-medium mb-4 flex items-center">
+                  <Award className="h-4 w-4 mr-2 text-muted-foreground" />
+                  Basic Information
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <div className="space-y-4">
                     <div className="flex items-start">
-                      <Mail className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
+                      <Building className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
                       <div>
-                        <p className="text-sm font-medium mb-1">Email</p>
-                        <a 
-                          href={`mailto:${company.email}`} 
-                          className="text-primary hover:underline"
-                        >
-                          {company.email}
-                        </a>
+                        <p className="text-sm font-medium mb-1">Industry</p>
+                        <p>{company.industry || "Not specified"}</p>
                       </div>
                     </div>
-                  )}
+                    
+                    {company.customFields?.size && (
+                      <div className="flex items-start">
+                        <Users className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium mb-1">Company Size</p>
+                          <p>{company.customFields.size}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                   
-                  {company.phone && (
-                    <div className="flex items-start">
-                      <Phone className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
-                      <div>
-                        <p className="text-sm font-medium mb-1">Phone</p>
-                        <p>{formatPhoneNumber(company.phone)}</p>
+                  <div className="space-y-4">
+                    {company.customFields?.yearFounded && (
+                      <div className="flex items-start">
+                        <Calendar className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium mb-1">Year Founded</p>
+                          <p>{company.customFields.yearFounded}</p>
+                        </div>
                       </div>
-                    </div>
-                  )}
-                  
-                  {company.website && (
-                    <div className="flex items-start">
-                      <Globe className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
-                      <div>
-                        <p className="text-sm font-medium mb-1">Website</p>
-                        <a 
-                          href={company.website.startsWith('http') ? company.website : `https://${company.website}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline"
-                        >
-                          {company.website}
-                        </a>
+                    )}
+                    
+                    {company.customFields?.revenue && (
+                      <div className="flex items-start">
+                        <DollarSign className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium mb-1">Annual Revenue</p>
+                          <p>{company.customFields.revenue}</p>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
                 
-                <div className="space-y-4">
-                  {company.address && (
-                    <div className="flex items-start">
-                      <MapPin className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
-                      <div>
-                        <p className="text-sm font-medium mb-1">Address</p>
-                        <p className="whitespace-pre-line">{company.address}</p>
+                {/* Contact Information Section */}
+                <h3 className="text-md font-medium mb-4 flex items-center">
+                  <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
+                  Contact Information
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <div className="space-y-4">
+                    {company.email && (
+                      <div className="flex items-start">
+                        <Mail className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium mb-1">Email</p>
+                          <a 
+                            href={`mailto:${company.email}`} 
+                            className="text-primary hover:underline"
+                          >
+                            {company.email}
+                          </a>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                    
+                    {company.phone && (
+                      <div className="flex items-start">
+                        <Phone className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium mb-1">Phone</p>
+                          <p>{formatPhoneNumber(company.phone)}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                   
-                  {company.tags && company.tags.length > 0 && (
+                  <div className="space-y-4">
+                    {company.website && (
+                      <div className="flex items-start">
+                        <Globe className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium mb-1">Website</p>
+                          <a 
+                            href={company.website.startsWith('http') ? company.website : `https://${company.website}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline"
+                          >
+                            {company.website}
+                          </a>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Location Section */}
+                <h3 className="text-md font-medium mb-4 flex items-center">
+                  <MapPinned className="h-4 w-4 mr-2 text-muted-foreground" />
+                  Location
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <div className="space-y-4">
+                    {company.customFields?.country && (
+                      <div className="flex items-start">
+                        <Flag className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium mb-1">Country</p>
+                          <p>{company.customFields.country}</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {company.customFields?.city && (
+                      <div className="flex items-start">
+                        <MapPin className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium mb-1">City</p>
+                          <p>{company.customFields.city}</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {company.customFields?.timezone && (
+                      <div className="flex items-start">
+                        <Clock className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium mb-1">Timezone</p>
+                          <p>{company.customFields.timezone}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {company.address && (
+                      <div className="flex items-start">
+                        <MapPin className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium mb-1">Address</p>
+                          <p className="whitespace-pre-line">{company.address}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Administrative Details Section */}
+                <h3 className="text-md font-medium mb-4 flex items-center">
+                  <FileText className="h-4 w-4 mr-2 text-muted-foreground" />
+                  Administrative Details
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <div className="space-y-4">
+                    {company.customFields?.vatNumber && (
+                      <div className="flex items-start">
+                        <Hash className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium mb-1">VAT/Tax Number</p>
+                          <p>{company.customFields.vatNumber}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {company.customFields?.registrationNumber && (
+                      <div className="flex items-start">
+                        <Hash className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium mb-1">Registration Number</p>
+                          <p>{company.customFields.registrationNumber}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Tags Section */}
+                {company.tags && company.tags.length > 0 && (
+                  <div className="mb-6">
                     <div className="flex items-start">
                       <FileText className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
                       <div>
@@ -232,10 +364,11 @@ export default function CompanyDetail() {
                         </div>
                       </div>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </CardContent>
               
+              {/* Notes Section */}
               {company.notes && (
                 <>
                   <Separator />
