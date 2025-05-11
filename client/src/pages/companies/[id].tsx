@@ -10,7 +10,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { 
   ArrowLeft, Building, Mail, Phone, Globe, MapPin, 
   Edit, Trash, Users, FileText, PenTool, 
-  Briefcase, Clock, CheckCircle, AlertCircle, Inbox
+  Briefcase, Clock, CheckCircle, AlertCircle, Inbox,
+  Calendar, Flag, Hash, Money, DollarSign, Award, MapPinned
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
