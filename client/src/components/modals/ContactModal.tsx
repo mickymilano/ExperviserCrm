@@ -135,7 +135,7 @@ export default function ContactModal({ open, onOpenChange, initialData }: Contac
       
       // Convert tags string to array if provided
       if (tagsInput.trim()) {
-        contactData.tags = tagsInput.split(",").map(tag => tag.trim());
+        contactData.tags = tagsInput.split(",").map((tag: string) => tag.trim());
       } else {
         contactData.tags = [];
       }
@@ -244,8 +244,11 @@ export default function ContactModal({ open, onOpenChange, initialData }: Contac
   // Mutazione per l'aggiornamento di un contatto esistente
   const updateContact = useMutation({
     mutationFn: async (data: ContactFormData) => {
-      if (!initialData || !initialData.id) {
-        throw new Error("Contact ID is required for update");
+      // Controllo se siamo in modalità modifica ma senza ID
+      // Questo può accadere quando si aggiunge un nuovo contatto da una pagina di azienda
+      if (isEditing && (!initialData || !initialData.id)) {
+        // In questo caso, creiamo un nuovo contatto invece di aggiornare
+        return createContact.mutate(data);
       }
       
       // Prepariamo i dati per l'aggiornamento del contatto
@@ -253,7 +256,7 @@ export default function ContactModal({ open, onOpenChange, initialData }: Contac
       
       // Convert tags string to array if provided
       if (tagsInput.trim()) {
-        contactData.tags = tagsInput.split(",").map(tag => tag.trim());
+        contactData.tags = tagsInput.split(",").map((tag: string) => tag.trim());
       } else {
         contactData.tags = [];
       }
@@ -280,13 +283,51 @@ export default function ContactModal({ open, onOpenChange, initialData }: Contac
         const updatedContact = await response.json();
         
         // Aggiorniamo le aree di attività
-        // Prima eliminiamo quelle rimosse
-        // Poi aggiorniamo o creiamo le nuove
+        // Prima otteniamo quelle esistenti
+        const existingAreasResponse = await fetch(`/api/contacts/${initialData.id}/areas-of-activity`, {
+          credentials: "include"
+        });
         
-        // Per semplicità, in questa implementazione assumiamo di ricreare tutte le aree
-        // In un'implementazione più avanzata si dovrebbe ottimizzare questo processo
-        
-        // TODO: Gestire correttamente le aree di attività
+        if (!existingAreasResponse.ok) {
+          console.warn("Failed to fetch existing areas of activity");
+        } else {
+          const existingAreas = await existingAreasResponse.json();
+          
+          // Rimuoviamo tutte le aree esistenti
+          // Questo approccio è più semplice rispetto a calcolare le differenze
+          const deletePromises = existingAreas.map((area: any) => 
+            fetch(`/api/areas-of-activity/${area.id}`, {
+              method: "DELETE",
+              credentials: "include"
+            })
+          );
+          
+          try {
+            await Promise.all(deletePromises);
+          } catch (error) {
+            console.warn("Some areas could not be deleted:", error);
+          }
+          
+          // Ora creiamo tutte le nuove aree
+          if (areasOfActivity.length > 0) {
+            const createPromises = areasOfActivity.map(area => 
+              fetch("/api/areas-of-activity", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  ...area,
+                  contactId: initialData.id
+                }),
+                credentials: "include"
+              }).then(res => {
+                if (!res.ok) throw new Error(`${res.status}: ${res.statusText}`);
+                return res.json();
+              })
+            );
+            
+            await Promise.all(createPromises);
+          }
+        }
         
         return updatedContact;
       } catch (error) {
@@ -319,9 +360,11 @@ export default function ContactModal({ open, onOpenChange, initialData }: Contac
   });
 
   const onSubmit = (data: ContactFormData) => {
-    if (isEditing) {
+    if (isEditing && initialData && initialData.id) {
+      // Solo se abbiamo un ID valido, eseguiamo l'aggiornamento
       updateContact.mutate(data);
     } else {
+      // Altrimenti, creiamo un nuovo contatto
       createContact.mutate(data);
     }
   };

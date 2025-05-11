@@ -98,7 +98,7 @@ export default function AreasOfActivityManager({
       setNewArea({
         ...newArea,
         companyId: null,
-        companyName: "", // Resetta il nome azienda per permettere l'inserimento
+        // Non resettiamo più il companyName qui per mantenere un eventuale valore già inserito
       });
     } else {
       // Se si seleziona un'azienda esistente, impostiamo sia l'ID che il nome
