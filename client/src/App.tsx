@@ -21,7 +21,7 @@ import Calendar from "@/pages/calendar";
 import Tasks from "@/pages/tasks";
 import Settings from "@/pages/settings";
 import LoginPage from "@/pages/auth/login";
-import RelationsDebug from "@/pages/debug/relations";
+// Debug imports removed
 import { useAuth } from "@/hooks/useAuth";
 
 // Protected route component
@@ -115,7 +115,7 @@ function ProtectedRoutes() {
           <Route path="/calendar" component={Calendar} />
           <Route path="/tasks" component={Tasks} />
           <Route path="/settings" component={Settings} />
-          <Route path="/debug/relations" component={RelationsDebug} />
+                    {/* Debug routes removed */}
           <Route component={NotFound} />
         </Switch>
       </AppLayout>

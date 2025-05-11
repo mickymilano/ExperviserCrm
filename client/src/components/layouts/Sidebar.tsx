@@ -134,18 +134,7 @@ export default function Sidebar({ open, setOpen }: SidebarProps) {
               active={location === "/tasks"} 
             />
             
-            {/* Debug section */}
-            <li className="mt-6">
-              <h3 className="px-4 text-xs font-semibold uppercase tracking-wider text-neutral-medium mb-2">
-                Debug Tools
-              </h3>
-              <NavItem 
-                href="/debug/relations" 
-                icon={<Network className="h-6 w-6" />} 
-                label="Relazioni Contatti-Aziende" 
-                active={location === "/debug/relations"} 
-              />
-            </li>
+            {/* Debug section removed */}
           </ul>
         </nav>
         
