@@ -24,6 +24,27 @@ export const useContacts = (options?: UseContactsOptions) => {
     error,
   } = useQuery<Contact[]>({
     queryKey: [apiUrl],
+    select: async (contacts) => {
+      // For each contact, fetch their areas of activity
+      return await Promise.all(
+        contacts.map(async (contact) => {
+          try {
+            const areasOfActivityResponse = await fetch(`/api/contacts/${contact.id}/areas-of-activity`);
+            if (areasOfActivityResponse.ok) {
+              const areasOfActivity = await areasOfActivityResponse.json();
+              return {
+                ...contact,
+                areasOfActivity,
+              };
+            }
+            return contact;
+          } catch (error) {
+            console.error(`Failed to fetch areas of activity for contact ${contact.id}:`, error);
+            return contact;
+          }
+        })
+      );
+    }
   });
 
   const createContact = useMutation({

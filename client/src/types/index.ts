@@ -34,6 +34,18 @@ export interface StageSummary {
   value: number;
 }
 
+export interface AreaOfActivity {
+  id: number;
+  contactId: number;
+  companyId: number | null;
+  companyName: string | null;
+  jobDescription: string | null;
+  role: string | null;
+  isPrimary: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Contact {
   id: number;
   firstName: string;
@@ -64,6 +76,9 @@ export interface Contact {
   customFields: Record<string, any> | null;
   createdAt: string;
   updatedAt: string;
+  
+  // Relationship data
+  areasOfActivity?: AreaOfActivity[];
 }
 
 export interface Company {
