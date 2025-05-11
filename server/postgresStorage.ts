@@ -438,61 +438,160 @@ export class PostgresStorage implements IStorage {
 
   // DEALS
   async getDeals(): Promise<Deal[]> {
-    return await db.query.deals.findMany({
-      with: {
-        contact: true,
-        company: true,
-        stage: true
-      },
-      orderBy: [
-        asc(deals.stageId),
-        desc(deals.value)
-      ]
-    });
+    // Using a simpler approach without relational queries
+    const dealsResult = await db.select().from(deals).orderBy(asc(deals.stageId), desc(deals.value));
+    
+    // Manually populate relations
+    const result = [];
+    for (const deal of dealsResult) {
+      // Get contact
+      let contactData = null;
+      if (deal.contactId) {
+        const [contact] = await db.select().from(contacts).where(eq(contacts.id, deal.contactId));
+        contactData = contact;
+      }
+      
+      // Get company
+      let companyData = null;
+      if (deal.companyId) {
+        const [company] = await db.select().from(companies).where(eq(companies.id, deal.companyId));
+        companyData = company;
+      }
+      
+      // Get stage
+      let stageData = null;
+      if (deal.stageId) {
+        const [stage] = await db.select().from(pipelineStages).where(eq(pipelineStages.id, deal.stageId));
+        stageData = stage;
+      }
+      
+      result.push({
+        ...deal,
+        contact: contactData,
+        company: companyData,
+        stage: stageData
+      });
+    }
+    
+    return result;
   }
 
   async getDealsByContact(contactId: number): Promise<Deal[]> {
-    return await db.query.deals.findMany({
-      where: eq(deals.contactId, contactId),
-      with: {
-        contact: true,
-        company: true,
-        stage: true
-      },
-      orderBy: [
-        asc(deals.stageId),
-        desc(deals.value)
-      ]
-    });
+    // Using a simpler approach without relational queries
+    const dealsResult = await db.select().from(deals)
+      .where(eq(deals.contactId, contactId))
+      .orderBy(asc(deals.stageId), desc(deals.value));
+    
+    // Manually populate relations
+    const result = [];
+    for (const deal of dealsResult) {
+      // Get contact
+      let contactData = null;
+      if (deal.contactId) {
+        const [contact] = await db.select().from(contacts).where(eq(contacts.id, deal.contactId));
+        contactData = contact;
+      }
+      
+      // Get company
+      let companyData = null;
+      if (deal.companyId) {
+        const [company] = await db.select().from(companies).where(eq(companies.id, deal.companyId));
+        companyData = company;
+      }
+      
+      // Get stage
+      let stageData = null;
+      if (deal.stageId) {
+        const [stage] = await db.select().from(pipelineStages).where(eq(pipelineStages.id, deal.stageId));
+        stageData = stage;
+      }
+      
+      result.push({
+        ...deal,
+        contact: contactData,
+        company: companyData,
+        stage: stageData
+      });
+    }
+    
+    return result;
   }
 
   async getDealsByCompany(companyId: number): Promise<Deal[]> {
-    return await db.query.deals.findMany({
-      where: eq(deals.companyId, companyId),
-      with: {
-        contact: true,
-        company: true,
-        stage: true
-      },
-      orderBy: [
-        asc(deals.stageId),
-        desc(deals.value)
-      ]
-    });
+    // Using a simpler approach without relational queries
+    const dealsResult = await db.select().from(deals)
+      .where(eq(deals.companyId, companyId))
+      .orderBy(asc(deals.stageId), desc(deals.value));
+    
+    // Manually populate relations
+    const result = [];
+    for (const deal of dealsResult) {
+      // Get contact
+      let contactData = null;
+      if (deal.contactId) {
+        const [contact] = await db.select().from(contacts).where(eq(contacts.id, deal.contactId));
+        contactData = contact;
+      }
+      
+      // Get company
+      let companyData = null;
+      if (deal.companyId) {
+        const [company] = await db.select().from(companies).where(eq(companies.id, deal.companyId));
+        companyData = company;
+      }
+      
+      // Get stage
+      let stageData = null;
+      if (deal.stageId) {
+        const [stage] = await db.select().from(pipelineStages).where(eq(pipelineStages.id, deal.stageId));
+        stageData = stage;
+      }
+      
+      result.push({
+        ...deal,
+        contact: contactData,
+        company: companyData,
+        stage: stageData
+      });
+    }
+    
+    return result;
   }
 
   async getDeal(id: number): Promise<Deal | undefined> {
-    // Get the deal with contact and company data
-    const result = await db.query.deals.findFirst({
-      where: eq(deals.id, id),
-      with: {
-        contact: true,
-        company: true,
-        stage: true
-      }
-    });
+    // Using a simpler approach without relational queries
+    const [deal] = await db.select().from(deals).where(eq(deals.id, id));
     
-    return result;
+    if (!deal) return undefined;
+    
+    // Manually populate relations
+    // Get contact
+    let contactData = null;
+    if (deal.contactId) {
+      const [contact] = await db.select().from(contacts).where(eq(contacts.id, deal.contactId));
+      contactData = contact;
+    }
+    
+    // Get company
+    let companyData = null;
+    if (deal.companyId) {
+      const [company] = await db.select().from(companies).where(eq(companies.id, deal.companyId));
+      companyData = company;
+    }
+    
+    // Get stage
+    let stageData = null;
+    if (deal.stageId) {
+      const [stage] = await db.select().from(pipelineStages).where(eq(pipelineStages.id, deal.stageId));
+      stageData = stage;
+    }
+    
+    return {
+      ...deal,
+      contact: contactData,
+      company: companyData,
+      stage: stageData
+    };
   }
 
   async createDeal(insertDeal: InsertDeal): Promise<Deal> {
