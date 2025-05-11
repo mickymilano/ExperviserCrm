@@ -343,22 +343,49 @@ export default function ContactModal({ open, onOpenChange, initialData }: Contac
           
           // Now create all new areas
           if (areasOfActivity.length > 0) {
-            const createPromises = areasOfActivity.map(area => 
+            console.log("Creating areas of activity:", areasOfActivity);
+            
+            // Per ogni area, assicuriamoci che abbia il contactId corretto
+            const areasToCreate = areasOfActivity.map(area => ({
+              ...area,
+              contactId: initialData.id
+            }));
+            
+            console.log("Areas to create with correct contactId:", areasToCreate);
+            
+            const createPromises = areasToCreate.map(area => 
               fetch("/api/areas-of-activity", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  ...area,
-                  contactId: initialData.id
-                }),
+                body: JSON.stringify(area),
                 credentials: "include"
-              }).then(res => {
-                if (!res.ok) throw new Error(`${res.status}: ${res.statusText}`);
+              })
+              .then(async res => {
+                if (!res.ok) {
+                  const errorText = await res.text();
+                  console.error(`Error creating area: ${res.status}: ${errorText}`);
+                  throw new Error(`${res.status}: ${errorText}`);
+                }
                 return res.json();
+              })
+              .then(result => {
+                console.log("Successfully created area:", result);
+                return result;
+              })
+              .catch(error => {
+                console.error("Error in area creation promise:", error);
+                throw error;
               })
             );
             
-            await Promise.all(createPromises);
+            try {
+              const results = await Promise.all(createPromises);
+              console.log("All areas created successfully:", results);
+            } catch (error) {
+              console.error("Failed to create all areas:", error);
+            }
+          } else {
+            console.log("No areas to create");
           }
         }
         

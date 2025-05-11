@@ -39,9 +39,21 @@ export default function AreasOfActivityManager({
   });
 
   const handleAddArea = () => {
-    const updatedAreas = [...areas, { ...newArea, contactId }];
+    // Assicuriamoci che l'area abbia tutti i campi necessari
+    const areaToAdd = { 
+      ...newArea, 
+      contactId,
+      // Se è una nuova azienda (companyId è null), il companyName deve essere specificato
+      companyName: newArea.companyId ? (newArea.companyName || "") : (newArea.companyName || "")
+    };
+    
+    console.log("Adding area with data:", areaToAdd);
+    
+    const updatedAreas = [...areas, areaToAdd];
     setAreas(updatedAreas);
     onChange(updatedAreas);
+    
+    // Reset the form
     setNewArea({
       contactId,
       companyName: "",
@@ -98,16 +110,20 @@ export default function AreasOfActivityManager({
       setNewArea({
         ...newArea,
         companyId: null,
-        // Non resettiamo più il companyName qui per mantenere un eventuale valore già inserito
+        // Manteniamo il companyName già inserito, se presente
+        companyName: newArea.companyName || ""
       });
+      console.log("Selected 'new company', area state:", {...newArea, companyId: null, companyName: newArea.companyName || ""});
     } else {
       // Se si seleziona un'azienda esistente, impostiamo sia l'ID che il nome
       const company = companies.find(c => c.id === parseInt(companyId));
-      setNewArea({
+      const updatedArea = {
         ...newArea,
         companyId: parseInt(companyId),
         companyName: company?.name || "",
-      });
+      };
+      setNewArea(updatedArea);
+      console.log("Selected existing company, area state:", updatedArea);
     }
   };
 
