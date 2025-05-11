@@ -1,4 +1,4 @@
-import { db } from "./db";
+import { db } from "./db-simple";
 import { contacts, companies, areasOfActivity } from "@shared/schema";
 import { eq } from "drizzle-orm";
 

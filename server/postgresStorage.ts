@@ -1,4 +1,4 @@
-import { db } from "./db";
+import { db } from "./db-simple";
 import { IStorage } from "./storage";
 import { 
   users, 

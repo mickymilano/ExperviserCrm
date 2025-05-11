@@ -11,6 +11,33 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// Create a simple pool without relational queries
+/**
+ * This is a simplified database connection that completely avoids the relational
+ * query functionality of Drizzle ORM which was causing the
+ * "Cannot read properties of undefined (reading 'map')" error
+ */
 export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-export const db = drizzle({ client: pool, schema });
+
+// Use explicit tables instead of the entire schema to avoid relation definitions
+export const db = drizzle(pool, {
+  schema: {
+    users: schema.users,
+    userSessions: schema.userSessions,
+    securityLogs: schema.securityLogs,
+    leads: schema.leads,
+    areasOfActivity: schema.areasOfActivity,
+    contacts: schema.contacts,
+    companies: schema.companies,
+    pipelineStages: schema.pipelineStages,
+    deals: schema.deals,
+    tasks: schema.tasks,
+    emailAccounts: schema.emailAccounts,
+    emails: schema.emails,
+    activities: schema.activities,
+    meetings: schema.meetings,
+    signatures: schema.signatures,
+    accountSignatures: schema.accountSignatures,
+  },
+  // Force simple queries without relational features
+  logger: false,
+});

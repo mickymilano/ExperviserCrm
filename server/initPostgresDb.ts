@@ -1,4 +1,4 @@
-import { db } from "./db";
+import { db } from "./db-simple";
 import { users, pipelineStages } from "@shared/schema";
 import * as bcrypt from "bcrypt";
 import { eq } from "drizzle-orm";
