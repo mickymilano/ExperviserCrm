@@ -8,6 +8,7 @@ export function useUserProfile() {
   // Get current user profile
   const { data: user, isLoading } = useQuery({
     queryKey: ['/api/auth/me'],
+    queryFn: () => apiRequest('/api/auth/me'),
     retry: false,
   });
 

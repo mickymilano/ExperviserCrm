@@ -212,10 +212,8 @@ export default function SettingsPage() {
   
   // Save general settings
   const saveSettings = () => {
-    toast({
-      title: "Settings saved",
-      description: "Your settings have been saved successfully",
-    });
+    // Call saveProfile to actually save the user data
+    saveProfile();
   };
 
   return (
