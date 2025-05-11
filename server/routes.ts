@@ -652,6 +652,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Prima otteniamo le aree di attività attuali
         const currentAreas = await storage.getAreasOfActivity(id);
         
+        // Registriamo quali aziende erano già associate per eventuali verifiche post-aggiornamento
+        const previousCompanyIds = currentAreas
+          .filter(area => area.companyId !== null)
+          .map(area => area.companyId);
+        
         // Eliminiamo tutte le aree di attività esistenti
         for (const area of currentAreas) {
           await storage.deleteAreaOfActivity(area.id);
@@ -670,6 +675,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Otteniamo le aree di attività aggiornate
         const updatedAreas = await storage.getAreasOfActivity(id);
         
+        // Otteniamo i nuovi ID delle aziende associate
+        const newCompanyIds = updatedAreas
+          .filter(area => area.companyId !== null)
+          .map(area => area.companyId);
+        
+        // Log per il debug delle relazioni
+        console.log(`Contact ${id} updated. Previous companies: ${previousCompanyIds.join(', ')}. New companies: ${newCompanyIds.join(', ')}`);
+        
         // Restituiamo il contatto con le aree di attività
         return res.json({
           ...updatedContact,
@@ -677,6 +690,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      // Se non ci sono aree di attività nella richiesta, ritorniamo solo il contatto senza aree
       res.json(contact);
     } catch (error) {
       console.error("Error updating contact:", error);

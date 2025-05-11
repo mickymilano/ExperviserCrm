@@ -50,7 +50,7 @@ import {
   type Meeting,
   type InsertMeeting
 } from "@shared/schema";
-import { eq, and, desc, sql, isNull, or, asc } from "drizzle-orm";
+import { eq, and, desc, sql, isNull, isNotNull, or, asc, inArray } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
 export class PostgresStorage implements IStorage {
