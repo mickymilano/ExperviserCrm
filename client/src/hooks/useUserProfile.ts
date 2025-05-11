@@ -15,10 +15,7 @@ export function useUserProfile() {
   // Update user profile
   const updateProfile = useMutation({
     mutationFn: (profileData: any) => 
-      apiRequest('/api/auth/profile', {
-        method: 'PATCH',
-        body: JSON.stringify(profileData),
-      }),
+      apiRequest('PATCH', '/api/auth/profile', profileData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
       toast({

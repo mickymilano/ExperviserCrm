@@ -22,7 +22,7 @@ export function useAuth() {
       if (!token) return null;
       
       // apiRequest will automatically add the token from localStorage
-      return apiRequest("/api/auth/me");
+      return apiRequest("GET", "/api/auth/me");
     },
     enabled: !!token, // Only run this query if we have a token
     retry: false, // Don't retry on error (e.g., if token is invalid)
@@ -35,9 +35,7 @@ export function useAuth() {
       if (!token) return;
       
       // apiRequest will automatically add the token from localStorage
-      return apiRequest("/api/auth/logout", { 
-        method: "POST"
-      });
+      return apiRequest("POST", "/api/auth/logout");
     },
     onSuccess: () => {
       // Remove the token
@@ -55,9 +53,9 @@ export function useAuth() {
   // Login function (to be used in login form)
   const login = async (emailOrUsername: string, password: string) => {
     try {
-      const result = await apiRequest("/api/auth/login", {
-        method: "POST",
-        body: JSON.stringify({ emailOrUsername, password })
+      const result = await apiRequest("POST", "/api/auth/login", { 
+        emailOrUsername, 
+        password 
       });
       
       if (result && result.token) {

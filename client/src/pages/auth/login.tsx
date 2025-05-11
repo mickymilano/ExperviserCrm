@@ -50,17 +50,9 @@ export default function LoginPage() {
       setLoginError(null);
       console.log("Attempting login with:", data.emailOrUsername);
       try {
-        const result = await apiRequest("POST", "/api/auth/login", {
-          emailOrUsername: data.emailOrUsername,
-          password: data.password
-        });
+        const result = await login(data.emailOrUsername, data.password);
         console.log("Login result:", result);
-        
-        if (result.token) {
-          localStorage.setItem("auth_token", result.token);
-          return result;
-        }
-        throw new Error("Authentication failed");
+        return result;
       } catch (error) {
         console.error("Login error:", error);
         setLoginError("Invalid credentials. Please try again.");
