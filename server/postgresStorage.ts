@@ -441,8 +441,8 @@ export class PostgresStorage implements IStorage {
         stage: true
       },
       orderBy: [
-        (fields) => asc(fields.stage.order),
-        (fields) => desc(fields.value)
+        asc(deals.stageId),
+        desc(deals.value)
       ]
     });
   }
@@ -456,8 +456,8 @@ export class PostgresStorage implements IStorage {
         stage: true
       },
       orderBy: [
-        (fields) => asc(fields.stage.order),
-        (fields) => desc(fields.value)
+        asc(deals.stageId),
+        desc(deals.value)
       ]
     });
   }
@@ -471,8 +471,8 @@ export class PostgresStorage implements IStorage {
         stage: true
       },
       orderBy: [
-        (fields) => asc(fields.stage.order),
-        (fields) => desc(fields.value)
+        asc(deals.stageId),
+        desc(deals.value)
       ]
     });
   }
