@@ -1,6 +1,7 @@
 import { pgTable, text, serial, integer, boolean, timestamp, jsonb, pgEnum } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { relations } from "drizzle-orm";
 
 // User role and status enums
 export const userRoleEnum = pgEnum("user_role", ["user", "admin", "super_admin"]);
@@ -121,6 +122,18 @@ export const areasOfActivity = pgTable("areas_of_activity", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Define areas of activity relationships
+export const areasOfActivityRelations = relations(areasOfActivity, ({ one }) => ({
+  contact: one(contacts, {
+    fields: [areasOfActivity.contactId],
+    references: [contacts.id],
+  }),
+  company: one(companies, {
+    fields: [areasOfActivity.companyId],
+    references: [companies.id],
+  }),
+}));
+
 export const insertAreaOfActivitySchema = createInsertSchema(areasOfActivity).omit({
   id: true,
   createdAt: true,
@@ -155,6 +168,16 @@ export const contacts = pgTable("contacts", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Define contact relationships
+export const contactsRelations = relations(contacts, ({ many, one }) => ({
+  areasOfActivity: many(areasOfActivity),
+  deals: many(deals),
+  tasks: many(tasks),
+  emails: many(emails),
+  meetings: many(meetings),
+  activities: many(activities),
+}));
+
 export const insertContactSchema = createInsertSchema(contacts).omit({
   id: true,
   createdAt: true,
@@ -176,6 +199,16 @@ export const companies = pgTable("companies", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+// Define company relationships
+export const companiesRelations = relations(companies, ({ many }) => ({
+  areasOfActivity: many(areasOfActivity),
+  deals: many(deals),
+  tasks: many(tasks),
+  emails: many(emails),
+  meetings: many(meetings),
+  activities: many(activities),
+}));
 
 export const insertCompanySchema = createInsertSchema(companies).omit({
   id: true,
@@ -208,6 +241,25 @@ export const deals = pgTable("deals", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+// Define deal relationships
+export const dealsRelations = relations(deals, ({ one, many }) => ({
+  contact: one(contacts, {
+    fields: [deals.contactId],
+    references: [contacts.id],
+  }),
+  company: one(companies, {
+    fields: [deals.companyId],
+    references: [companies.id],
+  }),
+  stage: one(pipelineStages, {
+    fields: [deals.stageId],
+    references: [pipelineStages.id],
+  }),
+  tasks: many(tasks),
+  meetings: many(meetings),
+  activities: many(activities),
+}));
 
 export const insertDealSchema = createInsertSchema(deals).omit({
   id: true,

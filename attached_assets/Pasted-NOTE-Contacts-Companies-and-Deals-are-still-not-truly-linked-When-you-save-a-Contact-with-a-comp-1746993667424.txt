@@ -1,0 +1,47 @@
+NOTE: Contacts, Companies, and Deals are still not truly linked. When you save a Contact with a companyId or a Deal with contactId/companyId, those associations aren’t persisting or displayed in the UI. You must fix this completely, end-to-end, then seed and verify relationships.
+
+You are a combined Senior Backend Developer + Senior Frontend Developer. Operate autonomously, perform deep code and UI checks, and only report back when everything is fully functional.
+
+1. SCHEMA & MIGRATIONS  
+   • In shared/schema.ts, add or verify:  
+     – contacts table: `companyId` FK → companies.id  
+     – deals table: `contactId` FK → contacts.id, `companyId` FK → companies.id  
+   • Run `drizzle migrate dev` (or equivalent) to apply any missing DDL.  
+   • Update Drizzle/ORM definitions to declare inverse relations:  
+     – Company model has `contacts` array  
+     – Contact model has `company` object  
+     – Deal model has both `contact` and `company` objects  
+
+2. STORAGE & CRUD  
+   • In server/postgresStorage.ts (or storage.ts), revise all create/update methods to include FKs:  
+     – `createContact` / `updateContact` must read/write `companyId`  
+     – `createDeal` / `updateDeal` must read/write `contactId` and `companyId`  
+   • Ensure each “get” method returns joined objects (contacts with their company, companies with their contacts, deals with both).  
+   • Add cleanup logic to clear any stale/linkless FK values (don’t delete data).
+
+3. API ROUTES  
+   • Verify PATCH `/api/contacts/:id` and PATCH `/api/companies/:id` correctly accept and persist FK fields.  
+   • Add two debug endpoints to validate data:  
+     GET `/api/debug/contacts/:id` → returns `{ contact, companies: [ … ] }`  
+     GET `/api/debug/companies/:id` → returns `{ company, contacts: [ … ] }`  
+
+4. LEAD CONVERSION  
+   • Create PATCH `/api/leads/:id/convert`:  
+     – If lead_type = “Company”: insert into companies, delete the lead, return new company.  
+     – If lead_type = “Person”: insert into contacts (link to existing company if provided), delete the lead, return new contact.  
+   • In the UI, add “Convert Lead” button on each lead card. It calls this endpoint, then reloads.
+
+5. SEED DATA  
+   • Seed 10 Company records and 10 Contact records, each Contact assigned via `companyId`.  
+   • Seed 20 Company Leads and 10 Person Leads, filling every field with realistic data.  
+   • Provide a single command (`npm run seed` or `drizzle migrate dev && node server/run-seed.js`) to reset and populate this data.
+
+6. VISUAL & SMOKE TESTS  
+   • After each change, run automated smoke tests + UI checks:  
+     – Contact detail page shows its Company.  
+     – Company detail page lists its Contacts.  
+     – Deal pages show both Contact and Company.  
+     – Lead conversion flows move data correctly.  
+   • Validate pipeline stages, task lists, email panel, calendar, and AI suggestions too.
+
+Execute all steps in one pass, verify each link persists in the database, API, and UI, and only notify when the end-to-end CRM is perfectly bidirectional, seeded, and error-free.```
