@@ -115,7 +115,7 @@ function ProtectedRoutes() {
           <Route path="/calendar" component={Calendar} />
           <Route path="/tasks" component={Tasks} />
           <Route path="/settings" component={Settings} />
-                    {/* Debug routes removed */}
+          {/* Debug routes removed */}
           <Route component={NotFound} />
         </Switch>
       </AppLayout>
