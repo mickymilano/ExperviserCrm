@@ -4,13 +4,13 @@ import * as bcrypt from "bcrypt";
 import { eq } from "drizzle-orm";
 
 /**
- * Inizializza il database PostgreSQL con i dati fondamentali
- * Viene eseguito all'avvio del server
+ * Initialize the PostgreSQL database with essential data
+ * Executed at server startup
  */
 export async function initializePostgresDb() {
-  console.log("Inizializzazione del database PostgreSQL...");
+  console.log("Initializing PostgreSQL database...");
   
-  // Verifica la presenza dell'utente super admin
+  // Check for the existence of the super admin user
   let superAdminExists = false;
   try {
     const adminUsers = await db
@@ -21,11 +21,11 @@ export async function initializePostgresDb() {
     superAdminExists = adminUsers.length > 0;
     
     if (superAdminExists) {
-      console.log("Super admin già esistente");
+      console.log("Super admin already exists");
     } else {
-      console.log("Creazione utente super admin...");
+      console.log("Creating super admin user...");
       
-      // Crea l'utente super admin
+      // Create the super admin user
       const hashedPassword = await bcrypt.hash("adminpassword", 10);
       await db.insert(users).values({
         username: "michele",
@@ -36,38 +36,38 @@ export async function initializePostgresDb() {
         status: "active"
       });
       
-      console.log("Utente super admin creato con successo");
+      console.log("Super admin user created successfully");
     }
   } catch (error) {
-    console.error("Errore durante la verifica/creazione del super admin:", error);
+    console.error("Error during super admin verification/creation:", error);
   }
   
-  // Verifica e crea le fasi della pipeline
+  // Check and create pipeline stages
   try {
     const existingStages = await db.select().from(pipelineStages);
     
     if (existingStages.length === 0) {
-      console.log("Creazione pipeline stages...");
+      console.log("Creating pipeline stages...");
       
-      // Crea le fasi della pipeline
+      // Create the pipeline stages
       await db.insert(pipelineStages).values([
-        { name: "Qualifica Lead", order: 1 },
-        { name: "Primo Contatto", order: 2 },
-        { name: "Analisi Esigenze", order: 3 },
-        { name: "Proposta", order: 4 },
-        { name: "Negoziazione", order: 5 },
-        { name: "Contratto", order: 6 },
-        { name: "Chiuso (Vinto)", order: 7 },
-        { name: "Chiuso (Perso)", order: 8 }
+        { name: "Lead Qualification", order: 1 },
+        { name: "First Contact", order: 2 },
+        { name: "Needs Analysis", order: 3 },
+        { name: "Proposal", order: 4 },
+        { name: "Negotiation", order: 5 },
+        { name: "Contract", order: 6 },
+        { name: "Closed (Won)", order: 7 },
+        { name: "Closed (Lost)", order: 8 }
       ]);
       
-      console.log("Pipeline stages create con successo");
+      console.log("Pipeline stages created successfully");
     } else {
-      console.log(`${existingStages.length} pipeline stages già esistenti`);
+      console.log(`${existingStages.length} pipeline stages already exist`);
     }
   } catch (error) {
-    console.error("Errore durante la verifica/creazione delle pipeline stages:", error);
+    console.error("Error during pipeline stages verification/creation:", error);
   }
   
-  console.log("Inizializzazione del database PostgreSQL completata");
+  console.log("PostgreSQL database initialization completed");
 }

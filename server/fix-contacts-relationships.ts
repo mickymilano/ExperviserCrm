@@ -3,28 +3,28 @@ import { contacts, companies, areasOfActivity } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
 /**
- * Script per correggere le relazioni tra contatti e aziende
- * 1. Rimuove le associazioni dei contatti "fake"
- * 2. Assicura che ogni azienda abbia almeno un contatto associato
+ * Script to fix relationships between contacts and companies
+ * 1. Removes associations of "fake" contacts
+ * 2. Ensures that every company has at least one associated contact
  */
 async function fixContactsRelationships() {
   try {
-    console.log("Inizio correzione relazioni tra contatti e aziende...");
+    console.log("Starting correction of relationships between contacts and companies...");
     
-    // Utilizzo select diretta dal database per evitare query con relazioni
-    // che potrebbero causare problemi con la nuova implementazione
+    // Use direct database select to avoid relational queries
+    // that could cause problems with the new implementation
     const allContacts = await db.select().from(contacts);
     const allCompanies = await db.select().from(companies);
     
-    console.log(`Trovati ${allContacts.length} contatti e ${allCompanies.length} aziende`);
+    console.log(`Found ${allContacts.length} contacts and ${allCompanies.length} companies`);
     
-    // Otteniamo tutte le aree di attività
+    // Get all areas of activity
     const allAreas = await db.select().from(areasOfActivity);
     
-    // Per ogni azienda, identifichiamo i contatti associati
+    // For each company, identify the associated contacts
     const companyContacts = new Map<number, any[]>();
     
-    // Raggruppiamo le aree di attività per azienda
+    // Group areas of activity by company
     for (const company of allCompanies) {
       const contactsForCompany = allAreas
         .filter(area => area.companyId === company.id)
@@ -32,16 +32,16 @@ async function fixContactsRelationships() {
           const contact = allContacts.find(c => c.id === area.contactId);
           return contact;
         })
-        .filter(Boolean); // Rimuoviamo valori null/undefined
+        .filter(Boolean); // Remove null/undefined values
       
       companyContacts.set(company.id, contactsForCompany);
-      console.log(`Azienda "${company.name}" ha ${contactsForCompany.length} contatti associati`);
+      console.log(`Company "${company.name}" has ${contactsForCompany.length} associated contacts`);
     }
     
-    // Ora per ogni azienda che non ha contatti, assegniamo un contatto "fake"
+    // Now for each company without contacts, assign a "fake" contact
     let fakeContactIndex = 0;
     const fakeContacts = allContacts.filter(contact => {
-      // Identifica i contatti "fake" (usando regole euristiche più dettagliate)
+      // Identify "fake" contacts (using more detailed heuristic rules)
       const isFake = 
         (contact.firstName === "Test" && contact.lastName === "Contact") ||
         (contact.firstName?.toLowerCase().includes("test") || contact.lastName?.toLowerCase().includes("test")) ||
@@ -66,30 +66,30 @@ async function fixContactsRelationships() {
       return isFake;
     });
     
-    console.log(`Trovati ${fakeContacts.length} contatti "fake"`);
+    console.log(`Found ${fakeContacts.length} "fake" contacts`);
     
-    // Rimuoviamo tutte le associazioni dei contatti fake
+    // Remove all associations of fake contacts
     for (const fakeContact of fakeContacts) {
       const contactAreas = allAreas.filter(area => area.contactId === fakeContact.id);
       
       for (const area of contactAreas) {
-        // Eliminiamo l'area di attività direttamente dal DB
+        // Delete the area of activity directly from the DB
         await db.delete(areasOfActivity).where(eq(areasOfActivity.id, area.id));
-        console.log(`Rimossa associazione del contatto fake ${fakeContact.firstName} ${fakeContact.lastName} dall'azienda con ID ${area.companyId}`);
+        console.log(`Removed association of fake contact ${fakeContact.firstName} ${fakeContact.lastName} from company with ID ${area.companyId}`);
       }
     }
     
-    // Assicuriamoci che ogni azienda abbia almeno un contatto
+    // Ensure that each company has at least one contact
     for (const company of allCompanies) {
       const contactsForCompany = companyContacts.get(company.id) || [];
       
       if (contactsForCompany.length === 0) {
-        // Se non ci sono contatti, assegna un contatto fake
+        // If there are no contacts, assign a fake contact
         if (fakeContacts.length > 0) {
           const fakeContact = fakeContacts[fakeContactIndex % fakeContacts.length];
           fakeContactIndex++;
           
-          // Crea l'area di attività per collegare questo contatto all'azienda
+          // Create the area of activity to connect this contact to the company
           await db.insert(areasOfActivity).values({
             contactId: fakeContact.id,
             companyId: company.id,
@@ -99,21 +99,21 @@ async function fixContactsRelationships() {
             jobDescription: `Contact person for ${company.name}`
           });
           
-          console.log(`Associato contatto fake ${fakeContact.firstName} ${fakeContact.lastName} all'azienda "${company.name}"`);
+          console.log(`Associated fake contact ${fakeContact.firstName} ${fakeContact.lastName} with company "${company.name}"`);
         } else {
-          console.log(`ATTENZIONE: Nessun contatto fake disponibile per l'azienda "${company.name}"`);
+          console.log(`WARNING: No fake contacts available for company "${company.name}"`);
         }
       }
     }
     
-    console.log("Correzione relazioni tra contatti e aziende completata con successo!");
+    console.log("Correction of relationships between contacts and companies completed successfully!");
     return true;
   } catch (error) {
-    console.error("Errore durante la correzione delle relazioni:", error);
+    console.error("Error during relationship correction:", error);
     return false;
   }
 }
 
-// Non possiamo utilizzare require.main === module nei moduli ES
-// Esportiamo semplicemente la funzione per poterla utilizzare altrove
+// We can't use require.main === module in ES modules
+// We simply export the function to use it elsewhere
 export { fixContactsRelationships };
