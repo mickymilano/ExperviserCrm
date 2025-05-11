@@ -27,11 +27,50 @@ export default function Contacts() {
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [_, navigate] = useLocation();
 
-  // Get company name from id
-  const getCompanyName = (companyId: number | null): string => {
-    if (!companyId) return "-";
-    const company = companies?.find((c) => c.id === companyId);
-    return company ? company.name : "-";
+  // Get company name for a contact from their areas of activity
+  const getCompanyName = (contact: Contact): string => {
+    if (!contact.areasOfActivity || contact.areasOfActivity.length === 0) {
+      // Fallback to legacy companyId if it exists
+      if (contact.companyId) {
+        const company = companies?.find((c) => c.id === contact.companyId);
+        return company ? company.name : "-";
+      }
+      return "-";
+    }
+    
+    // First try to find the primary area
+    const primaryArea = contact.areasOfActivity.find(area => area.isPrimary);
+    
+    if (primaryArea) {
+      // If we have a primary area with a company name directly in the area, use that
+      if (primaryArea.companyName) {
+        return primaryArea.companyName;
+      }
+      
+      // Otherwise try to find the company by ID
+      if (primaryArea.companyId && companies) {
+        const company = companies.find(c => c.id === primaryArea.companyId);
+        if (company) {
+          return company.name;
+        }
+      }
+    }
+    
+    // If no primary area is found, use the first area
+    const firstArea = contact.areasOfActivity[0];
+    
+    if (firstArea.companyName) {
+      return firstArea.companyName;
+    }
+    
+    if (firstArea.companyId && companies) {
+      const company = companies.find(c => c.id === firstArea.companyId);
+      if (company) {
+        return company.name;
+      }
+    }
+    
+    return "-";
   };
 
   // Filter contacts based on search term
@@ -134,7 +173,7 @@ export default function Contacts() {
                   </td>
                   <td className="py-3 px-4 text-sm">{contact.companyEmail || contact.privateEmail || "-"}</td>
                   <td className="py-3 px-4 text-sm">{formatPhoneNumber(contact.mobilePhone || contact.officePhone || contact.privatePhone) || "-"}</td>
-                  <td className="py-3 px-4 text-sm">{getCompanyName(contact.companyId)}</td>
+                  <td className="py-3 px-4 text-sm">{getCompanyName(contact)}</td>
                   <td className="py-3 px-4">
                     <div className="flex flex-wrap gap-1">
                       {contact.tags && contact.tags.map((tag, index) => (
