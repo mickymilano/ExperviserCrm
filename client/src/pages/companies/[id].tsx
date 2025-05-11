@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   ArrowLeft, Building, Mail, Phone, Globe, MapPin, 
-  Edit, Trash, Users, FileText, PenTool, 
+  Edit, Trash, Users, FileText, PenTool, Plus,
   Briefcase, Clock, CheckCircle, AlertCircle, Inbox,
   Calendar, Flag, Hash, Money, DollarSign, Award, MapPinned
 } from "lucide-react";
@@ -20,6 +20,7 @@ import CompanyEditForm from "@/components/forms/CompanyEditForm";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import TaskList from "@/components/tasks/TaskList";
+import ContactModal from "@/components/modals/ContactModal";
 
 export default function CompanyDetail() {
   const params = useParams();
@@ -27,6 +28,7 @@ export default function CompanyDetail() {
   const companyId = parseInt(params.id);
   const [activeTab, setActiveTab] = useState("overview");
   const [isEditing, setIsEditing] = useState(false);
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   
   // Fetch company data
   const { data: company, isLoading, isError, error } = useCompany(companyId);
@@ -430,14 +432,24 @@ export default function CompanyDetail() {
         {/* Contacts Tab */}
         <TabsContent value="contacts" className="space-y-4">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Users className="h-5 w-5 mr-2" />
-                Contacts ({contacts?.length || 0})
-              </CardTitle>
-              <CardDescription>
-                People associated with {company.name}
-              </CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center">
+                  <Users className="h-5 w-5 mr-2" />
+                  Contacts ({contacts?.length || 0})
+                </CardTitle>
+                <CardDescription>
+                  People associated with {company.name}
+                </CardDescription>
+              </div>
+              <Button 
+                onClick={() => setIsContactModalOpen(true)} 
+                size="sm"
+                className="ml-auto"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Contact
+              </Button>
             </CardHeader>
             <CardContent>
               {contacts && contacts.length > 0 ? (
