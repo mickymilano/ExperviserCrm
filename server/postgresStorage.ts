@@ -248,7 +248,19 @@ export class PostgresStorage implements IStorage {
 
   // CONTACTS
   async getContacts(): Promise<Contact[]> {
-    return await db.select().from(contacts).orderBy(contacts.firstName, contacts.lastName);
+    return await db.query.contacts.findMany({
+      with: {
+        areasOfActivity: {
+          with: {
+            company: true
+          }
+        }
+      },
+      orderBy: [
+        (contacts) => contacts.firstName,
+        (contacts) => contacts.lastName
+      ]
+    });
   }
 
   async getContactsByCompany(companyId: number): Promise<Contact[]> {
@@ -352,7 +364,18 @@ export class PostgresStorage implements IStorage {
 
   // COMPANIES
   async getCompanies(): Promise<Company[]> {
-    return await db.select().from(companies).orderBy(companies.name);
+    return await db.query.companies.findMany({
+      with: {
+        areasOfActivity: {
+          with: {
+            contact: true
+          }
+        }
+      },
+      orderBy: [
+        companies.name
+      ]
+    });
   }
 
   async getCompany(id: number): Promise<Company | undefined> {

@@ -1535,6 +1535,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.error("Errore durante l'esecuzione dello script all'avvio:", error);
   }
   
+  // Debug endpoints for relationship testing
+  apiRouter.get("/debug/contacts/:id", async (req, res) => {
+    try {
+      const contactId = parseInt(req.params.id, 10);
+      if (isNaN(contactId)) {
+        return res.status(400).json({ error: "Invalid contact ID" });
+      }
+      
+      const contact = await storage.getContact(contactId);
+      if (!contact) {
+        return res.status(404).json({ error: "Contact not found" });
+      }
+      
+      // Get related companies
+      const companies = await storage.getContactCompanies(contactId);
+      
+      // Get related deals
+      const deals = await storage.getDealsByContact(contactId);
+      
+      res.json({
+        contact,
+        companies,
+        deals
+      });
+    } catch (error) {
+      console.error("Error in debug contacts endpoint:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+  
+  apiRouter.get("/debug/companies/:id", async (req, res) => {
+    try {
+      const companyId = parseInt(req.params.id, 10);
+      if (isNaN(companyId)) {
+        return res.status(400).json({ error: "Invalid company ID" });
+      }
+      
+      const company = await storage.getCompany(companyId);
+      if (!company) {
+        return res.status(404).json({ error: "Company not found" });
+      }
+      
+      // Get related contacts
+      const contacts = await storage.getCompanyContacts(companyId);
+      
+      // Get related deals
+      const deals = await storage.getDealsByCompany(companyId);
+      
+      res.json({
+        company,
+        contacts,
+        deals
+      });
+    } catch (error) {
+      console.error("Error in debug companies endpoint:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+  
+  apiRouter.get("/debug/deals/:id", async (req, res) => {
+    try {
+      const dealId = parseInt(req.params.id, 10);
+      if (isNaN(dealId)) {
+        return res.status(400).json({ error: "Invalid deal ID" });
+      }
+      
+      const deal = await storage.getDeal(dealId);
+      if (!deal) {
+        return res.status(404).json({ error: "Deal not found" });
+      }
+      
+      res.json(deal);
+    } catch (error) {
+      console.error("Error in debug deals endpoint:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+  
   // Create HTTP server
   const httpServer = createServer(app);
   return httpServer;

@@ -1,5 +1,6 @@
-import { storage } from "./storage";
-import { Contact, Company, AreaOfActivity } from "@shared/schema";
+import { db } from "./db";
+import { contacts, companies, areasOfActivity } from "@shared/schema";
+import { eq } from "drizzle-orm";
 
 /**
  * Script per correggere le relazioni tra contatti e aziende
@@ -10,25 +11,36 @@ async function fixContactsRelationships() {
   try {
     console.log("Inizio correzione relazioni tra contatti e aziende...");
     
-    // Ottengo tutti i contatti e le aziende
-    const contacts = await storage.getContacts();
-    const companies = await storage.getCompanies();
+    // Utilizzo select diretta dal database per evitare query con relazioni
+    // che potrebbero causare problemi con la nuova implementazione
+    const allContacts = await db.select().from(contacts);
+    const allCompanies = await db.select().from(companies);
     
-    console.log(`Trovati ${contacts.length} contatti e ${companies.length} aziende`);
+    console.log(`Trovati ${allContacts.length} contatti e ${allCompanies.length} aziende`);
     
-    // Per ogni azienda, identifico i contatti associati
-    const companyContacts = new Map<number, Contact[]>();
+    // Otteniamo tutte le aree di attività
+    const allAreas = await db.select().from(areasOfActivity);
     
-    // Raggruppo i contatti per azienda
-    for (const company of companies) {
-      const contactsForCompany = await storage.getCompanyContacts(company.id);
+    // Per ogni azienda, identifichiamo i contatti associati
+    const companyContacts = new Map<number, any[]>();
+    
+    // Raggruppiamo le aree di attività per azienda
+    for (const company of allCompanies) {
+      const contactsForCompany = allAreas
+        .filter(area => area.companyId === company.id)
+        .map(area => {
+          const contact = allContacts.find(c => c.id === area.contactId);
+          return contact;
+        })
+        .filter(Boolean); // Rimuoviamo valori null/undefined
+      
       companyContacts.set(company.id, contactsForCompany);
       console.log(`Azienda "${company.name}" ha ${contactsForCompany.length} contatti associati`);
     }
     
-    // Ora per ogni azienda che non ha contatti, assegno un contatto "fake"
+    // Ora per ogni azienda che non ha contatti, assegniamo un contatto "fake"
     let fakeContactIndex = 0;
-    const fakeContacts: Contact[] = contacts.filter(contact => {
+    const fakeContacts = allContacts.filter(contact => {
       // Identifica i contatti "fake" (usando regole euristiche più dettagliate)
       const isFake = 
         (contact.firstName === "Test" && contact.lastName === "Contact") ||
@@ -58,15 +70,17 @@ async function fixContactsRelationships() {
     
     // Rimuoviamo tutte le associazioni dei contatti fake
     for (const fakeContact of fakeContacts) {
-      const areas = await storage.getAreasOfActivity(fakeContact.id);
-      for (const area of areas) {
-        await storage.deleteAreaOfActivity(area.id);
+      const contactAreas = allAreas.filter(area => area.contactId === fakeContact.id);
+      
+      for (const area of contactAreas) {
+        // Eliminiamo l'area di attività direttamente dal DB
+        await db.delete(areasOfActivity).where(eq(areasOfActivity.id, area.id));
         console.log(`Rimossa associazione del contatto fake ${fakeContact.firstName} ${fakeContact.lastName} dall'azienda con ID ${area.companyId}`);
       }
     }
     
     // Assicuriamoci che ogni azienda abbia almeno un contatto
-    for (const company of companies) {
+    for (const company of allCompanies) {
       const contactsForCompany = companyContacts.get(company.id) || [];
       
       if (contactsForCompany.length === 0) {
@@ -76,7 +90,7 @@ async function fixContactsRelationships() {
           fakeContactIndex++;
           
           // Crea l'area di attività per collegare questo contatto all'azienda
-          await storage.createAreaOfActivity({
+          await db.insert(areasOfActivity).values({
             contactId: fakeContact.id,
             companyId: company.id,
             companyName: company.name,
@@ -102,5 +116,4 @@ async function fixContactsRelationships() {
 
 // Non possiamo utilizzare require.main === module nei moduli ES
 // Esportiamo semplicemente la funzione per poterla utilizzare altrove
-
 export { fixContactsRelationships };
