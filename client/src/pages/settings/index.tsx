@@ -251,19 +251,40 @@ export default function SettingsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="fullName">Full Name</Label>
-                    <Input id="fullName" defaultValue="John Smith" />
+                    <Input 
+                      id="fullName" 
+                      name="fullName"
+                      value={profileForm.fullName}
+                      onChange={handleProfileFormChange}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
-                    <Input id="email" defaultValue="john@experviser.com" />
+                    <Input 
+                      id="email" 
+                      name="email"
+                      type="email"
+                      value={profileForm.email}
+                      onChange={handleProfileFormChange}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="phone">Phone</Label>
-                    <Input id="phone" defaultValue="+1 (555) 123-4567" />
+                    <Input 
+                      id="phone" 
+                      name="phone"
+                      value={profileForm.phone}
+                      onChange={handleProfileFormChange}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="jobTitle">Job Title</Label>
-                    <Input id="jobTitle" defaultValue="Consultant" />
+                    <Input 
+                      id="jobTitle" 
+                      name="jobTitle"
+                      value={profileForm.jobTitle}
+                      onChange={handleProfileFormChange}
+                    />
                   </div>
                 </div>
               </div>
@@ -653,24 +674,46 @@ export default function SettingsPage() {
                   <Lock className="h-5 w-5 mr-2" />
                   Password
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="currentPassword">Current Password</Label>
-                    <Input id="currentPassword" type="password" />
+                <form onSubmit={savePassword} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="currentPassword">Current Password</Label>
+                      <Input 
+                        id="currentPassword" 
+                        name="currentPassword"
+                        type="password" 
+                        value={passwordForm.currentPassword}
+                        onChange={handlePasswordFormChange}
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <Separator />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="newPassword">New Password</Label>
+                      <Input 
+                        id="newPassword" 
+                        name="newPassword"
+                        type="password" 
+                        value={passwordForm.newPassword}
+                        onChange={handlePasswordFormChange}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                      <Input 
+                        id="confirmPassword" 
+                        name="confirmPassword"
+                        type="password" 
+                        value={passwordForm.confirmPassword}
+                        onChange={handlePasswordFormChange}
+                      />
+                    </div>
                   </div>
-                  <div className="md:col-span-2">
-                    <Separator />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="newPassword">New Password</Label>
-                    <Input id="newPassword" type="password" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                    <Input id="confirmPassword" type="password" />
-                  </div>
-                </div>
-                <Button variant="outline">Change Password</Button>
+                  <Button type="submit" disabled={updatePassword.isPending}>
+                    {updatePassword.isPending ? "Updating..." : "Change Password"}
+                  </Button>
+                </form>
               </div>
               
               <Separator />
