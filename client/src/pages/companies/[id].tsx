@@ -99,6 +99,22 @@ export default function CompanyDetail() {
   
   return (
     <div className="max-w-5xl mx-auto p-4 space-y-6">
+      {/* Modal per la creazione di un nuovo contatto associato all'azienda */}
+      <ContactModal 
+        open={isContactModalOpen} 
+        onOpenChange={setIsContactModalOpen} 
+        initialData={{
+          // Predisponiamo automaticamente l'area di attività per collegarla all'azienda corrente
+          areasOfActivity: [{
+            companyId: company?.id,
+            companyName: company?.name,
+            isPrimary: true,
+            role: "", // L'utente dovrà specificare il ruolo
+            jobDescription: `Works at ${company?.name}`
+          }]
+        }}
+      />
+      
       {/* Header with back button and company name */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center">

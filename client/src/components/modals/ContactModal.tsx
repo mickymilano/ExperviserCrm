@@ -123,7 +123,11 @@ export default function ContactModal({ open, onOpenChange, initialData }: Contac
     }
   }, [initialData, reset]);
 
-  // Mutazione per la creazione di un nuovo contatto
+  // Verifichiamo se abbiamo un'azienda specifica per cui creare il contatto
+  const hasCompanyContext = areasOfActivity.some(area => area.companyId);
+  const companyId = hasCompanyContext ? areasOfActivity.find(area => area.companyId)?.companyId : null;
+  
+  // Mutazione per la creazione di un nuovo contatto, potenzialmente associato a un'azienda
   const createContact = useMutation({
     mutationFn: async (data: ContactFormData) => {
       // Prepariamo i dati per la creazione del contatto
@@ -142,13 +146,32 @@ export default function ContactModal({ open, onOpenChange, initialData }: Contac
       }
       
       try {
-        // Effettua la request con il formato corretto per apiRequest
-        const response = await fetch("/api/contacts", {
-          method: "POST", 
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(contactData),
-          credentials: "include"
-        });
+        let response;
+        
+        // Se abbiamo un contesto di azienda, utilizziamo l'endpoint specifico
+        if (hasCompanyContext && companyId) {
+          // Creiamo il contatto direttamente associato all'azienda
+          response = await fetch(`/api/companies/${companyId}/contacts`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              ...contactData,
+              // Passiamo anche il ruolo e la descrizione per l'associazione
+              role: areasOfActivity.find(area => area.companyId)?.role || 'Employee',
+              jobDescription: areasOfActivity.find(area => area.companyId)?.jobDescription || 
+                `Works at ${areasOfActivity.find(area => area.companyId)?.companyName}`
+            }),
+            credentials: "include"
+          });
+        } else {
+          // Utilizziamo l'endpoint standard per i contatti
+          response = await fetch("/api/contacts", {
+            method: "POST", 
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(contactData),
+            credentials: "include"
+          });
+        }
         
         if (!response.ok) {
           const errorText = await response.text();
@@ -157,8 +180,9 @@ export default function ContactModal({ open, onOpenChange, initialData }: Contac
         
         const newContact = await response.json();
         
-        // Se la creazione del contatto è andata a buon fine e abbiamo aree di attività, creale
-        if (areasOfActivity.length > 0 && newContact.id) {
+        // Se non abbiamo usato l'endpoint specifico dell'azienda ma abbiamo aree di attività,
+        // le creiamo manualmente
+        if (!hasCompanyContext && areasOfActivity.length > 0 && newContact.id) {
           // Crea ogni area di attività per il contatto
           const areaPromises = areasOfActivity.map(area => 
             fetch("/api/areas-of-activity", {
@@ -200,6 +224,13 @@ export default function ContactModal({ open, onOpenChange, initialData }: Contac
       queryClient.invalidateQueries({ queryKey: ["/api/contacts"] });
       queryClient.invalidateQueries({ queryKey: ["/api/areas-of-activity"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
+      
+      // Se creato da una pagina azienda, invalida anche quella cache specifica
+      if (hasCompanyContext && companyId) {
+        queryClient.invalidateQueries({ queryKey: [`/api/companies/${companyId}/contacts`] });
+        queryClient.invalidateQueries({ queryKey: ["/api/companies", companyId] });
+        queryClient.invalidateQueries({ queryKey: ["/api/companies"] });
+      }
     },
     onError: (error) => {
       toast({
