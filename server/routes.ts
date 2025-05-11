@@ -506,17 +506,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const contactId = parseInt(req.params.contactId);
       
+      // Check if we need to create a new company
+      let companyId = req.body.companyId;
+      const companyName = req.body.companyName;
+      
+      // Se abbiamo un nome azienda ma nessun ID azienda, significa che dobbiamo crearla
+      if (companyName && !companyId) {
+        console.log(`Creating new company: ${companyName}`);
+        
+        // Crea una nuova azienda
+        try {
+          const newCompany = await storage.createCompany({
+            name: companyName
+          });
+          
+          companyId = newCompany.id;
+          console.log(`Created new company with ID ${companyId}`);
+        } catch (err) {
+          console.error("Failed to create new company:", err);
+          // Continua comunque, anche se la creazione dell'azienda fallisce
+        }
+      }
+      
       // Include contactId in the request body
       const data = {
         ...req.body,
-        contactId
+        contactId,
+        companyId  // Utilizza il nuovo ID azienda se è stato creato
       };
       
       const validated = insertAreaOfActivitySchema.parse(data);
       const newArea = await storage.createAreaOfActivity(validated);
       
       // Log success
-      console.log(`Created new area of activity: contact ${contactId} with company ${validated.companyId || 'unknown'}`);
+      console.log(`Created new area of activity: contact ${contactId} with company ${validated.companyId || 'unknown'} (${companyName || 'no name'})`);
       
       res.status(201).json(newArea);
     } catch (error) {
@@ -565,6 +588,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   apiRouter.patch("/areas-of-activity/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
+      
+      // Check if we need to create a new company
+      let companyId = req.body.companyId;
+      const companyName = req.body.companyName;
+      
+      // Se abbiamo un nome azienda ma nessun ID azienda, significa che dobbiamo crearla
+      if (companyName && !companyId) {
+        console.log(`Creating new company during area update: ${companyName}`);
+        
+        // Crea una nuova azienda
+        try {
+          const newCompany = await storage.createCompany({
+            name: companyName
+          });
+          
+          companyId = newCompany.id;
+          console.log(`Created new company with ID ${companyId}`);
+          
+          // Aggiorna il payload con l'ID della nuova azienda
+          req.body.companyId = companyId;
+        } catch (err) {
+          console.error("Failed to create new company during area update:", err);
+          // Continua comunque, anche se la creazione dell'azienda fallisce
+        }
+      }
+      
       const validated = insertAreaOfActivitySchema.partial().parse(req.body);
       const updatedArea = await storage.updateAreaOfActivity(id, validated);
       

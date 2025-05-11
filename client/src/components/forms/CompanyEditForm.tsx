@@ -129,7 +129,9 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
         `/api/companies/${company.id}`, 
         companyData
       );
-      return response.json();
+      
+      // Return directly without calling .json()
+      return response;
     },
     onSuccess: () => {
       toast({

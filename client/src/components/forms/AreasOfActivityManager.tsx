@@ -93,11 +93,15 @@ export default function AreasOfActivityManager({
 
   const handleCompanySelect = (companyId: string) => {
     if (companyId === "new") {
+      // Se si seleziona "new", si permette di inserire un nome azienda libero
+      // ma si imposta companyId a null, indicando che è una nuova azienda
       setNewArea({
         ...newArea,
         companyId: null,
+        companyName: "", // Resetta il nome azienda per permettere l'inserimento
       });
     } else {
+      // Se si seleziona un'azienda esistente, impostiamo sia l'ID che il nome
       const company = companies.find(c => c.id === parseInt(companyId));
       setNewArea({
         ...newArea,
