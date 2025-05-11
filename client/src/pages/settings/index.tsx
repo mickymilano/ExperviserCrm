@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useEmailAccounts, useDeleteEmailAccount, useCreateEmailAccount } from "@/hooks/useEmailAccounts";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,10 +41,40 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 export default function SettingsPage() {
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
+  
+  // User profile state and handlers
+  const { user, isLoading: isUserLoading, updateProfile, updatePassword } = useUserProfile();
+  
+  // Profile form state
+  const [profileForm, setProfileForm] = useState({
+    fullName: "",
+    email: "",
+    phone: "",
+    jobTitle: "",
+    timezone: "Europe/Rome",
+    language: "English",
+  });
+  
+  // Password form state
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
   
   // Email accounts state and handlers
   const { data: accounts, isLoading } = useEmailAccounts();
@@ -53,6 +83,20 @@ export default function SettingsPage() {
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [accountToDelete, setAccountToDelete] = useState<EmailAccount | null>(null);
+  
+  // Initialize profile form with user data when loaded
+  useEffect(() => {
+    if (user) {
+      setProfileForm({
+        fullName: user.fullName || "Michele Ardoni",
+        email: user.email || "michele@experviser.com",
+        phone: user.phone || "+39 123 456 7890",
+        jobTitle: user.jobTitle || "CEO",
+        timezone: user.timezone || "Europe/Rome",
+        language: user.language || "English",
+      });
+    }
+  }, [user]);
   
   // Form state for email account
   const [emailForm, setEmailForm] = useState({
@@ -65,6 +109,24 @@ export default function SettingsPage() {
     username: "",
     password: "",
   });
+
+  // Handle profile form changes
+  const handleProfileFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setProfileForm({
+      ...profileForm,
+      [name]: value,
+    });
+  };
+  
+  // Handle password form changes
+  const handlePasswordFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setPasswordForm({
+      ...passwordForm,
+      [name]: value,
+    });
+  };
 
   const handleEmailFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -108,7 +170,47 @@ export default function SettingsPage() {
       setAccountToDelete(null);
     }
   };
-
+  
+  // Save profile settings
+  const saveProfile = () => {
+    updateProfile.mutate(profileForm, {
+      onSuccess: () => {
+        toast({
+          title: "Profile updated",
+          description: "Your profile has been updated successfully",
+        });
+      }
+    });
+  };
+  
+  // Save password settings
+  const savePassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      toast({
+        title: "Password mismatch",
+        description: "New password and confirmation do not match",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    updatePassword.mutate({
+      currentPassword: passwordForm.currentPassword,
+      newPassword: passwordForm.newPassword,
+    }, {
+      onSuccess: () => {
+        setPasswordForm({
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        });
+      }
+    });
+  };
+  
+  // Save general settings
   const saveSettings = () => {
     toast({
       title: "Settings saved",
@@ -181,7 +283,61 @@ export default function SettingsPage() {
                         Set your local timezone for accurate scheduling
                       </p>
                     </div>
-                    <Input id="timezone" className="w-64" defaultValue="America/New_York" />
+                    <Select 
+                      name="timezone" 
+                      defaultValue="Europe/Rome"
+                      onValueChange={(value) => setProfileForm({...profileForm, timezone: value})}
+                    >
+                      <SelectTrigger className="w-64">
+                        <SelectValue placeholder="Select timezone" />
+                      </SelectTrigger>
+                      <SelectContent className="h-80">
+                        <SelectGroup>
+                          <SelectLabel>Europe</SelectLabel>
+                          <SelectItem value="Europe/Rome">Europe/Rome</SelectItem>
+                          <SelectItem value="Europe/London">Europe/London</SelectItem>
+                          <SelectItem value="Europe/Paris">Europe/Paris</SelectItem>
+                          <SelectItem value="Europe/Berlin">Europe/Berlin</SelectItem>
+                          <SelectItem value="Europe/Madrid">Europe/Madrid</SelectItem>
+                          <SelectItem value="Europe/Athens">Europe/Athens</SelectItem>
+                          <SelectItem value="Europe/Moscow">Europe/Moscow</SelectItem>
+                        </SelectGroup>
+                        <SelectGroup>
+                          <SelectLabel>America</SelectLabel>
+                          <SelectItem value="America/New_York">America/New_York</SelectItem>
+                          <SelectItem value="America/Chicago">America/Chicago</SelectItem>
+                          <SelectItem value="America/Denver">America/Denver</SelectItem>
+                          <SelectItem value="America/Los_Angeles">America/Los_Angeles</SelectItem>
+                          <SelectItem value="America/Toronto">America/Toronto</SelectItem>
+                          <SelectItem value="America/Mexico_City">America/Mexico_City</SelectItem>
+                          <SelectItem value="America/Sao_Paulo">America/Sao_Paulo</SelectItem>
+                        </SelectGroup>
+                        <SelectGroup>
+                          <SelectLabel>Asia</SelectLabel>
+                          <SelectItem value="Asia/Tokyo">Asia/Tokyo</SelectItem>
+                          <SelectItem value="Asia/Shanghai">Asia/Shanghai</SelectItem>
+                          <SelectItem value="Asia/Hong_Kong">Asia/Hong_Kong</SelectItem>
+                          <SelectItem value="Asia/Singapore">Asia/Singapore</SelectItem>
+                          <SelectItem value="Asia/Dubai">Asia/Dubai</SelectItem>
+                          <SelectItem value="Asia/Bangkok">Asia/Bangkok</SelectItem>
+                          <SelectItem value="Asia/Seoul">Asia/Seoul</SelectItem>
+                        </SelectGroup>
+                        <SelectGroup>
+                          <SelectLabel>Australia/Pacific</SelectLabel>
+                          <SelectItem value="Australia/Sydney">Australia/Sydney</SelectItem>
+                          <SelectItem value="Australia/Melbourne">Australia/Melbourne</SelectItem>
+                          <SelectItem value="Australia/Perth">Australia/Perth</SelectItem>
+                          <SelectItem value="Pacific/Auckland">Pacific/Auckland</SelectItem>
+                        </SelectGroup>
+                        <SelectGroup>
+                          <SelectLabel>Africa</SelectLabel>
+                          <SelectItem value="Africa/Cairo">Africa/Cairo</SelectItem>
+                          <SelectItem value="Africa/Johannesburg">Africa/Johannesburg</SelectItem>
+                          <SelectItem value="Africa/Lagos">Africa/Lagos</SelectItem>
+                          <SelectItem value="Africa/Nairobi">Africa/Nairobi</SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
@@ -190,7 +346,49 @@ export default function SettingsPage() {
                         Choose your preferred language
                       </p>
                     </div>
-                    <Input id="language" className="w-64" defaultValue="English" />
+                    <Select 
+                      name="language" 
+                      defaultValue="English"
+                      onValueChange={(value) => setProfileForm({...profileForm, language: value})}
+                    >
+                      <SelectTrigger className="w-64">
+                        <SelectValue placeholder="Select language" />
+                      </SelectTrigger>
+                      <SelectContent className="h-80">
+                        <SelectGroup>
+                          <SelectLabel>Europe</SelectLabel>
+                          <SelectItem value="English">English</SelectItem>
+                          <SelectItem value="Italian">Italian</SelectItem>
+                          <SelectItem value="French">French</SelectItem>
+                          <SelectItem value="German">German</SelectItem>
+                          <SelectItem value="Spanish">Spanish</SelectItem>
+                          <SelectItem value="Portuguese">Portuguese</SelectItem>
+                          <SelectItem value="Dutch">Dutch</SelectItem>
+                          <SelectItem value="Greek">Greek</SelectItem>
+                          <SelectItem value="Swedish">Swedish</SelectItem>
+                          <SelectItem value="Polish">Polish</SelectItem>
+                          <SelectItem value="Russian">Russian</SelectItem>
+                        </SelectGroup>
+                        <SelectGroup>
+                          <SelectLabel>Asia</SelectLabel>
+                          <SelectItem value="Chinese">Chinese</SelectItem>
+                          <SelectItem value="Japanese">Japanese</SelectItem>
+                          <SelectItem value="Korean">Korean</SelectItem>
+                          <SelectItem value="Hindi">Hindi</SelectItem>
+                          <SelectItem value="Arabic">Arabic</SelectItem>
+                          <SelectItem value="Turkish">Turkish</SelectItem>
+                          <SelectItem value="Thai">Thai</SelectItem>
+                          <SelectItem value="Vietnamese">Vietnamese</SelectItem>
+                        </SelectGroup>
+                        <SelectGroup>
+                          <SelectLabel>Other</SelectLabel>
+                          <SelectItem value="Afrikaans">Afrikaans</SelectItem>
+                          <SelectItem value="Swahili">Swahili</SelectItem>
+                          <SelectItem value="Hebrew">Hebrew</SelectItem>
+                          <SelectItem value="Malay">Malay</SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </div>

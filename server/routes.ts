@@ -200,6 +200,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Update current user profile
+  apiRouter.patch("/auth/profile", authenticate, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const userId = user.id;
+      const { fullName, email, phone, jobTitle, timezone, language } = req.body;
+      
+      console.log("PATCH /auth/profile - Updating user profile:", { 
+        userId,
+        updateData: req.body 
+      });
+      
+      // Update user data
+      const updatedUser = await storage.updateUser(userId, {
+        fullName,
+        email,
+        timezone,
+        language,
+        phone,
+        jobTitle,
+        updatedAt: new Date()
+      });
+      
+      if (!updatedUser) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      // Remove sensitive data
+      const { password, ...safeUserData } = updatedUser;
+      
+      res.json(safeUserData);
+    } catch (error) {
+      console.error("PATCH /auth/profile - Error:", error);
+      res.status(500).json({ error: 'Failed to update user profile' });
+    }
+  });
+  
+  // Update current user password
+  apiRouter.patch("/auth/password", authenticate, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const userId = user.id;
+      const { currentPassword, newPassword } = req.body;
+      
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ error: 'Current password and new password are required' });
+      }
+      
+      // Verify current password
+      const isValid = await authService.verifyPassword(userId, currentPassword);
+      if (!isValid) {
+        return res.status(400).json({ error: 'Current password is incorrect' });
+      }
+      
+      // Update password
+      const success = await authService.updatePassword(userId, newPassword);
+      if (!success) {
+        return res.status(500).json({ error: 'Failed to update password' });
+      }
+      
+      res.json({ message: 'Password updated successfully' });
+    } catch (error) {
+      console.error("PATCH /auth/password - Error:", error);
+      res.status(500).json({ error: 'Failed to update password' });
+    }
+  });
+  
   // User Management (Super Admin only)
   apiRouter.get("/users", authenticate, authorize(['super_admin']), async (req: Request, res: Response) => {
     try {
