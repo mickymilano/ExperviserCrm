@@ -219,8 +219,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timezone,
         language,
         phone,
-        jobTitle,
-        updatedAt: new Date()
+        jobTitle
+        // updatedAt viene gestito automaticamente dal database
       });
       
       if (!updatedUser) {
