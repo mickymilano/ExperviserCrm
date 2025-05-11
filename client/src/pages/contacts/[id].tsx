@@ -45,7 +45,7 @@ export default function ContactDetail() {
   };
   
   const getPrimaryCompany = () => {
-    if (!contact?.areasOfActivity) return null;
+    if (!contact?.areasOfActivity || contact.areasOfActivity.length === 0) return null;
     
     // Find primary area of activity
     const primaryArea = contact.areasOfActivity.find(area => area.isPrimary);
@@ -53,20 +53,22 @@ export default function ContactDetail() {
     // If no primary, return the first one
     const firstArea = contact.areasOfActivity[0];
     
+    const processArea = (area) => {
+      // Se abbiamo il companyId, recuperiamo il nome dell'azienda dal nostro elenco delle compagnie
+      const companyNameFromId = area.companyId ? getCompanyName(area.companyId) : null;
+      
+      return {
+        id: area.companyId,
+        name: area.companyName || companyNameFromId || "Company not specified",
+        role: area.role,
+        jobDescription: area.jobDescription
+      };
+    };
+    
     if (primaryArea) {
-      return {
-        id: primaryArea.companyId,
-        name: primaryArea.companyName || getCompanyName(primaryArea.companyId) || "Unknown Company",
-        role: primaryArea.role,
-        jobDescription: primaryArea.jobDescription
-      };
+      return processArea(primaryArea);
     } else if (firstArea) {
-      return {
-        id: firstArea.companyId,
-        name: firstArea.companyName || getCompanyName(firstArea.companyId) || "Unknown Company",
-        role: firstArea.role,
-        jobDescription: firstArea.jobDescription
-      };
+      return processArea(firstArea);
     }
     
     return null;

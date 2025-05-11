@@ -128,7 +128,7 @@ export default function AreasOfActivityManager({
             <CardHeader className="py-3 px-4 flex flex-row justify-between items-center">
               <CardTitle className="text-base font-medium flex items-center gap-2">
                 {area.isPrimary && <Badge variant="outline" className="bg-primary/10 text-xs">Primary</Badge>}
-                {area.companyName || "Company not specified"}
+                {area.companyName || (area.companyId && companies.find(c => c.id === area.companyId)?.name) || "Company not specified"}
               </CardTitle>
               <div className="flex space-x-2">
                 {editIndex !== index && (
