@@ -58,6 +58,9 @@ export default function LoginPage() {
     setDirectLogin(true);
 
     try {
+      // Console di debug
+      console.log("Tentativo di login con:", data);
+      
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
@@ -66,15 +69,26 @@ export default function LoginPage() {
         body: JSON.stringify(data)
       });
       
+      const responseText = await response.text();
+      console.log("Server response:", response.status, responseText);
+      
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || response.statusText);
+        throw new Error(responseText || response.statusText);
       }
       
-      const result = await response.json();
+      // Parse la risposta come JSON dopo aver già letto il testo
+      let result;
+      try {
+        result = JSON.parse(responseText);
+        console.log("Login result:", result);
+      } catch (e) {
+        console.error("Failed to parse JSON response:", e);
+        throw new Error("Invalid server response format");
+      }
       
       if (result && result.token) {
         // Store the token
+        console.log("Saving token to localStorage:", result.token.substring(0, 10) + "...");
         localStorage.setItem("auth_token", result.token);
         
         toast({
@@ -82,8 +96,14 @@ export default function LoginPage() {
           description: `Welcome back, ${result.user.fullName || result.user.username}!`
         });
         
+        // Breve pausa per mostrare il toast di successo
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Reimposta eventuali token scaduti
+        console.log("Navigating to dashboard");
+        
         // Force a page reload to reset all app state
-        window.location.href = "/dashboard";
+        window.location.href = "/";
       } else {
         throw new Error("Invalid login response - missing token");
       }

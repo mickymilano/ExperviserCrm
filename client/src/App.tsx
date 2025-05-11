@@ -26,43 +26,44 @@ import { useAuth } from "@/hooks/useAuth";
 
 // Protected route component
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
-  // IMPORTANTE: mantenere l'ordine degli hooks sempre uguale
-  const [location, setLocation] = useLocation();
+  // IMPORTANTE: mantenere un ordine costante degli hooks
+  // Salva il token in una variabile per evitare accessi multipli a localStorage
+  const hasToken = !!localStorage.getItem("auth_token");
   const { user, isAuthenticated, isLoading } = useAuth();
+  const [location, setLocation] = useLocation();
   
   console.log("Protected route auth status:", { 
     isAuthenticated, 
     isLoading, 
     userExists: !!user, 
-    token: !!localStorage.getItem("auth_token") 
+    hasToken
   });
   
   useEffect(() => {
-    const token = localStorage.getItem("auth_token");
-    
-    if (!isLoading && !token) {
+    // Only redirect if we're sure there's no valid token AND user data couldn't be loaded
+    if (!isLoading && !hasToken) {
       console.log("No token found, redirecting to login");
       setLocation("/auth/login");
       return;
     }
     
-    // Only redirect if we're sure there's no valid token AND user data couldn't be loaded
-    if (!isLoading && !isAuthenticated && !user) {
-      console.log("Not authenticated and no user data, redirecting to login");
+    // Se non siamo autenticati e il token non funziona (no user data)
+    if (!isLoading && !isAuthenticated && !user && hasToken) {
+      console.log("Token exists but not authenticated, clearing token");
+      localStorage.removeItem("auth_token");
       setLocation("/auth/login");
     }
-  }, [isAuthenticated, isLoading, setLocation, user]);
+  }, [isAuthenticated, isLoading, setLocation, user, hasToken]);
   
   // Show loading while checking authentication
   if (isLoading) {
     return <div className="flex items-center justify-center h-full">Caricamento in corso...</div>;
   }
   
-  // If we have a token, we'll assume the user is authenticated for initial rendering
-  const token = localStorage.getItem("auth_token");
-  const shouldRender = isAuthenticated || (!!token && !isLoading);
+  // Se abbiamo un token, assumiamo che l'utente sia autenticato per il rendering iniziale
+  const shouldRender = isAuthenticated || (hasToken && !isLoading);
   
-  // Only render the component if authenticated or we have a token
+  // Renderizza solo se autenticati o abbiamo un token
   return shouldRender ? <Component /> : <div className="flex items-center justify-center h-full">Reindirizzamento al login...</div>;
 }
 
@@ -80,22 +81,23 @@ function PublicRoutes() {
 
 // Protected routes that require authentication
 function ProtectedRoutes() {
-  // IMPORTANTE: mantenere l'ordine degli hooks sempre uguale
-  const [location, setLocation] = useLocation();
+  // IMPORTANTE: mantenere un ordine costante degli hooks
+  // Salva token in una variabile per evitare accessi multipli a localStorage
+  const hasToken = !!localStorage.getItem("auth_token");
   const { isAuthenticated, isLoading } = useAuth();
-  const token = localStorage.getItem("auth_token");
+  const [location, setLocation] = useLocation();
   
-  console.log("ProtectedRoutes root:", { isAuthenticated, isLoading, hasToken: !!token });
+  console.log("ProtectedRoutes root:", { isAuthenticated, isLoading, hasToken });
   
   useEffect(() => {
-    if (!isLoading && !token) {
+    if (!isLoading && !hasToken) {
       console.log("No token in ProtectedRoutes, redirecting to login");
       setLocation("/auth/login");
     }
-  }, [isLoading, token, setLocation]);
+  }, [isLoading, hasToken, setLocation]);
   
   // Se stiamo caricando o abbiamo un token, renderizziamo il layout
-  if (isLoading || token) {
+  if (isLoading || hasToken) {
     return (
       <AppLayout>
         <Switch>
