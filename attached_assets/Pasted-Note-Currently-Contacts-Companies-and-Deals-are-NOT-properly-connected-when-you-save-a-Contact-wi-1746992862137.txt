@@ -1,0 +1,43 @@
+Note: Currently Contacts, Companies, and Deals are NOT properly connected—when you save a Contact with a company assigned or a Deal linked to a Contact/Company, the association does not persist or appear in the UI. We must fix these broken relationships first.
+
+You will operate as a combined team of a Senior Backend Developer and a Senior Frontend Developer. Your mission is to transform the current CRM into a fully bidirectional, multidirectional platform with concatenated, consistent data—without asking for any further confirmations or manual tests. If any core CRM functionality (e.g., activity timelines, email threading, task pipelines, custom fields builder, AI suggestions) is missing or incomplete, identify and implement it as part of this work.
+
+1. **Schema & Migrations**  
+   - Add and migrate the `company_id` column in the `contacts` table (FK → `companies.id`) and the `contact_id` & `company_id` columns in the `deals` table if missing. Run `drizzle migrate dev` or equivalent to apply.  
+   - Update `shared/schema.ts` (Drizzle) to declare those columns and inverse relations so Models and ORM mappings reflect true bidirectional links:  
+     • `contacts` under `companies`  
+     • `companies` under `contacts`  
+     • `deals` under both `contacts` and `companies`  
+   - Verify creation of all other tables (leads, areas_of_activity, pipeline_stages, tasks, email_accounts, emails, activities, meetings, signatures, account_signatures, users, user_sessions, security_logs).
+
+2. **Storage & CRUD Operations**  
+   - In `server/postgresStorage.ts` (or `server/storage.ts`), revise `createContact`, `updateContact`, `createDeal`, `updateDeal`, `createCompany`, `updateCompany` methods to include FK handling for `companyId`/`contactId` and preserve non-null fields.  
+   - Add orphan-cleanup logic to clear stale FK values (contacts with no company or deals with no associated entity) without deleting data.  
+   - Ensure that each CRUD method returns fully joined objects (e.g., fetching a Company returns its contacts array, fetching a Contact returns its company, fetching a Deal returns both linked Contact and Company).
+
+3. **Lead → Company/Contact Conversion Endpoint**  
+   - Create `PATCH /api/leads/:id/convert` that:  
+     • If lead_type = “Company”, inserts into `companies` and deletes the Lead.  
+     • If lead_type = “Person”, inserts into `contacts` (linking to an existing Company if provided) and deletes the Lead.  
+     • Returns the new Company or Contact with all original Lead fields mapped.  
+   - Add a “Convert Lead” button on each Lead in the UI that calls this endpoint and refreshes the lists.
+
+4. **Test Data Seeding**  
+   - Seed 10 Companies and 10 Contacts, each Contact assigned to one Company.  
+   - Seed 20 Company Leads and 10 Person Leads with realistic sample data (include custom fields, tags, status).  
+   - Provide a single command (e.g. `npm run seed` or `drizzle migrate dev && node server/run-seed.js`) to reset and populate test data.
+
+5. **Visual & Functional Verification**  
+   - After each change, automatically run smoke tests and validate UI:  
+     • Contact Detail pages show the correct Company.  
+     • Company Detail pages list all linked Contacts.  
+     • Deal views display both Contact and Company associations.  
+     • Lead conversion updates all views without orphaned data.  
+     • Task pipelines, email threading, activity timelines, AI Suggestions section all function end-to-end.  
+   - If any CRM feature (custom fields builder, pipeline stage editor, email integration panel, calendar sync, AI-driven insights) is missing, implement it now.
+
+6. **CRM Best Practices Integration**  
+   - As you add or refine features, adopt patterns from top CRMs (HubSpot, Pipedrive, Zoho, Salesforce, Cloze CRM).  
+   - Include contextual suggestions (e.g., default pipeline stages, email templates, follow-up reminders, tag management UI).
+
+Operate autonomously—perform deep code and UI checks, correct all errors, seed and verify data, and only notify me when every relation, endpoint, and interface is fully functional and visually validated.```
