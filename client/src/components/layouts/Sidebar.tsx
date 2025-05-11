@@ -11,10 +11,12 @@ import {
   Menu,
   UserPlus,
   Network,
-  LifeBuoy
+  LifeBuoy,
+  LogOut
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 
 interface SidebarProps {
   open: boolean;
@@ -43,6 +45,50 @@ function NavItem({ href, icon, label, active }: NavItemProps) {
         </a>
       </Link>
     </li>
+  );
+}
+
+// Componente per mostrare le informazioni dell'utente corrente
+function UserProfileSummary() {
+  const { user, logout } = useAuth();
+  
+  // Ottieni le iniziali per l'avatar
+  const getUserInitials = () => {
+    if (!user) return "MA";
+    
+    const nameParts = user.fullName?.split(" ") || [];
+    if (nameParts.length === 0) return "MA";
+    
+    if (nameParts.length === 1) {
+      return nameParts[0].charAt(0).toUpperCase();
+    }
+    
+    return (
+      nameParts[0].charAt(0).toUpperCase() + 
+      nameParts[nameParts.length - 1].charAt(0).toUpperCase()
+    );
+  };
+  
+  return (
+    <div className="flex flex-col space-y-2">
+      <div className="flex items-center">
+        <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center">
+          <span className="font-medium">{getUserInitials()}</span>
+        </div>
+        <div className="ml-3 hidden lg:block">
+          <p className="text-sm font-medium">{user?.fullName || "Michele Ardoni"}</p>
+          <p className="text-xs text-neutral-medium">{user?.email || "michele@experviser.com"}</p>
+        </div>
+      </div>
+      
+      <button 
+        onClick={logout}
+        className="flex items-center text-neutral-dark hover:text-red-500 mt-2 text-sm"
+      >
+        <LogOut className="h-4 w-4 mr-2" />
+        <span className="hidden lg:inline-block">Logout</span>
+      </button>
+    </div>
   );
 }
 
