@@ -322,18 +322,21 @@ export class PostgresStorage implements IStorage {
   }
 
   async getContact(id: number): Promise<Contact | undefined> {
-    const contact = await db.query.contacts.findFirst({
-      where: eq(contacts.id, id),
-      with: {
-        areasOfActivity: {
-          with: {
-            company: true
-          }
-        }
-      }
-    });
+    // Simplified query without relational features
+    const [contact] = await db.select().from(contacts).where(eq(contacts.id, id));
     
-    return contact;
+    if (!contact) {
+      return undefined;
+    }
+    
+    // Separately get areas of activity
+    const areas = await db.select().from(areasOfActivity).where(eq(areasOfActivity.contactId, id));
+    
+    // Return the contact with areas attached
+    return {
+      ...contact,
+      areasOfActivity: areas
+    };
   }
 
   async createContact(contact: InsertContact): Promise<Contact> {
@@ -362,33 +365,26 @@ export class PostgresStorage implements IStorage {
 
   // COMPANIES
   async getCompanies(): Promise<Company[]> {
-    return await db.query.companies.findMany({
-      with: {
-        areasOfActivity: {
-          with: {
-            contact: true
-          }
-        }
-      },
-      orderBy: [
-        companies.name
-      ]
-    });
+    // Simplified query without relational features
+    return await db.select().from(companies).orderBy(companies.name);
   }
 
   async getCompany(id: number): Promise<Company | undefined> {
-    const result = await db.query.companies.findFirst({
-      where: eq(companies.id, id),
-      with: {
-        areasOfActivity: {
-          with: {
-            contact: true
-          }
-        }
-      }
-    });
+    // Simplified query - first get the company
+    const [company] = await db.select().from(companies).where(eq(companies.id, id));
     
-    return result;
+    if (!company) {
+      return undefined;
+    }
+    
+    // Then fetch areas of activity separately
+    const areas = await db.select().from(areasOfActivity).where(eq(areasOfActivity.companyId, id));
+    
+    // Return the company with areas attached
+    return {
+      ...company,
+      areasOfActivity: areas
+    };
   }
 
   async createCompany(company: InsertCompany): Promise<Company> {
