@@ -312,7 +312,17 @@ export class PostgresStorage implements IStorage {
   }
 
   async getContact(id: number): Promise<Contact | undefined> {
-    const [contact] = await db.select().from(contacts).where(eq(contacts.id, id));
+    const contact = await db.query.contacts.findFirst({
+      where: eq(contacts.id, id),
+      with: {
+        areasOfActivity: {
+          with: {
+            company: true
+          }
+        }
+      }
+    });
+    
     return contact;
   }
 
@@ -346,8 +356,18 @@ export class PostgresStorage implements IStorage {
   }
 
   async getCompany(id: number): Promise<Company | undefined> {
-    const [company] = await db.select().from(companies).where(eq(companies.id, id));
-    return company;
+    const result = await db.query.companies.findFirst({
+      where: eq(companies.id, id),
+      with: {
+        areasOfActivity: {
+          with: {
+            contact: true
+          }
+        }
+      }
+    });
+    
+    return result;
   }
 
   async createCompany(company: InsertCompany): Promise<Company> {
@@ -391,37 +411,61 @@ export class PostgresStorage implements IStorage {
 
   // DEALS
   async getDeals(): Promise<Deal[]> {
-    return await db
-      .select()
-      .from(deals)
-      .leftJoin(pipelineStages, eq(deals.stageId, pipelineStages.id))
-      .orderBy(pipelineStages.order, desc(deals.value))
-      .then(result => result.map(r => r.deals));
+    return await db.query.deals.findMany({
+      with: {
+        contact: true,
+        company: true,
+        stage: true
+      },
+      orderBy: [
+        (fields) => asc(fields.stage.order),
+        (fields) => desc(fields.value)
+      ]
+    });
   }
 
   async getDealsByContact(contactId: number): Promise<Deal[]> {
-    return await db
-      .select()
-      .from(deals)
-      .where(eq(deals.contactId, contactId))
-      .leftJoin(pipelineStages, eq(deals.stageId, pipelineStages.id))
-      .orderBy(pipelineStages.order, desc(deals.value))
-      .then(result => result.map(r => r.deals));
+    return await db.query.deals.findMany({
+      where: eq(deals.contactId, contactId),
+      with: {
+        contact: true,
+        company: true,
+        stage: true
+      },
+      orderBy: [
+        (fields) => asc(fields.stage.order),
+        (fields) => desc(fields.value)
+      ]
+    });
   }
 
   async getDealsByCompany(companyId: number): Promise<Deal[]> {
-    return await db
-      .select()
-      .from(deals)
-      .where(eq(deals.companyId, companyId))
-      .leftJoin(pipelineStages, eq(deals.stageId, pipelineStages.id))
-      .orderBy(pipelineStages.order, desc(deals.value))
-      .then(result => result.map(r => r.deals));
+    return await db.query.deals.findMany({
+      where: eq(deals.companyId, companyId),
+      with: {
+        contact: true,
+        company: true,
+        stage: true
+      },
+      orderBy: [
+        (fields) => asc(fields.stage.order),
+        (fields) => desc(fields.value)
+      ]
+    });
   }
 
   async getDeal(id: number): Promise<Deal | undefined> {
-    const [deal] = await db.select().from(deals).where(eq(deals.id, id));
-    return deal;
+    // Get the deal with contact and company data
+    const result = await db.query.deals.findFirst({
+      where: eq(deals.id, id),
+      with: {
+        contact: true,
+        company: true,
+        stage: true
+      }
+    });
+    
+    return result;
   }
 
   async createDeal(insertDeal: InsertDeal): Promise<Deal> {
