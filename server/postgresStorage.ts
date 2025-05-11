@@ -257,22 +257,27 @@ export class PostgresStorage implements IStorage {
   }
 
   async getContactsByCompany(companyId: number): Promise<Contact[]> {
-    // Trova tutti i contatti associati a questa azienda tramite aree di attività
-    const contactsWithCompany = await db
+    // Simplified query without relational features - find contacts by areas of activity
+    const contactIds = await db
       .select({
-        contact: contacts
+        contactId: areasOfActivity.contactId
       })
+      .from(areasOfActivity)
+      .where(eq(areasOfActivity.companyId, companyId));
+    
+    // If no contacts found, return empty array
+    if (contactIds.length === 0) {
+      return [];
+    }
+    
+    // Get all contacts with these IDs
+    const result = await db
+      .select()
       .from(contacts)
-      .innerJoin(
-        areasOfActivity,
-        and(
-          eq(contacts.id, areasOfActivity.contactId),
-          eq(areasOfActivity.companyId, companyId)
-        )
-      )
+      .where(inArray(contacts.id, contactIds.map(c => c.contactId)))
       .orderBy(contacts.firstName, contacts.lastName);
     
-    return contactsWithCompany.map(c => c.contact);
+    return result;
   }
   
   // Alias per compatibilità con lo script di correzione delle relazioni
