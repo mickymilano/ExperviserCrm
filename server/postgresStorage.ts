@@ -125,13 +125,18 @@ export class PostgresStorage implements IStorage {
 
   // SECURITY LOGS
   async getSecurityLogs(userId?: number): Promise<SecurityLog[]> {
-    let query = db.select().from(securityLogs).orderBy(desc(securityLogs.createdAt));
-    
     if (userId) {
-      query = query.where(eq(securityLogs.userId, userId));
+      return await db
+        .select()
+        .from(securityLogs)
+        .where(eq(securityLogs.userId, userId))
+        .orderBy(desc(securityLogs.createdAt));
+    } else {
+      return await db
+        .select()
+        .from(securityLogs)
+        .orderBy(desc(securityLogs.createdAt));
     }
-    
-    return await query;
   }
 
   async createSecurityLog(log: InsertSecurityLog): Promise<SecurityLog> {
