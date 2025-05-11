@@ -3,11 +3,14 @@ import { createServer, type Server } from "http";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { storage } from "./storage";
+import { db } from "./db-simple";
 import { emailService } from "./services/email";
 import { authService } from "./services/authService";
 import { aiService } from "./services/aiService";
 import { initializeSuperAdmin } from "./seedData";
 import { fixContactsRelationships } from "./fix-contacts-relationships";
+import { contacts, companies, areasOfActivity } from "@shared/schema";
+import { eq, and, isNotNull, inArray } from "drizzle-orm";
 import {
   insertLeadSchema,
   insertContactSchema,
