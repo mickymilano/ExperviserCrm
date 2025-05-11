@@ -176,10 +176,10 @@ function RelationsDebugPage() {
             <div className="flex justify-between items-center">
               <div>
                 <CardTitle className="text-2xl flex items-center">
-                  <Network className="mr-2 h-6 w-6" /> Debug Relazioni Contatti-Aziende
+                  <Network className="mr-2 h-6 w-6" /> Contact-Company Relationship Debug
                 </CardTitle>
                 <CardDescription>
-                  Strumento per verificare e correggere le relazioni tra contatti e aziende
+                  Tool for verifying and fixing relationships between contacts and companies
                 </CardDescription>
               </div>
               <div className="flex gap-2">
@@ -190,7 +190,7 @@ function RelationsDebugPage() {
                   disabled={contactsLoading || companiesLoading}
                 >
                   <RefreshCw className="h-4 w-4 mr-2" />
-                  Aggiorna
+                  Refresh
                 </Button>
                 <Button
                   variant="default"
@@ -199,7 +199,7 @@ function RelationsDebugPage() {
                   disabled={isFixing}
                 >
                   <Check className="h-4 w-4 mr-2" />
-                  Correggi Relazioni
+                  Fix Relationships
                 </Button>
               </div>
             </div>
@@ -207,12 +207,12 @@ function RelationsDebugPage() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded-md">
-                <h3 className="text-lg font-semibold mb-2">Statistiche</h3>
+                <h3 className="text-lg font-semibold mb-2">Statistics</h3>
                 <ul className="space-y-2">
-                  <li>Totale contatti: {contacts?.length || 0}</li>
-                  <li>Totale aziende: {companies?.length || 0}</li>
+                  <li>Total contacts: {contacts?.length || 0}</li>
+                  <li>Total companies: {companies?.length || 0}</li>
                   <li className="flex items-center">
-                    Problemi di relazione: {relationshipProblems}
+                    Relationship issues: {relationshipProblems}
                     {relationshipProblems > 0 ? (
                       <AlertTriangle className="ml-2 h-4 w-4 text-amber-500" />
                     ) : (
@@ -222,17 +222,17 @@ function RelationsDebugPage() {
                 </ul>
               </div>
               <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded-md">
-                <h3 className="text-lg font-semibold mb-2">Stato dell'Integrità</h3>
+                <h3 className="text-lg font-semibold mb-2">Integrity Status</h3>
                 {relationshipProblems === 0 ? (
                   <div className="flex items-center text-green-600">
                     <Check className="mr-2 h-5 w-5" />
-                    <span>Tutte le relazioni sono integre e bidirezionali</span>
+                    <span>All relationships are intact and bidirectional</span>
                   </div>
                 ) : (
                   <div className="flex items-center text-amber-600">
                     <AlertTriangle className="mr-2 h-5 w-5" />
                     <span>
-                      Sono stati rilevati {relationshipProblems} problemi di relazione
+                      {relationshipProblems} relationship issues detected
                     </span>
                   </div>
                 )}
@@ -243,14 +243,14 @@ function RelationsDebugPage() {
 
         <Tabs defaultValue="contacts">
           <TabsList className="mb-4">
-            <TabsTrigger value="contacts">Vista Contatti</TabsTrigger>
-            <TabsTrigger value="companies">Vista Aziende</TabsTrigger>
+            <TabsTrigger value="contacts">Contacts View</TabsTrigger>
+            <TabsTrigger value="companies">Companies View</TabsTrigger>
           </TabsList>
 
           <TabsContent value="contacts">
             <div className="grid grid-cols-1 gap-4">
               {contactsLoading ? (
-                <div>Caricamento contatti...</div>
+                <div>Loading contacts...</div>
               ) : (
                 contacts?.map((contact) => (
                   <Card key={contact.id}>
@@ -259,11 +259,11 @@ function RelationsDebugPage() {
                         {contact.firstName} {contact.lastName}
                       </CardTitle>
                       <CardDescription>
-                        {contact.companyEmail || "Nessuna email aziendale"}
+                        {contact.companyEmail || "No company email"}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <h3 className="font-medium mb-2">Aree di Attività:</h3>
+                      <h3 className="font-medium mb-2">Areas of Activity:</h3>
                       {contactRelationships[contact.id]?.length ? (
                         <ul className="space-y-2">
                           {contactRelationships[contact.id].map((area) => (
@@ -274,16 +274,16 @@ function RelationsDebugPage() {
                               <div className="flex justify-between items-start">
                                 <div>
                                   <div className="font-medium">
-                                    {area.companyName || "Azienda senza nome"}
+                                    {area.companyName || "Company without name"}
                                     {area.isPrimary && (
-                                      <Badge className="ml-2">Primaria</Badge>
+                                      <Badge className="ml-2">Primary</Badge>
                                     )}
                                   </div>
                                   <div className="text-sm text-gray-500">
-                                    Ruolo: {area.role || "Non specificato"}
+                                    Role: {area.role || "Not specified"}
                                   </div>
                                   <div className="text-sm text-gray-500">
-                                    Descrizione: {area.jobDescription || "Non specificata"}
+                                    Description: {area.jobDescription || "Not specified"}
                                   </div>
                                 </div>
                                 <div>
