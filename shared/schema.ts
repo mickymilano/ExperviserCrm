@@ -16,6 +16,12 @@ export const users = pgTable("users", {
   backupEmail: text("backup_email"),
   role: userRoleEnum("role").default("user").notNull(),
   status: userStatusEnum("status").default("active").notNull(),
+  // User preferences
+  timezone: text("timezone").default("Europe/Rome"),
+  language: text("language").default("English"),
+  phone: text("phone"),
+  jobTitle: text("job_title"),
+  // Security fields
   lastLoginAt: timestamp("last_login_at"),
   loginAttempts: integer("login_attempts").default(0),
   resetPasswordToken: text("reset_password_token"),
