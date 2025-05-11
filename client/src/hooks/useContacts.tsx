@@ -37,7 +37,10 @@ export const useContacts = (options?: UseContactsOptions) => {
         title: "Success",
         description: "Contact created successfully",
       });
+      // Invalidate all contacts queries regardless of parameters
       queryClient.invalidateQueries({ queryKey: ['/api/contacts'] });
+      // Explicitly invalidate queries with includeAreas parameter
+      queryClient.invalidateQueries({ queryKey: ['/api/contacts?includeAreas=true'] });
       queryClient.invalidateQueries({ queryKey: ['/api/dashboard'] });
     },
     onError: (error) => {
@@ -59,7 +62,10 @@ export const useContacts = (options?: UseContactsOptions) => {
         title: "Success",
         description: "Contact updated successfully",
       });
+      // Invalidate all contacts queries regardless of parameters
       queryClient.invalidateQueries({ queryKey: ['/api/contacts'] });
+      // Explicitly invalidate queries with includeAreas parameter
+      queryClient.invalidateQueries({ queryKey: ['/api/contacts?includeAreas=true'] });
       queryClient.invalidateQueries({ queryKey: ['/api/dashboard'] });
     },
     onError: (error) => {
@@ -80,7 +86,10 @@ export const useContacts = (options?: UseContactsOptions) => {
         title: "Success",
         description: "Contact deleted successfully",
       });
+      // Invalidate all contacts queries regardless of parameters
       queryClient.invalidateQueries({ queryKey: ['/api/contacts'] });
+      // Explicitly invalidate queries with includeAreas parameter
+      queryClient.invalidateQueries({ queryKey: ['/api/contacts?includeAreas=true'] });
       queryClient.invalidateQueries({ queryKey: ['/api/dashboard'] });
     },
     onError: (error) => {
