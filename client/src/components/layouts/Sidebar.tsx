@@ -148,15 +148,7 @@ export default function Sidebar({ open, setOpen }: SidebarProps) {
           </Link>
           
           <div className="mt-4 pt-4 border-t border-neutral-light">
-            <div className="flex items-center">
-              <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center">
-                <span className="font-medium">JS</span>
-              </div>
-              <div className="ml-3 hidden lg:block">
-                <p className="text-sm font-medium">John Smith</p>
-                <p className="text-xs text-neutral-medium">john@experviser.com</p>
-              </div>
-            </div>
+            <UserProfileSummary />
           </div>
         </div>
       </div>

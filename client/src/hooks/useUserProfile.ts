@@ -35,10 +35,7 @@ export function useUserProfile() {
   // Update user password
   const updatePassword = useMutation({
     mutationFn: (passwordData: { currentPassword: string, newPassword: string }) => 
-      apiRequest('/api/auth/password', {
-        method: 'PATCH',
-        body: JSON.stringify(passwordData),
-      }),
+      apiRequest('PATCH', '/api/auth/password', passwordData),
     onSuccess: () => {
       toast({
         title: "Password updated",
