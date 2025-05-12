@@ -114,7 +114,13 @@ async function resetDatabase() {
       address: "Via Roma 123, Milano",
       tags: ["franchising", "retail"],
       notes: "Azienda di franchising attiva nel settore retail",
-      isActiveRep: true // Active Rep
+      status: "active",
+      isActiveRep: true, // Active Rep
+      companyType: "basket_company_franchisor",
+      brands: ["Brand1", "Brand2"],
+      channels: ["retail", "online"],
+      productsOrServicesTags: ["franchise", "consulting"],
+      locationTypes: ["urban", "mall"]
     }).returning();
     
     const company2 = await db.insert(companies).values({
@@ -126,7 +132,13 @@ async function resetDatabase() {
       address: "Via Veneto 456, Roma",
       tags: ["ristorazione", "food"],
       notes: "Catena di ristoranti italiani",
-      isActiveRep: false // Standard
+      status: "active",
+      isActiveRep: false, // Standard
+      companyType: "independent",
+      brands: ["RistoItaliano"],
+      channels: ["physical"],
+      productsOrServicesTags: ["food", "catering"],
+      locationTypes: ["urban", "mall", "travel"]
     }).returning();
     
     console.log('✓ Create 2 aziende (una Active Rep, una standard)');
@@ -136,13 +148,15 @@ async function resetDatabase() {
       firstName: "Marco",
       lastName: "Rossi",
       mobilePhone: "+39 333 1234567",
-      companyEmail: "", // Svuotare per futura migrazione a contact_emails
-      privateEmail: "", // Svuotare per futura migrazione a contact_emails
+      companyEmail: "", // Campo svuotato per migrazione a contact_emails
+      privateEmail: "", // Campo svuotato per migrazione a contact_emails
       officePhone: "+39 02 1234567",
       privatePhone: "",
       linkedin: "https://linkedin.com/in/marcorossi",
       tags: ["vip", "decision maker"],
       notes: "CEO di FranchisingPlus",
+      status: "active",
+      roles: ["executive", "board member"],
       lastContactedAt: new Date(),
       nextFollowUpAt: new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)) // 7 giorni da oggi
     }).returning();
@@ -151,13 +165,15 @@ async function resetDatabase() {
       firstName: "Laura",
       lastName: "Bianchi",
       mobilePhone: "+39 335 9876543",
-      companyEmail: "", // Svuotare per futura migrazione a contact_emails
-      privateEmail: "", // Svuotare per futura migrazione a contact_emails
+      companyEmail: "", // Campo svuotato per migrazione a contact_emails
+      privateEmail: "", // Campo svuotato per migrazione a contact_emails
       officePhone: "+39 02 1234568",
       privatePhone: "",
       linkedin: "https://linkedin.com/in/laurabianchi",
       tags: ["marketing", "franchising"],
       notes: "Direttore Marketing di FranchisingPlus",
+      status: "active",
+      roles: ["marketing", "management"],
       lastContactedAt: new Date(),
       nextFollowUpAt: new Date(Date.now() + (5 * 24 * 60 * 60 * 1000)) // 5 giorni da oggi
     }).returning();
@@ -166,13 +182,15 @@ async function resetDatabase() {
       firstName: "Giuseppe",
       lastName: "Verdi",
       mobilePhone: "+39 338 1122334",
-      companyEmail: "", // Svuotare per futura migrazione a contact_emails
-      privateEmail: "", // Svuotare per futura migrazione a contact_emails
+      companyEmail: "", // Campo svuotato per migrazione a contact_emails
+      privateEmail: "", // Campo svuotato per migrazione a contact_emails
       officePhone: "+39 06 7654322",
       privatePhone: "",
       linkedin: "https://linkedin.com/in/giuseppeverdi",
       tags: ["ristorazione", "chef"],
       notes: "Responsabile sviluppo di Ristoranti Italiani",
+      status: "active",
+      roles: ["operations", "business development"],
       lastContactedAt: new Date(),
       nextFollowUpAt: new Date(Date.now() + (3 * 24 * 60 * 60 * 1000)) // 3 giorni da oggi
     }).returning();
@@ -249,6 +267,7 @@ async function resetDatabase() {
       expectedCloseDate: new Date(Date.now() + (30 * 24 * 60 * 60 * 1000)), // 30 giorni da oggi
       notes: "Proposta di consulenza strategica per l'espansione della rete",
       tags: ["franchising", "consulenza", "strategia"],
+      status: "active",
       lastContactedAt: new Date(),
       nextFollowUpAt: new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)) // 7 giorni da oggi
     });
@@ -262,6 +281,7 @@ async function resetDatabase() {
       expectedCloseDate: new Date(Date.now() + (15 * 24 * 60 * 60 * 1000)), // 15 giorni da oggi
       notes: "Ristrutturazione completa del menu e identity della catena",
       tags: ["ristorazione", "menu", "brand"],
+      status: "active",
       lastContactedAt: new Date(),
       nextFollowUpAt: new Date(Date.now() + (3 * 24 * 60 * 60 * 1000)) // 3 giorni da oggi
     });

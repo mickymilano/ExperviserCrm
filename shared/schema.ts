@@ -244,6 +244,9 @@ export const insertPipelineStageSchema = createInsertSchema(pipelineStages).omit
   id: true,
 });
 
+// Deal status enum
+export const dealStatusEnum = pgEnum("deal_status", ["active", "archived"]);
+
 // Deals
 export const deals = pgTable("deals", {
   id: serial("id").primaryKey(),
@@ -255,6 +258,13 @@ export const deals = pgTable("deals", {
   expectedCloseDate: timestamp("expected_close_date"),
   notes: text("notes"),
   tags: text("tags").array(),
+  
+  // Nuovi campi come da specifiche
+  status: dealStatusEnum("status").default("active").notNull(),
+  lastContactedAt: timestamp("last_contacted_at"),
+  nextFollowUpAt: timestamp("next_follow_up_at"),
+  
+  // Timestamps
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -461,6 +471,30 @@ export type InsertSignature = z.infer<typeof insertSignatureSchema>;
 
 export type AccountSignature = typeof accountSignatures.$inferSelect;
 export type InsertAccountSignature = z.infer<typeof insertAccountSignatureSchema>;
+
+// Email type enum per i contatti
+export const contactEmailTypeEnum = pgEnum("contact_email_type", ["work", "personal", "previous_work", "other"]);
+
+// Tabella per gestire gli indirizzi email dei contatti
+export const contactEmails = pgTable("contact_emails", {
+  id: serial("id").primaryKey(),
+  contactId: integer("contact_id").notNull().references(() => contacts.id, { onDelete: 'cascade' }),
+  emailAddress: text("email_address").notNull(),
+  type: contactEmailTypeEnum("type").default("work").notNull(),
+  isPrimary: boolean("is_primary").default(false),
+  status: contactStatusEnum("status").default("active").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertContactEmailSchema = createInsertSchema(contactEmails).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type ContactEmail = typeof contactEmails.$inferSelect;
+export type InsertContactEmail = z.infer<typeof insertContactEmailSchema>;
 
 // Synergies (special relationships between contacts and companies that don't create permanent associations)
 export const synergies = pgTable("synergies", {
