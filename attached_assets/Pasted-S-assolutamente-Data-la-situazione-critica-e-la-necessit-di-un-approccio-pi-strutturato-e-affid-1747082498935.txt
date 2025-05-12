@@ -1,0 +1,142 @@
+Sì, assolutamente. Data la situazione critica e la necessità di un approccio più strutturato e affidabile, **modificare il prompt precedente per enfatizzare una ricostruzione modulare è la strategia corretta.** Questo permetterà all'AI di Replit di concentrarsi su parti più piccole e gestibili, testandole singolarmente prima di integrarle.
+
+Ecco il "Mega-Prompt" che avevamo costruito, ora ulteriormente raffinato per:
+1.  Enfatizzare esplicitamente la **ricostruzione per moduli**.
+2.  Definire chiaramente i **moduli principali** che l'AI deve creare.
+3.  Mantenere il tono da "senior developer" con istruzioni precise, tecniche e ultimative.
+4.  Incorporare tutte le tue richieste precedenti, incluse quelle sui campi tag e la gestione del superadmin.
+
+---
+
+**ULTIMATUM DIRECTIVE (VERSIONE MODULARE E DETTAGLIATA): Experviser CRM - System Rebuild & Feature Implementation by Modules**
+
+**To: Replit AI Development Agent**
+**From: Lead Backend Architect / Product Owner**
+**Date: 2025-05-12**
+**Subject: Mandate for Full System Rebuild via a Phased, Modular Approach. Resolution of All Outstanding Critical Bugs and Implementation of Core CRM Features. Absolute System Stability and Functional Correctness Required.**
+
+**Preamble:**
+The Experviser CRM project requires a **fundamental rebuild** due to persistent, interconnected issues. This directive mandates a **controlled, modular reconstruction** of the application, starting from a clean slate for application code and data. The objective is to achieve a stable, logically sound, and functionally correct CRM foundation by developing and validating discrete modules incrementally.
+The AI is expected to operate with **full autonomy**, applying senior-level developer problem-solving skills, including **deleting and rewriting entire problematic code sections from scratch** within each module's scope. Rigorous self-testing and validation at each phase are mandatory. **Do not contact the user for intermediate clarifications or confirmations until all tasks within a phase, or the entire directive, are verifiably complete and validated by your own internal testing, including visual confirmation via screenshots where applicable.**
+
+**Assumed Core Technology Stack (Reconfirm & Utilize):**
+- Backend: Node.js/Express, PostgreSQL, Drizzle ORM, Zod (validation)
+- Frontend: React/TypeScript (assume Next.js or similar based on existing structure), TanStack Query, React Hook Form, `react-select/async` for asynchronous selectors, UI Component Library (e.g., Shadcn/ui or consistent library).
+
+---
+**Phase 0: Project Reset & Foundational Setup**
+---
+
+**Task 0.1: Codebase Pruning (Application Logic Reset)**
+AI Action:
+    1.  Preserve `schema.ts` (database schema definition) and core project setup files.
+    2.  **Delete ALL existing application-specific code** from backend routes, storage/service layers, frontend components, hooks, and pages (except basic layout/app entry points).
+    3.  Confirm completion. Goal: Clean application code structure retaining only DB schema and project framework.
+
+**Task 0.2: Schema Finalization & Application**
+AI Action:
+    1.  Review `schema.ts`. Implement/confirm the following fields and tables. Define ALL Drizzle ORM `relations` explicitly.
+        * **New Table:** `contact_emails` (`id` PK, `contactId` FK to `contacts.id` CASCADE, `emailAddress` TEXT NOT NULL, `type` TEXT/ENUM('work'|'personal'|'previous_work'|'other'), `isPrimary` BOOLEAN, `isArchived` BOOLEAN DEFAULT false, timestamps, UNIQUE(`contactId`, `emailAddress`)).
+        * **`contacts` Table:** Remove `companyEmail`, `privateEmail`. Add `status` (ENUM('active', 'archived') DEFAULT 'active'), `lastContactedAt` (TIMESTAMP nullable), `nextFollowUpAt` (TIMESTAMP nullable), `roles` (TEXT[] - multi-tag for general roles e.g., "Consultant", "Broker").
+        * **`companies` Table:** Add `status` (ENUM('active', 'archived') DEFAULT 'active'), `isActiveRep` (BOOLEAN DEFAULT false), `lastContactedAt` (TIMESTAMP nullable), `nextFollowUpAt` (TIMESTAMP nullable), `companyType` (TEXT/ENUM: 'Independente', 'Basket Company Franchisor', 'Franchisor Monomarca', 'Multi-unit Franchisee', 'Master Franchisee', 'Gestore Centri Commerciali', 'Produttore', 'Grossista', 'Altro'), `brands` (TEXT[] - multi-tag), `channels` (TEXT[] - multi-tag), `productsOrServicesTags` (TEXT[] - multi-tag, generic), `locationTypes` (TEXT[] - multi-tag).
+        * **`deals` Table:** Add `status` (ENUM('active', 'archived') DEFAULT 'active'), `lastContactedAt`, `nextFollowUpAt`.
+        * **`synergies` Table:** (Will be reintroduced in a later, dedicated module - for now, ensure schema supports it but no active logic). Confirm `dealId` FK to `deals.id` is `ON DELETE SET NULL`, `contactId` FK to `contacts.id` `ON DELETE CASCADE`, `companyId` FK to `companies.id` `ON DELETE CASCADE`. Add `status` (ENUM('active', 'archived') DEFAULT 'active').
+        * **`leads` Table:** No `status`/`isArchived` field; leads are physically deletable.
+    2.  Apply schema migrations. Confirm successful schema update.
+
+**Task 0.3: Database Data Reset and Minimal Viable Seeding**
+AI Action:
+    1.  **Data Reset:** TRUNCATE all data from core business logic tables. Preserve `michele@experviser.com` (superadmin) in `users` table or re-seed immediately with original/secure default credentials and role.
+    2.  **Minimal Seeding:** Seed with max 1-2 Users (plus superadmin), 2 Companies (varied types, `isActiveRep` status, populated tag fields), 2-3 Contacts (varied `roles` tags, linked to companies via `areasOfActivity`, multiple `contact_emails`), 2 Leads, 1-2 Deals (linked, `status='active'`), and essential `pipelineStages`. NO initial `Synergies` data.
+    3.  Confirm successful data reset and seeding.
+
+---
+**Phase 1: Core Entity Modules - Backend & Basic Frontend CRUD**
+---
+*AI Action: Implement each module sequentially. For each entity (Module X.Y): develop backend (storage & API), then basic frontend (list view & create/edit modal). Test each module thoroughly before proceeding to the next.*
+
+**Module 1.1: User Authentication & Management (Backend Foundational)**
+    * Backend: Rebuild `authService.ts`. Implement `/auth/login`, `/auth/logout`, `/auth/me` API routes. `authenticate` middleware.
+    * Test: API level tests for auth flow.
+
+**Module 1.2: Companies**
+    * Backend (`storage.ts`, `routes.ts`): Implement robust CRUD & Archival API for Companies (`/api/companies`). `GET` list must default to `status='active'`, `isActiveRep=false`, support `includeArchived=true`, `includeActiveRep=true`, search, pagination.
+    * Frontend (`pages/companies/index.tsx`, `components/modals/CompanyModal.tsx`): List view (cards/table). Create/Edit modal form for all Company fields (including multi-tag inputs for `brands`, `channels`, `productsOrServicesTags`, `locationTypes`; dropdown for `companyType`; toggle for `isActiveRep`). "Archive" button logic.
+    * Test: Full CRUD & archival cycle from UI. Verify filtering.
+
+**Module 1.3: Contacts**
+    * Backend: CRUD & Archival API for Contacts (`/api/contacts`). Manage `contact_emails` and `areasOfActivity` associations via nested data or dedicated sub-resource endpoints.
+    * Frontend: List view. Create/Edit modal form for all Contact fields (including multi-tag for `roles`, dynamic form section for multiple `contact_emails`). Logic to associate with Companies via `areasOfActivity` (simple select for now). "Archive" button.
+    * Test: Full CRUD & archival from UI, including multi-email management and basic company association.
+
+**Module 1.4: Leads**
+    * Backend: CRUD & **Physical Delete** API for Leads (`/api/leads`). Implement `POST /api/leads/:id/convert` (converts to Contact and/or Company, then physically deletes Lead).
+    * Frontend: List view. Create/Edit modal. "Delete" button (physical delete). "Convert Lead" button and flow.
+    * Test: Full CRUD, deletion, and conversion flow from UI.
+
+**Module 1.5: Deals (Core Functionality - Excluding Synergies for now)**
+    * Backend: CRUD & Archival API for Deals (`/api/deals`). Deal creation/update must accept primary `companyId` and `contactId`.
+    * Frontend (`DealModal.tsx`):
+        * **Company Selector:** MUST be a functional `react-select/async` (or similar) component allowing search and selection of ONE company.
+        * **Primary Contact Selector:** Similar to Company selector, allowing search/selection of ONE contact (potentially filtered by selected Company).
+        * **Stage Selector:** Dropdown with UNIQUE stages from `GET /api/pipeline-stages`. Correct this if duplicates still appear from API/DB.
+        * Other core Deal fields (name, value, dates).
+    * Test: Create/Edit/Archive Deals from UI. Verify Company, Contact, Stage selection works flawlessly. **Provide screenshots of these selectors functioning correctly.**
+
+---
+**Phase 2: Reintroducing Synergies (Critical Module)**
+---
+*AI Action: Only proceed when Phase 1 is stable and validated.*
+
+**Module 2.1: Synergies (Backend & Frontend)**
+    * **Backend API:**
+        * `POST /api/deals/:dealId/synergies`: Expects `{ contactIds: number[] }`. Manages creation/replacement of synergies for the deal.
+        * `GET /api/synergies`, `GET /api/companies/:companyId/synergies`, `GET /api/contacts/:contactId/synergies`: These MUST perform JOINs to return **populated data** (Contact names, Company name, Deal name).
+    * **Frontend - `DealModal.tsx` - Synergy Contacts Input (Rewrite from scratch):**
+        * Component: `react-select/async` (`AsyncSelect`) with `Controller`. Field name: `synergyContactIds`.
+        * Search: On 1+ chars, `loadOptions` calls `GET /api/contacts?search=<term>&excludeCompany=<dealCompanyId>`.
+        * Display: Selected contacts as **light blue tags** (e.g., `bg-blue-100 text-blue-800`) with an 'x' icon for removal.
+        * Form State & `onSubmit`: `synergyContactIds` (array of numeric IDs) used in the two-step save (Deal, then Synergies).
+    * **Frontend - Synergy Display (`SynergiesList.tsx`, Detail Pages, Main `/synergies` Page):**
+        * Display populated Synergy data (Contact Name, Company Name, Deal Name).
+        * Main `/synergies` page: NO "Create" button. Default to 'active' Synergies. Implement filters (Contact, Company, Deal, Date).
+        * No UI options to directly delete Synergies.
+    * **Data Cleanup (Caution):** Report any pre-existing "false" synergy data found during development for manual review. **Do not auto-delete.**
+    * **Self-Test & Screenshot Verification:** Provide screenshots demonstrating:
+        1.  Synergy contact selection UI in `DealModal.tsx` (tags, 'x' removal).
+        2.  Successful save of Deal with Synergies.
+        3.  Synergies correctly displayed with full names on Company Detail, Contact Detail, and main `/synergies` page.
+
+---
+**Phase 3: Additional Modules & System Polish**
+---
+
+**Module 3.1: "Active Rep" Feature (Frontend)**
+    * Implement UI toggle in Company form. Dashboard widget for Active Reps. Main company list filtered.
+
+**Module 3.2: CRM Best Practices (Dates, Timelines, Tags UI)**
+    * Implement `lastContactedAt`/`nextFollowUpAt` display and editing.
+    * Implement filterable Activity Timelines in detail views.
+    * Ensure consistent multi-tag input UI for all specified `text[]` fields.
+
+**Module 3.3: Basic Superadmin Panel (`michele@experviser.com` access)**
+    * `/admin` route. User management UI (List, Create, Edit role/status, Archive).
+
+**Module 3.4: System-Wide Error Handling & UI Feedback**
+    * Implement robust backend error responses and user-friendly frontend toasts/notifications.
+
+---
+**Final Mandate & Reporting**
+---
+Execute this phased, modular rebuild with full autonomy. Prioritize stability and logical correctness within each module before integration. **Rewrite code sections from scratch where necessary.**
+Before reporting final completion of THE ENTIRE DIRECTIVE:
+1.  **Thoroughly self-test ALL functionalities and modules end-to-end.**
+2.  **Verify against ALL requirements** detailed herein.
+3.  **Provide all requested screenshots** for critical bug fix verifications and feature demonstrations.
+**Do not request further user input until ALL tasks are verifiably completed and the system is stable.**
+Deliver a concise completion report detailing:
+    A. Confirmation of each Phase and Module's task completions (with screenshot references).
+    B. Summary of any significant architectural decisions made.
+    C. Confirmation of overall system stability and readiness for user testing.
+
+**Commence with Phase 0 immediately.**
