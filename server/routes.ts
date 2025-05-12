@@ -2099,6 +2099,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get synergies for a specific contact
+  apiRouter.get("/contacts/:id/synergies", async (req: Request, res: Response) => {
+    try {
+      const contactId = Number(req.params.id);
+      if (isNaN(contactId)) {
+        return res.status(400).json({ message: "Invalid contact ID" });
+      }
+      
+      const contact = await storage.getContact(contactId);
+      if (!contact) {
+        return res.status(404).json({ message: "Contact not found" });
+      }
+      
+      // Get all synergies and filter them for this contact
+      const allSynergies = await storage.getSynergies();
+      const contactSynergies = allSynergies.filter(synergy => synergy.contactId === contactId);
+      
+      console.log(`Found ${contactSynergies.length} synergies for contact #${contactId}`);
+      
+      res.json(contactSynergies);
+    } catch (error) {
+      console.error("Error fetching contact synergies:", error);
+      res.status(500).json({ message: "Failed to fetch contact synergies" });
+    }
+  });
+  
+  // Get synergies for a specific company
+  apiRouter.get("/companies/:id/synergies", async (req: Request, res: Response) => {
+    try {
+      const companyId = Number(req.params.id);
+      if (isNaN(companyId)) {
+        return res.status(400).json({ message: "Invalid company ID" });
+      }
+      
+      const company = await storage.getCompany(companyId);
+      if (!company) {
+        return res.status(404).json({ message: "Company not found" });
+      }
+      
+      // Get all synergies and filter them for this company
+      const allSynergies = await storage.getSynergies();
+      const companySynergies = allSynergies.filter(synergy => synergy.companyId === companyId);
+      
+      console.log(`Found ${companySynergies.length} synergies for company #${companyId}`);
+      
+      res.json(companySynergies);
+    } catch (error) {
+      console.error("Error fetching company synergies:", error);
+      res.status(500).json({ message: "Failed to fetch company synergies" });
+    }
+  });
+  
   // Get synergies for a specific deal
   apiRouter.get("/deals/:id/synergies", async (req: Request, res: Response) => {
     try {

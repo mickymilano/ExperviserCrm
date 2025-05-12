@@ -1,0 +1,129 @@
+Okay, I understand. You want to give the AI a very strong, direct, and comprehensive mandate to fix the outstanding issues, especially the Synergy visibility and the Deal form selection problems (Company field and duplicate Stages). You're emphasizing autonomous problem-solving, including rewriting code if necessary, and thorough self-testing with visual confirmation (screenshots) by the AI.
+
+I will incorporate your requests into the previous detailed prompt, making it even more "ultimative" and precise from a senior developer's perspective.
+
+Here's the updated and enhanced directive for Replit AI:
+
+---
+
+**ULTIMATUM DIRECTIVE: Experviser CRM - Critical Bug Resolution & Feature Completion**
+
+**To: Replit AI Development Agent**
+**From: Lead Architect / Product Owner**
+**Date: 2025-05-12**
+**Subject: Mandate for Autonomous Resolution of Critical CRM Bugs (Synergy Visibility, Deal Form Selectors) and Implementation of Pending Core Features. Full System Stability and Functional Correctness Required.**
+
+**Preamble:**
+Despite previous attempts, critical usability and data integrity issues persist. This directive mandates a comprehensive, autonomous effort to resolve all outlined problems. This may involve **deleting and rewriting entire problematic code sections from scratch** if deemed the most efficient path to a stable solution by a senior developer. The AI is expected to operate with full autonomy, applying all necessary debugging techniques, code modifications, and rigorous self-testing until all specified issues are resolved and features are correctly implemented. **Do not contact the user for intermediate clarifications or confirmations until all tasks herein are verifiably complete and validated by your own internal testing, including visual confirmation via screenshots where applicable.**
+
+**Assumed Core Technology Stack:**
+- Backend: Node.js/Express, PostgreSQL, Drizzle ORM, Zod (validation)
+- Frontend: React/TypeScript (assume Next.js or similar), TanStack Query, React Hook Form, `react-select/async`, UI Component Library (e.g., Shadcn/ui)
+
+---
+**IMMEDIATE CRITICAL BUG FIXES (Phase 1)**
+---
+
+**Task 1.A: Resolve "Synergy Contacts Not Visible Outside Deal Detail"**
+* **Problem:** Successfully created Synergies (linked to a Deal, Company, and Contact in the database) are NOT visible on:
+    1. The main Synergies list page (`/synergies`).
+    2. The "Synergies" tab on the associated Company's detail page.
+    3. The "Synergies" tab on the associated Contact's detail page.
+* **Assumptions:** Synergies *are* being correctly created in the `synergies` DB table (verify this first via direct DB query after a test Deal save). The "phantom synergies" issue (API returning wrong data type for empty results) is believed to be fixed, but re-verify.
+* **Mandatory Actions:**
+    1.  **Database Verification:** After creating a test Deal with Synergy Contacts, query the `synergies` table directly. Confirm row existence with correct `dealId`, `companyId`, `contactId`.
+    2.  **Backend API Endpoints (`GET /api/synergies`, `GET /api/companies/:companyId/synergies`, `GET /api/contacts/:contactId/synergies`):**
+        * Audit and, if necessary, **rewrite** the logic in `server/routes.ts` and corresponding `storage.ts` functions.
+        * These endpoints MUST correctly fetch all relevant synergies and **critically perform necessary JOINs or data population** to include associated data: `contacts.firstName`, `contacts.lastName`, `companies.name`, `deals.name`. This is essential for the frontend to display meaningful information beyond mere IDs.
+        * Ensure they return all expected synergy records (or `[]` if none).
+    3.  **Frontend Hooks (`useSynergies`, `useCompanySynergies`, `useContactSynergies`):**
+        * Ensure these hooks in `client/src/hooks/useSynergies.tsx` correctly call their respective APIs and provide the full, populated data (including names) to `SynergiesList.tsx`.
+    4.  **Frontend Component (`SynergiesList.tsx`):**
+        * When used in different contexts (no props, `companyId` prop, `contactId` prop), ensure it correctly maps and displays ALL details for each synergy: Associated Contact Name, Company Name, Deal Name, Status, Start Date, Description. Handle cases where some associated data might be missing (e.g., a deal name for a generic synergy if that's possible).
+    5.  **Cache Invalidation:** Implement/verify robust TanStack Query cache invalidation for all relevant synergy-related query keys after a new Synergy is created (via Deal save) to ensure all views update.
+    6.  **Self-Test & Screenshot Verification:** After fixes, autonomously create a Deal with Synergies. Navigate to the main Synergies page, the Company detail page, and the Contact detail page. **Take screenshots** demonstrating that the created Synergies are now correctly listed with all details in all three locations.
+
+**Task 1.B: Resolve Deal Form Selection Issues (`DealModal.tsx`)**
+* **Problem 1: Company Field Not Selectable.** The "Company" dropdown in the Deal form, while displaying company names, does not allow selection.
+* **Problem 2: Stage Field Displays Duplicates.** The "Stage" dropdown shows duplicate pipeline stage names.
+* **Mandatory Actions:**
+    1.  **Company/Contact Selectors (Non-Selectable Issue):**
+        * In `client/src/components/DealModal.tsx`, for the "Company" field (and the "Contact" field if it suffers the same issue):
+            * Ensure it uses an appropriate select/autocomplete component (e.g., `react-select` or similar from your UI library).
+            * Confirm correct integration with `react-hook-form` via `<Controller>`.
+            * **Implement/verify `getOptionValue={(option) => option.id}` and `getOptionLabel={(option) => option.name}` (or equivalent for contacts).** This is critical.
+            * Ensure the `onChange` handler updates `react-hook-form`'s state with the selected option's ID.
+            * Ensure the `value` prop is correctly bound to display the selected company/contact.
+            * If async, verify `loadOptions` / `onInputChange` logic.
+        * **Self-Test & Screenshot Verification:** Test company selection. **Take a screenshot** showing a company successfully selected in the Deal form.
+    2.  **Stage Field (Duplicates Issue):**
+        * **Database Check (`pipelineStages` table):** Query and ensure no duplicate stage names exist. Clean if necessary (provide script/log of cleanup).
+        * **API Endpoint (`GET /api/pipeline-stages`):** Verify this endpoint in `server/routes.ts` and `storage.ts` returns a *distinct* list of stages.
+        * **Frontend Data Handling:** Ensure the hook fetching stages and the `DealModal.tsx` select component for "Stage" do not introduce duplicates. De-duplicate client-side only as a last resort if API/DB fix is problematic.
+        * **Self-Test & Screenshot Verification:** Test the "Stage" dropdown. **Take a screenshot** showing the Stage dropdown with unique values.
+
+---
+**Phase 2: Comprehensive CRM Core Refactor and Feature Implementation**
+---
+*(Directive: Proceed with these tasks only after successfully completing, self-testing, and validating ALL fixes in Phase 1. Refer to the full detailed prompt previously provided by the user, summarized here for context. Apply the same level of autonomous problem-solving, code rewriting if necessary, and rigorous self-testing.)*
+
+**Task 2.1: Schema Enhancements (Task 0 from previous detailed prompt):**
+    * Implement all new tables (`contact_emails`) and new fields (`status`/`isArchived` for archival; `isActiveRep`; date tracking fields; `companyType`; multi-tag `text[]` fields for `companies.brands`, `channels`, `productsOrServicesTags`, `locationTypes`; `contacts.roles`). Define explicit Drizzle ORM `relations`.
+
+**Task 2.2: Database Reset & Minimal Seeding (Task 0.B):**
+    * Execute data truncation (preserve `michele@experviser.com` superadmin). Seed minimal data (max 2 companies, 3 contacts, etc.; NO initial Synergies).
+
+**Task 2.3: Data Archival System (Task 1):**
+    * Implement "archive" logic (no physical delete) for `Deals`, `Contacts`, `contact_emails`.
+    * **Exception:** `Leads` remain physically deletable.
+    * Update APIs for default filtering (`status='active'`) and `includeArchived` parameter.
+
+**Task 2.4: Advanced Contact Email Management (Task 2):**
+    * Backend CRUD for `contact_emails`. Update email matching logic. UI for multi-email management in Contact form.
+
+**Task 2.5: "Active Rep" Company Feature (Task 3):**
+    * Backend logic for `isActiveRep`. UI toggle. Dashboard widget. Main company list filtered.
+
+**Task 2.6: CRM Best Practices Implementation (Task 4):**
+    * `lastContactedAt`/`nextFollowUpAt` fields & logic. Filterable Activity Timelines.
+    * **Consistent Multi-Tag Input UI:** For `text[]` fields (`brands`, `channels`, `productsOrServicesTags`, `locationTypes`, `roles`), UI must support autocomplete from existing tags & on-the-fly creation.
+    * Structured `companyType` (enum/dropdown).
+
+**Task 2.7: Synergies Module Rewrite & Fix (`DealModal.tsx`) (Task 5 - re-verify post Phase 1):**
+    * **Input Component:** `react-select/async` (`AsyncSelect`). Search on 1+ chars. API for contact search (`excludeCompany`). Map results to `{value, label}`. Multi-select. **Light blue tags with 'x' for removal.**
+    * **Rules:** Non-deletable from UI. **Report (don't auto-delete) suspect old synergy data.**
+    * **Display:** On Contact/Company details. Main `/synergies` page (no create, default active, filters).
+    * **`onSubmit`:** Two-step save (Deal, then `POST /api/deals/:dealId/synergies`).
+
+**Task 2.8: Basic Superadmin Panel (Task 6):**
+    * Route-protected `/admin` page. User management (list, create, edit role/status, archive).
+
+**Task 2.9: System-Wide Error Handling & Feedback (General Requirement):**
+    * Implement robust backend error responses and user-friendly frontend toasts/notifications for all operations.
+
+---
+**Final Mandate for Replit AI Development Agent**
+Execute all specified tasks with full autonomy, employing senior-level developer problem-solving skills, including **rewriting entire code sections from scratch if necessary** to achieve stability and correctness.
+Before reporting completion:
+1.  **Thoroughly self-test ALL functionalities end-to-end.** This includes all CRUD operations, archival, filtering, user role specific access, and the complete synergy workflow (creation, display, non-deletion).
+2.  **Verify against ALL requirements** detailed in this directive.
+3.  **Provide screenshots** as requested for critical bug fix verifications.
+**Do not request further user input until ALL tasks are verifiably completed and the system is stable.**
+Deliver a concise completion report detailing:
+    A. Confirmation of Phase 1 critical bug resolutions (with screenshot references).
+    B. Confirmation of all Phase 2 task completions.
+    C. Summary of any other significant bugs identified and resolved.
+    D. Overview of features implemented and validated.
+
+**Commence immediately.**
+```
+
+**Commenti e Suggerimenti Aggiunti (già integrati nel prompt sopra):**
+
+* **Tono Ultimativo e Autonomia:** Ho rafforzato il linguaggio per dare all'AI un mandato chiaro di operare in autonomia, prendere decisioni da "senior developer" (incluso riscrivere codice) e non interrompere il flusso fino alla risoluzione.
+* **Screenshot come Prova:** Ho inserito richieste esplicite per l'AI di fare screenshot per validare le correzioni dei bug visivi.
+* **Prioritizzazione Fase 1 / Fase 2:** Ho strutturato il prompt per affrontare prima i bug bloccanti attuali (Fase 1) e poi procedere con il refactoring più ampio e le nuove funzionalità (Fase 2), anche se l'AI dovrebbe comunque mirare a completare tutto.
+* **Dettaglio Tag Sinergie:** Ho reinserito la specifica "Light blue tags with 'x' for removal" per i Synergy Contacts.
+* **Logica Complessiva:** Il prompt ora copre in modo olistico i problemi segnalati e i task di sviluppo, con un forte accento sulla responsabilità dell'AI di risolvere e validare.
+
+Questo prompt è il più completo e direttivo che possiamo formulare basandoci su tutte le informazioni. Speriamo che l'AI di Replit lo interpreti correttamente e riesca a stabilizzare e far progredire il CRM.
