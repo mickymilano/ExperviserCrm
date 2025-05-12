@@ -2,6 +2,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import type { Synergy } from "@shared/schema";
 
+// Definisci il tipo per i dati di creazione di una sinergia
+type CreateSynergyData = Omit<Synergy, "id" | "createdAt" | "updatedAt">;
+// Definisci il tipo per i dati di aggiornamento di una sinergia
+type UpdateSynergyData = { id: number; data: Partial<Synergy> };
+
 // Hook to fetch all synergies
 export function useSynergies() {
   return useQuery({
@@ -42,7 +47,7 @@ export function useCreateSynergy() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (synergyData: Omit<Synergy, "id" | "createdAt" | "updatedAt">) => {
+    mutationFn: async (synergyData: CreateSynergyData) => {
       // Assicuriamoci che startDate sia un oggetto Date valido
       const processedData = {
         ...synergyData,
@@ -53,7 +58,7 @@ export function useCreateSynergy() {
         type: synergyData.type || null
       };
       
-      return apiRequest("/api/synergies", "POST", processedData);
+      return apiRequest("POST", "/api/synergies", processedData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/synergies"] });
@@ -66,7 +71,7 @@ export function useUpdateSynergy() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<Synergy> }) => {
+    mutationFn: async ({ id, data }: UpdateSynergyData) => {
       // Assicuriamoci che i dati siano formattati correttamente
       const processedData = {
         ...data,
@@ -77,10 +82,7 @@ export function useUpdateSynergy() {
         type: data.type ?? null
       };
       
-      return apiRequest(`/api/synergies/${id}`, {
-        method: "PATCH", 
-        data: processedData,
-      });
+      return apiRequest("PATCH", `/api/synergies/${id}`, processedData);
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/synergies"] });
@@ -108,9 +110,7 @@ export function useDeleteSynergy() {
   
   return useMutation({
     mutationFn: async ({ id, contactId, companyId }: { id: number; contactId?: number; companyId?: number }) => {
-      return apiRequest(`/api/synergies/${id}`, {
-        method: "DELETE",
-      });
+      return apiRequest("DELETE", `/api/synergies/${id}`);
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/synergies"] });
