@@ -355,21 +355,17 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     saveDeal.mutate(data);
   };
 
-  // Update synergy options when filtered contacts or selected contact changes
+  // Update synergy options when filtered contacts change
   useEffect(() => {
-    // Get the selected contact ID
-    const selectedContactId = Number(getValues("contactId"));
-    
-    // Create options from filtered synergy contacts, excluding the selected contact
+    // Create options from filtered synergy contacts
     const options = filteredSynergyContacts
-      .filter(contact => contact.id !== selectedContactId)
       .map(contact => ({
         value: contact.id.toString(),
         label: `${contact.firstName} ${contact.lastName}`
       }));
     
     setSynergyOptions(options);
-  }, [filteredSynergyContacts, getValues]);
+  }, [filteredSynergyContacts]);
   
   return (
     <>
