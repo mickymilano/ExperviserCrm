@@ -1,0 +1,34 @@
+To: Replit AI Development Agent
+Subject: Re-Mandate: Persisting Issue - Synergies Not Visible in UI (Post API Fixes)
+
+Directive:
+Despite previous backend API corrections (ensuring endpoints return correct raw synergy data or `[]`), the critical issue persists: **Synergies, even if successfully created and present in the database (verified after a Deal save), are NOT visible with their full details (Associated Contact Name, Company Name, Deal Name) in the following UI locations:**
+    1. The main Synergies list page (`/synergies`).
+    2. The "Synergies" tab on the associated Company's detail page.
+    3. The "Synergies" tab on the associated Contact's detail page.
+
+**Re-emphasize and execute with extreme diligence Task 1.A of the "ULTIMATUM DIRECTIVE: Experviser CRM - Critical Bug Resolution & Feature Completion" prompt I provided previously.** Pay URGENT and FOCUSED attention to the following sub-points of that task:
+
+1.  **Backend API Endpoints (`GET /api/synergies`, `GET /api/companies/:companyId/synergies`, `GET /api/contacts/:contactId/synergies`):**
+    * **CRITICAL VERIFICATION:** Confirm these endpoints are NOT just returning IDs for associated entities. They **MUST** perform the necessary database JOINs (with `contacts`, `companies`, `deals` tables) or data population steps in the backend to include the **actual names** (e.g., `contact.firstName`, `contact.lastName`, `company.name`, `deal.name`) within each synergy object returned in the API response. The frontend cannot display names if it only receives IDs. If this is not happening, **REWRITE these endpoints and their underlying storage functions (`storage.getSynergies`, `storage.getSynergiesByCompany`, `storage.getSynergiesByContact` in `storage.ts`) immediately to include this populated data.**
+
+2.  **Frontend Hooks (`useSynergies`, `useCompanySynergies`, `useContactSynergies`):**
+    * Ensure these hooks correctly receive and pass on the *fully populated* synergy objects (with names, not just IDs) from the backend.
+
+3.  **Frontend Component (`SynergiesList.tsx`):**
+    * Ensure this component is designed to receive and render the populated names (Contact Name, Company Name, Deal Name) for each synergy. Update its rendering logic if it's currently expecting to look up names itself client-side or only displaying IDs.
+
+4.  **Self-Test & Screenshot Verification (MANDATORY):**
+    * After ensuring the backend APIs provide populated data and the frontend consumes it:
+        a. Create a new Deal and add at least two Synergy Contacts to it. Save the Deal.
+        b. Verify in the database that the `synergies` table contains these new records with correct foreign keys.
+        c. Navigate to:
+            i.  The main `/synergies` page.
+            ii. The detail page of the Company associated with the Deal, and go to its "Synergies" tab.
+            iii.The detail page of one of the Contacts you added as a Synergy Contact, and go to its "Synergies" tab (if this view is intended).
+        d. **Provide screenshots of these three UI locations clearly showing the newly created Synergies listed with their associated Contact names, Company names, and Deal names.**
+        e. If they are still not visible, or show IDs instead of names, detail precisely what the API is returning and what the `SynergiesList` component is receiving.
+
+**Additionally, re-confirm and fix the Deal Form selection issues (Company field not selectable, Stage field duplicates) as per Task 1.B of the "ULTIMATUM DIRECTIVE" prompt.** These are also critical for basic functionality.
+
+**Operate autonomously. Do not request further user input until these specific visibility and selection issues are resolved and verified with screenshots.** Provide a clear report of the fixes applied to both backend data fetching/population and frontend rendering for Synergies, and the fixes for the Deal Form selectors.
