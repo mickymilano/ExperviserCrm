@@ -51,9 +51,10 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(
     initialData?.companyId || null
   );
-  const [synergyContactId, setSynergyContactId] = useState<string | null>(null);
+  const [selectedSynergyContacts, setSelectedSynergyContacts] = useState<string[]>([]);
   const [filteredSynergyContacts, setFilteredSynergyContacts] = useState<any[]>([]);
   const [synergyOptions, setSynergyOptions] = useState<Array<{value: string, label: string}>>([]);
+  const [synergySearchTerm, setSynergySearchTerm] = useState("");
   
   // Form reference for alert dialog submission
   const formRef = useRef<HTMLFormElement>(null);
