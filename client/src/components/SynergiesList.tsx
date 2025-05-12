@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useContactSynergies, useCompanySynergies, useDeleteSynergy } from "@/hooks/useSynergies";
+import { useContactSynergies, useCompanySynergies } from "@/hooks/useSynergies";
 import { useContacts } from "@/hooks/useContacts";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useDeals } from "@/hooks/useDeals";
@@ -7,19 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SynergyModal } from "@/components/modals/SynergyModal";
-import { PlusCircle, Edit, Trash2, Handshake } from "lucide-react";
+import { Edit, Handshake } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 
 interface SynergiesListProps {
@@ -32,7 +21,7 @@ interface SynergiesListProps {
 
 export function SynergiesList({ contactId, companyId, showTitle = true, hideAddButton = true, hideDeleteButtons = true }: SynergiesListProps) {
   const { toast } = useToast();
-  // Rimuoviamo il modal di creazione poiché le sinergie devono essere create solo tramite Deal
+  // Solo il modal di modifica è permesso, la creazione è gestita solo tramite Deal
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [currentSynergy, setCurrentSynergy] = useState<any>(null);
   
@@ -64,33 +53,10 @@ export function SynergiesList({ contactId, companyId, showTitle = true, hideAddB
   const dealsResult = useDeals();
   const deals = dealsResult.deals || [];
   
-  const deleteMutation = useDeleteSynergy();
-  
+  // Funzione per modificare una sinergia esistente
   const handleEdit = (synergy: any) => {
     setCurrentSynergy(synergy);
     setEditModalOpen(true);
-  };
-  
-  const handleDelete = async (synergy: any) => {
-    try {
-      await deleteMutation.mutateAsync({
-        id: synergy.id,
-        contactId: synergy.contactId,
-        companyId: synergy.companyId
-      });
-      
-      toast({
-        title: "Success",
-        description: "Synergy deleted successfully",
-      });
-    } catch (error) {
-      console.error("Error deleting synergy:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete synergy",
-        variant: "destructive",
-      });
-    }
   };
   
   const getContactName = (id: number) => {
@@ -183,43 +149,16 @@ export function SynergiesList({ contactId, companyId, showTitle = true, hideAddB
         {showTitle && (
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold">Business Synergies</h3>
-            {!hideAddButton && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setCreateModalOpen(true)}
-              >
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Add Synergy
-              </Button>
-            )}
+            {/* Pulsante "Add Synergy" rimosso - le sinergie vanno create solo tramite Deal */}
           </div>
         )}
         <div className="text-center py-10 border rounded-md bg-muted/20">
           <Handshake className="h-10 w-10 mx-auto mb-2 text-muted-foreground" />
           <p className="text-muted-foreground">No business synergies found.</p>
-          {!hideAddButton && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="mt-4"
-              onClick={() => setCreateModalOpen(true)}
-            >
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Create New Synergy
-            </Button>
-          )}
+          {/* Pulsante rimosso - le sinergie vanno create solo tramite Deal */}
         </div>
         
-        {!hideAddButton && (
-          <SynergyModal
-            open={createModalOpen}
-            onOpenChange={setCreateModalOpen}
-            contactId={contactId}
-            companyId={companyId}
-            mode="create"
-          />
-        )}
+        {/* Modal di creazione rimosso - le sinergie vanno create solo tramite Deal */}
       </div>
     );
   }
@@ -290,15 +229,7 @@ export function SynergiesList({ contactId, companyId, showTitle = true, hideAddB
         ))}
       </div>
       
-      {!hideAddButton && (
-        <SynergyModal
-          open={createModalOpen}
-          onOpenChange={setCreateModalOpen}
-          contactId={contactId}
-          companyId={companyId}
-          mode="create"
-        />
-      )}
+      {/* Modal di creazione rimosso - le sinergie vanno create solo tramite Deal */}
       
       <SynergyModal
         open={editModalOpen}
