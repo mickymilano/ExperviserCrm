@@ -38,6 +38,8 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
   const [tagsInput, setTagsInput] = useState(
     initialData?.tags && initialData.tags.length > 0 ? initialData.tags.join(", ") : ""
   );
+  const [companySearchQuery, setCompanySearchQuery] = useState("");
+  const [filteredCompanies, setFilteredCompanies] = useState<any[]>([]);
   const isEditMode = !!initialData;
 
   // Fetch pipeline stages for dropdown
@@ -107,6 +109,30 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       setValue("stageId", stages[0].id);
     }
   }, [initialData, stages, open, setValue]);
+  
+  // Effect per impostare le aziende filtrate inizialmente
+  useEffect(() => {
+    if (companies && Array.isArray(companies)) {
+      setFilteredCompanies(companies);
+    }
+  }, [companies]);
+  
+  // Effect per filtrare le aziende in base alla ricerca
+  useEffect(() => {
+    if (companies && Array.isArray(companies)) {
+      if (companySearchQuery.trim() === '') {
+        // Se non c'è una query di ricerca, mostriamo tutte le aziende
+        setFilteredCompanies(companies);
+      } else {
+        // Altrimenti filtriamo in base alla query
+        const query = companySearchQuery.toLowerCase().trim();
+        const filtered = companies.filter(company => 
+          company.name.toLowerCase().includes(query)
+        );
+        setFilteredCompanies(filtered);
+      }
+    }
+  }, [companySearchQuery, companies]);
 
   const saveDeal = useMutation({
     mutationFn: async (data: DealFormData) => {
@@ -249,22 +275,56 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div className="space-y-2">
               <Label htmlFor="companyId">Company</Label>
-              <Select 
-                defaultValue={initialData?.companyId?.toString() || "0"}
-                onValueChange={(value) => setValue("companyId", value === "0" ? null : parseInt(value))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a company" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">None</SelectItem>
-                  {companies.map((company) => (
-                    <SelectItem key={company.id} value={company.id.toString()}>
-                      {company.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="relative">
+                {/* Campo di ricerca input */}
+                <Input
+                  type="text"
+                  placeholder="Search company or select from list"
+                  value={companySearchQuery}
+                  onChange={(e) => setCompanySearchQuery(e.target.value)}
+                  className="mb-1"
+                />
+                
+                {/* Dropdown di selezione con risultati filtrati */}
+                <Select 
+                  defaultValue={initialData?.companyId?.toString() || "0"}
+                  onValueChange={(value) => setValue("companyId", value === "0" ? null : parseInt(value))}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select a company" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">None</SelectItem>
+                    {/* Se abbiamo un contatto selezionato, mostriamo prima la sua azienda primaria */}
+                    {filteredCompanies.map((company) => {
+                      // Creiamo una variabile per monitorare se questa è l'azienda primaria
+                      // senza utilizzare form o register direttamente, perché non sono accessibili qui
+                      let isPrimaryCompany = false;
+                      
+                      // Cerchiamo nei contatti se qualcuno ha quest'azienda come primaria
+                      if (contacts && Array.isArray(contacts)) {
+                        const selectedContactId = initialData?.contactId || null;
+                        const selectedContact = selectedContactId 
+                          ? contacts.find(c => c.id === selectedContactId) 
+                          : null;
+                        
+                        // Se troviamo un contatto selezionato, verifichiamo se ha quest'azienda come primaria
+                        if (selectedContact?.areasOfActivity?.length > 0) {
+                          isPrimaryCompany = selectedContact.areasOfActivity.some(
+                            area => area.companyId === company.id && area.isPrimary
+                          );
+                        }
+                      }
+                      
+                      return (
+                        <SelectItem key={company.id} value={company.id.toString()}>
+                          {company.name} {isPrimaryCompany ? " (Primary)" : ""}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             
             <div className="space-y-2">
@@ -278,7 +338,11 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                   // Se è selezionato un contatto, cerca la sua azienda primaria
                   if (contactId && contacts && Array.isArray(contacts)) {
                     const selectedContact = contacts.find(c => c.id === contactId);
+                    console.log("Selected contact:", selectedContact);
+                    
                     if (selectedContact?.areasOfActivity?.length > 0) {
+                      console.log("Contact areas of activity:", selectedContact.areasOfActivity);
+                      
                       // Trova l'area di attività primaria (o prende la prima disponibile)
                       const primaryArea = selectedContact.areasOfActivity.find(a => a.isPrimary) || 
                                          selectedContact.areasOfActivity[0];
