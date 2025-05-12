@@ -13,12 +13,13 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { 
   ArrowLeft, User, Building2, Mail, Phone, Calendar, Edit,
   Briefcase, MessageCircle, Clock, FileText, Trash, Linkedin,
-  Facebook, Instagram, AlertCircle, CheckCircle,
+  Facebook, Instagram, AlertCircle, CheckCircle, Link as LinkIcon,
 } from "lucide-react";
 import { formatDateToLocal, getInitials, formatPhoneNumber, generateAvatarColor } from "@/lib/utils";
 import ContactModal from "@/components/modals/ContactModal";
 import TaskList from "@/components/tasks/TaskList";
 import { Link } from "wouter";
+import { LinkCompanyButton } from "@/components/forms/LinkCompanyButton";
 
 export default function ContactDetail() {
   const params = useParams();
@@ -486,9 +487,18 @@ export default function ContactDetail() {
                   <p className="text-muted-foreground mb-4">
                     This contact is not associated with any companies yet.
                   </p>
-                  <Button onClick={() => setShowModal(true)}>
-                    Add Company Association
-                  </Button>
+                  <div className="flex flex-col space-y-2 items-center justify-center">
+                    <Button onClick={() => setShowModal(true)}>
+                      Add Company Association
+                    </Button>
+                    <LinkCompanyButton 
+                      contactId={contactId} 
+                      onSuccess={() => {
+                        // Refresh the contact data
+                        window.location.reload();
+                      }}
+                    />
+                  </div>
                 </div>
               )}
             </CardContent>
