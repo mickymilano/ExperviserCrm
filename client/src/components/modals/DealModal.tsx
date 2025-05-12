@@ -57,7 +57,18 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
   const [companySearchQuery, setCompanySearchQuery] = useState("");
   const [filteredCompanies, setFilteredCompanies] = useState<any[]>([]);
   const [filteredContacts, setFilteredContacts] = useState<any[]>([]);
-  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
+  
+  // Importante: useRef invece di useState per evitare render eccessivi
+  // questo elimina un potenziale ciclo di aggiornamento
+  const selectedCompanyIdRef = useRef<number | null>(null);
+  
+  // Funzione sicura per impostare companyId che non causerà re-render
+  const setSelectedCompanyId = (id: number | null) => {
+    selectedCompanyIdRef.current = id;
+  };
+  
+  // Per leggere in modo sicuro il valore attuale
+  const getSelectedCompanyId = () => selectedCompanyIdRef.current;
 
   // Form reference for alert dialog submission
   const formRef = useRef<HTMLFormElement>(null);
@@ -136,10 +147,8 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
         if (initialData.companyId !== undefined) {
           const companyId = initialData.companyId !== null ? Number(initialData.companyId) : null;
           setValue("companyId", companyId);
-          // Imposta selectedCompanyId solo se effettivamente diverso per evitare cicli di aggiornamento
-          if (selectedCompanyId !== companyId) {
-            setSelectedCompanyId(companyId);
-          }
+          // Imposta il companyId usando la nostra funzione sicura
+          setSelectedCompanyId(companyId);
         }
         
         // Gestione contactId
@@ -198,11 +207,13 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
   useEffect(() => {
     if (!contacts || !Array.isArray(contacts)) return;
     
-    if (!selectedCompanyId) {
+    // Usa getSelectedCompanyId() per ottenere il valore corrente senza dipendenze
+    const currentCompanyId = getSelectedCompanyId();
+    
+    if (!currentCompanyId) {
       // If no company is selected, show all contacts
-      // Controllo se è diverso per evitare cicli di aggiornamento
-      const currentFiltered = filteredContacts || [];
-      if (currentFiltered.length !== contacts.length) {
+      // Evita l'aggiornamento dello stato se non è necessario
+      if (filteredContacts.length !== contacts.length) {
         setFilteredContacts(contacts);
       }
       return;
@@ -213,20 +224,19 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       if (!contact.areasOfActivity || !Array.isArray(contact.areasOfActivity)) {
         return false;
       }
-      return contact.areasOfActivity.some((area: { companyId: number }) => area.companyId === selectedCompanyId);
+      return contact.areasOfActivity.some((area: { companyId: number }) => area.companyId === currentCompanyId);
     });
     
-    // Controllo se il risultato è diverso prima di aggiornare lo stato
-    // per evitare cicli di aggiornamento
-    const currentFiltered = filteredContacts || [];
-    if (JSON.stringify(currentFiltered) !== JSON.stringify(filteredContactsList)) {
+    // Aggiorna solo se necessario per evitare cicli di aggiornamento
+    if (JSON.stringify(filteredContacts) !== JSON.stringify(filteredContactsList)) {
       setFilteredContacts(filteredContactsList);
     }
     
     // Note: We don't need to filter synergy contacts here anymore
     // as we're using the async server-side search via the API
+  // Rimuove il selectedCompanyId dalle dipendenze poiché usiamo getSelectedCompanyId()
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contacts, selectedCompanyId]);
+  }, [contacts]);
 
   // We're now using the async search API directly instead of filtering locally
 
@@ -665,7 +675,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="0">None</SelectItem>
-                    {filteredContacts.length > 0 && selectedCompanyId ? (
+                    {filteredContacts.length > 0 && getSelectedCompanyId() ? (
                       filteredContacts.map((contact: any) => (
                         <SelectItem key={contact.id} value={contact.id.toString()}>
                           {contact.firstName} {contact.lastName}
@@ -693,12 +703,12 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                   render={({ field }) => (
                     <AsyncSelect
                       isMulti
-                      isDisabled={!selectedCompanyId}
-                      placeholder={selectedCompanyId ? "Type to search contacts..." : "Select a company first"}
+                      isDisabled={!getSelectedCompanyId()}
+                      placeholder={getSelectedCompanyId() ? "Type to search contacts..." : "Select a company first"}
                       loadOptions={(inputValue) => {
                         // Assicuriamoci che ci sia un'azienda selezionata
                         return new Promise((resolve) => {
-                          if (!selectedCompanyId) {
+                          if (!getSelectedCompanyId()) {
                             return resolve([]);
                           }
                           
@@ -729,7 +739,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                           // Altrimenti, cerchiamo contatti che corrispondono all'input
                           console.log('Searching contacts with term:', inputValue);
                           
-                          fetch(`/api/contacts?search=${encodeURIComponent(inputValue)}&excludeCompanyId=${selectedCompanyId}&includeAreas=true`)
+                          fetch(`/api/contacts?search=${encodeURIComponent(inputValue)}&excludeCompanyId=${getSelectedCompanyId()}&includeAreas=true`)
                             .then(response => {
                               if (!response.ok) throw new Error('Failed to search contacts');
                               return response.json();
@@ -840,7 +850,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                   )}
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  {getValues("synergyContactIds")?.length > 0 && !selectedCompanyId ? 
+                  {getValues("synergyContactIds")?.length > 0 && !getSelectedCompanyId() ? 
                     <span className="text-red-500">Company selection is required when adding synergy contacts</span> : 
                     "Type to search and select synergy contacts..."}
                 </p>
