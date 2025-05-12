@@ -279,9 +279,20 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
 
   // Helper function to create synergies for contacts
   const createSynergiesForContacts = async (dealId: number, companyId: number, contactIds: number[]) => {
+    if (!dealId || !companyId || !contactIds || contactIds.length === 0) {
+      console.error("Impossibile creare sinergie: parametri mancanti", { dealId, companyId, contactIds });
+      return [];
+    }
+    
+    console.log("Creando sinergie per", contactIds.length, "contatti");
     const results = [];
 
     for (const contactId of contactIds) {
+      if (!contactId) {
+        console.error("ID contatto invalido, salto la creazione della sinergia", { contactId });
+        continue;
+      }
+      
       try {
         const result = await createSynergyMutation.mutateAsync({
           type: "business",
@@ -289,12 +300,14 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
           companyId: companyId,
           dealId: dealId,
           status: "active",
-          description: "Synergy created from deal",
-          startDate: new Date()
+          description: "Sinergia creata dal deal",
+          startDate: new Date(),
+          endDate: null
         });
+        console.log("Sinergia creata con successo per il contatto", contactId, result);
         results.push(result);
       } catch (error) {
-        console.error(`Error creating synergy for contact ${contactId}:`, error);
+        console.error(`Errore nella creazione della sinergia per il contatto ${contactId}:`, error);
       }
     }
 
