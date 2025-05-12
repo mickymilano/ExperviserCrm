@@ -52,9 +52,9 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     enabled: open,
   });
 
-  // Fetch contacts for dropdown
+  // Fetch contacts with areas of activity for dropdown
   const { data: contacts = [] } = useQuery({
-    queryKey: ["/api/contacts"],
+    queryKey: ["/api/contacts?includeAreas=true"],
     enabled: open,
   });
 
@@ -148,8 +148,11 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       console.log("Deal data being sent:", dealData);
       
       // Determine if we're updating or creating
-      const method = isEditMode ? "PATCH" : "POST";
-      const url = isEditMode ? `/api/deals/${initialData?.id}` : "/api/deals";
+      const method = isEditMode && initialData && 'id' in initialData ? "PATCH" : "POST";
+      // Solo se stiamo modificando un deal esistente E abbiamo un ID valido, usiamo PATCH
+      const url = method === "PATCH" && initialData && 'id' in initialData 
+        ? `/api/deals/${initialData.id}` 
+        : "/api/deals";
       
       // Make the API request
       const response = await fetch(url, {
@@ -268,7 +271,26 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
               <Label htmlFor="contactId">Contact</Label>
               <Select 
                 defaultValue={initialData?.contactId?.toString() || "0"} 
-                onValueChange={(value) => setValue("contactId", value === "0" ? null : parseInt(value))}
+                onValueChange={(value) => {
+                  const contactId = value === "0" ? null : parseInt(value);
+                  setValue("contactId", contactId);
+                  
+                  // Se è selezionato un contatto, cerca la sua azienda primaria
+                  if (contactId && contacts && Array.isArray(contacts)) {
+                    const selectedContact = contacts.find(c => c.id === contactId);
+                    if (selectedContact?.areasOfActivity?.length > 0) {
+                      // Trova l'area di attività primaria (o prende la prima disponibile)
+                      const primaryArea = selectedContact.areasOfActivity.find(a => a.isPrimary) || 
+                                         selectedContact.areasOfActivity[0];
+                                         
+                      // Se l'area ha un'azienda associata, suggeriscila come scelta predefinita
+                      if (primaryArea?.companyId) {
+                        console.log(`Setting company to primary company: ${primaryArea.companyId}`);
+                        setValue("companyId", primaryArea.companyId);
+                      }
+                    }
+                  }
+                }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a contact" />
