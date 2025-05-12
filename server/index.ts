@@ -1,140 +1,50 @@
-import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
-import { initializeSuperAdmin } from "./seedData";
-import { storage } from "./storage";
-import bcrypt from "bcrypt";
-import { fixContactsRelationships } from "./fix-contacts-relationships";
-import { fixUnknownSynergies } from "./fix-unknown-synergies";
+import express, { Request, Response, NextFunction } from "express";
 import { initializePostgresDb } from "./initPostgresDb";
+import { registerRoutes } from "./routes";
+import { Server } from "http";
+import { setupVite } from "./vite";
 
-const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+// Avvio dell'applicazione
+async function main() {
+  const app = express();
+  
+  // Inizializzazione del database PostgreSQL
+  console.log("Initializing PostgreSQL database...");
+  await initializePostgresDb();
+  console.log("PostgreSQL database initialization completed");
 
-app.use((req, res, next) => {
-  const start = Date.now();
-  const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
-
-  const originalResJson = res.json;
-  res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
-  };
-
-  res.on("finish", () => {
-    const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
-
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
-      }
-
-      log(logLine);
-    }
-  });
-
-  next();
-});
-
-(async () => {
-  // Inizializza il database PostgreSQL con i dati di base
-  try {
-    await initializePostgresDb();
-  } catch (error) {
-    console.error("Errore durante l'inizializzazione del database PostgreSQL:", error);
+  // Middleware di base
+  app.use(express.json());
+  
+  // Registrazione delle routes
+  const httpServer: Server = await registerRoutes(app);
+  
+  // Configurazione di Vite in modalità sviluppo
+  if (process.env.NODE_ENV === "development") {
+    await setupVite(app, httpServer);
   }
   
-  // Per retrocompatibilità, manteniamo anche il codice del seed precedente
-  const superAdmin = await initializeSuperAdmin();
-  
-  if (superAdmin) {
-    // Force update the password to ensure it works
-    try {
-      const hashedPassword = await bcrypt.hash("admin_admin_69", 10);
-      const updated = await storage.updateUser(superAdmin.id, {
-        password: hashedPassword
-      });
-      
-      if (updated) {
-        console.log("Admin password verified and reset");
-      }
-    } catch (error) {
-      console.error("Failed to update admin password:", error);
-    }
-  }
-  
-  // Create or ensure test user
-  try {
-    const existingTestUser = await storage.getUserByUsername("test");
-    if (!existingTestUser) {
-      const hashedPassword = await bcrypt.hash("test123", 10);
-      const testUser = await storage.createUser({
-        username: "test",
-        password: hashedPassword,
-        fullName: "Test User",
-        email: "test@example.com",
-        role: "user",
-        status: "active"
-      });
-      console.log("Test user created:", testUser.username);
-    } else {
-      // Update test user password
-      const hashedPassword = await bcrypt.hash("test123", 10);
-      await storage.updateUser(existingTestUser.id, {
-        password: hashedPassword
-      });
-      console.log("Test user updated");
-    }
-  } catch (error) {
-    console.error("Failed to create/update test user:", error);
-  }
-  
-  // Automatically run the relationship fix script at startup
-  console.log("Automatically running the relationship correction script at startup...");
-  try {
-    await fixContactsRelationships();
-    console.log("Relationship correction script completed at startup.");
-  } catch (error) {
-    console.error("Error executing the relationship correction script:", error);
-  }
-  
-  // Synergy cleanup script disabilitato (funzionalità synergies rimosse)
-  console.log("Il sistema delle sinergie è stato rimosso, script di pulizia non necessario.");
-  
-  const server = await registerRoutes(app);
-
+  // Middleware per la gestione degli errori
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
+    console.error("Server error:", err);
+    
+    const statusCode = err.statusCode || 500;
     const message = err.message || "Internal Server Error";
-
-    res.status(status).json({ message });
-    throw err;
+    
+    res.status(statusCode).json({
+      error: message,
+      ...(process.env.NODE_ENV === "development" ? { stack: err.stack } : {})
+    });
   });
-
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
-  }
-
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = 5000;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
+  
+  // Avvio del server
+  const PORT = process.env.PORT || 5000;
+  httpServer.listen(PORT, () => {
+    console.log(`[express] serving on port ${PORT}`);
   });
-})();
+}
+
+main().catch(error => {
+  console.error("Failed to start server:", error);
+  process.exit(1);
+});

@@ -1,33 +1,21 @@
-import { db } from "./db-simple";
-import { users, pipelineStages } from "@shared/schema";
-import * as bcrypt from "bcrypt";
+import { db } from "./db";
 import { eq } from "drizzle-orm";
-import { fixDuplicatePipelineStages } from "./fix-duplicate-pipeline-stages";
+import { users, pipelineStages } from "@shared/schema";
+import bcrypt from "bcrypt";
 
 /**
  * Initialize the PostgreSQL database with essential data
  * Executed at server startup
  */
 export async function initializePostgresDb() {
-  console.log("Initializing PostgreSQL database...");
-  
-  // Check for the existence of the super admin user
-  let superAdminExists = false;
   try {
-    const adminUsers = await db
-      .select()
-      .from(users)
-      .where(eq(users.role, "super_admin"));
+    // Check if superadmin exists
+    const superAdmin = await db.select().from(users).where(eq(users.role, "super_admin")).limit(1);
     
-    superAdminExists = adminUsers.length > 0;
-    
-    if (superAdminExists) {
-      console.log("Super admin already exists");
-    } else {
+    if (superAdmin.length === 0) {
       console.log("Creating super admin user...");
-      
-      // Create the super admin user
-      const hashedPassword = await bcrypt.hash("adminpassword", 10);
+      // Create default super admin
+      const hashedPassword = await bcrypt.hash("admin_admin_69", 10);
       await db.insert(users).values({
         username: "michele",
         password: hashedPassword,
@@ -36,45 +24,33 @@ export async function initializePostgresDb() {
         role: "super_admin",
         status: "active"
       });
-      
-      console.log("Super admin user created successfully");
+      console.log("Super admin created successfully");
+    } else {
+      console.log("Super admin already exists");
     }
-  } catch (error) {
-    console.error("Error during super admin verification/creation:", error);
-  }
-  
-  // Check and create pipeline stages
-  try {
-    const existingStages = await db.select().from(pipelineStages);
     
-    if (existingStages.length === 0) {
+    // Check if pipeline stages exist
+    const stages = await db.select().from(pipelineStages);
+    
+    if (stages.length === 0) {
       console.log("Creating pipeline stages...");
-      
-      // Create the pipeline stages
+      // Create default pipeline stages
       await db.insert(pipelineStages).values([
-        { name: "Lead Qualification", order: 1 },
-        { name: "First Contact", order: 2 },
-        { name: "Needs Analysis", order: 3 },
-        { name: "Proposal", order: 4 },
-        { name: "Negotiation", order: 5 },
-        { name: "Contract", order: 6 },
-        { name: "Closed (Won)", order: 7 },
-        { name: "Closed (Lost)", order: 8 }
+        { name: "Lead", order: 1 },
+        { name: "Contatto", order: 2 },
+        { name: "Qualificazione", order: 3 },
+        { name: "Analisi", order: 4 },
+        { name: "Proposta", order: 5 },
+        { name: "Negoziazione", order: 6 },
+        { name: "Vinta", order: 7 },
+        { name: "Persa", order: 8 }
       ]);
-      
       console.log("Pipeline stages created successfully");
     } else {
-      console.log(`${existingStages.length} pipeline stages already exist`);
-      
-      // Verifica e rimuovi eventuali stage duplicati
-      if (existingStages.length > 8) {
-        console.log("Rilevati possibili stage duplicati, avvio la procedura di pulizia...");
-        await fixDuplicatePipelineStages();
-      }
+      console.log(`${stages.length} pipeline stages already exist`);
     }
   } catch (error) {
-    console.error("Error during pipeline stages verification/creation:", error);
+    console.error("Error initializing PostgreSQL database:", error);
+    throw error;
   }
-  
-  console.log("PostgreSQL database initialization completed");
 }
