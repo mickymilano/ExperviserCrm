@@ -50,15 +50,7 @@ async function fixUnknownSynergies() {
   }
 }
 
-// Esegui lo script
-fixUnknownSynergies()
-  .then(() => {
-    console.log("Script completato con successo");
-    process.exit(0);
-  })
-  .catch(error => {
-    console.error("Errore durante l'esecuzione dello script:", error);
-    process.exit(1);
-  });
+// Esportiamo la funzione principale senza eseguirla automaticamente
+// In questo modo può essere importata in server/index.ts senza causare chiusura del processo
 
 export { fixUnknownSynergies };

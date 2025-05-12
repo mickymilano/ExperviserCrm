@@ -43,10 +43,17 @@ export function useCreateSynergy() {
   
   return useMutation({
     mutationFn: async (synergyData: Omit<Synergy, "id" | "createdAt" | "updatedAt">) => {
-      return apiRequest("/api/synergies", {
-        method: "POST",
-        data: synergyData,
-      });
+      // Assicuriamoci che startDate sia un oggetto Date valido
+      const processedData = {
+        ...synergyData,
+        startDate: synergyData.startDate || new Date(),
+        description: synergyData.description || null,
+        dealId: synergyData.dealId || null,
+        status: synergyData.status || null,
+        type: synergyData.type || null
+      };
+      
+      return apiRequest("/api/synergies", "POST", processedData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/synergies"] });
@@ -60,9 +67,19 @@ export function useUpdateSynergy() {
   
   return useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<Synergy> }) => {
+      // Assicuriamoci che i dati siano formattati correttamente
+      const processedData = {
+        ...data,
+        startDate: data.startDate || new Date(),
+        description: data.description ?? null,
+        dealId: data.dealId ?? null,
+        status: data.status ?? null,
+        type: data.type ?? null
+      };
+      
       return apiRequest(`/api/synergies/${id}`, {
         method: "PATCH", 
-        data,
+        data: processedData,
       });
     },
     onSuccess: (_, variables) => {

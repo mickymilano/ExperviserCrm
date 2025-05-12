@@ -51,7 +51,7 @@ const formSchema = z.object({
   description: z.string().optional(),
   dealId: z.number().optional().nullable(),
   status: z.string().optional().nullable(),
-  startDate: z.date().optional(),
+  startDate: z.date(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -100,16 +100,29 @@ export function SynergyModal({
     },
   });
 
-  // Reset form when initialData changes
+  // Reset form when initialData changes or modal opens/closes
   useEffect(() => {
-    if (initialData) {
-      const formData = {
-        ...initialData,
-        startDate: initialData.startDate ? new Date(initialData.startDate) : undefined,
-      };
-      form.reset(formData);
+    if (open) {
+      if (initialData) {
+        const formData = {
+          ...initialData,
+          startDate: initialData.startDate ? new Date(initialData.startDate) : new Date(),
+        };
+        form.reset(formData);
+      } else {
+        // Reset to default values when opening in create mode
+        form.reset({
+          contactId: contactId || 0,
+          companyId: companyId || 0,
+          type: "",
+          description: "",
+          dealId: null,
+          status: "Active",
+          startDate: new Date(),
+        });
+      }
     }
-  }, [initialData, form]);
+  }, [initialData, form, open, contactId, companyId]);
 
   // Update form when contactId/companyId props change
   useEffect(() => {
@@ -128,7 +141,8 @@ export function SynergyModal({
         ...data,
         description: data.description || null,
         dealId: data.dealId || null,
-        status: data.status || null
+        status: data.status || null,
+        startDate: data.startDate || new Date() // Assicuriamo che startDate non sia mai undefined
       };
       
       if (mode === "create") {

@@ -5,6 +5,7 @@ import { initializeSuperAdmin } from "./seedData";
 import { storage } from "./storage";
 import bcrypt from "bcrypt";
 import { fixContactsRelationships } from "./fix-contacts-relationships";
+import { fixUnknownSynergies } from "./fix-unknown-synergies";
 import { initializePostgresDb } from "./initPostgresDb";
 
 const app = express();
@@ -101,6 +102,15 @@ app.use((req, res, next) => {
     console.log("Relationship correction script completed at startup.");
   } catch (error) {
     console.error("Error executing the relationship correction script:", error);
+  }
+  
+  // Automatically run the synergy fix script at startup
+  console.log("Automatically running the synergy cleanup script at startup...");
+  try {
+    await fixUnknownSynergies();
+    console.log("Synergy cleanup script completed at startup.");
+  } catch (error) {
+    console.error("Error executing the synergy cleanup script:", error);
   }
   
   const server = await registerRoutes(app);
