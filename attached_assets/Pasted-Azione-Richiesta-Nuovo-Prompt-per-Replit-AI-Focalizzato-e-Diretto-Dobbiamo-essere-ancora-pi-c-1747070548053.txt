@@ -1,0 +1,53 @@
+Azione Richiesta (Nuovo Prompt per Replit AI - Focalizzato e Diretto):
+
+Dobbiamo essere ancora più chirurgici. Visto che il backend sembra ok, l'AI deve concentrarsi esclusivamente sul frontend e su come SynergiesList.tsx si comporta quando l'API restituisce [].
+
+Ecco un prompt specifico per l'AI di Replit:
+
+Prompt per Replit AI: Investigazione Finale Visualizzazione "Sinergie Fantasma" nel Frontend
+
+Obiettivo:
+Identificare e correggere definitivamente la causa della visualizzazione di "Sinergie Fantasma" nel componente SynergiesList.tsx quando utilizzato nella pagina di dettaglio di un'Azienda, dato che è stato confermato che il backend (API GET /api/companies/:companyId/synergies) restituisce correttamente un array vuoto ([]) quando non ci sono sinergie nel database per quella compagnia.
+
+Contesto:
+
+Il database (tabella synergies) è vuoto.
+L'API GET /api/companies/:companyId/synergies restituisce [].
+Nonostante ciò, SynergiesList.tsx (usato nella scheda "Synergies" del dettaglio Azienda) mostra ancora card placeholder "Business Relationship".
+Precedenti tentativi di invalidazione cache (CacheReset.tsx, modifiche a useCompanySynergies) non hanno risolto il problema.
+Task Specifici di Investigazione e Correzione nel Frontend:
+
+Isolamento del Componente SynergiesList.tsx:
+
+Azione: Concentrati esclusivamente sul file client/src/components/SynergiesList.tsx.
+Verifica Stato Iniziale e Dati Mock: Controlla se esiste uno stato iniziale (useState, useReducer), props di default, o dati mock/hardcoded all'interno di SynergiesList.tsx che potrebbero causare il rendering delle card placeholder prima che i dati reali (o l'array vuoto) vengano ricevuti e processati.
+Logica di Rendering Condizionale: Esamina attentamente la logica JSX che renderizza la lista delle sinergie o il messaggio "Nessuna sinergia". Come gestisce specificamente il caso in cui la prop synergies (o i dati dall'hook useCompanySynergies) sia un array vuoto (length === 0)? Deve esplicitamente renderizzare il messaggio "Nessuna sinergia trovata" (o simile) e non le card placeholder.
+Gestione isLoading e isError: Come vengono gestiti questi stati? È possibile che uno stato isLoading prolungato o mal gestito, o uno stato isError, porti a un fallback che renderizza i placeholder? Assicurati che isLoading=false e isError=false e data=[] portino a un messaggio di "nessun dato".
+Analisi Dettagliata dell'Hook useCompanySynergies (in useSynergies.tsx):
+
+Azione: Anche se l'API restituisce [], verifica come l'hook useCompanySynergies processa questa risposta.
+Trasformazione Dati: L'hook modifica o trasforma l'array vuoto restituito dall'API prima di passarlo al componente? Assicurati che restituisca effettivamente [] e non, per esempio, [null] o un array con oggetti placeholder in caso di risposta vuota.
+Stato Iniziale dell'Hook: Qual è il data iniziale restituito dall'hook prima che la prima chiamata API sia completata o se la chiamata fallisce?
+Verifica Props Ricevute da SynergiesList.tsx:
+
+Azione: Quando SynergiesList.tsx è renderizzato nella pagina di dettaglio dell'Azienda, logga (o chiedi all'AI di loggare per suo debug) le props che riceve, specialmente quella che contiene l'array delle sinergie. Cosa contiene esattamente questa prop prima e dopo che l'hook useCompanySynergies ha terminato il fetching (che dovrebbe restituire [])?
+Test di Rendering Semplificato:
+
+Azione: Temporaneamente, all'interno di SynergiesList.tsx, commenta la logica di fetching dati e passa un array esplicitamente vuoto (const testSynergies = [];) alla logica di mappatura che crea le card. Le card placeholder appaiono ancora?
+Se sì, il problema è profondamente nella logica di rendering di SynergiesList.tsx che non gestisce correttamente un array vuoto.
+Se no (e mostra "Nessuna sinergia"), allora il problema risiede nei dati che pensa di ricevere dall'hook, o nella gestione della cache che ancora fornisce dati vecchi nonostante gli sforzi.
+Invalidazione Cache Mirata e Aggressiva (React Query):
+
+Azione: Rivedi l'implementazione di CacheReset.tsx o qualsiasi altra logica di invalidazione. Assicurati che le queryKey usate per useCompanySynergies (es. ["/api/companies", companyId, "synergies"]) siano esattamente quelle invalidate. Considera di usare queryClient.removeQueries() per queste chiavi specifiche durante il reset per una pulizia più profonda, oltre a invalidateQueries().
+Correzione:
+Applica la correzione al file o ai file identificati come problematici (SynergiesList.tsx, useSynergies.tsx, o la strategia di gestione cache) per assicurare che quando il database è vuoto e l'API restituisce [], l'interfaccia utente mostri un messaggio appropriato di "Nessuna sinergia" e non le card placeholder.
+
+Report Finale Richiesto:
+Descrivi la causa esatta del problema identificato nel frontend e la modifica specifica applicata per risolverlo. Conferma che, testando con un'azienda che non ha sinergie nel database, la UI ora riflette correttamente questo stato vuoto.
+
+Cosa fare tu ora:
+
+Invia questo prompt all'AI di Replit.
+Richiedi Screenshot: Chiedi esplicitamente all'AI di fornirti uno screenshot della pagina di dettaglio dell'azienda (tab "Synergies") dopo che ha applicato le correzioni e ha verificato che la tabella synergies sia vuota, mostrando idealmente il messaggio "Nessuna sinergia trovata".
+Richiedi Codice Modificato: Chiedi all'AI di mostrarti le sezioni di codice specifiche che ha modificato in SynergiesList.tsx o useSynergies.tsx.
+Questo approccio dovrebbe costringere l'AI a esaminare il flusso di dati e la logica di rendering nel frontend in modo molto più granulare. Il fatto che il backend restituisca [] è un'informazione chiave che restringe il campo di indagine.

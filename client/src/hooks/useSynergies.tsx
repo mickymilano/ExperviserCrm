@@ -59,6 +59,18 @@ export function useContactSynergies(contactId: number) {
     queryKey: ["/api/contacts", contactId, "synergies"],
     enabled: !!contactId,
     refetchOnWindowFocus: false,
+    staleTime: 0, // Forza un refetch ogni volta che il componente viene montato
+    gcTime: 1, // Garbage collection immediata
+    retry: false, // Non ritenta in caso di errore
+    select: (data) => {
+      // Assicuriamoci che i dati siano sempre un array o un array vuoto
+      console.log(`[useContactSynergies] Data ricevuta da API per contactId ${contactId}:`, data);
+      if (!data || !Array.isArray(data)) {
+        console.warn(`[useContactSynergies] Dati ricevuti non array per contactId ${contactId}:`, data);
+        return [];
+      }
+      return data;
+    }
   });
 }
 
@@ -69,7 +81,17 @@ export function useCompanySynergies(companyId: number) {
     enabled: !!companyId,
     refetchOnWindowFocus: false,
     staleTime: 0, // Forza un refetch ogni volta che il componente viene montato
-    cacheTime: 1000, // Mantiene i dati nella cache solo per 1 secondo
+    gcTime: 1, // Usa gcTime invece di cacheTime (che è deprecato in v5)
+    retry: false, // Non ritenta in caso di errore
+    select: (data) => {
+      // Assicuriamoci che i dati siano sempre un array o un array vuoto
+      console.log(`[useCompanySynergies] Data ricevuta da API per companyId ${companyId}:`, data);
+      if (!data || !Array.isArray(data)) {
+        console.warn(`[useCompanySynergies] Dati ricevuti non array per companyId ${companyId}:`, data);
+        return [];
+      }
+      return data;
+    }
   });
 }
 

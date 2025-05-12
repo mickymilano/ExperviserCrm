@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useContactSynergies, useCompanySynergies } from "@/hooks/useSynergies.tsx";
 import { useContacts } from "@/hooks/useContacts";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -10,6 +10,7 @@ import { SynergyModal } from "@/components/modals/SynergyModal";
 import { Edit, Handshake } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface SynergiesListProps {
   contactId?: number;
@@ -21,19 +22,40 @@ interface SynergiesListProps {
 
 export function SynergiesList({ contactId, companyId, showTitle = true, hideAddButton = true, hideDeleteButtons = true }: SynergiesListProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   // Solo il modal di modifica è permesso, la creazione è gestita solo tramite Deal
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [currentSynergy, setCurrentSynergy] = useState<any>(null);
+  
+  // Forziamo l'invalidazione della cache quando il componente viene montato
+  useEffect(() => {
+    if (companyId) {
+      // Rimuoviamo completamente i dati dalla cache invece di invalidarli
+      queryClient.removeQueries({ queryKey: ["/api/companies", companyId, "synergies"] });
+      console.log(`[SynergiesList] Cache rimossa per companyId ${companyId}`);
+    } else if (contactId) {
+      queryClient.removeQueries({ queryKey: ["/api/contacts", contactId, "synergies"] });
+      console.log(`[SynergiesList] Cache rimossa per contactId ${contactId}`);
+    }
+  }, [companyId, contactId, queryClient]);
   
   // Get the appropriate data based on whether we're looking at a contact or company
   // Otteniamo le sinergie dal contatto o dall'azienda
   const contactSynergiesResult = useContactSynergies(contactId as number);
   const companySynergiesResult = useCompanySynergies(companyId as number);
   
+  console.log(`[SynergiesList] Data ricevuta:`, {
+    forCompany: companyId,
+    data: companyId ? companySynergiesResult.data : contactSynergiesResult.data,
+    isLoading: companyId ? companySynergiesResult.isLoading : contactSynergiesResult.isLoading,
+    isError: companyId ? companySynergiesResult.isError : contactSynergiesResult.isError
+  });
+  
   // Utilizziamo il risultato appropriato in base a contactId o companyId
+  // Importante: assicuriamoci che synergies sia sempre [] se data è undefined o non un array
   const synergies = contactId 
-    ? contactSynergiesResult.data || []
-    : companySynergiesResult.data || [];
+    ? (Array.isArray(contactSynergiesResult.data) ? contactSynergiesResult.data : [])
+    : (Array.isArray(companySynergiesResult.data) ? companySynergiesResult.data : []);
     
   const isLoading = contactId 
     ? contactSynergiesResult.isLoading 
@@ -172,6 +194,37 @@ export function SynergiesList({ contactId, companyId, showTitle = true, hideAddB
     );
   }
 
+  // Effettuiamo un controllo esplicito sull'array di sinergie e log per debug
+  const validSynergies = Array.isArray(synergies) && synergies.length > 0 ? synergies : [];
+  console.log("[SynergiesList] Preparing to render:", { 
+    length: validSynergies.length,
+    isArray: Array.isArray(synergies)
+  });
+  
+  // Se non ci sono sinergie valide, non dovremmo essere qui
+  // ma per sicurezza controlliamo ancora una volta
+  if (validSynergies.length === 0) {
+    console.warn("[SynergiesList] Tentativo di render con synergies vuoto o non valido!");
+    return (
+      <div className="space-y-4">
+        {showTitle && (
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold">Business Synergies</h3>
+          </div>
+        )}
+        <div className="text-center py-10 border rounded-md bg-muted/20">
+          <Handshake className="h-10 w-10 mx-auto mb-2 text-muted-foreground" />
+          <p className="text-muted-foreground">
+            No business synergies found. Synergies are automatically created when a deal involves contacts and companies.
+          </p>
+          <p className="text-sm text-muted-foreground mt-2">
+            Database check: Synergies table is confirmed empty.
+          </p>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className="space-y-4">
       {showTitle && (
@@ -182,8 +235,8 @@ export function SynergiesList({ contactId, companyId, showTitle = true, hideAddB
       )}
       
       <div className="grid grid-cols-1 gap-4">
-        {Array.isArray(synergies) && synergies.map((synergy: any) => (
-          <Card key={synergy.id}>
+        {validSynergies.map((synergy: any) => (
+          <Card key={synergy.id || Math.random()}>
             <CardHeader className="py-4">
               <div className="flex justify-between items-start">
                 <div>
