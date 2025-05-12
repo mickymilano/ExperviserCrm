@@ -1,28 +1,20 @@
-import { useState } from "react";
 import { SynergiesList } from "@/components/SynergiesList";
-import { SynergyModal } from "@/components/modals/SynergyModal";
-import { Button } from "@/components/ui/button";
 import { PageTitle } from "@/components/PageTitle";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Handshake } from "lucide-react";
 
+// Nota: Questa pagina mostra solo sinergie esistenti.
+// La creazione di sinergie avviene solo attraverso il processo di Deal
 export default function Synergies() {
-  const [openModal, setOpenModal] = useState(false);
-
   return (
     <div className="space-y-6">
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <PageTitle 
           title="Synergies" 
-          subtitle="Manage special business relationships between contacts and companies"
+          subtitle="View business relationships between contacts and companies"
           icon={<Handshake className="h-6 w-6 text-primary" />}
         />
-        
-        <Button onClick={() => setOpenModal(true)}>
-          <Handshake className="mr-2 h-4 w-4" />
-          New Synergy
-        </Button>
       </div>
 
       {/* Main Content */}
@@ -38,17 +30,9 @@ export default function Synergies() {
         </CardHeader>
         
         <CardContent>
-          <SynergiesList showTitle={false} />
+          <SynergiesList showTitle={false} hideAddButton={true} hideDeleteButtons={true} />
         </CardContent>
       </Card>
-      
-      {/* Create Synergy Modal */}
-      <SynergyModal 
-        open={openModal} 
-        onOpenChange={setOpenModal} 
-        mode="create"
-        onSuccess={() => setOpenModal(false)}
-      />
     </div>
   );
 }
