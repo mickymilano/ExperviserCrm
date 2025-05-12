@@ -34,7 +34,7 @@ const dealSchema = z.object({
   expectedCloseDate: z.string().optional(),
   tags: z.array(z.string()).optional().nullable(),
   notes: z.string().optional().nullable(),
-  synergyContactId: z.coerce.number().optional().nullable(),
+  synergyContactIds: z.array(z.coerce.number()).optional().default([]),
 });
 
 type DealFormData = z.infer<typeof dealSchema>;
@@ -95,7 +95,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       expectedCloseDate: "",
       tags: [],
       notes: "",
-      synergyContactId: undefined,
+      synergyContactIds: [],
     }
   });
 
@@ -306,16 +306,19 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       
       const createdDeal = await response.json();
       
-      // Se è stata specificata una sinergia, creiamola
-      if (data.synergyContactId && data.companyId) {
+      // Se sono stati specificati contatti synergy, creiamoli (multi-selezione)
+      if (data.synergyContactIds.length > 0 && data.companyId) {
         try {
-          await createSynergy.mutateAsync({
-            contactId: data.synergyContactId,
-            companyId: data.companyId,
-            dealId: createdDeal.id
-          });
+          // Crea synergies per ogni contatto selezionato
+          for (const contactId of data.synergyContactIds) {
+            await createSynergy.mutateAsync({
+              contactId: contactId,
+              companyId: data.companyId,
+              dealId: createdDeal.id
+            });
+          }
         } catch (error) {
-          console.error("Failed to create synergy:", error);
+          console.error("Failed to create synergies:", error);
           // Ma continuiamo con il processo, il deal è stato comunque creato
         }
       }
@@ -332,7 +335,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       onOpenChange(false);
       reset();
       setTagsInput("");
-      setSynergyContactId(null);
+      setSelectedSynergyContacts([]);
       setShowNoCompanyAlert(false);
       setShowNoContactAlert(false);
       
@@ -571,53 +574,106 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
               </div>
             </div>
             
-            {/* Campo Sinergie */}
+            {/* Campo Sinergie - Selezione multipla con autocompletamento */}
             <div className="space-y-2 mb-4">
-              <Label htmlFor="synergyContactId">Synergy Contact</Label>
+              <Label htmlFor="synergyContactIds">Synergy Contacts <span className="text-red-500">*</span></Label>
               <div className="relative">
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
                       role="combobox"
-                      className="w-full justify-between"
+                      className="w-full justify-between min-h-[40px]"
                     >
-                      {synergyContactId ? 
-                        synergyOptions.find(option => option.value === synergyContactId)?.label || "Select a contact" : 
-                        "Search for a contact to create a synergy"}
+                      {selectedSynergyContacts.length > 0 ? 
+                        `${selectedSynergyContacts.length} contact${selectedSynergyContacts.length > 1 ? 's' : ''} selected` : 
+                        "Search for contacts to create synergies"}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-full p-0">
                     <Command>
-                      <CommandInput placeholder="Search for a contact..." />
+                      <CommandInput 
+                        placeholder="Search for contacts..." 
+                        value={synergySearchTerm}
+                        onValueChange={setSynergySearchTerm}
+                      />
                       <CommandEmpty>No contacts found</CommandEmpty>
                       <CommandGroup>
-                        {synergyOptions.map((option) => (
-                          <CommandItem
-                            key={option.value}
-                            value={option.value}
-                            onSelect={() => {
-                              const value = option.value === synergyContactId ? "" : option.value;
-                              setSynergyContactId(value);
-                              setValue("synergyContactId", value ? parseInt(value) : null);
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                synergyContactId === option.value ? "opacity-100" : "opacity-0"
-                              )}
-                            />
-                            {option.label}
-                          </CommandItem>
-                        ))}
+                        {synergyOptions
+                          .filter(option => 
+                            option.label.toLowerCase().includes(synergySearchTerm.toLowerCase()))
+                          .map((option) => (
+                            <CommandItem
+                              key={option.value}
+                              value={option.value}
+                              onSelect={() => {
+                                const contactId = option.value;
+                                setSelectedSynergyContacts(prev => {
+                                  // Se già selezionato, rimuovi dalla lista
+                                  if (prev.includes(contactId)) {
+                                    const newSelected = prev.filter(id => id !== contactId);
+                                    // Aggiorna il form value
+                                    setValue("synergyContactIds", newSelected.map(id => parseInt(id)));
+                                    return newSelected;
+                                  } 
+                                  // Altrimenti, aggiungi alla lista
+                                  const newSelected = [...prev, contactId];
+                                  // Aggiorna il form value
+                                  setValue("synergyContactIds", newSelected.map(id => parseInt(id)));
+                                  return newSelected;
+                                });
+                              }}
+                            >
+                              <div className="flex items-center">
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    selectedSynergyContacts.includes(option.value) ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {option.label}
+                              </div>
+                            </CommandItem>
+                          ))}
                       </CommandGroup>
                     </Command>
                   </PopoverContent>
                 </Popover>
+                
+                {/* Display selected contacts */}
+                {selectedSynergyContacts.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {selectedSynergyContacts.map(contactId => {
+                      const label = synergyOptions.find(option => option.value === contactId)?.label;
+                      return (
+                        <div 
+                          key={contactId}
+                          className="bg-primary/10 text-primary rounded-full px-2 py-1 text-xs flex items-center"
+                        >
+                          {label}
+                          <button
+                            type="button"
+                            className="ml-1 text-primary/70 hover:text-primary"
+                            onClick={() => {
+                              setSelectedSynergyContacts(prev => {
+                                const newSelected = prev.filter(id => id !== contactId);
+                                setValue("synergyContactIds", newSelected.map(id => parseInt(id)));
+                                return newSelected;
+                              });
+                            }}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                
                 <p className="text-xs text-muted-foreground mt-1">
-                  Optional: Select a contact to create a synergy relationship with this deal
+                  {selectedCompanyId ? 
+                    <span className="text-red-500 font-semibold">Required:</span> : "Optional:"} Select contacts to create synergy relationships with this deal
                 </p>
               </div>
             </div>
