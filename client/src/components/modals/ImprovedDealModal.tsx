@@ -122,13 +122,7 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
     }
   });
 
-  // Wrapper function to set company ID safely - definita come useCallback
-  const setSelectedCompanyId = useCallback((id: number | null) => {
-    if (selectedCompanyIdRef.current !== id) {
-      selectedCompanyIdRef.current = id;
-      // Non aggiorniamo il form value qui per evitare un ciclo infinito
-    }
-  }, []);
+  // Rimuoviamo la funzione setSelectedCompanyId e accediamo direttamente al ref
 
   // Wrapper function to get company ID safely
   const getSelectedCompanyId = () => selectedCompanyIdRef.current;
@@ -166,7 +160,8 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
       if (initialData.companyId !== undefined) {
         const companyId = initialData.companyId !== null ? Number(initialData.companyId) : null;
         setValue("companyId", companyId);
-        setSelectedCompanyId(companyId);
+        // Aggiorniamo direttamente il ref senza usare setSelectedCompanyId
+        selectedCompanyIdRef.current = companyId;
       }
       
       // Handle contact ID
@@ -448,7 +443,8 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
       onOpenChange(false);
       reset();
       setTagsInput("");
-      setSelectedCompanyId(null);
+      // Impostiamo direttamente il ref a null
+      selectedCompanyIdRef.current = null;
       setShowNoCompanyAlert(false);
       setShowNoContactAlert(false);
       formInitializedRef.current = false;
