@@ -61,10 +61,29 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(
     initialData?.companyId || null
   );
+  // States for the synergy contacts autocomplete
   const [selectedSynergyContacts, setSelectedSynergyContacts] = useState<string[]>([]);
-  const [filteredSynergyContacts, setFilteredSynergyContacts] = useState<any[]>([]);
-  const [synergyOptions, setSynergyOptions] = useState<Array<{value: string, label: string}>>([]);
   const [synergySearchTerm, setSynergySearchTerm] = useState("");
+  const [synergySearchOpen, setSynergySearchOpen] = useState(false);
+  
+  // Query for async searching of contacts
+  const { data: searchedContacts = [], isLoading: isSearchingContacts } = useQuery({
+    queryKey: ["/api/contacts", { search: synergySearchTerm, excludeCompanyId: selectedCompanyId }],
+    queryFn: async () => {
+      if (synergySearchTerm.length < 2) return [];
+      
+      const response = await fetch(
+        `/api/contacts?search=${encodeURIComponent(synergySearchTerm)}&excludeCompanyId=${selectedCompanyId}&includeAreas=true`
+      );
+      
+      if (!response.ok) throw new Error('Failed to search contacts');
+      const contacts = await response.json();
+      console.log(`Found ${contacts.length} contacts matching search "${synergySearchTerm}"`);
+      return contacts;
+    },
+    enabled: synergySearchTerm.length >= 2 && !!selectedCompanyId && synergySearchOpen,
+    staleTime: 10000, // Cache results for 10 seconds
+  });
 
   // Form reference for alert dialog submission
   const formRef = useRef<HTMLFormElement>(null);
@@ -676,65 +695,101 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
               </div>
             </div>
 
-            {/* Campo Sinergie - Selezione multipla con autocompletamento */}
+            {/* Synergy Contacts - True type-ahead autocomplete */}
             <div className="space-y-2 mb-4">
               <Label htmlFor="synergyContactIds">Synergy Contacts</Label>
               <div className="relative">
                 <div className="flex flex-col gap-2">
-                  {/* Autocomplete for synergy contacts */}
-                  <Popover>
+                  {/* Async autocomplete for synergy contacts */}
+                  <Popover open={synergySearchOpen} onOpenChange={setSynergySearchOpen}>
                     <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        className="w-full justify-between"
-                        disabled={!selectedCompanyId}
-                      >
-                        {selectedCompanyId ? 
-                          "Search contacts to create synergies..." : 
-                          "Select a company first"}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
+                      <div className="relative flex w-full">
+                        <Input
+                          id="synergyContactIds"
+                          className="w-full"
+                          placeholder={selectedCompanyId ? "Type to search contacts..." : "Select a company first"}
+                          disabled={!selectedCompanyId}
+                          value={synergySearchTerm}
+                          onChange={(e) => setSynergySearchTerm(e.target.value)}
+                          onFocus={() => {
+                            if (selectedCompanyId) {
+                              setSynergySearchOpen(true);
+                            }
+                          }}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          type="button"
+                          className="absolute right-0 top-0 h-full"
+                          onClick={() => {
+                            if (selectedCompanyId) {
+                              setSynergySearchOpen(!synergySearchOpen);
+                            }
+                          }}
+                          disabled={!selectedCompanyId}
+                        >
+                          <ChevronsUpDown className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </PopoverTrigger>
-                    <PopoverContent className="w-full p-0">
+                    <PopoverContent className="w-[calc(100vw-4rem)] md:w-[400px] p-0">
                       <Command>
                         <CommandInput 
-                          placeholder="Search contact name..." 
+                          placeholder="Type at least 2 characters..." 
+                          value={synergySearchTerm} 
                           onValueChange={setSynergySearchTerm}
                         />
-                        <CommandEmpty>No contact found.</CommandEmpty>
+                        <CommandEmpty>
+                          {synergySearchTerm.length < 2 
+                            ? "Type at least 2 characters to search" 
+                            : isSearchingContacts 
+                              ? "Searching..."
+                              : "No contacts found"}
+                        </CommandEmpty>
                         <CommandGroup className="max-h-[200px] overflow-y-auto">
-                          {filteredSynergyContacts
-                            .filter(contact => {
-                              // Filter by search term
-                              if (!synergySearchTerm) return true;
-                              const fullName = `${contact.firstName} ${contact.lastName}`.toLowerCase();
-                              return fullName.includes(synergySearchTerm.toLowerCase());
-                            })
-                            // Don't show already selected contacts
-                            .filter(contact => !selectedSynergyContacts.includes(contact.id.toString()))
-                            .map((contact) => (
-                              <CommandItem
-                                key={contact.id}
-                                value={`${contact.firstName} ${contact.lastName}`}
-                                onSelect={() => {
-                                  const contactId = contact.id.toString();
-                                  if (!selectedSynergyContacts.includes(contactId)) {
-                                    const newSelected = [...selectedSynergyContacts, contactId];
-                                    setSelectedSynergyContacts(newSelected);
-                                    setValue("synergyContactIds", newSelected.map(id => parseInt(id)));
-                                  }
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    selectedSynergyContacts.includes(contact.id.toString()) ? "opacity-100" : "opacity-0"
-                                  )}
-                                />
-                                {contact.firstName} {contact.lastName}
-                              </CommandItem>
-                            ))}
+                          {isSearchingContacts && (
+                            <div className="flex items-center justify-center py-2">
+                              <span className="text-sm text-muted-foreground">Searching contacts...</span>
+                            </div>
+                          )}
+                          
+                          {!isSearchingContacts && searchedContacts && searchedContacts.length > 0 && (
+                            searchedContacts
+                              // Filter out already selected contacts
+                              .filter(contact => !selectedSynergyContacts.includes(contact.id.toString()))
+                              .map((contact) => (
+                                <CommandItem
+                                  key={contact.id}
+                                  value={`${contact.firstName} ${contact.lastName}`}
+                                  onSelect={() => {
+                                    const contactId = contact.id.toString();
+                                    if (!selectedSynergyContacts.includes(contactId)) {
+                                      const newSelected = [...selectedSynergyContacts, contactId];
+                                      setSelectedSynergyContacts(newSelected);
+                                      setValue("synergyContactIds", newSelected.map(id => parseInt(id)));
+                                      // Clear the search term after selection
+                                      setSynergySearchTerm("");
+                                    }
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      selectedSynergyContacts.includes(contact.id.toString()) ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  <div className="flex flex-col">
+                                    <span>{contact.firstName} {contact.lastName}</span>
+                                    {contact.companyEmail && (
+                                      <span className="text-muted-foreground text-xs">
+                                        {contact.companyEmail}
+                                      </span>
+                                    )}
+                                  </div>
+                                </CommandItem>
+                              ))
+                          )}
                         </CommandGroup>
                       </Command>
                     </PopoverContent>
@@ -744,8 +799,16 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                   {selectedSynergyContacts.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-2 p-2 border rounded-md bg-secondary/10">
                       {selectedSynergyContacts.map(contactId => {
-                        const contact = contacts.find(c => c.id.toString() === contactId);
+                        // First try to find contact in searched contacts
+                        let contact = searchedContacts?.find(c => c.id.toString() === contactId);
+                        
+                        // Fallback to contacts from the main query
+                        if (!contact) {
+                          contact = contacts?.find(c => c.id.toString() === contactId);
+                        }
+                        
                         if (!contact) return null;
+                        
                         return (
                           <Badge 
                             key={contactId}
