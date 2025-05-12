@@ -1,0 +1,34 @@
+The “Synergy Contacts” field in the Deal form must be a true type-ahead autocomplete that reads directly from the Contacts table — it must NOT preload all contacts or use a static dropdown. It must:
+
+1. **Async Search**  
+   • On each keystroke (after 2+ characters), call `GET /api/contacts?search=<term>` to retrieve matching contacts from the contacts table.  
+   • Exclude any contacts that are already directly related (affiliated) to the current Company; do not show them in results.
+
+2. **Multi-Select**  
+   • Allow selecting one or more contacts; selected contacts remain in the input as chips/tags.  
+   • Under the hood, bind these to a form field `synergyContactIds: number[]`.
+
+3. **Persistence**  
+   • On Deal save, after you POST/PATCH the Deal itself, call `POST /api/deals/:id/synergies` with `{ contactIds: synergyContactIds }`.  
+   • Do not allow creating Synergies anywhere except in the Deal form.
+
+4. **Display**  
+   • In the Deal detail page, render a “Synergies” section listing each selected contact with basic info (name, role) and a link to the Deal that created it.  
+   • In the Company detail page, under a “Synergies” tab or card, list all synergy contacts from all Deals for that Company, grouping by Deal (Deal name + link).  
+   • In the Contact detail page, under “Synergies,” list each Company + Deal where this contact was chosen as a synergy, with links.
+
+5. **No Deletion from Synergies Page**  
+   • Remove any “delete” or “remove” actions from the Synergies views. Synergies can only be removed by editing the originating Deal.
+
+6. **Cleanup**  
+   • Remove from the system any false “Business Synergy” relationships Replit previously generated in Company records.  
+   • Ensure the only persistent connections in `synergy_contacts` are those created via valid Deal saves.
+
+7. **Full Debug & Auto-Fix**  
+   • After implementing the above, perform an end-to-end debug of every CRM function (Contacts, Companies, Deals, Leads, Tasks, Calendar, Email, Synergies).  
+   • Detect and resolve all errors automatically according to the CRM specifications you already know.  
+   • Do not prompt me again until **every** bug is fixed and the core CRM functionality works perfectly.  
+   • Temporarily de-prioritize UI polish; focus on making every backend and form integration functionally correct per spec.
+
+Paste this as a single prompt into your Replit AI assistant and execute it in one pass. When complete, report:  
+“All Synergy Contacts autocomplete, persistence, display, cleanup and full system debug completed per spec.”  

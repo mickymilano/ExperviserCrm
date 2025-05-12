@@ -705,6 +705,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const companyId = req.query.companyId ? Number(req.query.companyId) : undefined;
       const includeAreas = req.query.includeAreas === 'true';
+      const searchTerm = req.query.search as string | undefined;
+      const excludeCompanyId = req.query.excludeCompanyId ? 
+        parseInt(req.query.excludeCompanyId as string) : undefined;
       
       let contacts;
       if (companyId) {
@@ -715,8 +718,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         contacts = await storage.getContacts();
       }
       
+      // Apply search filter if provided
+      if (searchTerm && searchTerm.length >= 2) {
+        const lowerSearch = searchTerm.toLowerCase();
+        contacts = contacts.filter(contact => {
+          const firstName = (contact.firstName || '').toLowerCase();
+          const middleName = (contact.middleName || '').toLowerCase();
+          const lastName = (contact.lastName || '').toLowerCase();
+          const companyEmail = (contact.companyEmail || '').toLowerCase();
+          const privateEmail = (contact.privateEmail || '').toLowerCase();
+          
+          const fullName = `${firstName} ${middleName} ${lastName}`.trim();
+          
+          return fullName.includes(lowerSearch) || 
+                 firstName.includes(lowerSearch) || 
+                 lastName.includes(lowerSearch) || 
+                 companyEmail.includes(lowerSearch) || 
+                 privateEmail.includes(lowerSearch);
+        });
+        
+        console.log(`Filtered ${contacts.length} contacts matching search term "${searchTerm}"`);
+      }
+      
       // If includeAreas flag is set, add areas of activity data to each contact
-      if (includeAreas && contacts && contacts.length > 0) {
+      if ((includeAreas || excludeCompanyId) && contacts && contacts.length > 0) {
         // Fetch areas of activity for all contacts in a single batch
         const contactsWithAreas = await Promise.all(
           contacts.map(async (contact) => {
@@ -727,6 +752,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
             };
           })
         );
+        
+        // If excludeCompanyId is provided, filter out contacts that have this company as primary
+        if (excludeCompanyId) {
+          const filteredContacts = contactsWithAreas.filter(contact => {
+            // Include contacts that don't have this company as primary
+            if (!contact.areasOfActivity || !Array.isArray(contact.areasOfActivity)) {
+              return true;
+            }
+            return !contact.areasOfActivity.some(area => 
+              area.companyId === excludeCompanyId && area.isPrimary
+            );
+          });
+          return res.json(filteredContacts);
+        }
+        
         return res.json(contactsWithAreas);
       }
       
@@ -1988,6 +2028,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching synergies:", error);
       res.status(500).json({ message: "Failed to fetch synergies" });
+    }
+  });
+  
+  // Get synergies for a specific deal
+  apiRouter.get("/deals/:id/synergies", async (req: Request, res: Response) => {
+    try {
+      const dealId = Number(req.params.id);
+      if (isNaN(dealId)) {
+        return res.status(400).json({ message: "Invalid deal ID" });
+      }
+      
+      const deal = await storage.getDeal(dealId);
+      if (!deal) {
+        return res.status(404).json({ message: "Deal not found" });
+      }
+      
+      // Get all synergies and filter them for this deal
+      const allSynergies = await storage.getSynergies();
+      const dealSynergies = allSynergies.filter(synergy => synergy.dealId === dealId);
+      
+      res.json(dealSynergies);
+    } catch (error) {
+      console.error("Error fetching deal synergies:", error);
+      res.status(500).json({ message: "Failed to fetch deal synergies" });
+    }
+  });
+  
+  // Create synergies for a deal with multiple contacts
+  apiRouter.post("/deals/:id/synergies", async (req: Request, res: Response) => {
+    try {
+      const dealId = Number(req.params.id);
+      if (isNaN(dealId)) {
+        return res.status(400).json({ message: "Invalid deal ID" });
+      }
+      
+      const deal = await storage.getDeal(dealId);
+      if (!deal) {
+        return res.status(404).json({ message: "Deal not found" });
+      }
+      
+      if (!deal.companyId) {
+        return res.status(400).json({ message: "Deal must have a company to create synergies" });
+      }
+      
+      const { contactIds } = req.body;
+      
+      if (!contactIds || !Array.isArray(contactIds) || contactIds.length === 0) {
+        return res.status(400).json({ message: "Contact IDs array is required" });
+      }
+      
+      const results = [];
+      
+      // First, remove any existing synergies for this deal
+      const allSynergies = await storage.getSynergies();
+      const dealSynergies = allSynergies.filter(synergy => synergy.dealId === dealId);
+      
+      // Get list of contacts that are not in the new list to delete
+      for (const synergy of dealSynergies) {
+        if (!contactIds.includes(synergy.contactId)) {
+          await storage.deleteSynergy(synergy.id);
+        }
+      }
+      
+      // Create new synergies for each contact
+      for (const contactId of contactIds) {
+        // Skip if synergy already exists
+        const existingSynergy = dealSynergies.find(s => s.contactId === contactId);
+        if (existingSynergy) {
+          results.push(existingSynergy);
+          continue;
+        }
+        
+        const synergyData = {
+          contactId: contactId,
+          companyId: deal.companyId,
+          dealId: dealId,
+          type: "business",
+          status: "active",
+          description: "Created from deal",
+          startDate: new Date()
+        };
+        
+        const newSynergy = await storage.createSynergy(synergyData);
+        results.push(newSynergy);
+      }
+      
+      res.status(201).json(results);
+    } catch (error) {
+      console.error("Error creating deal synergies:", error);
+      res.status(500).json({ message: "Failed to create deal synergies", error: error.message });
     }
   });
 

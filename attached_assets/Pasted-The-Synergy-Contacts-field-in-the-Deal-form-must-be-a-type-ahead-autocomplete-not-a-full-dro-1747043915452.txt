@@ -1,0 +1,66 @@
+The “Synergy Contacts” field in the Deal form must be a type-ahead autocomplete — **not** a full dropdown menu. We need:
+
+1. **Async Search**  
+   - When the user types at least 2 characters, call `GET /api/contacts?search=<term>` to retrieve matching contacts (paginated if needed).  
+   - Do **not** load all 3 000 contacts at once.
+
+2. **Multi-Select UI**  
+   - Use an async multi-select component such as `react-select`’s `AsyncSelect` or Shadcn’s `Combobox` with `multiple` support.  
+   - As the user types, show matching results in the dropdown.  
+   - Allow selection of one or more contacts — selected items appear as tags/chips inside the input.
+
+3. **Filter Out Company-Affiliated Contacts**  
+   - On mount, fetch `/api/companies/:companyId/contacts` and keep that ID list locally.  
+   - Each time you fetch matching contacts for the autocomplete, filter out those already affiliated to this company so they never appear in the suggestions.
+
+4. **Integrate With React-Hook-Form**  
+   - In `DealModal.tsx` or `DealForm.tsx`, register a field `synergyContactIds: number[]`.  
+   - On selection change, write the array of contact IDs back to the form state.
+
+5. **Example Using `react-select/async`**  
+   ```tsx
+   import AsyncSelect from 'react-select/async';
+   import { useFormContext, Controller } from 'react-hook-form';
+
+   function SynergyMultiSelect({ companyId }) {
+     const { control } = useFormContext();
+     const [excluded, setExcluded] = useState<number[]>([]);
+
+     // Load already affiliated IDs
+     useEffect(() => {
+       fetch(`/api/companies/${companyId}/contacts`)
+         .then(r => r.json())
+         .then(data => setExcluded(data.map((c: any) => c.id)));
+     }, [companyId]);
+
+     // Load options from server
+     const loadOptions = (inputValue: string, callback) => {
+       if (inputValue.length < 2) return callback([]);
+       fetch(`/api/contacts?search=${inputValue}`)
+         .then(r => r.json())
+         .then((all: any[]) => {
+           const options = all
+             .filter(c => !excluded.includes(c.id))
+             .map(c => ({ value: c.id, label: `${c.firstName} ${c.lastName}` }));
+           callback(options);
+         });
+     };
+
+     return (
+       <Controller
+         name="synergyContactIds"
+         control={control}
+         render={({ field }) => (
+           <AsyncSelect
+             {...field}
+             isMulti
+             cacheOptions
+             defaultOptions={[]}
+             loadOptions={loadOptions}
+             onChange={opts => field.onChange(opts.map(o => o!.value))}
+             placeholder="Type to search contacts…"
+           />
+         )}
+       />
+     );
+   }
