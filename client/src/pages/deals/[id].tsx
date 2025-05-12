@@ -265,11 +265,12 @@ export default function DealDetail() {
                   <Skeleton className="h-12 w-full mb-2" />
                   <Skeleton className="h-12 w-full" />
                 </div>
-              ) : dealSynergies && dealSynergies.length > 0 ? (
+              ) : dealId ? (
                 <SynergiesList 
-                  synergies={dealSynergies} 
-                  showCompany={false}
-                  hideDealColumn={true}
+                  companyId={deal.companyId} 
+                  showTitle={false}
+                  hideAddButton={true}
+                  hideDeleteButtons={true}
                 />
               ) : (
                 <div className="text-center py-8">
