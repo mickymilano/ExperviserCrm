@@ -1,3 +1,5 @@
+"use client"
+
 import * as React from "react"
 import { Check, ChevronsUpDown } from "lucide-react"
 
@@ -36,18 +38,12 @@ export function Combobox({
   value,
   onChange,
   placeholder = "Select an option",
-  emptyMessage = "No results found.",
+  emptyMessage = "No results found",
   className,
   disabled = false,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false)
   
-  // Find the corresponding label for the currently selected value
-  const selectedOption = React.useMemo(() => 
-    options.find((option) => option.value === value),
-    [options, value]
-  )
-
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -59,16 +55,16 @@ export function Combobox({
           disabled={disabled}
         >
           {value
-            ? selectedOption?.label || placeholder
+            ? options.find((option) => option.value === value)?.label || placeholder
             : placeholder}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-full p-0">
         <Command>
-          <CommandInput placeholder="Search..." />
+          <CommandInput placeholder={`Search...`} />
           <CommandEmpty>{emptyMessage}</CommandEmpty>
-          <CommandGroup className="max-h-60 overflow-auto">
+          <CommandGroup>
             {options.map((option) => (
               <CommandItem
                 key={option.value}

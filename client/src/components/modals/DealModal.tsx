@@ -47,11 +47,14 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(
     initialData?.companyId || null
   );
+  const [synergyContact, setSynergyContact] = useState<string | null>(null);
+  
+  // Form reference for alert dialog submission
+  const formRef = useRef<HTMLFormElement>(null);
+  
   const [showNoCompanyAlert, setShowNoCompanyAlert] = useState(false);
   const [showNoContactAlert, setShowNoContactAlert] = useState(false);
-  const [synergyContact, setSynergyContact] = useState<string | null>(null); 
   const isEditMode = !!initialData;
-  const formRef = useRef<HTMLFormElement>(null);
 
   // Fetch pipeline stages for dropdown
   const { data: stages = [] } = useQuery({
