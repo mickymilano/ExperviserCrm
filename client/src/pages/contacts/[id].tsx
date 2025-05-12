@@ -410,6 +410,27 @@ export default function ContactDetail() {
                 </Card>
               )}
               
+              {/* Synergies Card */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center text-lg">
+                    <MessageCircle className="h-5 w-5 mr-2" />
+                    Business Synergies
+                  </CardTitle>
+                  <CardDescription>
+                    Special business relationships involving this contact
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <SynergiesList 
+                    contactId={contactId} 
+                    showTitle={false}
+                    hideAddButton={true}
+                    hideDeleteButtons={true}
+                  />
+                </CardContent>
+              </Card>
+              
               {/* Task List Component */}
               <TaskList 
                 entityId={contactId} 
