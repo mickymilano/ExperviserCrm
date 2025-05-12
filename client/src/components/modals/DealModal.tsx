@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -19,6 +19,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { useCreateSynergy } from "@/hooks/useSynergies";
 import { Badge } from "@/components/ui/badge";
+import AsyncSelect from "react-select/async";
 
 interface DealModalProps {
   open: boolean;
@@ -61,41 +62,6 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(
     initialData?.companyId || null
   );
-  // States for synergy contacts autocomplete
-  const [selectedSynergyContacts, setSelectedSynergyContacts] = useState<string[]>([]);
-  const [synergySearchTerm, setSynergySearchTerm] = useState("");
-  const [synergySearchOpen, setSynergySearchOpen] = useState(false);
-  
-  // Query for async searching of contacts
-  const { data: searchedContacts = [], isLoading: isSearchingContacts } = useQuery({
-    queryKey: ["/api/contacts", { search: synergySearchTerm, excludeCompanyId: selectedCompanyId }],
-    queryFn: async () => {
-      if (synergySearchTerm.length < 2) return [];
-      
-      const response = await fetch(
-        `/api/contacts?search=${encodeURIComponent(synergySearchTerm)}&excludeCompanyId=${selectedCompanyId}&includeAreas=true`
-      );
-      
-      if (!response.ok) throw new Error('Failed to search contacts');
-      const contacts = await response.json();
-      
-      // Enhanced logging for debugging the contact data structure
-      console.log(`Found ${contacts.length} contacts matching search "${synergySearchTerm}"`);
-      if (contacts.length > 0) {
-        console.log("Sample contact data structure:", contacts[0]);
-        // Ensure contact IDs are properly formatted
-        return contacts.map(contact => ({
-          ...contact,
-          id: typeof contact.id === 'string' ? parseInt(contact.id) : contact.id
-        }));
-      }
-      
-      return contacts;
-    },
-    enabled: synergySearchTerm.length >= 2 && !!selectedCompanyId && synergySearchOpen,
-    staleTime: 30000, // Cache results for 30 seconds
-    refetchOnWindowFocus: false, // Prevent unnecessary refetches
-  });
 
   // Form reference for alert dialog submission
   const formRef = useRef<HTMLFormElement>(null);
@@ -132,7 +98,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     staleTime: Infinity // Prevent refetching during component lifecycle to avoid infinite loop
   });
 
-  const { register, handleSubmit, reset, setValue, getValues, formState: { errors } } = useForm<DealFormData>({
+  const { register, handleSubmit, reset, setValue, getValues, control, formState: { errors } } = useForm<DealFormData>({
     resolver: zodResolver(dealSchema),
     defaultValues: {
       name: "",
@@ -689,188 +655,121 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
               </div>
             </div>
 
-            {/* Synergy Contacts - True type-ahead autocomplete */}
+            {/* Synergy Contacts - AsyncSelect implementation */}
             <div className="space-y-2 mb-4">
               <Label htmlFor="synergyContactIds">Synergy Contacts</Label>
               <div className="relative">
-                <div className="flex flex-col gap-2">
-                  {/* Async autocomplete for synergy contacts */}
-                  <Popover 
-                    open={synergySearchOpen} 
-                    onOpenChange={(open) => {
-                      console.log("Popover onOpenChange:", open);
-                      setSynergySearchOpen(open);
-                    }}
-                  >
-                    <PopoverTrigger asChild>
-                      <div className="relative flex w-full">
-                        <Input
-                          id="synergyContactIds"
-                          className="w-full"
-                          placeholder={selectedCompanyId ? "Type to search contacts..." : "Select a company first"}
-                          disabled={!selectedCompanyId}
-                          value={synergySearchTerm}
-                          onChange={(e) => {
-                            console.log("Input onChange:", e.target.value);
-                            setSynergySearchTerm(e.target.value);
-                          }}
-                          onFocus={() => {
-                            if (selectedCompanyId) {
-                              console.log("Input onFocus, opening search");
-                              setSynergySearchOpen(true);
-                            }
-                          }}
-                        />
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          type="button"
-                          className="absolute right-0 top-0 h-full"
-                          onClick={() => {
-                            if (selectedCompanyId) {
-                              setSynergySearchOpen(!synergySearchOpen);
-                            }
-                          }}
-                          disabled={!selectedCompanyId}
-                        >
-                          <ChevronsUpDown className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[calc(100vw-4rem)] md:w-[400px] p-0 z-50">
-                      <Command>
-                        <CommandInput 
-                          placeholder="Type at least 2 characters..." 
-                          value={synergySearchTerm} 
-                          onValueChange={(value) => {
-                            console.log("CommandInput onValueChange:", value);
-                            setSynergySearchTerm(value);
-                          }}
-                        />
-                        <CommandEmpty>
-                          {synergySearchTerm.length < 2 
-                            ? "Type at least 2 characters to search" 
-                            : isSearchingContacts 
-                              ? "Searching..."
-                              : "No contacts found"}
-                        </CommandEmpty>
-                        <CommandGroup className="max-h-[200px] overflow-y-auto relative z-50">
-                          {isSearchingContacts && (
-                            <div className="flex items-center justify-center py-2">
-                              <span className="text-sm text-muted-foreground">Searching contacts...</span>
-                            </div>
-                          )}
-                          
-                          {!isSearchingContacts && searchedContacts && searchedContacts.length > 0 && (
-                            searchedContacts
-                              // Filter out already selected contacts
-                              .filter(contact => !selectedSynergyContacts.includes(contact.id.toString()))
-                              .map((contact) => (
-                                <CommandItem
-                                  key={contact.id}
-                                  value={`${contact.firstName} ${contact.lastName}`}
-                                  className="cursor-pointer hover:bg-accent relative z-50"
-                                  onSelect={() => {
-                                    console.log("CommandItem onSelect triggered for contact:", contact);
-                                    
-                                    // Ensure we're working with a string version of the ID for consistency
-                                    const contactId = contact.id.toString();
-                                    console.log("Current selected contacts:", selectedSynergyContacts);
-                                    console.log("Adding contact ID:", contactId);
-                                    
-                                    // Simulating a click event for debugging
-                                    console.log("Would trigger click at", new Date().toISOString());
-                                    
-                                    // Check if contact is already selected
-                                    if (!selectedSynergyContacts.includes(contactId)) {
-                                      // Create new array with the selected contact ID
-                                      const newSelected = [...selectedSynergyContacts, contactId];
-                                      console.log("New selected array:", newSelected);
-                                      
-                                      // Directly do DOM operations (for testing)
-                                      try {
-                                        // Update React state
-                                        setSelectedSynergyContacts(newSelected);
-                                        
-                                        // Update form state for submission
-                                        setValue("synergyContactIds", newSelected.map(id => parseInt(id, 10)));
-                                        
-                                        // Reset UI state to close dropdown and clear search
-                                        setSynergySearchTerm("");
-                                        setTimeout(() => setSynergySearchOpen(false), 10);
-                                      } catch (err) {
-                                        console.error("Error in contact selection:", err);
-                                      }
-                                    }
-                                  }}
-                                >
-                                  <Check
-                                    className={cn(
-                                      "mr-2 h-4 w-4",
-                                      selectedSynergyContacts.includes(contact.id.toString()) ? "opacity-100" : "opacity-0"
-                                    )}
-                                  />
-                                  <div className="flex flex-col">
-                                    <span>{contact.firstName} {contact.lastName}</span>
-                                    {contact.companyEmail && (
-                                      <span className="text-muted-foreground text-xs">
-                                        {contact.companyEmail}
-                                      </span>
-                                    )}
-                                  </div>
-                                </CommandItem>
-                              ))
-                          )}
-                        </CommandGroup>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-
-                  {/* Display selected contacts */}
-                  {selectedSynergyContacts.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2 p-2 border rounded-md bg-secondary/10">
-                      {selectedSynergyContacts.map(contactId => {
-                        // First try to find contact in searched contacts
-                        let contact = searchedContacts?.find(c => c.id.toString() === contactId);
+                <Controller
+                  name="synergyContactIds"
+                  control={form.control}
+                  render={({ field }) => (
+                    <AsyncSelect
+                      isMulti
+                      isDisabled={!selectedCompanyId}
+                      placeholder={selectedCompanyId ? "Type to search contacts..." : "Select a company first"}
+                      loadOptions={async (inputValue) => {
+                        if (!inputValue || inputValue.length < 1 || !selectedCompanyId) return [];
                         
-                        // Fallback to contacts from the main query
+                        try {
+                          const response = await fetch(
+                            `/api/contacts?search=${encodeURIComponent(inputValue)}&excludeCompanyId=${selectedCompanyId}&includeAreas=true`
+                          );
+                          
+                          if (!response.ok) throw new Error('Failed to search contacts');
+                          const contacts = await response.json();
+                          
+                          // Map API results to the expected format for react-select
+                          return contacts.map(contact => ({
+                            value: contact.id,
+                            label: `${contact.firstName} ${contact.lastName}`,
+                            contact // Store the full contact data for reference
+                          }));
+                        } catch (error) {
+                          console.error('Error searching contacts:', error);
+                          return [];
+                        }
+                      }}
+                      onChange={(selectedOptions) => {
+                        // Extract contact IDs from selected options
+                        const contactIds = selectedOptions ? 
+                          selectedOptions.map(option => typeof option.value === 'string' ? parseInt(option.value) : option.value) : 
+                          [];
+                        
+                        // Update form state
+                        field.onChange(contactIds);
+                      }}
+                      value={field.value.map(id => {
+                        // Find the contact in our data sources
+                        const contactFromDealSynergies = dealSynergies.find(synergy => 
+                          (typeof synergy.contactId === 'string' ? parseInt(synergy.contactId) : synergy.contactId) === id
+                        );
+                        
+                        // Find the contact in the main contacts query
+                        const contactFromAllContacts = contacts.find(contact => contact.id === id);
+                        
+                        // Use the first available data source
+                        const contact = contactFromDealSynergies?.contact || contactFromAllContacts;
+                        
                         if (!contact) {
-                          contact = contacts?.find(c => c.id.toString() === contactId);
+                          // If we can't find the contact data, return a placeholder
+                          return {
+                            value: id,
+                            label: `Contact #${id}`
+                          };
                         }
                         
-                        if (!contact) return null;
-                        
-                        return (
-                          <Badge 
-                            key={contactId}
-                            variant="secondary"
-                            className="flex items-center gap-1 pl-2 pr-1 py-1"
-                          >
-                            {contact.firstName} {contact.lastName}
-                            <button
-                              type="button"
-                              className="ml-1 rounded-full hover:bg-destructive/10 hover:text-destructive flex items-center justify-center w-4 h-4"
-                              onClick={() => {
-                                setSelectedSynergyContacts(prev => {
-                                  const newSelected = prev.filter(id => id !== contactId);
-                                  setValue("synergyContactIds", newSelected.map(id => parseInt(id)));
-                                  return newSelected;
-                                });
-                              }}
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
-                          </Badge>
-                        );
+                        return {
+                          value: id,
+                          label: `${contact.firstName} ${contact.lastName}`
+                        };
                       })}
-                    </div>
+                      styles={{
+                        multiValue: (base) => ({
+                          ...base,
+                          backgroundColor: 'rgba(186, 230, 253, 0.4)', // Light blue bg (bg-blue-100)
+                          color: 'rgb(7, 89, 133)', // Dark blue text (text-blue-800)
+                          borderRadius: '0.25rem',
+                        }),
+                        multiValueLabel: (base) => ({
+                          ...base,
+                          color: 'rgb(7, 89, 133)', // text-blue-800
+                          padding: '0.25rem'
+                        }),
+                        multiValueRemove: (base) => ({
+                          ...base,
+                          color: 'rgb(7, 89, 133)', // text-blue-800
+                          ':hover': {
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)', // hover:bg-destructive/10
+                            color: 'rgb(239, 68, 68)', // hover:text-destructive
+                          },
+                        }),
+                        control: (base, state) => ({
+                          ...base,
+                          borderColor: state.isFocused ? 'rgb(147, 197, 253)' : 'rgb(226, 232, 240)',
+                          boxShadow: state.isFocused ? '0 0 0 1px rgb(147, 197, 253)' : 'none',
+                          '&:hover': {
+                            borderColor: 'rgb(147, 197, 253)',
+                          },
+                        }),
+                        option: (base, state) => ({
+                          ...base,
+                          backgroundColor: state.isFocused ? 'rgba(219, 234, 254, 0.5)' : base.backgroundColor,
+                          '&:hover': {
+                            backgroundColor: 'rgba(219, 234, 254, 0.5)',
+                          },
+                        }),
+                      }}
+                      className="z-50 mt-0"
+                      classNamePrefix="react-select"
+                      menuPosition="fixed"
+                      menuPlacement="auto"
+                    />
                   )}
-                </div>
-
+                />
                 <p className="text-xs text-muted-foreground mt-1">
-                  {selectedSynergyContacts.length > 0 && !selectedCompanyId ? 
+                  {getValues("synergyContactIds")?.length > 0 && !selectedCompanyId ? 
                     <span className="text-red-500">Company selection is required when adding synergy contacts</span> : 
-                    "Select contacts to create synergy relationships with this deal"}
+                    "Type to search and select synergy contacts..."}
                 </p>
               </div>
             </div>
