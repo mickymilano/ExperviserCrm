@@ -34,7 +34,16 @@ const dealSchema = z.object({
   expectedCloseDate: z.string().optional(),
   tags: z.array(z.string()).optional().nullable(),
   notes: z.string().optional().nullable(),
-  synergyContactIds: z.array(z.coerce.number()).optional().default([]),
+  synergyContactIds: z.array(z.coerce.number()).default([]),
+}).refine((data) => {
+  // If a company is selected, require at least one synergy contact
+  if (data.companyId && (!data.synergyContactIds || data.synergyContactIds.length === 0)) {
+    return false;
+  }
+  return true;
+}, {
+  message: "At least one synergy contact is required when a company is selected",
+  path: ["synergyContactIds"]
 });
 
 type DealFormData = z.infer<typeof dealSchema>;
@@ -82,6 +91,12 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
   const { data: contacts = [] } = useQuery({
     queryKey: ["/api/contacts?includeAreas=true"],
     enabled: open,
+  });
+  
+  // Fetch synergies for the initial deal if in edit mode
+  const { data: dealSynergies = [] } = useQuery({
+    queryKey: [`/api/deals/${initialData?.id}/synergies`],
+    enabled: open && isEditMode && initialData?.id !== undefined,
   });
 
   const { register, handleSubmit, reset, setValue, getValues, formState: { errors } } = useForm<DealFormData>({
@@ -192,6 +207,28 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       }
     }
   }, [contacts, selectedCompanyId]);
+  
+  // Effect to generate synergy contact options from filtered contacts
+  useEffect(() => {
+    if (filteredSynergyContacts && Array.isArray(filteredSynergyContacts)) {
+      const options = filteredSynergyContacts.map(contact => ({
+        value: contact.id.toString(),
+        label: `${contact.firstName} ${contact.lastName}`
+      }));
+      setSynergyOptions(options);
+    } else {
+      setSynergyOptions([]);
+    }
+  }, [filteredSynergyContacts]);
+  
+  // Initialize selected synergy contacts from existing synergies when editing a deal
+  useEffect(() => {
+    if (isEditMode && dealSynergies && dealSynergies.length > 0) {
+      const contactIds = dealSynergies.map(synergy => synergy.contactId.toString());
+      setSelectedSynergyContacts(contactIds);
+      setValue("synergyContactIds", dealSynergies.map(synergy => synergy.contactId));
+    }
+  }, [dealSynergies, isEditMode, setValue]);
 
   const createSynergy = useMutation({
     mutationFn: async (data: { contactId: number, companyId: number, dealId: number }) => {
