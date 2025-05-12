@@ -26,27 +26,43 @@ interface SynergiesListProps {
   contactId?: number;
   companyId?: number;
   showTitle?: boolean;
+  hideAddButton?: boolean;
+  hideDeleteButtons?: boolean;
 }
 
-export function SynergiesList({ contactId, companyId, showTitle = true }: SynergiesListProps) {
+export function SynergiesList({ contactId, companyId, showTitle = true, hideAddButton = false, hideDeleteButtons = false }: SynergiesListProps) {
   const { toast } = useToast();
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [currentSynergy, setCurrentSynergy] = useState<any>(null);
   
   // Get the appropriate data based on whether we're looking at a contact or company
-  const { data: synergies, isLoading, isError } = contactId 
-    ? useContactSynergies(contactId) 
-    : useCompanySynergies(companyId as number);
+  // Otteniamo le sinergie dal contatto o dall'azienda
+  const contactSynergiesResult = useContactSynergies(contactId as number);
+  const companySynergiesResult = useCompanySynergies(companyId as number);
+  
+  // Utilizziamo il risultato appropriato in base a contactId o companyId
+  const synergies = contactId 
+    ? contactSynergiesResult.data || []
+    : companySynergiesResult.data || [];
     
-  const { data: contactsData } = useContacts();
-  const contacts = contactsData || [];
+  const isLoading = contactId 
+    ? contactSynergiesResult.isLoading 
+    : companySynergiesResult.isLoading;
+    
+  const isError = contactId 
+    ? contactSynergiesResult.isError 
+    : companySynergiesResult.isError;
+    
+  // Ottieni i dati necessari da altri hook
+  const contactsResult = useContacts();
+  const contacts = contactsResult.contacts || [];
   
-  const { data: companiesData } = useCompanies();
-  const companies = companiesData || [];
+  const companiesResult = useCompanies();
+  const companies = companiesResult.companies || [];
   
-  const { data: dealsData } = useDeals();
-  const deals = dealsData || [];
+  const dealsResult = useDeals();
+  const deals = dealsResult.deals || [];
   
   const deleteMutation = useDeleteSynergy();
   
@@ -117,43 +133,49 @@ export function SynergiesList({ contactId, companyId, showTitle = true }: Synerg
     return <div className="text-red-500 p-4">Error loading synergies.</div>;
   }
 
-  if (!synergies || synergies.length === 0) {
+  if (!Array.isArray(synergies) || synergies.length === 0) {
     return (
       <div className="space-y-4">
         {showTitle && (
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold">Business Synergies</h3>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => setCreateModalOpen(true)}
-            >
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add Synergy
-            </Button>
+            {!hideAddButton && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setCreateModalOpen(true)}
+              >
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add Synergy
+              </Button>
+            )}
           </div>
         )}
         <div className="text-center py-10 border rounded-md bg-muted/20">
           <Handshake className="h-10 w-10 mx-auto mb-2 text-muted-foreground" />
           <p className="text-muted-foreground">No business synergies found.</p>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="mt-4"
-            onClick={() => setCreateModalOpen(true)}
-          >
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Create New Synergy
-          </Button>
+          {!hideAddButton && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="mt-4"
+              onClick={() => setCreateModalOpen(true)}
+            >
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Create New Synergy
+            </Button>
+          )}
         </div>
         
-        <SynergyModal
-          open={createModalOpen}
-          onOpenChange={setCreateModalOpen}
-          contactId={contactId}
-          companyId={companyId}
-          mode="create"
-        />
+        {!hideAddButton && (
+          <SynergyModal
+            open={createModalOpen}
+            onOpenChange={setCreateModalOpen}
+            contactId={contactId}
+            companyId={companyId}
+            mode="create"
+          />
+        )}
       </div>
     );
   }
@@ -163,24 +185,26 @@ export function SynergiesList({ contactId, companyId, showTitle = true }: Synerg
       {showTitle && (
         <div className="flex justify-between items-center">
           <h3 className="text-lg font-semibold">Business Synergies</h3>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => setCreateModalOpen(true)}
-          >
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Add Synergy
-          </Button>
+          {!hideAddButton && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setCreateModalOpen(true)}
+            >
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Add Synergy
+            </Button>
+          )}
         </div>
       )}
       
       <div className="grid grid-cols-1 gap-4">
-        {synergies.map((synergy: any) => (
+        {Array.isArray(synergies) && synergies.map((synergy: any) => (
           <Card key={synergy.id}>
             <CardHeader className="py-4">
               <div className="flex justify-between items-start">
                 <div>
-                  <CardTitle className="text-base">{synergy.type} Relationship</CardTitle>
+                  <CardTitle className="text-base">{synergy.type || 'Business'} Relationship</CardTitle>
                   <CardDescription>
                     {contactId 
                       ? `With ${getCompanyName(synergy.companyId)}` 
@@ -189,7 +213,7 @@ export function SynergiesList({ contactId, companyId, showTitle = true }: Synerg
                   </CardDescription>
                 </div>
                 <Badge variant={getStatusBadgeVariant(synergy.status)}>
-                  {synergy.status}
+                  {synergy.status || 'Active'}
                 </Badge>
               </div>
             </CardHeader>
@@ -215,54 +239,58 @@ export function SynergiesList({ contactId, companyId, showTitle = true }: Synerg
                 )}
               </div>
             </CardContent>
-            <CardFooter className="py-2 flex justify-end gap-2">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => handleEdit(synergy)}
-              >
-                <Edit className="mr-1 h-4 w-4" />
-                Edit
-              </Button>
-              
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="ghost" size="sm">
-                    <Trash2 className="mr-1 h-4 w-4" />
-                    Delete
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Synergy</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to delete this business synergy? 
-                      This action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction 
-                      onClick={() => handleDelete(synergy)}
-                      className="bg-red-500 hover:bg-red-600"
-                    >
+            {!hideDeleteButtons && (
+              <CardFooter className="py-2 flex justify-end gap-2">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => handleEdit(synergy)}
+                >
+                  <Edit className="mr-1 h-4 w-4" />
+                  Edit
+                </Button>
+                
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="sm">
+                      <Trash2 className="mr-1 h-4 w-4" />
                       Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </CardFooter>
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete Synergy</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Are you sure you want to delete this business synergy? 
+                        This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={() => handleDelete(synergy)}
+                        className="bg-red-500 hover:bg-red-600"
+                      >
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </CardFooter>
+            )}
           </Card>
         ))}
       </div>
       
-      <SynergyModal
-        open={createModalOpen}
-        onOpenChange={setCreateModalOpen}
-        contactId={contactId}
-        companyId={companyId}
-        mode="create"
-      />
+      {!hideAddButton && (
+        <SynergyModal
+          open={createModalOpen}
+          onOpenChange={setCreateModalOpen}
+          contactId={contactId}
+          companyId={companyId}
+          mode="create"
+        />
+      )}
       
       <SynergyModal
         open={editModalOpen}
