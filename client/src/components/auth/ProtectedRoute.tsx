@@ -1,62 +1,49 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
+import { apiRequest } from '@/lib/queryClient';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+export default function ProtectedRoute({ children }: ProtectedRouteProps) {
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [, setLocation] = useLocation();
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const token = localStorage.getItem('token');
-        
-        if (!token) {
-          setIsAuthenticated(false);
-          return;
-        }
-
-        const response = await fetch('/api/auth/verify', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (response.ok) {
-          setIsAuthenticated(true);
-        } else {
-          localStorage.removeItem('token');
-          setIsAuthenticated(false);
-        }
+        // Verifica lo stato di autenticazione
+        const response = await apiRequest('/auth/check');
+        setIsAuthenticated(response.authenticated);
       } catch (error) {
-        console.error('Auth check error:', error);
-        localStorage.removeItem('token');
         setIsAuthenticated(false);
+        console.error('Errore durante la verifica dell\'autenticazione:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     checkAuth();
-  }, []);
+  }, [setLocation]);
 
+  // Reindirizza alla pagina di login se non autenticato
   useEffect(() => {
-    if (isAuthenticated === false) {
+    if (!isLoading && !isAuthenticated) {
       setLocation('/login');
     }
-  }, [isAuthenticated, setLocation]);
+  }, [isLoading, isAuthenticated, setLocation]);
 
-  if (isAuthenticated === null) {
-    // Loading state
+  // Mostra un loader durante la verifica dell'autenticazione
+  if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
   }
 
+  // Renderizza i figli solo se autenticato
   return isAuthenticated ? <>{children}</> : null;
-};
-
-export default ProtectedRoute;
+}

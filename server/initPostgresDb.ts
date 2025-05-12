@@ -1,56 +1,281 @@
-import { db } from "./db";
-import { eq } from "drizzle-orm";
-import { users, pipelineStages } from "@shared/schema";
-import bcrypt from "bcrypt";
+import { sql } from "drizzle-orm";
+import { pool, db, testConnection } from "./db";
+import * as schema from '@shared/schema';
+import bcrypt from 'bcrypt';
 
-/**
- * Initialize the PostgreSQL database with essential data
- * Executed at server startup
- */
-export async function initializePostgresDb() {
+// Funzione per verificare se le tabelle esistono già
+async function tablesExist(): Promise<boolean> {
   try {
-    // Check if superadmin exists
-    const superAdmin = await db.select().from(users).where(eq(users.role, "super_admin")).limit(1);
-    
-    if (superAdmin.length === 0) {
-      console.log("Creating super admin user...");
-      // Create default super admin
-      const hashedPassword = await bcrypt.hash("admin_admin_69", 10);
-      await db.insert(users).values({
-        username: "michele",
-        password: hashedPassword,
-        fullName: "Michele Ardoni",
-        email: "michele@experviser.com",
-        role: "super_admin",
-        status: "active"
-      });
-      console.log("Super admin created successfully");
-    } else {
-      console.log("Super admin already exists");
-    }
-    
-    // Check if pipeline stages exist
-    const stages = await db.select().from(pipelineStages);
-    
-    if (stages.length === 0) {
-      console.log("Creating pipeline stages...");
-      // Create default pipeline stages
-      await db.insert(pipelineStages).values([
-        { name: "Lead", order: 1 },
-        { name: "Contatto", order: 2 },
-        { name: "Qualificazione", order: 3 },
-        { name: "Analisi", order: 4 },
-        { name: "Proposta", order: 5 },
-        { name: "Negoziazione", order: 6 },
-        { name: "Vinta", order: 7 },
-        { name: "Persa", order: 8 }
-      ]);
-      console.log("Pipeline stages created successfully");
-    } else {
-      console.log(`${stages.length} pipeline stages already exist`);
-    }
+    const result = await pool.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'users'
+      );
+    `);
+    return result.rows[0].exists;
   } catch (error) {
-    console.error("Error initializing PostgreSQL database:", error);
-    throw error;
+    console.error('Error checking if tables exist:', error);
+    return false;
   }
+}
+
+// Funzione per creare le tabelle
+async function createTables() {
+  console.log('Creating database tables...');
+  try {
+    // Crea le tabelle utilizzando gli schemi definiti
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS "users" (
+        "id" SERIAL PRIMARY KEY,
+        "username" VARCHAR(50) NOT NULL UNIQUE,
+        "password" VARCHAR(255) NOT NULL,
+        "full_name" VARCHAR(100) NOT NULL,
+        "email" VARCHAR(100) NOT NULL,
+        "backup_email" VARCHAR(100),
+        "role" VARCHAR(20) NOT NULL DEFAULT 'user',
+        "status" VARCHAR(20) NOT NULL DEFAULT 'active',
+        "email_verified" BOOLEAN DEFAULT false,
+        "avatar" TEXT,
+        "preferences" JSON,
+        "last_login" TIMESTAMP,
+        "created_at" TIMESTAMP DEFAULT NOW(),
+        "updated_at" TIMESTAMP DEFAULT NOW()
+      );
+      
+      CREATE TABLE IF NOT EXISTS "contacts" (
+        "id" SERIAL PRIMARY KEY,
+        "first_name" VARCHAR(50) NOT NULL,
+        "last_name" VARCHAR(50) NOT NULL,
+        "status" VARCHAR(20) NOT NULL DEFAULT 'active',
+        "email" VARCHAR(100),
+        "phone" VARCHAR(20),
+        "mobile" VARCHAR(20),
+        "address" TEXT,
+        "city" VARCHAR(50),
+        "region" VARCHAR(50),
+        "country" VARCHAR(50),
+        "postal_code" VARCHAR(20),
+        "website" VARCHAR(255),
+        "birthday" DATE,
+        "notes" TEXT,
+        "source" VARCHAR(100),
+        "tags" TEXT[],
+        "avatar" TEXT,
+        "custom_fields" JSON,
+        "created_at" TIMESTAMP DEFAULT NOW(),
+        "updated_at" TIMESTAMP DEFAULT NOW()
+      );
+      
+      CREATE TABLE IF NOT EXISTS "companies" (
+        "id" SERIAL PRIMARY KEY,
+        "name" VARCHAR(100) NOT NULL,
+        "status" VARCHAR(20) NOT NULL DEFAULT 'active',
+        "email" VARCHAR(100),
+        "phone" VARCHAR(20),
+        "address" TEXT,
+        "city" VARCHAR(50),
+        "region" VARCHAR(50),
+        "country" VARCHAR(50),
+        "postal_code" VARCHAR(20),
+        "website" VARCHAR(255),
+        "industry" VARCHAR(100),
+        "description" TEXT,
+        "employee_count" INTEGER,
+        "annual_revenue" DECIMAL(15, 2),
+        "founded_year" INTEGER,
+        "logo" TEXT,
+        "tags" TEXT[],
+        "notes" TEXT,
+        "custom_fields" JSON,
+        "parent_company_id" INTEGER REFERENCES "companies"("id"),
+        "linkedin_url" VARCHAR(255),
+        "location_types" TEXT[],
+        "created_at" TIMESTAMP DEFAULT NOW(),
+        "updated_at" TIMESTAMP DEFAULT NOW()
+      );
+      
+      CREATE TABLE IF NOT EXISTS "pipeline_stages" (
+        "id" SERIAL PRIMARY KEY,
+        "name" VARCHAR(50) NOT NULL,
+        "description" TEXT,
+        "position" INTEGER NOT NULL,
+        "color" VARCHAR(20),
+        "created_at" TIMESTAMP DEFAULT NOW(),
+        "updated_at" TIMESTAMP DEFAULT NOW()
+      );
+      
+      CREATE TABLE IF NOT EXISTS "deals" (
+        "id" SERIAL PRIMARY KEY,
+        "name" VARCHAR(100) NOT NULL,
+        "status" VARCHAR(20) NOT NULL DEFAULT 'active',
+        "contact_id" INTEGER REFERENCES "contacts"("id"),
+        "company_id" INTEGER REFERENCES "companies"("id"),
+        "value" DECIMAL(15, 2),
+        "notes" TEXT,
+        "tags" TEXT[],
+        "stage_id" INTEGER REFERENCES "pipeline_stages"("id"),
+        "last_contacted_at" TIMESTAMP,
+        "expected_close_date" DATE,
+        "actual_close_date" DATE,
+        "next_follow_up_at" TIMESTAMP,
+        "description" TEXT,
+        "probability" INTEGER,
+        "created_at" TIMESTAMP DEFAULT NOW(),
+        "updated_at" TIMESTAMP DEFAULT NOW()
+      );
+      
+      CREATE TABLE IF NOT EXISTS "leads" (
+        "id" SERIAL PRIMARY KEY,
+        "first_name" VARCHAR(50) NOT NULL,
+        "last_name" VARCHAR(50) NOT NULL,
+        "email" VARCHAR(100),
+        "role" VARCHAR(100),
+        "status" VARCHAR(50),
+        "phone" VARCHAR(20),
+        "address" TEXT,
+        "city" VARCHAR(50),
+        "region" VARCHAR(50),
+        "country" VARCHAR(50),
+        "postal_code" VARCHAR(20),
+        "company" VARCHAR(100),
+        "website" VARCHAR(255),
+        "source" VARCHAR(100),
+        "notes" TEXT,
+        "custom_fields" JSON,
+        "assigned_to_id" INTEGER REFERENCES "users"("id"),
+        "created_at" TIMESTAMP DEFAULT NOW(),
+        "updated_at" TIMESTAMP DEFAULT NOW()
+      );
+      
+      CREATE TABLE IF NOT EXISTS "areas_of_activity" (
+        "id" SERIAL PRIMARY KEY,
+        "contact_id" INTEGER NOT NULL REFERENCES "contacts"("id"),
+        "company_id" INTEGER REFERENCES "companies"("id"),
+        "company_name" VARCHAR(100),
+        "role" VARCHAR(100),
+        "job_description" TEXT,
+        "is_primary" BOOLEAN,
+        "created_at" TIMESTAMP DEFAULT NOW(),
+        "updated_at" TIMESTAMP DEFAULT NOW()
+      );
+    `);
+    
+    console.log('Database tables created successfully');
+    return true;
+  } catch (error) {
+    console.error('Error creating tables:', error);
+    return false;
+  }
+}
+
+// Funzione per inserire l'utente admin iniziale
+async function createInitialAdmin() {
+  try {
+    // Verifica se esiste già un amministratore
+    const adminExists = await db.select().from(schema.users).where(sql`role = 'super_admin'`);
+    
+    if (adminExists.length === 0) {
+      console.log('Creating initial super admin user...');
+      
+      // Crea la password criptata
+      const hashedPassword = await bcrypt.hash('admin_admin_69', 10);
+      
+      // Inserisci l'utente super admin
+      await db.insert(schema.users).values({
+        username: 'michele@experviser.com',
+        password: hashedPassword,
+        fullName: 'Michele Experviser',
+        email: 'michele@experviser.com',
+        role: 'super_admin' as any,
+        status: 'active' as any,
+        emailVerified: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+      
+      console.log('Initial super admin user created successfully');
+    } else {
+      console.log('Super admin user already exists');
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error creating initial admin:', error);
+    return false;
+  }
+}
+
+// Funzione per creare le fasi della pipeline iniziali
+async function createInitialPipelineStages() {
+  try {
+    // Verifica se esistono già le fasi della pipeline
+    const stagesExist = await db.select().from(schema.pipelineStages);
+    
+    if (stagesExist.length === 0) {
+      console.log('Creating initial pipeline stages...');
+      
+      // Definisci le fasi della pipeline
+      const stages = [
+        { name: 'Primo contatto', description: 'Fase iniziale di contatto', position: 1, color: '#3498db' },
+        { name: 'Qualificato', description: 'Lead qualificato', position: 2, color: '#2ecc71' },
+        { name: 'Proposta', description: 'Proposta inviata', position: 3, color: '#f1c40f' },
+        { name: 'Negoziazione', description: 'In fase di negoziazione', position: 4, color: '#e67e22' },
+        { name: 'Vinto/Perso', description: 'Opportunità conclusa', position: 5, color: '#e74c3c' }
+      ];
+      
+      // Inserisci le fasi della pipeline
+      for (const stage of stages) {
+        await db.insert(schema.pipelineStages).values(stage);
+      }
+      
+      console.log('Initial pipeline stages created successfully');
+    } else {
+      console.log('Pipeline stages already exist');
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error creating initial pipeline stages:', error);
+    return false;
+  }
+}
+
+// Funzione principale per inizializzare il database
+export async function initializePostgresDb() {
+  console.log('Initializing PostgreSQL database...');
+  
+  // Verifica la connessione
+  const isConnected = await testConnection();
+  if (!isConnected) {
+    console.error('Failed to connect to PostgreSQL database');
+    return false;
+  }
+  
+  // Verifica se le tabelle esistono già
+  const tables = await tablesExist();
+  if (tables) {
+    console.log('Database tables already exist');
+  } else {
+    console.log('Database tables don\'t exist yet. This is normal if this is the first run.');
+    console.log('Schema will be applied during migration.');
+    // Crea le tabelle
+    await createTables();
+    
+    // Crea l'utente admin iniziale
+    await createInitialAdmin();
+    
+    // Crea le fasi della pipeline iniziali
+    await createInitialPipelineStages();
+  }
+  
+  console.log('PostgreSQL database initialized successfully');
+  return true;
+}
+
+// Funzione per chiudere le connessioni
+export async function closeDbConnections() {
+  console.log('Closing database connections...');
+  await pool.end();
+  console.log('Database connections closed');
 }

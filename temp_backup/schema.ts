@@ -1,500 +1,233 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, pgEnum, serial, text, timestamp, boolean, varchar, integer, json, index, uniqueIndex } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// User role and status enums
+// Enum per ruoli utente
 export const userRoleEnum = pgEnum("user_role", ["user", "admin", "super_admin"]);
+
+// Enum per stato utente
 export const userStatusEnum = pgEnum("user_status", ["active", "inactive", "suspended", "pending"]);
 
-// Users with enhanced security features
+// Enum per stato entità
+export const entityStatusEnum = pgEnum("entity_status", ["active", "archived"]);
+
+// Tabella utenti
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
-  fullName: text("full_name").notNull(),
-  email: text("email").notNull().unique(),
-  backupEmail: text("backup_email"),
-  role: userRoleEnum("role").default("user").notNull(),
-  status: userStatusEnum("status").default("active").notNull(),
-  // User preferences
-  timezone: text("timezone").default("Europe/Rome"),
-  language: text("language").default("English"),
-  phone: text("phone"),
-  jobTitle: text("job_title"),
-  // Security fields
-  lastLoginAt: timestamp("last_login_at"),
-  loginAttempts: integer("login_attempts").default(0),
-  resetPasswordToken: text("reset_password_token"),
-  resetPasswordExpires: timestamp("reset_password_expires"),
+  username: varchar("username", { length: 255 }).notNull().unique(),
+  password: varchar("password", { length: 255 }).notNull(),
+  fullName: varchar("full_name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  backupEmail: varchar("backup_email", { length: 255 }),
+  role: userRoleEnum("role").notNull().default("user"),
+  status: userStatusEnum("status").notNull().default("active"),
+  phone: varchar("phone", { length: 30 }),
+  avatar: text("avatar"),
+  emailVerified: boolean("email_verified").default(false),
+  preferences: json("preferences"),
+  lastLogin: timestamp("last_login"),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at"),
 });
 
-export const insertUserSchema = createInsertSchema(users).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-  lastLoginAt: true,
-  loginAttempts: true,
-  resetPasswordToken: true,
-  resetPasswordExpires: true,
-});
-
-// User sessions for tracking logged in devices
-export const userSessions = pgTable("user_sessions", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  token: text("token").notNull().unique(),
-  userAgent: text("user_agent"),
-  ip: text("ip"),
-  expiresAt: timestamp("expires_at").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-  lastActiveAt: timestamp("last_active_at").defaultNow(),
-});
-
-export const insertUserSessionSchema = createInsertSchema(userSessions).omit({
-  id: true,
-  createdAt: true,
-  lastActiveAt: true,
-});
-
-// Security logs for auditing
-export const securityLogs = pgTable("security_logs", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id),
-  action: text("action").notNull(), // login, logout, password_reset, failed_login, etc.
-  ip: text("ip"),
-  userAgent: text("user_agent"),
-  details: jsonb("details"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const insertSecurityLogSchema = createInsertSchema(securityLogs).omit({
-  id: true,
-  createdAt: true,
-});
-
-// Leads
-export const leads = pgTable("leads", {
-  id: serial("id").primaryKey(),
-  firstName: text("first_name"),
-  middleName: text("middle_name"),
-  lastName: text("last_name"),
-  companyName: text("company_name"),
-  role: text("role"),
-  
-  // Contact information
-  mobilePhone: text("mobile_phone"),
-  companyEmail: text("company_email"),
-  privateEmail: text("private_email"),
-  officePhone: text("office_phone"),
-  privatePhone: text("private_phone"),
-  
-  // Social profiles
-  linkedin: text("linkedin"),
-  facebook: text("facebook"),
-  instagram: text("instagram"),
-  tiktok: text("tiktok"),
-  
-  // Other fields
-  website: text("website"),
-  source: text("source"),
-  status: text("status").default("new"), // new, qualified, converted, disqualified
-  tags: text("tags").array(),
-  notes: text("notes"),
-  assignedToId: integer("assigned_to_id"),
-  customFields: jsonb("custom_fields"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-export const insertLeadSchema = createInsertSchema(leads).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-// Areas of Activity (for contacts)
-export const areasOfActivity = pgTable("areas_of_activity", {
-  id: serial("id").primaryKey(),
-  contactId: integer("contact_id").notNull().references(() => contacts.id, { onDelete: 'cascade' }),
-  companyId: integer("company_id").references(() => companies.id, { onDelete: 'set null' }),
-  companyName: text("company_name"), // In case company is not in database yet
-  jobDescription: text("job_description"),
-  role: text("role"),
-  isPrimary: boolean("is_primary").default(false),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-// Remove relations function to fix compatibility issues
-
-export const insertAreaOfActivitySchema = createInsertSchema(areasOfActivity).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-// Contact status enum
-export const contactStatusEnum = pgEnum("contact_status", ["active", "archived"]);
-
-// Contacts
+// Tabella contatti
 export const contacts = pgTable("contacts", {
   id: serial("id").primaryKey(),
-  firstName: text("first_name").notNull(),
-  middleName: text("middle_name"),
-  lastName: text("last_name").notNull(),
-  
-  // Contact information
-  mobilePhone: text("mobile_phone"),
-  companyEmail: text("company_email"),
-  privateEmail: text("private_email"),
-  officePhone: text("office_phone"),
-  privatePhone: text("private_phone"),
-  
-  // Social profiles
-  linkedin: text("linkedin"),
-  facebook: text("facebook"),
-  instagram: text("instagram"),
-  tiktok: text("tiktok"),
-  
-  // Other fields
-  tags: text("tags").array(),
+  firstName: varchar("first_name", { length: 255 }).notNull(),
+  lastName: varchar("last_name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }),
+  phone: varchar("phone", { length: 30 }),
+  mobile: varchar("mobile", { length: 30 }),
+  address: text("address"),
+  city: varchar("city", { length: 100 }),
+  region: varchar("region", { length: 100 }),
+  country: varchar("country", { length: 100 }),
+  postalCode: varchar("postal_code", { length: 20 }),
+  website: text("website"),
+  birthday: timestamp("birthday"),
   notes: text("notes"),
-  customFields: jsonb("custom_fields"),
-  
-  // Nuovi campi come da specifiche
-  status: contactStatusEnum("status").default("active").notNull(),
-  roles: text("roles").array(),
-  lastContactedAt: timestamp("last_contacted_at"),
-  nextFollowUpAt: timestamp("next_follow_up_at"),
-  
-  // Timestamps
+  tags: json("tags").$type<string[]>(),
+  source: varchar("source", { length: 100 }),
+  roles: json("roles").$type<string[]>(),
+  status: entityStatusEnum("status").notNull().default("active"),
+  customFields: json("custom_fields"),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at"),
 });
 
-// Relations removed for compatibility
-
-export const insertContactSchema = createInsertSchema(contacts).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-// Company status enum
-export const companyStatusEnum = pgEnum("company_status", ["active", "archived"]);
-
-// Company type enum
-export const companyTypeEnum = pgEnum("company_type", [
-  "independent", 
-  "basket_company_franchisor", 
-  "mono_brand_franchisor", 
-  "multi_unit_franchisee", 
-  "master_franchisee", 
-  "mall_manager", 
-  "manufacturer", 
-  "wholesaler", 
-  "other"
-]);
-
-// Companies
+// Tabella aziende
 export const companies = pgTable("companies", {
   id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  industry: text("industry"),
-  website: text("website"),
-  email: text("email"),
-  phone: text("phone"),
+  name: varchar("name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }),
+  phone: varchar("phone", { length: 30 }),
   address: text("address"),
-  tags: text("tags").array(),
-  notes: text("notes"),
-  customFields: jsonb("custom_fields"),
-  // Nuovi campi come da specifiche
-  status: companyStatusEnum("status").default("active").notNull(),
-  isActiveRep: boolean("is_active_rep").default(false).notNull(),
-  companyType: companyTypeEnum("company_type").default("other"),
-  brands: text("brands").array(),
-  channels: text("channels").array(),
-  productsOrServicesTags: text("products_or_services_tags").array(),
-  locationTypes: text("location_types").array(),
-  lastContactedAt: timestamp("last_contacted_at"),
-  nextFollowUpAt: timestamp("next_follow_up_at"),
-  // Timestamps
+  city: varchar("city", { length: 100 }),
+  region: varchar("region", { length: 100 }),
+  country: varchar("country", { length: 100 }),
+  postalCode: varchar("postal_code", { length: 20 }),
+  website: text("website"),
+  industry: varchar("industry", { length: 100 }),
+  description: text("description"),
+  logo: text("logo"),
+  employeeCount: integer("employee_count"),
+  revenue: varchar("revenue", { length: 100 }),
+  tags: json("tags").$type<string[]>(),
+  status: entityStatusEnum("status").notNull().default("active"),
+  locationTypes: json("location_types").$type<string[]>(),
+  customFields: json("custom_fields"),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at"),
 });
 
-// Relations removed for compatibility
-
-export const insertCompanySchema = createInsertSchema(companies).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
+// Tabella per le aree di attività (relazione tra contatti e aziende)
+export const areasOfActivity = pgTable("areas_of_activity", {
+  id: serial("id").primaryKey(),
+  contactId: integer("contact_id").notNull().references(() => contacts.id, { onDelete: "cascade" }),
+  companyId: integer("company_id").references(() => companies.id, { onDelete: "set null" }),
+  companyName: varchar("company_name", { length: 255 }),
+  role: varchar("role", { length: 255 }),
+  jobDescription: text("job_description"),
+  isPrimary: boolean("is_primary").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at"),
 });
 
-// Deal pipeline stages
+// Tabella lead
+export const leads = pgTable("leads", {
+  id: serial("id").primaryKey(),
+  firstName: varchar("first_name", { length: 255 }).notNull(),
+  lastName: varchar("last_name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }),
+  phone: varchar("phone", { length: 30 }),
+  companyName: varchar("company_name", { length: 255 }),
+  jobTitle: varchar("job_title", { length: 255 }),
+  website: text("website"),
+  source: varchar("source", { length: 100 }),
+  status: varchar("status", { length: 100 }),
+  score: integer("score"),
+  notes: text("notes"),
+  address: text("address"),
+  city: varchar("city", { length: 100 }),
+  region: varchar("region", { length: 100 }),
+  country: varchar("country", { length: 100 }),
+  postalCode: varchar("postal_code", { length: 20 }),
+  tags: json("tags").$type<string[]>(),
+  customFields: json("custom_fields"),
+  assignedToId: integer("assigned_to_id").references(() => users.id, { onDelete: "set null" }),
+  role: varchar("role", { length: 255 }),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at"),
+});
+
+// Tabella delle fasi della pipeline
 export const pipelineStages = pgTable("pipeline_stages", {
   id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  order: integer("order").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  position: integer("position").notNull(),
+  color: varchar("color", { length: 20 }),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at"),
 });
 
-export const insertPipelineStageSchema = createInsertSchema(pipelineStages).omit({
-  id: true,
-});
-
-// Deal status enum
-export const dealStatusEnum = pgEnum("deal_status", ["active", "archived"]);
-
-// Deals
+// Tabella deal
 export const deals = pgTable("deals", {
   id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  value: integer("value").notNull(),
-  stageId: integer("stage_id").notNull().references(() => pipelineStages.id),
-  contactId: integer("contact_id").references(() => contacts.id, { onDelete: 'set null' }),
-  companyId: integer("company_id").references(() => companies.id, { onDelete: 'set null' }),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  value: integer("value"),
+  currency: varchar("currency", { length: 10 }).default("EUR"),
+  pipelineStageId: integer("pipeline_stage_id").references(() => pipelineStages.id, { onDelete: "set null" }),
+  companyId: integer("company_id").references(() => companies.id, { onDelete: "set null" }),
+  probability: integer("probability"),
   expectedCloseDate: timestamp("expected_close_date"),
+  actualCloseDate: timestamp("actual_close_date"),
   notes: text("notes"),
-  tags: text("tags").array(),
-  
-  // Nuovi campi come da specifiche
-  status: dealStatusEnum("status").default("active").notNull(),
-  lastContactedAt: timestamp("last_contacted_at"),
+  tags: json("tags").$type<string[]>(),
+  assignedToId: integer("assigned_to_id").references(() => users.id, { onDelete: "set null" }),
+  status: entityStatusEnum("status").notNull().default("active"),
   nextFollowUpAt: timestamp("next_follow_up_at"),
-  
-  // Timestamps
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at"),
 });
 
-// Relations removed for compatibility
+// Relazioni tra le tabelle
+export const usersRelations = relations(users, ({ many }) => ({
+  assignedDeals: many(deals),
+  assignedLeads: many(leads),
+}));
 
-export const insertDealSchema = createInsertSchema(deals).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+export const contactsRelations = relations(contacts, ({ many }) => ({
+  areasOfActivity: many(areasOfActivity),
+}));
 
-// Tasks
-export const tasks = pgTable("tasks", {
-  id: serial("id").primaryKey(),
-  title: text("title").notNull(),
-  description: text("description"),
-  startDateTime: timestamp("start_date_time"),
-  endDateTime: timestamp("end_date_time"),
-  dueDate: timestamp("due_date"),
-  taskValue: integer("task_value").default(0),
-  completed: boolean("completed").default(false),
-  assignedToId: integer("assigned_to_id").references(() => users.id, { onDelete: 'set null' }),
-  contactId: integer("contact_id").references(() => contacts.id, { onDelete: 'set null' }),
-  companyId: integer("company_id").references(() => companies.id, { onDelete: 'set null' }),
-  dealId: integer("deal_id").references(() => deals.id, { onDelete: 'set null' }),
-  leadId: integer("lead_id").references(() => leads.id, { onDelete: 'set null' }),
-  isCalendarEvent: boolean("is_calendar_event").default(false),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
+export const companiesRelations = relations(companies, ({ many }) => ({
+  areasOfActivity: many(areasOfActivity),
+  deals: many(deals),
+}));
 
-export const insertTaskSchema = createInsertSchema(tasks).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+export const areasOfActivityRelations = relations(areasOfActivity, ({ one }) => ({
+  contact: one(contacts, {
+    fields: [areasOfActivity.contactId],
+    references: [contacts.id],
+  }),
+  company: one(companies, {
+    fields: [areasOfActivity.companyId],
+    references: [companies.id],
+  }),
+}));
 
-// Email accounts
-export const emailAccounts = pgTable("email_accounts", {
-  id: serial("id").primaryKey(),
-  email: text("email").notNull().unique(),
-  displayName: text("display_name").notNull(),
-  imapHost: text("imap_host").notNull(),
-  imapPort: integer("imap_port").notNull(),
-  imapSecure: boolean("imap_secure").default(true),
-  smtpHost: text("smtp_host").notNull(),
-  smtpPort: integer("smtp_port").notNull(),
-  smtpSecure: boolean("smtp_secure").default(true),
-  username: text("username").notNull(),
-  password: text("password").notNull(),
-  userId: integer("user_id").notNull(),
-  isPrimary: boolean("is_primary").default(false),
-  isActive: boolean("is_active").default(true),
-  status: text("status").default("unknown"), // "ok", "error", "unknown"
-  lastSyncTime: timestamp("last_sync_time"),
-  lastError: text("last_error"),
-});
+export const leadsRelations = relations(leads, ({ one }) => ({
+  assignedTo: one(users, {
+    fields: [leads.assignedToId],
+    references: [users.id],
+  }),
+}));
 
-export const insertEmailAccountSchema = createInsertSchema(emailAccounts).omit({
-  id: true,
-});
+export const pipelineStagesRelations = relations(pipelineStages, ({ many }) => ({
+  deals: many(deals),
+}));
 
-// Emails
-export const emails = pgTable("emails", {
-  id: serial("id").primaryKey(),
-  subject: text("subject").notNull(),
-  body: text("body").notNull(),
-  from: text("from").notNull(),
-  to: text("to").notNull().array(),
-  cc: text("cc").array(),
-  bcc: text("bcc").array(),
-  date: timestamp("date").notNull(),
-  read: boolean("read").default(false),
-  accountId: integer("account_id").notNull(),
-  contactId: integer("contact_id"),
-  companyId: integer("company_id"),
-  dealId: integer("deal_id"),
-  messageId: text("message_id").unique(),
-});
+export const dealsRelations = relations(deals, ({ one, many }) => ({
+  pipelineStage: one(pipelineStages, {
+    fields: [deals.pipelineStageId],
+    references: [pipelineStages.id],
+  }),
+  company: one(companies, {
+    fields: [deals.companyId],
+    references: [companies.id],
+  }),
+  assignedTo: one(users, {
+    fields: [deals.assignedToId],
+    references: [users.id],
+  }),
+}));
 
-export const insertEmailSchema = createInsertSchema(emails).omit({
-  id: true,
-});
+// Definizione degli schemi di inserimento
+export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertContactSchema = createInsertSchema(contacts).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertCompanySchema = createInsertSchema(companies).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertAreaOfActivitySchema = createInsertSchema(areasOfActivity).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertLeadSchema = createInsertSchema(leads).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertPipelineStageSchema = createInsertSchema(pipelineStages).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertDealSchema = createInsertSchema(deals).omit({ id: true, createdAt: true, updatedAt: true });
 
-// Activities (for activity timeline)
-export const activities = pgTable("activities", {
-  id: serial("id").primaryKey(),
-  type: text("type").notNull(), // email, meeting, task, deal, etc.
-  description: text("description").notNull(),
-  date: timestamp("date").notNull(),
-  userId: integer("user_id"),
-  contactId: integer("contact_id"),
-  companyId: integer("company_id"),
-  dealId: integer("deal_id"),
-  emailId: integer("email_id"),
-  taskId: integer("task_id"),
-  metadata: jsonb("metadata"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const insertActivitySchema = createInsertSchema(activities).omit({
-  id: true,
-  createdAt: true,
-});
-
-// Meetings
-export const meetings = pgTable("meetings", {
-  id: serial("id").primaryKey(),
-  title: text("title").notNull(),
-  description: text("description"),
-  startTime: timestamp("start_time").notNull(),
-  endTime: timestamp("end_time").notNull(),
-  location: text("location"),
-  meetingType: text("meeting_type").notNull(), // call, in-person, virtual
-  attendees: jsonb("attendees"),
-  contactId: integer("contact_id"),
-  companyId: integer("company_id"),
-  dealId: integer("deal_id"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-export const insertMeetingSchema = createInsertSchema(meetings).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-// Email signatures
-export const signatures = pgTable("signatures", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  content: text("content").notNull(),
-  isDefault: boolean("is_default").default(false),
-  userId: integer("user_id").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-export const insertSignatureSchema = createInsertSchema(signatures).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-// Email account signature relations (many-to-many)
-export const accountSignatures = pgTable("account_signatures", {
-  id: serial("id").primaryKey(),
-  accountId: integer("account_id").notNull().references(() => emailAccounts.id),
-  signatureId: integer("signature_id").notNull().references(() => signatures.id),
-  isActive: boolean("is_active").default(true),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const insertAccountSignatureSchema = createInsertSchema(accountSignatures).omit({
-  id: true,
-  createdAt: true,
-});
-
-// Define Types
-export type User = typeof users.$inferSelect;
+// Tipi per gli schemi di inserimento
 export type InsertUser = z.infer<typeof insertUserSchema>;
-export type UserSession = typeof userSessions.$inferSelect;
-export type InsertUserSession = z.infer<typeof insertUserSessionSchema>;
-export type SecurityLog = typeof securityLogs.$inferSelect;
-export type InsertSecurityLog = z.infer<typeof insertSecurityLogSchema>;
-
-export type Lead = typeof leads.$inferSelect;
-export type InsertLead = z.infer<typeof insertLeadSchema>;
-
-export type Contact = typeof contacts.$inferSelect;
 export type InsertContact = z.infer<typeof insertContactSchema>;
-
-export type AreaOfActivity = typeof areasOfActivity.$inferSelect;
-export type InsertAreaOfActivity = z.infer<typeof insertAreaOfActivitySchema>;
-
-export type Company = typeof companies.$inferSelect;
 export type InsertCompany = z.infer<typeof insertCompanySchema>;
-
-export type PipelineStage = typeof pipelineStages.$inferSelect;
+export type InsertAreaOfActivity = z.infer<typeof insertAreaOfActivitySchema>;
+export type InsertLead = z.infer<typeof insertLeadSchema>;
 export type InsertPipelineStage = z.infer<typeof insertPipelineStageSchema>;
-
-export type Deal = typeof deals.$inferSelect;
 export type InsertDeal = z.infer<typeof insertDealSchema>;
 
-export type Task = typeof tasks.$inferSelect;
-export type InsertTask = z.infer<typeof insertTaskSchema>;
-
-export type EmailAccount = typeof emailAccounts.$inferSelect;
-export type InsertEmailAccount = z.infer<typeof insertEmailAccountSchema>;
-
-export type Email = typeof emails.$inferSelect;
-export type InsertEmail = z.infer<typeof insertEmailSchema>;
-
-export type Activity = typeof activities.$inferSelect;
-export type InsertActivity = z.infer<typeof insertActivitySchema>;
-
-export type Meeting = typeof meetings.$inferSelect;
-export type InsertMeeting = z.infer<typeof insertMeetingSchema>;
-
-export type Signature = typeof signatures.$inferSelect;
-export type InsertSignature = z.infer<typeof insertSignatureSchema>;
-
-export type AccountSignature = typeof accountSignatures.$inferSelect;
-export type InsertAccountSignature = z.infer<typeof insertAccountSignatureSchema>;
-
-// Email type enum per i contatti
-export const contactEmailTypeEnum = pgEnum("contact_email_type", ["work", "personal", "previous_work", "other"]);
-
-// Tabella per gestire gli indirizzi email dei contatti
-export const contactEmails = pgTable("contact_emails", {
-  id: serial("id").primaryKey(),
-  contactId: integer("contact_id").notNull().references(() => contacts.id, { onDelete: 'cascade' }),
-  emailAddress: text("email_address").notNull(),
-  type: contactEmailTypeEnum("type").default("work").notNull(),
-  isPrimary: boolean("is_primary").default(false),
-  status: contactStatusEnum("status").default("active").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-export const insertContactEmailSchema = createInsertSchema(contactEmails).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export type ContactEmail = typeof contactEmails.$inferSelect;
-export type InsertContactEmail = z.infer<typeof insertContactEmailSchema>;
-
-// NOTE: Synergies module è stato temporaneamente rimosso per stabilità e sarà reintrodotto
-// in un modulo isolato e testato in un secondo momento
+// Tipi per i dati selezionati
+export type User = typeof users.$inferSelect;
+export type Contact = typeof contacts.$inferSelect;
+export type Company = typeof companies.$inferSelect;
+export type AreaOfActivity = typeof areasOfActivity.$inferSelect;
+export type Lead = typeof leads.$inferSelect;
+export type PipelineStage = typeof pipelineStages.$inferSelect;
+export type Deal = typeof deals.$inferSelect;
