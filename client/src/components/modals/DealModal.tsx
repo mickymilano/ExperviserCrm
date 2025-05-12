@@ -65,7 +65,6 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
   const [selectedSynergyContacts, setSelectedSynergyContacts] = useState<string[]>([]);
   const [synergySearchTerm, setSynergySearchTerm] = useState("");
   const [synergySearchOpen, setSynergySearchOpen] = useState(false);
-  const [filteredSynergyContacts, setFilteredSynergyContacts] = useState<any[]>([]);
   
   // Query for async searching of contacts
   const { data: searchedContacts = [], isLoading: isSearchingContacts } = useQuery({
@@ -199,7 +198,6 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     if (!selectedCompanyId) {
       // If no company is selected, show all contacts
       setFilteredContacts(contacts);
-      setFilteredSynergyContacts([]);
       return;
     }
     
@@ -212,34 +210,11 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     });
     setFilteredContacts(filteredContactsList);
     
-    // For synergy contacts, we want contacts NOT already associated with the company as primary
-    const synergyContactsList = contacts.filter(contact => {
-      if (!contact.areasOfActivity || !Array.isArray(contact.areasOfActivity)) {
-        return true; // Include contacts with no areas of activity
-      }
-      // Include if not already a primary contact for this company
-      return !contact.areasOfActivity.some(area => 
-        area.companyId === selectedCompanyId && area.isPrimary
-      );
-    });
-    setFilteredSynergyContacts(synergyContactsList);
+    // Note: We don't need to filter synergy contacts here anymore
+    // as we're using the async server-side search via the API
   }, [contacts, selectedCompanyId]);
 
-  // This useEffect is also redundant and contributing to the infinite loop
-  // We can calculate these options directly in the render function
-  /*
-  useEffect(() => {
-    if (filteredSynergyContacts && Array.isArray(filteredSynergyContacts)) {
-      const options = filteredSynergyContacts.map(contact => ({
-        value: contact.id.toString(),
-        label: `${contact.firstName} ${contact.lastName}`
-      }));
-      setSynergyOptions(options);
-    } else {
-      setSynergyOptions([]);
-    }
-  }, [filteredSynergyContacts]);
-  */
+  // We're now using the async search API directly instead of filtering locally
 
   // Initialize selected synergy contacts from existing synergies when editing a deal
   useEffect(() => {
