@@ -14,7 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import ContactModal from "@/components/modals/ContactModal";
 import LeadModal from "@/components/modals/LeadModal";
 import CompanyModal from "@/components/modals/CompanyModal";
-import DealModal from "@/components/modals/DealModal";
+import ImprovedDealModal from "@/components/modals/ImprovedDealModal";
 import { useAuth } from "@/hooks/useAuth";
 
 // User Profile Menu Component
@@ -213,7 +213,7 @@ export default function Header({ toggleSidebar }: HeaderProps) {
         onOpenChange={setShowCompanyModal}
         initialData={null}
       />
-      <DealModal
+      <ImprovedDealModal
         open={showDealModal}
         onOpenChange={setShowDealModal}
       />

@@ -25,6 +25,9 @@ export interface DealInfo {
   tags: string[] | null;
   createdAt: string;
   updatedAt: string;
+  status: string;
+  lastContactedAt: string | null;
+  nextFollowUpAt: string | null;
 }
 
 export interface StageSummary {
