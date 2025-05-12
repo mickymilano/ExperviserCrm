@@ -56,6 +56,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
   const [companySearchQuery, setCompanySearchQuery] = useState("");
   const [filteredCompanies, setFilteredCompanies] = useState<any[]>([]);
   const [filteredContacts, setFilteredContacts] = useState<any[]>([]);
+  const [selectedCompany, setSelectedCompany] = useState<number | null>(null);
   
   // Use ref for selected company to avoid render cycles
   const selectedCompanyIdRef = useRef<number | null>(null);
@@ -111,15 +112,14 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     }
   });
 
-  // Helper function to set company ID safely
+  // Helper functions for company selection
   const setSelectedCompanyId = (id: number | null) => {
     console.log("Setting selected company ID to:", id);
     selectedCompanyIdRef.current = id;
     // Update the state directly as well
     setSelectedCompany(id);
   };
-
-  // Helper function to get company ID safely
+  
   const getSelectedCompanyId = () => selectedCompany;
 
   // Initialize form when in edit mode or reset for create mode
@@ -219,15 +219,9 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     }
   }, [selectedCompany, setValue]);
 
-  // Aggiungiamo uno stato per tracciare l'azienda selezionata
-  const [selectedCompany, setSelectedCompany] = useState<number | null>(null);
 
-  // Aggiorniamo lo stato quando cambia la ref
-  useEffect(() => {
-    if (selectedCompanyIdRef.current !== selectedCompany) {
-      setSelectedCompany(selectedCompanyIdRef.current);
-    }
-  }, [selectedCompany]);
+
+
   
   // Filter contacts based on selected company
   useEffect(() => {
