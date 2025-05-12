@@ -122,13 +122,23 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
     }
   });
 
-  // Helper function to set company ID safely
+  // Wrapper function to set company ID safely
   const setSelectedCompanyId = (id: number | null) => {
     selectedCompanyIdRef.current = id;
   };
 
-  // Helper function to get company ID safely
+  // Wrapper function to get company ID safely
   const getSelectedCompanyId = () => selectedCompanyIdRef.current;
+  
+  // Keep selectedCompanyIdRef in sync with form value
+  useEffect(() => {
+    const currentCompanyId = getValues("companyId");
+    if (currentCompanyId !== undefined && currentCompanyId !== null) {
+      selectedCompanyIdRef.current = Number(currentCompanyId);
+    } else {
+      selectedCompanyIdRef.current = null;
+    }
+  }, [getValues]);
 
   // Initialize form when in edit mode or reset for create mode
   useEffect(() => {
@@ -236,9 +246,7 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
     const currentCompanyId = getSelectedCompanyId();
     
     if (!currentCompanyId) {
-      if (filteredContacts.length !== contacts.length) {
-        setFilteredContacts(contacts);
-      }
+      setFilteredContacts(contacts);
       return;
     }
     
@@ -252,10 +260,8 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
       );
     });
     
-    if (JSON.stringify(filteredContacts) !== JSON.stringify(filteredContactsList)) {
-      setFilteredContacts(filteredContactsList);
-    }
-  }, [contacts, filteredContacts]);
+    setFilteredContacts(filteredContactsList);
+  }, [contacts, getSelectedCompanyId]);
 
   // Load existing synergy contacts in edit mode
   useEffect(() => {
@@ -452,13 +458,14 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
         return resolve([]);
       }
       
-      if (inputValue.length === 0) {
+      // Return empty results for very short inputs (less than 1 character)
+      // This prevents unnecessary API calls but still allows typeahead search
+      if (inputValue.length < 1) {
         return resolve([]);
       }
       
-      const endpoint = inputValue.trim() 
-        ? `/api/contacts?search=${encodeURIComponent(inputValue)}&excludeCompanyId=${getSelectedCompanyId()}&includeAreas=true`
-        : `/api/contacts?excludeCompanyId=${getSelectedCompanyId()}&limit=10&includeAreas=true`;
+      // Build query with selected company ID excluded
+      const endpoint = `/api/contacts?search=${encodeURIComponent(inputValue.trim())}&excludeCompanyId=${getSelectedCompanyId()}&includeAreas=true`;
         
       fetch(endpoint)
         .then(response => {
@@ -466,10 +473,18 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
           return response.json();
         })
         .then(contacts => {
+          if (!Array.isArray(contacts)) {
+            console.error("Contacts API did not return an array:", contacts);
+            return resolve([]);
+          }
+          
+          // Map contacts to select options format
           const options = contacts.map((contact: any) => ({
             value: contact.id,
-            label: `${contact.firstName} ${contact.lastName}`
+            label: `${contact.firstName || ""} ${contact.lastName || ""}`.trim() || `Contact #${contact.id}`,
+            data: contact // Store full contact data for reference
           }));
+          
           resolve(options);
         })
         .catch(error => {
@@ -817,16 +832,20 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
                   render={({ field }) => (
                     <AsyncSelect
                       cacheOptions
-                      defaultOptions
+                      defaultOptions={false} 
                       isMulti
                       isDisabled={!getSelectedCompanyId()}
                       placeholder={getSelectedCompanyId() ? "Type at least 1 character to search contacts..." : "Select a company first"}
                       loadOptions={loadSynergyContactOptions}
                       value={field.value?.map((id: number) => {
-                        const contact = contacts.find((c: any) => c.id === id);
+                        const contact = Array.isArray(contacts) 
+                          ? contacts.find((c: any) => c.id === id) 
+                          : null;
                         return {
                           value: id,
-                          label: contact ? `${contact.firstName} ${contact.lastName}` : `Contact #${id}`
+                          label: contact 
+                            ? `${contact.firstName || ""} ${contact.lastName || ""}`.trim() || `Contact #${id}`
+                            : `Contact #${id}`
                         };
                       })}
                       onChange={(selected) => {
@@ -835,6 +854,14 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
                       }}
                       className="basic-multi-select"
                       classNamePrefix="select"
+                      // Wait until user types a character before showing options
+                      noOptionsMessage={({ inputValue }) => 
+                        !getSelectedCompanyId() 
+                          ? "Please select a company first" 
+                          : inputValue.length < 1 
+                            ? "Type at least 1 character to search" 
+                            : "No matching contacts found"
+                      }
                     />
                   )}
                 />
