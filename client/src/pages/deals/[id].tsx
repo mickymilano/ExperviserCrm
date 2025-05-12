@@ -11,12 +11,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { 
   ArrowLeft, Briefcase, CircleDollarSign, Calendar, Edit,
-  Building2, User, Clock, AlertCircle, CheckCircle, Trash, FileText, 
+  Building2, User, Clock, AlertCircle, CheckCircle, Trash, FileText, Handshake
 } from "lucide-react";
 import { formatCurrency, formatDateToLocal } from "@/lib/utils";
 import DealModal from "@/components/modals/DealModal";
 import TaskList from "@/components/tasks/TaskList";
 import { Link } from "wouter";
+import { SynergiesList } from "@/components/SynergiesList";
+import { useQuery } from "@tanstack/react-query";
 
 export default function DealDetail() {
   const params = useParams();
@@ -32,6 +34,13 @@ export default function DealDetail() {
   const { data: stages } = usePipelineStages();
   const { companies } = useCompanies();
   const { contacts } = useContacts();
+  
+  // Fetch deal synergies
+  const { data: dealSynergies, isLoading: synergiesLoading } = useQuery({
+    queryKey: [`/api/deals/${dealId}/synergies`],
+    enabled: !!dealId,
+    refetchOnWindowFocus: true,
+  });
   
   // Helper functions
   const getStageName = (stageId: number) => {
