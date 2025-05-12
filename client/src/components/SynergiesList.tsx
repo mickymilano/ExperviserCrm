@@ -26,13 +26,13 @@ interface SynergiesListProps {
   contactId?: number;
   companyId?: number;
   showTitle?: boolean;
-  hideAddButton?: boolean;
-  hideDeleteButtons?: boolean;
+  hideAddButton?: boolean; // Non più usato - le sinergie devono essere create solo tramite Deal
+  hideDeleteButtons?: boolean; // Non più usato - le sinergie non possono essere cancellate
 }
 
-export function SynergiesList({ contactId, companyId, showTitle = true, hideAddButton = false, hideDeleteButtons = false }: SynergiesListProps) {
+export function SynergiesList({ contactId, companyId, showTitle = true, hideAddButton = true, hideDeleteButtons = true }: SynergiesListProps) {
   const { toast } = useToast();
-  const [createModalOpen, setCreateModalOpen] = useState(false);
+  // Rimuoviamo il modal di creazione poiché le sinergie devono essere create solo tramite Deal
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [currentSynergy, setCurrentSynergy] = useState<any>(null);
   
@@ -229,16 +229,7 @@ export function SynergiesList({ contactId, companyId, showTitle = true, hideAddB
       {showTitle && (
         <div className="flex justify-between items-center">
           <h3 className="text-lg font-semibold">Business Synergies</h3>
-          {!hideAddButton && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => setCreateModalOpen(true)}
-            >
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add Synergy
-            </Button>
-          )}
+          {/* Il bottone "Add Synergy" è stato rimosso perché le sinergie devono essere create solo tramite Deal */}
         </div>
       )}
       
@@ -293,33 +284,6 @@ export function SynergiesList({ contactId, companyId, showTitle = true, hideAddB
                   <Edit className="mr-1 h-4 w-4" />
                   Edit
                 </Button>
-                
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <Trash2 className="mr-1 h-4 w-4" />
-                      Delete
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Delete Synergy</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Are you sure you want to delete this business synergy? 
-                        This action cannot be undone.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction 
-                        onClick={() => handleDelete(synergy)}
-                        className="bg-red-500 hover:bg-red-600"
-                      >
-                        Delete
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
               </CardFooter>
             )}
           </Card>
