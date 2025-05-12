@@ -1,0 +1,52 @@
+Ecco un comando semplice, diretto e inequivocabile, da copiare integralmente nella chat di Replit per forzare la completa eliminazione di tutte le sinergie errate (fake) rimaste nel sistema:
+
+⸻
+
+🚨 Comando definitivo per Replit (Rimozione Forzata Sinergie Fake)
+
+Problema:
+Nonostante il precedente comando di reset, esistono ancora sinergie (synergies) errate e non desiderate nel database.
+
+Azione Immediata Richiesta:
+
+Esegui immediatamente, senza ulteriori domande o interruzioni, queste operazioni:
+	1.	Elimina tutte le sinergie attualmente presenti nella tabella synergies.
+
+DELETE FROM synergies;
+
+
+	2.	Verifica immediatamente che la tabella synergies sia vuota:
+
+SELECT * FROM synergies;
+
+	•	Se appaiono ancora risultati, ripeti il punto 1 fino a che la query restituisce una tabella vuota.
+
+	3.	Assicurati inoltre che nessuna tabella collegata (deals, companies, contacts) contenga riferimenti invalidi alle sinergie appena eliminate.
+	•	Verifica rapidamente:
+
+SELECT * FROM deals WHERE id IN (SELECT dealId FROM synergies);
+SELECT * FROM contacts WHERE id IN (SELECT contactId FROM synergies);
+SELECT * FROM companies WHERE id IN (SELECT companyId FROM synergies);
+
+
+	•	Queste query NON DEVONO restituire alcun risultato dopo la pulizia.
+
+	4.	Dopodiché, forza immediatamente il reset totale dei dati (escluso l’utente admin michele@experviser.com):
+	•	Cancella (truncate) di nuovo tutte le tabelle principali (deals, contacts, companies, leads, synergies, areasOfActivity, contact_emails, emails, tasks, pipelineStages, activities).
+
+TRUNCATE TABLE deals, contacts, companies, leads, synergies, areas_of_activity, contact_emails, emails, tasks, pipeline_stages, activities RESTART IDENTITY CASCADE;
+
+
+	5.	Esegui immediatamente il reseed minimale definito precedentemente:
+	•	2 aziende (1 Active Rep, 1 standard)
+	•	2-3 contatti con email multiple
+	•	2 Lead
+	•	1-2 Deal
+	•	Nessuna sinergia iniziale.
+	6.	Infine, fornisci una conferma finale rapida ed esplicita che:
+	•	La tabella synergies è vuota.
+	•	Il reseed minimo è avvenuto con successo e senza errori.
+	•	Nessuna sinergia fake risulta più presente nel database.
+
+⚠️ IMPORTANTE:
+Non procedere a nessuna altra attività finché questi step non saranno completati e confermati esplicitamente.
