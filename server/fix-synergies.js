@@ -7,56 +7,67 @@
  * Questo script è in formato .js con sintassi ES modules per compatibilità.
  */
 
-import { Pool } from '@neondatabase/serverless';
+import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
-import { sql } from 'drizzle-orm';
+import { sql, eq, isNull } from 'drizzle-orm';
 import ws from 'ws';
 
 // Setup Neon WebSocket configuration
-import { neonConfig } from '@neondatabase/serverless';
 neonConfig.webSocketConstructor = ws; // Configure WebSocket for Neon
 
-// Setup database connection
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-const db = drizzle(pool);
+// Need to define the synergies table structure before using it
+const synergies = {
+  id: { name: 'id' },
+  dealId: { name: 'deal_id' },
+  contactId: { name: 'contact_id' },
+  companyId: { name: 'company_id' }
+};
 
 async function fixFakeSynergies() {
+  // Setup database connection
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  const db = drizzle(pool);
+  
   try {
     console.log("Iniziando correzione delle sinergie...");
     
-    // 1. Recupera tutte le sinergie
-    const allSynergies = await db.execute(sql`SELECT * FROM synergies`);
-    console.log(`Trovate ${allSynergies.length} sinergie totali`);
+    // 1. Conta tutte le sinergie
+    const totalCount = await db.execute(sql`SELECT COUNT(*) as count FROM synergies`);
+    console.log(`Trovate ${totalCount[0]?.count || 0} sinergie totali`);
     
-    // 2. Identifica sinergie senza deal associato (sinergie "orfane")
-    const orphanSynergies = allSynergies.filter(s => s.deal_id === null);
-    console.log(`Trovate ${orphanSynergies.length} sinergie senza deal associato (orfane)`);
+    // 2. Conta sinergie senza deal associato (sinergie "orfane")
+    const orphanCount = await db.execute(sql`SELECT COUNT(*) as count FROM synergies WHERE deal_id IS NULL`);
+    console.log(`Trovate ${orphanCount[0]?.count || 0} sinergie senza deal associato (orfane)`);
     
     // 3. Elimina le sinergie orfane
-    if (orphanSynergies.length > 0) {
+    if (orphanCount[0]?.count > 0) {
+      // Recupera le sinergie orfane prima di eliminarle per mostrarle nei log
+      const orphanSynergies = await db.execute(sql`SELECT * FROM synergies WHERE deal_id IS NULL`);
+      
+      // Log delle sinergie che saranno eliminate
       for (const synergy of orphanSynergies) {
-        await db.execute(sql`DELETE FROM synergies WHERE id = ${synergy.id}`);
-        console.log(`Eliminata sinergia orfana ID: ${synergy.id} tra contatto ${synergy.contact_id} e azienda ${synergy.company_id}`);
+        console.log(`Sarà eliminata sinergia orfana ID: ${synergy.id} tra contatto ${synergy.contact_id} e azienda ${synergy.company_id}`);
       }
+      
+      // Eliminazione in bulk di tutte le sinergie orfane
+      await db.execute(sql`DELETE FROM synergies WHERE deal_id IS NULL`);
+      console.log(`Eliminate ${orphanCount[0]?.count || 0} sinergie orfane`);
     }
     
     // 4. Verifica se ci sono ancora problemi dopo la pulizia
-    const remainingSynergies = await db.execute(sql`SELECT * FROM synergies`);
-    console.log(`Rimaste ${remainingSynergies.length} sinergie valide`);
-    
-    // 5. Chiudi il pool di connessione
-    await pool.end();
+    const remainingCount = await db.execute(sql`SELECT COUNT(*) as count FROM synergies`);
+    console.log(`Rimaste ${remainingCount[0]?.count || 0} sinergie valide`);
     
     console.log("Correzione delle sinergie completata con successo!");
     
   } catch (error) {
     console.error("Errore durante la correzione delle sinergie:", error);
-    await pool.end();
     throw error;
+  } finally {
+    // 5. Chiudi il pool di connessione
+    await pool.end();
   }
 }
-
-// sql tag is now imported at the top
 
 // Esegui la correzione
 fixFakeSynergies()
