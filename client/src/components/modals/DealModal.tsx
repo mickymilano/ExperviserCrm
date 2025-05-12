@@ -13,7 +13,10 @@ import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { DealInfo } from "@/types";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Combobox } from "@/components/ui/combobox";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { useCreateSynergy } from "@/hooks/useSynergies";
 
 interface DealModalProps {
@@ -571,16 +574,47 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
             <div className="space-y-2 mb-4">
               <Label htmlFor="synergyContactId">Synergy Contact</Label>
               <div className="relative">
-                <Combobox
-                  options={synergyOptions}
-                  value={synergyContactId || ""}
-                  onChange={(value) => {
-                    setSynergyContactId(value);
-                    setValue("synergyContactId", value ? parseInt(value) : null);
-                  }}
-                  placeholder="Search for a contact to create a synergy"
-                  emptyMessage="No contacts found"
-                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      className="w-full justify-between"
+                    >
+                      {synergyContactId ? 
+                        synergyOptions.find(option => option.value === synergyContactId)?.label || "Select a contact" : 
+                        "Search for a contact to create a synergy"}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0">
+                    <Command>
+                      <CommandInput placeholder="Search for a contact..." />
+                      <CommandEmpty>No contacts found</CommandEmpty>
+                      <CommandGroup>
+                        {synergyOptions.map((option) => (
+                          <CommandItem
+                            key={option.value}
+                            value={option.value}
+                            onSelect={() => {
+                              const value = option.value === synergyContactId ? "" : option.value;
+                              setSynergyContactId(value);
+                              setValue("synergyContactId", value ? parseInt(value) : null);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                synergyContactId === option.value ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {option.label}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
                 <p className="text-xs text-muted-foreground mt-1">
                   Optional: Select a contact to create a synergy relationship with this deal
                 </p>
