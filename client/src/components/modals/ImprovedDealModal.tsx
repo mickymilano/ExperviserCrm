@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -130,15 +130,24 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
   // Wrapper function to get company ID safely
   const getSelectedCompanyId = () => selectedCompanyIdRef.current;
   
-  // Keep selectedCompanyIdRef in sync with form value
-  useEffect(() => {
+  // Sincronizza selectedCompanyIdRef solo quando necessario (non a ogni render)
+  const updateSelectedCompanyIdFromForm = useCallback(() => {
     const currentCompanyId = getValues("companyId");
     if (currentCompanyId !== undefined && currentCompanyId !== null) {
-      selectedCompanyIdRef.current = Number(currentCompanyId);
+      if (selectedCompanyIdRef.current !== Number(currentCompanyId)) {
+        selectedCompanyIdRef.current = Number(currentCompanyId);
+      }
     } else {
       selectedCompanyIdRef.current = null;
     }
   }, [getValues]);
+  
+  // Eseguiamo solo quando viene aperto il modale
+  useEffect(() => {
+    if (open) {
+      updateSelectedCompanyIdFromForm();
+    }
+  }, [open, updateSelectedCompanyIdFromForm]);
 
   // Initialize form when in edit mode or reset for create mode
   useEffect(() => {
