@@ -185,7 +185,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       if (!contact.areasOfActivity || !Array.isArray(contact.areasOfActivity)) {
         return false;
       }
-      return contact.areasOfActivity.some(area => area.companyId === selectedCompanyId);
+      return contact.areasOfActivity.some((area: { companyId: number }) => area.companyId === selectedCompanyId);
     });
     setFilteredContacts(filteredContactsList);
     
@@ -582,7 +582,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                           // Se troviamo un contatto selezionato, verifichiamo se ha quest'azienda come primaria
                           if (selectedContact?.areasOfActivity?.length > 0) {
                             isPrimaryCompany = selectedContact.areasOfActivity.some(
-                              area => area.companyId === company.id && area.isPrimary
+                              (area: { companyId: number, isPrimary: boolean }) => area.companyId === company.id && area.isPrimary
                             );
                           }
                         }
@@ -612,8 +612,9 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
 
                       if (selectedContact?.areasOfActivity?.length > 0) {
                         // Trova l'area di attività primaria (o prende la prima disponibile)
-                        const primaryArea = selectedContact.areasOfActivity.find(a => a.isPrimary) || 
-                                           selectedContact.areasOfActivity[0];
+                        const primaryArea = selectedContact.areasOfActivity.find(
+                          (a: { isPrimary: boolean }) => a.isPrimary
+                        ) || selectedContact.areasOfActivity[0];
 
                         // Se l'area ha un'azienda associata, suggeriscila come scelta predefinita
                         if (primaryArea?.companyId) {
@@ -630,13 +631,13 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                   <SelectContent>
                     <SelectItem value="0">None</SelectItem>
                     {filteredContacts.length > 0 && selectedCompanyId ? (
-                      filteredContacts.map((contact) => (
+                      filteredContacts.map((contact: any) => (
                         <SelectItem key={contact.id} value={contact.id.toString()}>
                           {contact.firstName} {contact.lastName}
                         </SelectItem>
                       ))
                     ) : (
-                      contacts.map((contact) => (
+                      Array.isArray(contacts) && contacts.map((contact: any) => (
                         <SelectItem key={contact.id} value={contact.id.toString()}>
                           {contact.firstName} {contact.lastName}
                         </SelectItem>
@@ -671,7 +672,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                           const contacts = await response.json();
                           
                           // Map API results to the expected format for react-select
-                          return contacts.map(contact => ({
+                          return contacts.map((contact: any) => ({
                             value: contact.id,
                             label: `${contact.firstName} ${contact.lastName}`,
                             contact // Store the full contact data for reference
