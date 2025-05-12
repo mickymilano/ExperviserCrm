@@ -45,16 +45,8 @@ const dealSchema = z.object({
   status: z.string().default("active"),
   lastContactedAt: z.string().optional(),
   nextFollowUpAt: z.string().optional(),
-  synergyContactIds: z.array(z.coerce.number()).default([]),
-}).refine((data) => {
-  // If synergy contacts are selected, a company is required
-  if (data.synergyContactIds && data.synergyContactIds.length > 0 && !data.companyId) {
-    return false;
-  }
-  return true;
-}, {
-  message: "A company is required when synergy contacts are selected",
-  path: ["companyId"]
+  // La funzionalità sinergie è stata rimossa
+  // synergyContactIds: z.array(z.coerce.number()).default([]),
 });
 
 type DealFormData = z.infer<typeof dealSchema>;
@@ -78,11 +70,11 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
   const [showNoContactAlert, setShowNoContactAlert] = useState(false);
   const isEditMode = !!initialData && initialData.id !== undefined;
 
-  // Create synergy mutation - utilizzo dell'hook dedicato che include tutti i comportamenti necessari
-  const createSynergyMutation = useCreateSynergy();
+  // La funzionalità delle sinergie è stata rimossa
+  // const createSynergyMutation = useCreateSynergy();
   
-  // Debug log per verificare se la mutation è disponibile
-  console.log("Create synergy mutation disponibile:", !!createSynergyMutation);
+  // Debug log rimosso
+  // console.log("Create synergy mutation disponibile:", !!createSynergyMutation);
 
   // Fetch pipeline stages 
   const { data: stages = [] } = useQuery({
