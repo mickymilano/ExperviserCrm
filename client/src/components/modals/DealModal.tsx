@@ -204,10 +204,15 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       const contactIds = dealSynergies.map(synergy => 
         typeof synergy.contactId === 'string' ? parseInt(synergy.contactId) : synergy.contactId
       );
-      setValue("synergyContactIds", contactIds);
+      
+      // Compare with current value to avoid unnecessary updates
+      const currentValue = getValues("synergyContactIds") || [];
+      if (JSON.stringify(currentValue) !== JSON.stringify(contactIds)) {
+        setValue("synergyContactIds", contactIds);
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dealSynergies, isEditMode]);
+  }, [dealSynergies, isEditMode, setValue]);
 
   // Helper function to create multiple synergies at once for all selected contacts
   const createSynergiesForContacts = async (dealId: number, companyId: number, contactIds: number[]) => {
