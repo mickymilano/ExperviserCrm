@@ -761,16 +761,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
   apiRouter.get("/contacts/:id/companies", async (req: Request, res: Response) => {
     try {
       const id = Number(req.params.id);
-      const contact = await storage.getContact(id);
+      console.log(`GET /contacts/${id}/companies - Retrieving linked companies`);
       
+      const contact = await storage.getContact(id);
       if (!contact) {
         return res.status(404).json({ message: "Contact not found" });
       }
       
       const companies = await storage.getContactCompanies(id);
+      console.log(`Found ${companies.length} companies linked to contact ${id}`);
+      
       res.json(companies);
     } catch (error) {
-      res.status(500).json({ message: "Failed to get contact companies", error: error.message });
+      console.error(`Error fetching contact companies:`, error);
+      res.status(500).json({ 
+        message: "Failed to get contact companies", 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  });
+  
+  // New endpoint to directly link a contact to a company
+  apiRouter.post("/contacts/:contactId/companies/:companyId", async (req: Request, res: Response) => {
+    try {
+      const contactId = Number(req.params.contactId);
+      const companyId = Number(req.params.companyId);
+      
+      console.log(`POST /contacts/${contactId}/companies/${companyId} - Linking contact to company`);
+      
+      // First check if the contact and company exist
+      const contact = await storage.getContact(contactId);
+      if (!contact) {
+        return res.status(404).json({ message: "Contact not found" });
+      }
+      
+      const company = await storage.getCompany(companyId);
+      if (!company) {
+        return res.status(404).json({ message: "Company not found" });
+      }
+      
+      // Check if this contact is already linked to this company
+      const existingAreas = await storage.getAreasOfActivity(contactId);
+      const alreadyLinked = existingAreas.some(area => area.companyId === companyId);
+      
+      if (alreadyLinked) {
+        console.log(`Contact ${contactId} is already linked to company ${companyId}`);
+        return res.status(200).json({ message: "Contact is already linked to this company" });
+      }
+      
+      // If not already linked, create a new area of activity
+      const isPrimary = existingAreas.length === 0; // Make it primary if it's the first
+      
+      const newArea = await storage.createAreaOfActivity({
+        contactId,
+        companyId,
+        companyName: company.name,
+        role: req.body.role || null,
+        jobDescription: req.body.jobDescription || null,
+        isPrimary
+      });
+      
+      console.log(`Successfully linked contact ${contactId} to company ${companyId} with area of activity ${newArea.id}`);
+      
+      res.status(201).json(newArea);
+    } catch (error) {
+      console.error(`Error linking contact to company:`, error);
+      res.status(500).json({ 
+        message: "Failed to link contact to company", 
+        error: error instanceof Error ? error.message : String(error) 
+      });
     }
   });
   
