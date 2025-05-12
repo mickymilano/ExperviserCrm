@@ -1,0 +1,44 @@
+Objective: Resolve critical issues in the Deal creation/editing form (`DealModal.tsx`):
+1.  Company and Contact selection fields are displaying options but are not selectable.
+2.  The "Stage" selection field is displaying duplicate stage names.
+
+---
+**Issue 1: Company/Contact Fields Not Selectable in Deal Modal**
+
+**File to Investigate:** `client/src/components/DealModal.tsx`
+
+**Analysis & Correction Steps:**
+1.  **Identify UI Components:** Determine which select/autocomplete components are being used for the "Company" and "Contact" fields.
+2.  **React Hook Form Integration:**
+    - Ensure each field is correctly wrapped in a `<Controller>` from `react-hook-form`.
+    - Verify the `name` prop of the `Controller` matches the field name in your form schema.
+3.  **Select Component Props (`react-select` or similar):**
+    - **Crucial:** Implement or verify correct `getOptionValue` (e.g., `(option) => option.id`) and `getOptionLabel` (e.g., `(option) => option.name` for companies, or `(option) => \`${option.firstName} ${option.lastName}\` for contacts) props.
+    - **`onChange` Handler:** Ensure the function passed to the `onChange` prop of the select component correctly calls `field.onChange()` (from the `Controller`'s `render` prop) with the appropriate value (typically the `id` of the selected option, or `null` if deselected).
+    - **`value` Prop:** The `value` prop of the select component must be correctly managed. It should derive from `field.value` (which typically stores the ID). You may need to find the full option object from your `options` list that matches the `field.value` ID to pass to `react-select`'s `value` prop (e.g., `options.find(option => option.id === field.value)`).
+    - **Options Loading:** If these are asynchronous search fields (like Synergy Contacts was intended to be), ensure the `loadOptions` or `onInputChange` logic is correctly implemented and that the fetched `options` are in the expected format for the select component.
+4.  **Test:** After applying fixes, confirm that companies and contacts can be searched (if applicable) and selected, and that the selection correctly updates the form state.
+
+---
+**Issue 2: Duplicate "Stage" Values in Deal Modal Dropdown**
+
+**Analysis & Correction Steps:**
+1.  **Database Check (`pipelineStages` table):**
+    - Action: Query the `pipelineStages` table directly in the database.
+    - Verification: Ensure there are no duplicate stage names. Each stage name should be unique.
+    - Rectify: If duplicates exist, provide a script or commands to clean the table, leaving only unique stage entries (e.g., based on `name`, keeping the one with the lowest `id`).
+2.  **API Endpoint Check (`GET /api/pipeline-stages`):**
+    - File: `server/routes.ts` and corresponding `storage.ts` function.
+    - Action: Review the logic for this endpoint.
+    - Verification: Ensure it fetches and returns a distinct list of pipeline stages. If there are JOINs or complex queries, ensure they are not causing records to be duplicated in the result set.
+3.  **Frontend Data Handling (DealModal.tsx & `usePipelineStages` hook if applicable):**
+    - Action: Examine how the list of stages is fetched and passed to the "Stage" select component.
+    - Verification: Ensure the data fetching hook does not accidentally append or merge data in a way that creates duplicates upon re-fetch or cache updates.
+    - Rectify (if frontend de-duplication is a last resort): If the API or DB correction is complex, as a temporary measure, ensure the frontend de-duplicates the list of stages before rendering them in the dropdown. Example: `const uniqueStages = Array.from(new Map(stagesFromServer.map(stage => [stage.id, stage])).values());`. The primary fix should be at the data source (DB or API).
+4.  **Test:** After applying fixes, confirm that the "Stage" dropdown in the Deal Modal displays each stage name only once.
+
+---
+**General Instructions:**
+- Prioritize fixing the data source (database or API) for the duplicate stages issue.
+- Ensure all select components are robust and provide good user experience for selection.
+- Report back with the specific changes made and confirmation of testing for both issues.

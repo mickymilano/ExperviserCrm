@@ -112,14 +112,16 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     }
   });
 
-  // Helper functions for company selection
+  // Helper function to manage company selection with proper logging
   const setSelectedCompanyId = (id: number | null) => {
     console.log("Setting selected company ID to:", id);
     selectedCompanyIdRef.current = id;
-    // Update the state directly as well
     setSelectedCompany(id);
+    // Also update the form value directly
+    setValue("companyId", id);
   };
   
+  // Helper function to get company ID from state
   const getSelectedCompanyId = () => selectedCompany;
 
   // Initialize form when in edit mode or reset for create mode
@@ -202,22 +204,16 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
 
   // Aggiorniamo i contatti filtrati quando cambia l'azienda selezionata
   useEffect(() => {
-    // Rilevare quando cambia l'azienda selezionata
+    // Rilevare quando cambia l'azienda selezionata nel form
     const companyIdFromForm = getValues("companyId");
-    console.log("Form company ID:", companyIdFromForm);
+    console.log("Form company ID (from form):", companyIdFromForm);
     
-    if (companyIdFromForm) {
+    // Solo se l'ID dell'azienda è diverso dall'ID corrente, aggiorniamo lo stato
+    if (companyIdFromForm && companyIdFromForm !== selectedCompany) {
+      console.log("Setting company ID from form:", companyIdFromForm);
       setSelectedCompanyId(Number(companyIdFromForm));
     }
-  }, [getValues]);
-  
-  // Quando l'azienda selezionata cambia, aggiorniamo anche il form
-  useEffect(() => {
-    if (selectedCompany) {
-      console.log("Selected company changed to:", selectedCompany);
-      setValue("companyId", selectedCompany);
-    }
-  }, [selectedCompany, setValue]);
+  }, [getValues, selectedCompany]);
 
 
 
@@ -225,35 +221,54 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
   
   // Filter contacts based on selected company
   useEffect(() => {
-    if (!contacts || !Array.isArray(contacts)) return;
+    if (!contacts || !Array.isArray(contacts)) {
+      console.warn("Contacts data is not available or not an array");
+      return;
+    }
     
     const currentCompanyId = selectedCompany;
     console.log("Filtering contacts for company ID:", currentCompanyId);
     
     if (!currentCompanyId) {
       // Se non c'è un'azienda selezionata, mostra tutti i contatti
-      setFilteredContacts(contacts);
-      console.log("No company selected, showing all contacts:", contacts.length);
+      setFilteredContacts([]);
+      console.log("No company selected, clearing contacts selection");
       return;
     }
     
     // Only show contacts associated with selected company
     const filteredContactsList = contacts.filter(contact => {
+      // Check if the contact has areasOfActivity data
       if (!contact.areasOfActivity || !Array.isArray(contact.areasOfActivity)) {
+        console.log(`Contact ${contact.id} has no areasOfActivity data`);
         return false;
       }
       
+      // Check if any area links the contact to the selected company
       const isAssociated = contact.areasOfActivity.some((area: { companyId: number }) => 
         area.companyId === currentCompanyId
       );
       
+      if (isAssociated) {
+        console.log(`Contact ${contact.id} (${contact.firstName} ${contact.lastName}) is associated with company ${currentCompanyId}`);
+      }
+      
       return isAssociated;
     });
     
-    console.log("Filtered contacts for company ID", currentCompanyId, ":", filteredContactsList.length);
+    console.log(`Filtered contacts for company ID ${currentCompanyId}: found ${filteredContactsList.length} contacts`);
     setFilteredContacts(filteredContactsList);
     
-  }, [contacts, selectedCompany]);
+    // If there's only one contact for this company, auto-select it
+    if (filteredContactsList.length === 1) {
+      console.log(`Auto-selecting the only contact: ${filteredContactsList[0].id}`);
+      setValue("contactId", filteredContactsList[0].id);
+    } else if (filteredContactsList.length === 0) {
+      // Clear contact selection if no contacts available
+      setValue("contactId", null);
+    }
+    
+  }, [contacts, selectedCompany, setValue]);
 
   // Load existing synergy contacts in edit mode
   useEffect(() => {
@@ -644,11 +659,14 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                               <CommandItem
                                 key={company.id}
                                 onSelect={() => {
-                                  field.onChange(company.id);
+                                  console.log("Company selection - Setting ID:", company.id, company.name);
+                                  // Set the company ID using our single setter function
                                   setSelectedCompanyId(company.id);
-                                  setSelectedCompany(company.id);
+                                  // Also set in the form directly
+                                  field.onChange(company.id);
+                                  // Reset contact selection
                                   setValue("contactId", null);
-                                  console.log("Company selected:", company.id, company.name);
+                                  setValue("synergyContactIds", []);
                                 }}
                               >
                                 <Check
