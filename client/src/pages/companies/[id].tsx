@@ -11,13 +11,14 @@ import {
   ArrowLeft, Building, Mail, Phone, Globe, MapPin, 
   Edit, Trash, Users, FileText, PenTool, Plus,
   Briefcase, Clock, CheckCircle, AlertCircle, Inbox,
-  Calendar, Flag, Hash, Money, DollarSign, Award, MapPinned
+  Calendar, Flag, Hash, Money, DollarSign, Award, MapPinned, Link
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { formatPhoneNumber } from "@/lib/utils";
 import CompanyEditForm from "@/components/forms/CompanyEditForm";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { LinkContactButton } from "@/components/forms/LinkContactButton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import TaskList from "@/components/tasks/TaskList";
 import ContactModal from "@/components/modals/ContactModal";
