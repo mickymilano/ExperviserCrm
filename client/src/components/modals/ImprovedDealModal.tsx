@@ -78,8 +78,11 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
   const [showNoContactAlert, setShowNoContactAlert] = useState(false);
   const isEditMode = !!initialData && initialData.id !== undefined;
 
-  // Create synergy mutation
+  // Create synergy mutation - utilizzo dell'hook dedicato che include tutti i comportamenti necessari
   const createSynergyMutation = useCreateSynergy();
+  
+  // Debug log per verificare se la mutation è disponibile
+  console.log("Create synergy mutation disponibile:", !!createSynergyMutation);
 
   // Fetch pipeline stages 
   const { data: stages = [] } = useQuery({
@@ -275,53 +278,66 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
 
   // Load existing synergy contacts in edit mode
   useEffect(() => {
+    // Solo se siamo in modalità modifica e ci sono sinergie esistenti
     if (isEditMode && dealSynergies && Array.isArray(dealSynergies) && dealSynergies.length > 0) {
+      console.log("Caricamento sinergie esistenti in modalità modifica:", dealSynergies);
+      
+      // Estrai gli ID dei contatti dalle sinergie, assicurandoti che siano numeri
       const contactIds = dealSynergies.map(synergy => 
         typeof synergy.contactId === 'string' ? parseInt(synergy.contactId) : synergy.contactId
       );
       
+      console.log("ID contatti sinergici estratti:", contactIds);
+      
+      // Verifica se è necessario aggiornare il valore del campo
       const currentValue = getValues("synergyContactIds") || [];
       if (JSON.stringify(currentValue) !== JSON.stringify(contactIds)) {
+        console.log("Aggiornamento del campo synergyContactIds con:", contactIds);
         setValue("synergyContactIds", contactIds);
       }
+    } else if (isEditMode) {
+      console.log("Nessuna sinergia trovata per questo deal:", dealSynergies);
     }
   }, [dealSynergies, isEditMode, getValues, setValue]);
 
   // Helper function to create synergies for contacts
+  // Questo metodo gestisce le sinergie per un deal, creando o aggiornando secondo necessità
   const createSynergiesForContacts = async (dealId: number, companyId: number, contactIds: number[]) => {
-    if (!dealId || !companyId || !contactIds || contactIds.length === 0) {
+    if (!dealId || !companyId || !contactIds) {
       console.error("Impossibile creare sinergie: parametri mancanti", { dealId, companyId, contactIds });
       return [];
     }
     
-    console.log("Creando sinergie per", contactIds.length, "contatti");
-    const results = [];
-
-    for (const contactId of contactIds) {
-      if (!contactId) {
-        console.error("ID contatto invalido, salto la creazione della sinergia", { contactId });
-        continue;
+    // Anche se contactIds è vuoto, possiamo procedere (rimuoveremo le sinergie esistenti)
+    console.log(`Gestione sinergie per deal ${dealId} e company ${companyId} con ${contactIds.length} contatti:`, contactIds);
+    
+    try {
+      // Utilizziamo l'endpoint dedicato per gestire tutte le sinergie in un'unica chiamata
+      const response = await fetch(`/api/deals/${dealId}/synergies`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contactIds }),
+        credentials: "include"
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Errore nella gestione delle sinergie: ${response.status}: ${errorText}`);
       }
       
-      try {
-        const result = await createSynergyMutation.mutateAsync({
-          type: "business",
-          contactId: contactId,
-          companyId: companyId,
-          dealId: dealId,
-          status: "active",
-          description: "Sinergia creata dal deal",
-          startDate: new Date(),
-          endDate: null
-        });
-        console.log("Sinergia creata con successo per il contatto", contactId, result);
-        results.push(result);
-      } catch (error) {
-        console.error(`Errore nella creazione della sinergia per il contatto ${contactId}:`, error);
-      }
+      const results = await response.json();
+      console.log("Sinergie gestite con successo:", results);
+      
+      // Invalidiamo la query delle sinergie per questo deal
+      queryClient.invalidateQueries({
+        queryKey: [`/api/deals/${dealId}/synergies`]
+      });
+      
+      return results;
+    } catch (error) {
+      console.error("Errore durante la gestione delle sinergie:", error);
+      return [];
     }
-
-    return results;
   };
 
   // Save deal mutation
@@ -873,18 +889,31 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
                       placeholder={getSelectedCompanyId() ? "Type at least 1 character to search contacts..." : "Select a company first"}
                       loadOptions={loadSynergyContactOptions}
                       value={field.value?.map((id: number) => {
+                        // Log per il debugging
+                        console.log("Rendering synergy contact option for ID:", id);
+                        
+                        // Cerca il contatto nella lista completa dei contatti
                         const contact = Array.isArray(contacts) 
                           ? contacts.find((c: any) => c.id === id) 
                           : null;
+                          
+                        if (contact) {
+                          console.log("Found contact for synergy:", contact);
+                        } else {
+                          console.log("Contact not found for ID:", id);
+                        }
+                        
                         return {
                           value: id,
                           label: contact 
                             ? `${contact.firstName || ""} ${contact.lastName || ""}`.trim() || `Contact #${id}`
-                            : `Contact #${id}`
+                            : `Contact #${id} (not found)`
                         };
                       })}
                       onChange={(selected) => {
+                        console.log("Synergy contacts selection changed:", selected);
                         const selectedIds = selected ? selected.map((item: any) => item.value) : [];
+                        console.log("Setting synergy contact IDs:", selectedIds);
                         field.onChange(selectedIds);
                       }}
                       className="basic-multi-select"
