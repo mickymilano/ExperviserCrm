@@ -719,7 +719,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Apply search filter if provided
-      if (searchTerm && searchTerm.length >= 2) {
+      if (searchTerm) {
         const lowerSearch = searchTerm.toLowerCase();
         contacts = contacts.filter(contact => {
           const firstName = (contact.firstName || '').toLowerCase();

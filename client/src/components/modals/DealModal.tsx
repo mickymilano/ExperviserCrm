@@ -663,6 +663,8 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                       loadOptions={async (inputValue) => {
                         if (!inputValue || inputValue.length < 1 || !selectedCompanyId) return [];
                         
+                        console.log('Searching contacts with term:', inputValue);
+                        
                         try {
                           const response = await fetch(
                             `/api/contacts?search=${encodeURIComponent(inputValue)}&excludeCompanyId=${selectedCompanyId}&includeAreas=true`
@@ -671,12 +673,17 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                           if (!response.ok) throw new Error('Failed to search contacts');
                           const contacts = await response.json();
                           
+                          console.log('Found contacts:', contacts);
+                          
                           // Map API results to the expected format for react-select
-                          return contacts.map((contact: any) => ({
+                          const options = contacts.map((contact: any) => ({
                             value: contact.id,
                             label: `${contact.firstName} ${contact.lastName}`,
                             contact // Store the full contact data for reference
                           }));
+                          
+                          console.log('Returning options:', options);
+                          return options;
                         } catch (error) {
                           console.error('Error searching contacts:', error);
                           return [];
@@ -687,6 +694,8 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                         const contactIds = selectedOptions ? 
                           selectedOptions.map(option => typeof option.value === 'string' ? parseInt(option.value) : option.value) : 
                           [];
+                        
+                        console.log('Selected contact IDs:', contactIds);
                         
                         // Update form state
                         field.onChange(contactIds);
@@ -753,11 +762,20 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                             backgroundColor: 'rgba(219, 234, 254, 0.5)',
                           },
                         }),
+                        menu: (base) => ({
+                          ...base,
+                          zIndex: 9999, // Ensure menu is on top
+                          position: 'absolute',
+                        }),
                       }}
                       className="z-50 mt-0"
                       classNamePrefix="react-select"
-                      menuPosition="fixed"
+                      menuPosition="absolute"
                       menuPlacement="auto"
+                      cacheOptions
+                      defaultOptions
+                      filterOption={null}
+                      loadingMessage={() => "Ricerca contatti..."}
                     />
                   )}
                 />
