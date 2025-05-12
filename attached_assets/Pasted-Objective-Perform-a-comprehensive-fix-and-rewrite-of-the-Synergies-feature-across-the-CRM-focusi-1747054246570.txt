@@ -1,0 +1,69 @@
+Objective: Perform a comprehensive fix and rewrite of the "Synergies" feature across the CRM, focusing on correcting the contact selection in the Deal form, ensuring proper display and filtering on relevant pages, enforcing creation/deletion rules, and performing thorough debugging and validation.
+
+---
+
+**Part 1: Rewrite Synergy Contacts Input in Deal Form (`client/src/components/DealModal.tsx`)**
+
+1.1. **Delete Existing Implementation:** Completely remove the current `<Controller name="synergyContactIds" ...> ... </Controller>` block, associated `useState` hooks (for search term, etc.), and any related `useQuery` for synergy contact search within this file.
+1.2. **Re-implement from Scratch:** Add the "Synergy Contacts" field back into the form using `react-select/async` (`AsyncSelect`) and `react-hook-form` (`Controller`) with the following strict requirements:
+    - **Field Name:** `synergyContactIds` (must store array of selected numeric contact IDs in `react-hook-form` state).
+    - **Trigger:** Asynchronous search must trigger when the user types **1 or more characters**.
+    - **API Call:** Use `loadOptions` prop of `AsyncSelect`. Inside `loadOptions`, call `GET /api/contacts?search=<term>&excludeCompany=<companyId>` (using the Deal's `companyId`). Exclude affiliated contacts.
+    - **Data Mapping:** Map API results to `{ value: contact.id, label: \`${contact.firstName} ${contact.lastName}\` }` format *before* calling the `loadOptions` callback.
+    - **Display:** Show results in dropdown. Selected contacts MUST be displayed as **tags/chips** within the input area.
+    - **Tag Styling:** Selected contact tags MUST have a **light blue background color** (e.g., Tailwind classes `bg-blue-100 text-blue-800` or similar).
+    - **Tag Removal:** Each selected contact tag MUST have a small clickable 'x' icon (ideally positioned bottom-right or right) allowing the user to remove that specific selection. Clicking 'x' must update the `synergyContactIds` array in the form state.
+    - **Integration:** Use `Controller` correctly. The `onChange` handler within the `Controller` must map the selected option objects to an array of numeric IDs for the `react-hook-form` state. Ensure the `value` prop passed to `AsyncSelect` is correctly derived from the `field.value` (array of IDs) and the fetched/cached options.
+    - **Loading State:** Implement the `isLoading` prop display.
+    - **Placeholder:** Use a relevant placeholder (e.g., "Type to search and select synergy contacts...").
+1.3. **`onSubmit` Logic:** Re-confirm that the `onSubmit` function in this modal implements the **two-step save process**: first `POST/PATCH /api/deals` (without synergy IDs), then on success `POST /api/deals/:id/synergies` with `{ contactIds: synergyContactIds }`. Ensure this logic is present and correct.
+
+---
+
+**Part 2: Synergy Display & Filtering (`client/src/components/SynergiesList.tsx` and Usage)**
+
+2.1. **Default Filter:** Modify `SynergiesList.tsx` and/or its data fetching hook (`useSynergies` or direct fetching) so that by default it displays only Synergies with an **'active' status** (or equivalent primary positive status).
+2.2. **Filtering Controls:** On the main Synergies page (`client/src/pages/synergies/index.tsx`), implement UI controls (e.g., dropdowns, date pickers, search inputs) allowing the user to **filter** the displayed list of synergies based on:
+    - Associated Contact
+    - Associated Company
+    - Associated Deal
+    - Date Range (based on `startDate` or `createdAt`)
+2.3. Ensure the `SynergiesList` component can accept and apply these filters to the data it displays. Update data fetching logic (`useSynergies` or related hooks/API calls) to support server-side or efficient client-side filtering based on these criteria.
+
+---
+
+**Part 3: Synergy Visibility on Detail Pages**
+
+3.1. **Verification:** Check the Contact detail page and the Company detail page. Ensure they correctly display a list or section showing associated Synergies (likely using the `SynergiesList` component with appropriate `contactId` or `companyId` props).
+
+---
+
+**Part 4: Enforce Deletion Rule**
+
+4.1. **Requirement:** Synergies **cannot** be deleted directly by the user through the UI. They can only be implicitly removed by updating the Synergy Contacts list within the originating Deal's edit form.
+4.2. **Verification & Removal:**
+    - Examine `SynergiesList.tsx`: Remove any "Delete" button, icon, or action associated with individual synergy items.
+    - Examine `SynergyModal.tsx`: Ensure it *only* handles Create/Edit modes and has no Delete functionality.
+    - Examine Contact and Company detail pages: Ensure the displayed synergy lists there do *not* offer a delete action.
+    - Review `useDeleteSynergy` hook usage: Ensure it is *not* called directly from any UI component's event handler. (It might be called internally by the backend logic of `POST /api/deals/:id/synergies` when handling updates, which is acceptable).
+
+---
+
+**Part 5: Main Synergies Page (`client/src/pages/synergies/index.tsx`)**
+
+5.1. **Verification:** Confirm again that the "New Synergy" button previously removed from this page is indeed absent. This page should only be for viewing and filtering existing synergies.
+
+---
+
+**Part 6: AI Process - Thorough Debugging and Validation**
+
+6.1. **Implement All Changes:** Apply all the fixes, rewrite, and feature additions detailed in Parts 1-5.
+6.2. **Deep Debugging:** Proactively search for and fix any related bugs, console errors, or unexpected behavior related to the entire Synergy feature (creation via Deal, display, filtering, non-deletion). Check for type errors, logical flaws, and UI inconsistencies.
+6.3. **Mandatory Self-Testing & Validation:** Before reporting completion, **you MUST perform the following tests**:
+    - **Deal Form:** Successfully search for contacts (triggering on 1st char), select multiple contacts (appearing as blue tags), remove a selected contact using the 'x' icon on its tag, save the Deal, and verify the correct synergies are persisted via the two-step API call process.
+    - **Synergies Page:** Verify the "Create" button is gone. Verify only 'active' synergies show by default. Test the filtering controls (Contact, Company, Deal, Date) and confirm the list updates correctly.
+    - **Detail Pages:** Verify synergies appear correctly on related Contact and Company pages.
+    - **Deletion:** Verify there are absolutely NO UI buttons/actions anywhere to directly delete a synergy record.
+6.4. **Completion Report:** Only report completion when all tasks are done, all self-tests pass, and the Synergy feature is fully functional, stable, and meets all specified requirements without errors. Detail the key fixes and tests performed. If any part cannot be completed, explain the specific blocker.
+
+Operate autonomously with maximum precision. Perform thorough debugging and validation. Eliminate all related errors.
