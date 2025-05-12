@@ -249,6 +249,47 @@ export default function DealDetail() {
             </CardContent>
           </Card>
           
+          {/* Synergies Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Handshake className="h-5 w-5 mr-2" />
+                Synergies
+              </CardTitle>
+              <CardDescription>Business connections related to this deal</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {synergiesLoading ? (
+                <div className="py-4">
+                  <Skeleton className="h-12 w-full mb-2" />
+                  <Skeleton className="h-12 w-full mb-2" />
+                  <Skeleton className="h-12 w-full" />
+                </div>
+              ) : dealSynergies && dealSynergies.length > 0 ? (
+                <SynergiesList 
+                  synergies={dealSynergies} 
+                  showCompany={false}
+                  hideDealColumn={true}
+                />
+              ) : (
+                <div className="text-center py-8">
+                  <Handshake className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <h3 className="text-lg font-medium mb-2">No Synergies Found</h3>
+                  <p className="text-muted-foreground mb-4 max-w-md mx-auto">
+                    This deal doesn't have any synergy connections yet. Add synergies by editing the deal.
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowModal(true)}
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit Deal
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Notes */}
           {deal.notes && (
             <Card>

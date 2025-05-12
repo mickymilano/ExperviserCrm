@@ -508,9 +508,26 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
       
       console.log(`Searching for synergy contacts with query: "${inputValue}" for company ID: ${getSelectedCompanyId()}`);
       
+      // Get current selected synergy contacts to exclude them from results (prevent duplicates)
+      const currentSynergyContactIds = getValues("synergyContactIds") || [];
+      console.log("Current synergy contact IDs (will be excluded from results):", currentSynergyContactIds);
+      
+      // Also exclude the primary contact of the deal
+      const primaryContactId = getValues("contactId");
+      const excludeContactIds = [...currentSynergyContactIds];
+      if (primaryContactId) {
+        excludeContactIds.push(primaryContactId);
+      }
+      
       // Build query with selected company ID (exclude contacts already in this company)
       const companyId = getSelectedCompanyId();
-      const endpoint = `/api/contacts?search=${encodeURIComponent(inputValue.trim())}&excludeCompanyId=${companyId}&includeAreas=true`;
+      
+      // Build the exclude contacts query parameter
+      const excludeContactsParam = excludeContactIds.length > 0 
+        ? `&excludeContactIds=${excludeContactIds.join(',')}` 
+        : '';
+        
+      const endpoint = `/api/contacts?search=${encodeURIComponent(inputValue.trim())}&excludeCompanyId=${companyId}${excludeContactsParam}&includeAreas=true`;
         
       console.log(`Fetching contacts from: ${endpoint}`);
       
@@ -527,8 +544,14 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
           
           console.log(`Found ${contacts.length} potential synergy contacts`);
           
+          // Filter out contacts that are already selected (just in case the API doesn't filter them out)
+          const filteredContacts = contacts.filter(contact => 
+            !currentSynergyContactIds.includes(contact.id) && 
+            (!primaryContactId || contact.id !== primaryContactId)
+          );
+          
           // Map contacts to select options format
-          const options = contacts.map((contact: any) => ({
+          const options = filteredContacts.map((contact: any) => ({
             value: contact.id,
             label: `${contact.firstName || ""} ${contact.lastName || ""}`.trim() || `Contact #${contact.id}`,
             data: contact // Store full contact data for reference
