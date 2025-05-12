@@ -501,7 +501,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       </AlertDialog>
 
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold">{isEditMode ? 'Edit Deal' : 'Add New Deal'}</DialogTitle>
           </DialogHeader>
@@ -659,68 +659,79 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
             <div className="space-y-2 mb-4">
               <Label htmlFor="synergyContactIds">Synergy Contacts</Label>
               <div className="relative">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      className="w-full justify-between min-h-[40px]"
-                    >
-                      {selectedSynergyContacts.length > 0 ? 
-                        `${selectedSynergyContacts.length} contact${selectedSynergyContacts.length > 1 ? 's' : ''} selected` : 
-                        "Search for contacts to create synergies"}
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-full p-0 max-h-[300px] overflow-auto">
-                    <Command>
-                      <CommandInput 
-                        placeholder="Search for contacts..." 
-                        value={synergySearchTerm}
-                        onValueChange={setSynergySearchTerm}
-                      />
-                      <CommandEmpty>No contacts found</CommandEmpty>
-                      <CommandGroup>
+                <div className="flex flex-col gap-2">
+                  <Select
+                    onValueChange={(value) => {
+                      if (!value || value === "0") return;
+                      
+                      const contactId = value;
+                      setSelectedSynergyContacts(prev => {
+                        if (prev.includes(contactId)) return prev;
+                        const newSelected = [...prev, contactId];
+                        setValue("synergyContactIds", newSelected.map(id => parseInt(id)));
+                        return newSelected;
+                      });
+                    }}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select contacts to create synergies" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <div className="max-h-[200px] overflow-y-auto">
                         {contacts
-                          .filter(contact => 
-                            `${contact.firstName} ${contact.lastName}`.toLowerCase().includes(synergySearchTerm.toLowerCase()))
+                          .filter(contact => {
+                            // Filter out contacts already associated with the selected company
+                            if (!selectedCompanyId) return true;
+                            return !contact.areasOfActivity?.some(
+                              area => area.companyId === selectedCompanyId && area.isPrimary
+                            );
+                          })
                           .map((contact) => (
-                            <CommandItem
-                              key={contact.id}
+                            <SelectItem 
+                              key={contact.id} 
                               value={contact.id.toString()}
-                              onSelect={(value) => {
-                                const contactId = value;
+                              disabled={selectedSynergyContacts.includes(contact.id.toString())}
+                            >
+                              {contact.firstName} {contact.lastName}
+                            </SelectItem>
+                          ))
+                        }
+                      </div>
+                    </SelectContent>
+                  </Select>
+
+                  {/* Display selected contacts */}
+                  {selectedSynergyContacts.length > 0 && (
+                    <div className="flex flex-wrap gap-2 p-2 border rounded-md">
+                      {selectedSynergyContacts.map(contactId => {
+                        const contact = contacts.find(c => c.id.toString() === contactId);
+                        if (!contact) return null;
+                        return (
+                          <Badge 
+                            key={contactId}
+                            variant="secondary"
+                            className="flex items-center gap-1"
+                          >
+                            {contact.firstName} {contact.lastName}
+                            <button
+                              type="button"
+                              className="ml-1 hover:text-destructive"
+                              onClick={() => {
                                 setSelectedSynergyContacts(prev => {
-                                  // If already selected, remove from the list
-                                  if (prev.includes(contactId)) {
-                                    const newSelected = prev.filter(id => id !== contactId);
-                                    // Update form value
-                                    setValue("synergyContactIds", newSelected.map(id => parseInt(id)));
-                                    return newSelected;
-                                  } 
-                                  // Otherwise, add to the list
-                                  const newSelected = [...prev, contactId];
-                                  // Update form value
+                                  const newSelected = prev.filter(id => id !== contactId);
                                   setValue("synergyContactIds", newSelected.map(id => parseInt(id)));
                                   return newSelected;
                                 });
                               }}
                             >
-                              <div className="flex items-center">
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    selectedSynergyContacts.includes(contact.id.toString()) ? "opacity-100" : "opacity-0"
-                                  )}
-                                />
-                                {contact.firstName} {contact.lastName}
-                              </div>
-                            </CommandItem>
-                          ))}
-                      </CommandGroup>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
+                              ×
+                            </button>
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
 
                 {/* Display selected contacts */}
                 {selectedSynergyContacts.length > 0 && (
