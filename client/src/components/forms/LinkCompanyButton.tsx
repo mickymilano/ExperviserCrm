@@ -77,10 +77,15 @@ export function LinkCompanyButton({ contactId, onSuccess }: LinkCompanyButtonPro
       const data = await response.json();
       console.log("Link successful:", data);
 
-      // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: [`/api/contacts/${contactId}`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/contacts/${contactId}/companies`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/contacts/${contactId}/areas-of-activity`] });
+      // Invalidate relevant queries with more effective pattern that matches queries with parameters too
+      queryClient.invalidateQueries({ queryKey: [[`/api/contacts/${contactId}`]] });
+      queryClient.invalidateQueries({ queryKey: [[`/api/contacts/${contactId}/companies`]] });
+      queryClient.invalidateQueries({ queryKey: [[`/api/contacts/${contactId}/areas-of-activity`]] });
+      queryClient.invalidateQueries({ queryKey: [[`/api/contacts`]] }); // Invalidate all contacts queries
+      
+      // Invalidate company data
+      queryClient.invalidateQueries({ queryKey: [[`/api/companies/${selectedCompanyId}`]] });
+      queryClient.invalidateQueries({ queryKey: [[`/api/companies/${selectedCompanyId}/contacts`]] });
 
       toast({
         title: "Success",

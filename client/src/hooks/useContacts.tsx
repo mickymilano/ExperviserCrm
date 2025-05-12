@@ -32,16 +32,30 @@ export const useContacts = (options?: UseContactsOptions) => {
       const response = await apiRequest("POST", "/api/contacts", contactData);
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
         title: "Success",
         description: "Contact created successfully",
       });
-      // Invalidate all contacts queries regardless of parameters
-      queryClient.invalidateQueries({ queryKey: ['/api/contacts'] });
-      // Explicitly invalidate queries with includeAreas parameter
-      queryClient.invalidateQueries({ queryKey: ['/api/contacts?includeAreas=true'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/dashboard'] });
+      
+      // Invalidate all contact-related queries with a more effective pattern
+      queryClient.invalidateQueries({ queryKey: [['/api/contacts']] });
+      
+      // Invalidate any specific company queries if the contact is linked to a company
+      if (data.areasOfActivity && data.areasOfActivity.length > 0) {
+        data.areasOfActivity.forEach((area: { companyId?: number }) => {
+          if (area.companyId) {
+            queryClient.invalidateQueries({ 
+              queryKey: [[`/api/companies/${area.companyId}`]] 
+            });
+            queryClient.invalidateQueries({ 
+              queryKey: [[`/api/companies/${area.companyId}/contacts`]] 
+            });
+          }
+        });
+      }
+      
+      queryClient.invalidateQueries({ queryKey: [['/api/dashboard']] });
     },
     onError: (error) => {
       toast({
@@ -57,16 +71,49 @@ export const useContacts = (options?: UseContactsOptions) => {
       const response = await apiRequest("PATCH", `/api/contacts/${id}`, data);
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (updatedContact, variables) => {
       toast({
         title: "Success",
         description: "Contact updated successfully",
       });
-      // Invalidate all contacts queries regardless of parameters
-      queryClient.invalidateQueries({ queryKey: ['/api/contacts'] });
-      // Explicitly invalidate queries with includeAreas parameter
-      queryClient.invalidateQueries({ queryKey: ['/api/contacts?includeAreas=true'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/dashboard'] });
+      
+      // Invalidate the specific contact query
+      queryClient.invalidateQueries({ 
+        queryKey: [[`/api/contacts/${variables.id}`]] 
+      });
+      
+      // Invalidate all contacts queries
+      queryClient.invalidateQueries({ 
+        queryKey: [['/api/contacts']]
+      });
+      
+      // Invalidate any specific company queries if the contact is linked to companies
+      // First, get fresh contact data with associated companies
+      queryClient.fetchQuery({ 
+        queryKey: [`/api/contacts/${variables.id}/companies`],
+      }).then((companiesData: any) => {
+        if (companiesData && Array.isArray(companiesData)) {
+          companiesData.forEach((company: any) => {
+            if (company.id) {
+              queryClient.invalidateQueries({
+                queryKey: [[`/api/companies/${company.id}`]]
+              });
+              queryClient.invalidateQueries({
+                queryKey: [[`/api/companies/${company.id}/contacts`]]
+              });
+            }
+          });
+        }
+      }).catch(() => {
+        // Fallback invalidation if we can't get fresh data
+        queryClient.invalidateQueries({
+          queryKey: [['/api/companies']]
+        });
+      });
+      
+      queryClient.invalidateQueries({ 
+        queryKey: [['/api/dashboard']]
+      });
     },
     onError: (error) => {
       toast({
@@ -112,12 +159,12 @@ export const useContacts = (options?: UseContactsOptions) => {
   };
 };
 
-export const useContact = (id: number) => {
+export function useContact(id: number) {
   return useQuery<Contact>({
     queryKey: [`/api/contacts/${id}`],
     enabled: !!id,
   });
-};
+}
 
 /**
  * Hook to retrieve companies associated with a contact
@@ -128,11 +175,11 @@ export const useContact = (id: number) => {
  * @param contactId ID of the contact whose associated companies to retrieve
  * @returns List of associated companies with relationship details, loading state and any errors
  */
-export const useContactCompanies = (contactId: number) => {
+export function useContactCompanies(contactId: number) {
   const { toast } = useToast();
   
   return useQuery({
     queryKey: [`/api/contacts/${contactId}/companies`],
     enabled: !!contactId,
   });
-};
+}
