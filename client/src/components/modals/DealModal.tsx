@@ -415,9 +415,11 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     saveDeal.mutate(data);
   };
 
-  // Update synergy options when filtered contacts change
+  // This useEffect was causing an infinite render loop
+  // because filteredSynergyContacts is already being set in another useEffect
+  // and we're directly using contacts in the UI now, so we don't need this at all
+  /*
   useEffect(() => {
-    // Create options from filtered synergy contacts
     const options = filteredSynergyContacts
       .map(contact => ({
         value: contact.id.toString(),
@@ -426,6 +428,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     
     setSynergyOptions(options);
   }, [filteredSynergyContacts]);
+  */
   
   return (
     <>

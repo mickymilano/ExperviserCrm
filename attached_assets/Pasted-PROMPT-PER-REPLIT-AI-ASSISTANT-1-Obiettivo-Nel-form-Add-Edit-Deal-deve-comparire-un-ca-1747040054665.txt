@@ -1,0 +1,114 @@
+PROMPT PER REPLIT AI ASSISTANT:
+
+1. **Obiettivo**  
+   Nel form “Add/Edit Deal” deve comparire un campo “Synergy Contacts” con:
+   - Autocomplete text-input
+   - Ricerca fra **TUTTI** i contatti esistenti **escludendo** quelli già affiliati all’azienda selezionata nel deal
+   - **Multi-select** (possibile scegliere più contatti)
+   - Al salvataggio, creare in database una nuova relazione “synergy” per ogni contatto selezionato, collegando:
+     • deal_id → id del deal  
+     • contact_id → id del contatto  
+     • company_id → id dell’azienda del deal
+
+2. **Front-end**  
+   - File: `client/src/components/forms/DealForm.tsx` (o `DealModal.tsx`)  
+   - Importa un componente di multi-autocomplete, ad esempio `<ComboboxMultiple>` basato su `@headlessui/react` o `use-places-autocomplete` style, ma per contacts:
+     ```tsx
+     // Esempio con Radix Select / Multi-select
+     import { Select, SelectTrigger, SelectContent, SelectItem } from "@components/ui/select";
+     ```
+   - In fase di render:
+     ```tsx
+     <Select
+       multiple
+       label="Synergy Contacts"
+       name="synergyContacts"
+       placeholder="Search for contacts…"
+       onFilter={(input) => {
+         // Chiamata API ai contatti NON ancora affiliati a questa company
+         return fetch(`/api/contacts?excludeCompany=${companyId}&search=${input}`)
+           .then(res => res.json()) as Promise<Contact[]>;
+       }}
+       onChange={(selected: Contact[]) => {
+         form.setValue("synergyContacts", selected.map(c => c.id));
+       }}
+       value={form.getValues("synergyContacts")}
+       itemToString={(c: Contact) => `${c.firstName} ${c.lastName}`}
+     >
+       {contactsList.map(c => (
+         <SelectItem key={c.id} value={c.id}>
+           {c.firstName} {c.lastName}
+         </SelectItem>
+       ))}
+     </Select>
+     ```
+   - Assicurati che il placeholder e gli item non siano disabilitati (rimuovi `disabled` se presente).
+
+3. **Hook e API**  
+   - In `useDeals.ts` (o hook simile) crea un nuovo endpoint:
+     ```ts
+     // API slice
+     async function fetchSynergyContacts(companyId: number, search: string) {
+       return apiRequest<Contact[]>(
+         `/api/contacts?excludeCompany=${companyId}&search=${search}`, "GET"
+       );
+     }
+     ```
+   - Sul backend (`server/routes.ts`):
+     ```ts
+     // GET /api/contacts?excludeCompany=123&search=foo
+     app.get("/api/contacts", async (req, res) => {
+       const { excludeCompany, search } = req.query;
+       let contacts = await storage.getContacts(); // tutti
+       contacts = contacts.filter(c => 
+         !await storage.isContactAffiliatedToCompany(c.id, Number(excludeCompany))
+       );
+       if (search) {
+         const term = (search as string).toLowerCase();
+         contacts = contacts.filter(c =>
+           c.firstName.toLowerCase().includes(term) ||
+           c.lastName.toLowerCase().includes(term)
+         );
+       }
+       res.json(contacts);
+     });
+     ```
+   - Implementa in `PostgresStorage` il metodo `isContactAffiliatedToCompany(contactId, companyId)` che controlla `areas_of_activity`.
+
+4. **Salvataggio “Synergies”**  
+   - Nel `PATCH /api/deals/:id` o nel nuovo endpoint `POST /api/deals/:id/synergies`, quando ricevi `synergyContacts: number[]`, per ogni `contactId`:
+     ```ts
+     await storage.createSynergy({
+       dealId: id,
+       companyId: deal.companyId,
+       contactId
+     });
+     ```
+   - Definisci tabella `synergies` in schema Drizzle:
+     ```ts
+     export const synergies = pgTable("synergies", {
+       id: serial("id").primaryKey(),
+       dealId: integer("deal_id").notNull().references(() => deals.id),
+       companyId: integer("company_id").notNull().references(() => companies.id),
+       contactId: integer("contact_id").notNull().references(() => contacts.id),
+       createdAt: timestamp("created_at").defaultNow(),
+     });
+     ```
+   - E aggiungi `storage.createSynergy()` in `postgresStorage.ts`.
+
+5. **Visualizzazione in UI**  
+   - **Company Detail**: aggiungi Tab “Synergies” che recupera da `GET /api/companies/:id/synergies` e mostra lista di:
+     - contatto (link a contatto)
+     - deal (link a deal)
+   - **Contact Detail**: Tab “Synergies” che recupera da `GET /api/contacts/:id/synergies`.
+
+6. **Testing**  
+   - Esegui manualmente:  
+     1. Apri “Add Deal” per un’azienda A con 3 contatti affiliati.  
+     2. Il campo Synergy Contacts **dovrebbe** mostrare solo tutti gli altri contatti (non affiliati).  
+     3. Cerca “Mario” e seleziona “Mario Rossi” + “Luca Bianchi”.  
+     4. Salva il Deal.  
+     5. Apri Company A → Tab Synergies: vedi Mario Rossi e Luca Bianchi elencati con link al Deal.  
+     6. Apri Mario Rossi → Tab Synergies: vedi Company A + link al Deal.
+
+**Applica** queste modifiche in un unico batch: front-end, hook, API, storage, schema, UI di dettaglio. **Non** rendere il campo disabilitato. **Testa** tutto automaticamente o manualmente e conferma “Synergy Contacts fully functional.”  
