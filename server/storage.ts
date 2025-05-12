@@ -174,6 +174,7 @@ export class MemStorage implements IStorage {
   private signatureCurrentId: number;
   private accountSignatureCurrentId: number;
   private securityLogCurrentId: number;
+  private synergyCurrentId: number;
 
   constructor() {
     this.users = new Map();
@@ -192,6 +193,7 @@ export class MemStorage implements IStorage {
     this.accountSignatures = new Map();
     this.userSessions = new Map();
     this.securityLogs = new Map();
+    this.synergies = new Map();
 
     this.userCurrentId = 1;
     this.leadCurrentId = 1;
@@ -208,6 +210,7 @@ export class MemStorage implements IStorage {
     this.signatureCurrentId = 1;
     this.accountSignatureCurrentId = 1;
     this.securityLogCurrentId = 1;
+    this.synergyCurrentId = 1;
 
     // Initialize with demo data
     this.initializeDemoData();
