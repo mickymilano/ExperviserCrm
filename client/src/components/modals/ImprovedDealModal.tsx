@@ -94,12 +94,13 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
     enabled: open,
   });
 
-  // Fetch synergies for the initial deal in edit mode
-  const { data: dealSynergies = [] } = useQuery({
-    queryKey: [`/api/deals/${initialData?.id}/synergies`],
-    enabled: open && isEditMode && initialData?.id !== undefined,
-    staleTime: Infinity // Prevent refetching during component lifecycle
-  });
+  // La funzionalità delle sinergie è stata rimossa
+  // const { data: dealSynergies = [] } = useQuery({
+  //   queryKey: [`/api/deals/${initialData?.id}/synergies`],
+  //   enabled: open && isEditMode && initialData?.id !== undefined,
+  //   staleTime: Infinity // Prevent refetching during component lifecycle
+  // });
+  const dealSynergies = [];
 
   const { register, handleSubmit, reset, setValue, getValues, control, formState: { errors } } = useForm<DealFormData>({
     resolver: zodResolver(dealSchema),
@@ -113,7 +114,8 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
       tags: [],
       notes: "",
       status: "active",
-      synergyContactIds: [],
+      // La funzionalità delle sinergie è stata rimossa
+      // synergyContactIds: [],
     }
   });
 
@@ -313,43 +315,10 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
 
   // Helper function to create synergies for contacts
   // Questo metodo gestisce le sinergie per un deal, creando o aggiornando secondo necessità
-  const createSynergiesForContacts = async (dealId: number, companyId: number, contactIds: number[]) => {
-    if (!dealId || !companyId || !contactIds) {
-      console.error("Impossibile creare sinergie: parametri mancanti", { dealId, companyId, contactIds });
-      return [];
-    }
-    
-    // Anche se contactIds è vuoto, possiamo procedere (rimuoveremo le sinergie esistenti)
-    console.log(`Gestione sinergie per deal ${dealId} e company ${companyId} con ${contactIds.length} contatti:`, contactIds);
-    
-    try {
-      // Utilizziamo l'endpoint dedicato per gestire tutte le sinergie in un'unica chiamata
-      const response = await fetch(`/api/deals/${dealId}/synergies`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contactIds }),
-        credentials: "include"
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Errore nella gestione delle sinergie: ${response.status}: ${errorText}`);
-      }
-      
-      const results = await response.json();
-      console.log("Sinergie gestite con successo:", results);
-      
-      // Invalidiamo la query delle sinergie per questo deal
-      queryClient.invalidateQueries({
-        queryKey: [`/api/deals/${dealId}/synergies`]
-      });
-      
-      return results;
-    } catch (error) {
-      console.error("Errore durante la gestione delle sinergie:", error);
-      return [];
-    }
-  };
+  // La funzionalità delle sinergie è stata rimossa
+  // const createSynergiesForContacts = async (dealId: number, companyId: number, contactIds: number[]) => {
+  //   // Funzione rimossa in quanto parte del modulo sinergie
+  // };
 
   // Save deal mutation
   const saveDeal = useMutation({
@@ -435,31 +404,7 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
 
       const savedDeal = await response.json();
 
-      // Create synergies if needed
-      if (data.synergyContactIds && data.synergyContactIds.length > 0 && data.companyId) {
-        try {
-          await createSynergiesForContacts(
-            savedDeal.id, 
-            data.companyId, 
-            data.synergyContactIds
-          );
-          
-          // Invalidate synergies queries
-          queryClient.invalidateQueries({ 
-            queryKey: [`/api/deals/${savedDeal.id}/synergies`] 
-          });
-          queryClient.invalidateQueries({ 
-            queryKey: ["/api/synergies"] 
-          });
-        } catch (error) {
-          console.error("Failed to create synergies:", error);
-          toast({
-            title: "Warning",
-            description: "Deal was saved but failed to create synergy relationships",
-            variant: "destructive",
-          });
-        }
-      }
+      // La funzionalità delle sinergie è stata rimossa
 
       return savedDeal;
     },
