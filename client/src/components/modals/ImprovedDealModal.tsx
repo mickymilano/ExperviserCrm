@@ -475,22 +475,29 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
     saveDeal.mutate(data);
   };
 
-  // Async function to load synergy contact options
+  // Async function to load synergy contact options - contatti per sinergie
   const loadSynergyContactOptions = (inputValue: string) => {
     return new Promise<any[]>((resolve) => {
       if (!getSelectedCompanyId()) {
+        console.log("No company selected, cannot search for synergy contacts");
         return resolve([]);
       }
       
       // Return empty results for very short inputs (less than 1 character)
       // This prevents unnecessary API calls but still allows typeahead search
       if (inputValue.length < 1) {
+        console.log("Search term too short for synergy contacts");
         return resolve([]);
       }
       
-      // Build query with selected company ID excluded
-      const endpoint = `/api/contacts?search=${encodeURIComponent(inputValue.trim())}&excludeCompanyId=${getSelectedCompanyId()}&includeAreas=true`;
+      console.log(`Searching for synergy contacts with query: "${inputValue}" for company ID: ${getSelectedCompanyId()}`);
+      
+      // Build query with selected company ID (exclude contacts already in this company)
+      const companyId = getSelectedCompanyId();
+      const endpoint = `/api/contacts?search=${encodeURIComponent(inputValue.trim())}&excludeCompanyId=${companyId}&includeAreas=true`;
         
+      console.log(`Fetching contacts from: ${endpoint}`);
+      
       fetch(endpoint)
         .then(response => {
           if (!response.ok) throw new Error('Failed to search contacts');
@@ -502,6 +509,8 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
             return resolve([]);
           }
           
+          console.log(`Found ${contacts.length} potential synergy contacts`);
+          
           // Map contacts to select options format
           const options = contacts.map((contact: any) => ({
             value: contact.id,
@@ -509,10 +518,11 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
             data: contact // Store full contact data for reference
           }));
           
+          console.log("Synergy contact options:", options);
           resolve(options);
         })
         .catch(error => {
-          console.error("Error searching contacts:", error);
+          console.error("Error searching synergy contacts:", error);
           resolve([]);
         });
     });
@@ -893,7 +903,10 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
                 <p className="text-xs text-muted-foreground mt-1">
                   {getValues("synergyContactIds")?.length > 0 && !getSelectedCompanyId() ? 
                     <span className="text-red-500">Company selection is required when adding synergy contacts</span> : 
-                    "Type to search and select synergy contacts..."}
+                    getSelectedCompanyId() ? 
+                      "Type to search for contacts to add to this deal's synergies..." :
+                      "Select a company first to enable synergy contact selection"
+                  }
                 </p>
               </div>
 
