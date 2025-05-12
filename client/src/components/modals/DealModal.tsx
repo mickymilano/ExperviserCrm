@@ -66,7 +66,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
   const [showNoContactAlert, setShowNoContactAlert] = useState(false);
   const isEditMode = !!initialData;
 
-  // Use createSynergy mutation
+  // Use createSynergy mutation for direct synergy creation
   const createSynergyMutation = useCreateSynergy();
 
   // Fetch pipeline stages for dropdown
@@ -235,24 +235,13 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
         dealId: dealId,
         status: "active",
         description: "Synergy created from deal",
-        startDate: new Date().toISOString()
+        startDate: new Date()  // Passa un oggetto Date invece di una stringa
       };
 
       try {
-        const response = await fetch('/api/synergies', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(synergyData),
-          credentials: 'include'
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error(`Failed to create synergy for contact ${contactId}: ${errorText}`);
-          continue;
-        }
-
-        const result = await response.json();
+        // Usa la mutation anziché fetch diretto
+        const result = await createSynergyMutation.mutateAsync(synergyData);
+        console.log("Creata sinergia:", result);
         results.push(result);
       } catch (error) {
         console.error(`Error creating synergy for contact ${contactId}:`, error);
@@ -262,6 +251,9 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     return results;
   }
 
+  // Questa mutazione era ridondante perché ora using direttamente createSynergyMutation
+  // all'interno di createSynergiesForContacts
+  /*
   const createSynergiesMutation = useMutation({
     mutationFn: async (data: { contactIds: number[], companyId: number, dealId: number }) => {
       return createSynergiesForContacts(data.dealId, data.companyId, data.contactIds);
@@ -279,6 +271,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       });
     }
   });
+  */
 
   // This function has been replaced by createSynergiesForContacts
   /*
