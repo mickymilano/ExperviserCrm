@@ -710,6 +710,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         parseInt(req.query.excludeCompanyId as string) : undefined;
       const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
       
+      // Parse excluded contact IDs if provided
+      const excludeContactIds: number[] = [];
+      if (req.query.excludeContactIds) {
+        const idsParam = req.query.excludeContactIds as string;
+        idsParam.split(',').forEach(id => {
+          const parsed = parseInt(id.trim());
+          if (!isNaN(parsed)) {
+            excludeContactIds.push(parsed);
+          }
+        });
+        console.log(`Excluding contact IDs from results:`, excludeContactIds);
+      }
+      
       let contacts;
       if (companyId) {
         // If companyId is provided, filter contacts by company
