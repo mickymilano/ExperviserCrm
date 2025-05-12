@@ -35,6 +35,15 @@ const dealSchema = z.object({
   tags: z.array(z.string()).optional().nullable(),
   notes: z.string().optional().nullable(),
   synergyContactIds: z.array(z.coerce.number()).default([]),
+}).refine((data) => {
+  // If synergy contacts are selected, a company is required
+  if (data.synergyContactIds && data.synergyContactIds.length > 0 && !data.companyId) {
+    return false;
+  }
+  return true;
+}, {
+  message: "A company is required when synergy contacts are selected",
+  path: ["companyId"]
 });
 
 type DealFormData = z.infer<typeof dealSchema>;
@@ -354,20 +363,16 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       
       const createdDeal = await response.json();
       
-      // Se sono stati specificati contatti synergy, creiamoli (multi-selezione)
+      // If synergy contacts are specified, create synergy relationships
       if (data.synergyContactIds.length > 0 && data.companyId) {
         try {
-          // Crea synergies per ogni contatto selezionato
-          for (const contactId of data.synergyContactIds) {
-            await createSynergy.mutateAsync({
-              contactId: contactId,
-              companyId: data.companyId,
-              dealId: createdDeal.id
-            });
-          }
+          console.log("Creating synergies for selected contacts:", data.synergyContactIds);
+          
+          // Use our helper function to create synergies for all selected contacts
+          await createMultipleSynergies(data.synergyContactIds, data.companyId, createdDeal.id);
         } catch (error) {
           console.error("Failed to create synergies:", error);
-          // Ma continuiamo con il processo, il deal è stato comunque creato
+          // Continue with the process, the deal has been created anyway
         }
       }
       
@@ -721,7 +726,9 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                 )}
                 
                 <p className="text-xs text-muted-foreground mt-1">
-                  Select contacts to create synergy relationships with this deal
+                  {selectedSynergyContacts.length > 0 && !selectedCompanyId ? 
+                    <span className="text-red-500">Company selection is required when adding synergy contacts</span> : 
+                    "Select contacts to create synergy relationships with this deal"}
                 </p>
               </div>
             </div>
