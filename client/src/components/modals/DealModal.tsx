@@ -208,7 +208,9 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     }
   }, [contacts, selectedCompanyId]);
   
-  // Effect to generate synergy contact options from filtered contacts
+  // This useEffect is also redundant and contributing to the infinite loop
+  // We can calculate these options directly in the render function
+  /*
   useEffect(() => {
     if (filteredSynergyContacts && Array.isArray(filteredSynergyContacts)) {
       const options = filteredSynergyContacts.map(contact => ({
@@ -220,6 +222,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       setSynergyOptions([]);
     }
   }, [filteredSynergyContacts]);
+  */
   
   // Initialize selected synergy contacts from existing synergies when editing a deal
   useEffect(() => {
@@ -230,34 +233,52 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     }
   }, [dealSynergies, isEditMode, setValue]);
 
-  const createSynergy = useMutation({
-    mutationFn: async (data: { contactId: number, companyId: number, dealId: number }) => {
+  // Helper function to create multiple synergies at once for all selected contacts
+  const createSynergiesForContacts = async (dealId: number, companyId: number, contactIds: number[]) => {
+    console.log("Creating synergies for contacts:", contactIds);
+    const results = [];
+    
+    for (const contactId of contactIds) {
       const synergyData = {
         type: "business",
-        contactId: data.contactId,
-        companyId: data.companyId,
-        dealId: data.dealId,
+        contactId: contactId,
+        companyId: companyId,
+        dealId: dealId,
         status: "active",
         description: "Synergy created from deal",
         startDate: new Date()
       };
       
-      const response = await fetch('/api/synergies', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(synergyData),
-        credentials: 'include'
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to create synergy: ${errorText}`);
+      try {
+        const response = await fetch('/api/synergies', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(synergyData),
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`Failed to create synergy for contact ${contactId}: ${errorText}`);
+          continue;
+        }
+        
+        const result = await response.json();
+        results.push(result);
+      } catch (error) {
+        console.error(`Error creating synergy for contact ${contactId}:`, error);
       }
-      
-      return response.json();
+    }
+    
+    return results;
+  }
+  
+  const createSynergiesMutation = useMutation({
+    mutationFn: async (data: { contactIds: number[], companyId: number, dealId: number }) => {
+      return createSynergiesForContacts(data.dealId, data.companyId, data.contactIds);
     },
     onSuccess: () => {
-      console.log("Synergy created successfully");
+      console.log("Synergies created successfully");
       queryClient.invalidateQueries({ queryKey: ["/api/synergies"] });
     },
     onError: (error) => {
@@ -270,7 +291,8 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     }
   });
   
-  // Helper function to create multiple synergies at once
+  // This function has been replaced by createSynergiesForContacts
+  /*
   const createMultipleSynergies = async (contactIds: number[], companyId: number, dealId: number) => {
     if (!companyId || !contactIds || contactIds.length === 0) return;
     
@@ -289,6 +311,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     }
     return results;
   };
+  */
 
   const saveDeal = useMutation({
     mutationFn: async (data: DealFormData) => {
