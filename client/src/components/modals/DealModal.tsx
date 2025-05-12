@@ -116,7 +116,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     // Funzione di reset per evitare ripetizioni
     const resetFormToDefaults = () => {
       setTagsInput("");
-      setSelectedCompanyId(null);
+      // Evita di impostare selectedCompanyId qui - è un effetto collaterale che causa cicli di aggiornamento
       
       // Set default stage for new deal if available
       if (stages && Array.isArray(stages) && stages.length > 0) {
@@ -136,7 +136,10 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
         if (initialData.companyId !== undefined) {
           const companyId = initialData.companyId !== null ? Number(initialData.companyId) : null;
           setValue("companyId", companyId);
-          setSelectedCompanyId(companyId);
+          // Imposta selectedCompanyId solo se effettivamente diverso per evitare cicli di aggiornamento
+          if (selectedCompanyId !== companyId) {
+            setSelectedCompanyId(companyId);
+          }
         }
         
         // Gestione contactId
@@ -165,11 +168,12 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       } catch (error) {
         console.error("Error setting form values:", error);
       }
-    } else {
-      // Reset the form when opening in create mode
-      resetFormToDefaults();
     }
-  // Remove form methods from dependencies to prevent infinite loops
+    /* Rimuoviamo il caso else per evitare chiamate multiple a resetFormToDefaults
+     * che potrebbero causare cicli di aggiornamento
+     * I valori predefiniti saranno già impostati tramite defaultValues nell'hook useForm
+     */
+  // Remove form methods and selectedCompanyId from dependencies to prevent infinite loops
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData, stages, open]);
 
@@ -196,7 +200,11 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     
     if (!selectedCompanyId) {
       // If no company is selected, show all contacts
-      setFilteredContacts(contacts);
+      // Controllo se è diverso per evitare cicli di aggiornamento
+      const currentFiltered = filteredContacts || [];
+      if (currentFiltered.length !== contacts.length) {
+        setFilteredContacts(contacts);
+      }
       return;
     }
     
@@ -207,16 +215,24 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       }
       return contact.areasOfActivity.some((area: { companyId: number }) => area.companyId === selectedCompanyId);
     });
-    setFilteredContacts(filteredContactsList);
+    
+    // Controllo se il risultato è diverso prima di aggiornare lo stato
+    // per evitare cicli di aggiornamento
+    const currentFiltered = filteredContacts || [];
+    if (JSON.stringify(currentFiltered) !== JSON.stringify(filteredContactsList)) {
+      setFilteredContacts(filteredContactsList);
+    }
     
     // Note: We don't need to filter synergy contacts here anymore
     // as we're using the async server-side search via the API
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contacts, selectedCompanyId]);
 
   // We're now using the async search API directly instead of filtering locally
 
   // Initialize selected synergy contacts from existing synergies when editing a deal
   useEffect(() => {
+    // Esegui solo se è definito dealSynergies e siamo in modalità di modifica
     if (isEditMode && dealSynergies && Array.isArray(dealSynergies) && dealSynergies.length > 0) {
       console.log("Loading existing synergies for edit mode:", dealSynergies);
       
@@ -231,8 +247,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
         setValue("synergyContactIds", contactIds);
       }
     }
-  // Only include dealSynergies and isEditMode in dependencies to prevent infinite loops
-  // setValue and getValues shouldn't change between renders
+  // Include solo le dipendenze essenziali per evitare cicli di aggiornamento
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dealSynergies, isEditMode]);
 
