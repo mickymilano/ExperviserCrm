@@ -391,8 +391,8 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
         try {
           console.log("Creating synergies for selected contacts:", data.synergyContactIds);
           
-          // Use our helper function to create synergies for all selected contacts
-          await createMultipleSynergies(data.synergyContactIds, data.companyId, createdDeal.id);
+          // Use our new helper function to create synergies for all selected contacts
+          await createSynergiesForContacts(createdDeal.id, data.companyId, data.synergyContactIds);
         } catch (error) {
           console.error("Failed to create synergies:", error);
           // Continue with the process, the deal has been created anyway
