@@ -15,7 +15,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     const checkAuth = async () => {
       try {
         // Verifica lo stato di autenticazione
-        const response = await apiRequest('/auth/check');
+        const response = await apiRequest('/api/auth/status');
         setIsAuthenticated(response.authenticated);
       } catch (error) {
         setIsAuthenticated(false);

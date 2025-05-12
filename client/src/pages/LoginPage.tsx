@@ -22,7 +22,7 @@ export default function LoginPage() {
     setError('');
     
     try {
-      const response = await apiRequest('/auth/login', {
+      const response = await apiRequest('/api/auth/login', {
         method: 'POST',
         body: { username, password },
       });
