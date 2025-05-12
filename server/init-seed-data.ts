@@ -1,24 +1,16 @@
 /**
- * Script per il reset completo del database
- * 
- * Questo script:
- * 1. Mantiene solo l'utente admin (michele@experviser.com)
- * 2. Elimina tutti i dati da tutte le altre tabelle
- * 3. Resetta le sequenze di auto-increment
- * 4. Ricrea un seed minimo per i test
+ * Script per creare dati di seed iniziali dopo la pulizia del database
  */
 
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import ws from 'ws';
-import { sql } from 'drizzle-orm';
 
 neonConfig.webSocketConstructor = ws;
 
 import {
-  users, contacts, companies, deals, 
-  areasOfActivity, leads, pipelineStages, 
-  tasks, activities, synergies
+  companies, contacts, areasOfActivity, leads, deals,
+  pipelineStages, contactEmails, contactEmailTypeEnum
 } from '../shared/schema';
 
 const pool = new Pool({
@@ -27,82 +19,21 @@ const pool = new Pool({
 
 const db = drizzle(pool);
 
-async function resetDatabase() {
+async function createSeedData() {
   try {
     console.log('='.repeat(50));
-    console.log('AVVIO RESET COMPLETO DEL DATABASE');
+    console.log('AVVIO CREAZIONE DATI DI SEED');
     console.log('='.repeat(50));
     
-    // Nota: Non usiamo SET session_replication_role = 'replica' per evitare problemi di privilegi
-    
-    console.log('1. Eliminazione dati da tutte le tabelle (tranne utente admin)...');
-    
-    // Elimina tutte le sinergie
-    await db.execute(sql`DELETE FROM synergies`);
-    console.log('✓ Tabella synergies svuotata');
-    
-    // Elimina tutte le attività
-    await db.execute(sql`DELETE FROM activities`);
-    console.log('✓ Tabella activities svuotata');
-    
-    // Elimina tutti i task
-    await db.execute(sql`DELETE FROM tasks`);
-    console.log('✓ Tabella tasks svuotata');
-    
-    // Elimina tutti i deal
-    await db.execute(sql`DELETE FROM deals`);
-    console.log('✓ Tabella deals svuotata');
-    
-    // Elimina tutte le aree di attività
-    await db.execute(sql`DELETE FROM areas_of_activity`);
-    console.log('✓ Tabella areas_of_activity svuotata');
-    
-    // Elimina tutti i lead
-    await db.execute(sql`DELETE FROM leads`);
-    console.log('✓ Tabella leads svuotata');
-    
-    // Elimina tutti i contatti
-    await db.execute(sql`DELETE FROM contacts`);
-    console.log('✓ Tabella contacts svuotata');
-    
-    // Elimina tutte le aziende
-    await db.execute(sql`DELETE FROM companies`);
-    console.log('✓ Tabella companies svuotata');
-    
-    // Mantieni solo l'utente admin (michele@experviser.com)
-    await db.execute(sql`DELETE FROM users WHERE username != 'michele' AND email != 'michele@experviser.com'`);
-    await db.execute(sql`DELETE FROM user_sessions WHERE user_id NOT IN (SELECT id FROM users)`);
-    console.log('✓ Tabella users filtrata (mantenuto solo michele@experviser.com)');
-    
-    console.log('2. Reset sequenze di auto-increment...');
-    
-    // Reset delle sequenze di auto-increment
-    const sequences = [
-      'synergies_id_seq',
-      'activities_id_seq',
-      'tasks_id_seq',
-      'deals_id_seq',
-      'areas_of_activity_id_seq',
-      'leads_id_seq',
-      'contacts_id_seq',
-      'companies_id_seq'
-    ];
-    
-    for (const sequence of sequences) {
-      try {
-        await db.execute(sql`ALTER SEQUENCE ${sql.identifier(sequence)} RESTART WITH 1`);
-      } catch (error) {
-        console.error(`Errore nel reset della sequenza ${sequence}:`, error);
-      }
+    // Recupera le fasi della pipeline esistenti
+    const stages = await db.select().from(pipelineStages);
+    if (stages.length === 0) {
+      console.error('Errore: Le fasi della pipeline non esistono. Eseguire prima initPostgresDb.ts');
+      return;
     }
     
-    console.log('✓ Sequenze di auto-increment resettate');
-    
-    // Nota: Non usiamo SET session_replication_role = 'origin' per evitare problemi di privilegi
-    
-    console.log('3. Creazione seed minimo per test...');
-    
     // Crea aziende di test
+    console.log('Creazione aziende di test...');
     const company1 = await db.insert(companies).values({
       name: "FranchisingPlus SpA",
       industry: "Franchising",
@@ -113,7 +44,7 @@ async function resetDatabase() {
       tags: ["franchising", "retail"],
       notes: "Azienda di franchising attiva nel settore retail",
       status: "active",
-      isActiveRep: true, // Active Rep
+      isActiveRep: true,
       companyType: "basket_company_franchisor",
       brands: ["Brand1", "Brand2"],
       channels: ["retail", "online"],
@@ -131,7 +62,7 @@ async function resetDatabase() {
       tags: ["ristorazione", "food"],
       notes: "Catena di ristoranti italiani",
       status: "active",
-      isActiveRep: false, // Standard
+      isActiveRep: false,
       companyType: "independent",
       brands: ["RistoItaliano"],
       channels: ["physical"],
@@ -139,63 +70,108 @@ async function resetDatabase() {
       locationTypes: ["urban", "mall", "travel"]
     }).returning();
     
-    console.log('✓ Create 2 aziende (una Active Rep, una standard)');
+    console.log(`✓ Create ${company1.length + company2.length} aziende di test`);
     
     // Crea contatti di test
+    console.log('Creazione contatti di test...');
     const contact1 = await db.insert(contacts).values({
       firstName: "Marco",
       lastName: "Rossi",
       mobilePhone: "+39 333 1234567",
-      companyEmail: "", // Campo svuotato per migrazione a contact_emails
-      privateEmail: "", // Campo svuotato per migrazione a contact_emails
+      companyEmail: "", // Svuotato per migrazione a contact_emails
+      privateEmail: "", // Svuotato per migrazione a contact_emails
       officePhone: "+39 02 1234567",
       privatePhone: "",
       linkedin: "https://linkedin.com/in/marcorossi",
       tags: ["vip", "decision maker"],
       notes: "CEO di FranchisingPlus",
       status: "active",
-      roles: ["executive", "board member"],
-      lastContactedAt: new Date(),
-      nextFollowUpAt: new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)) // 7 giorni da oggi
+      roles: ["executive", "board member"]
     }).returning();
     
     const contact2 = await db.insert(contacts).values({
       firstName: "Laura",
       lastName: "Bianchi",
       mobilePhone: "+39 335 9876543",
-      companyEmail: "", // Campo svuotato per migrazione a contact_emails
-      privateEmail: "", // Campo svuotato per migrazione a contact_emails
+      companyEmail: "", // Svuotato per migrazione a contact_emails
+      privateEmail: "", // Svuotato per migrazione a contact_emails
       officePhone: "+39 02 1234568",
       privatePhone: "",
       linkedin: "https://linkedin.com/in/laurabianchi",
       tags: ["marketing", "franchising"],
       notes: "Direttore Marketing di FranchisingPlus",
       status: "active",
-      roles: ["marketing", "management"],
-      lastContactedAt: new Date(),
-      nextFollowUpAt: new Date(Date.now() + (5 * 24 * 60 * 60 * 1000)) // 5 giorni da oggi
+      roles: ["marketing", "management"]
     }).returning();
     
     const contact3 = await db.insert(contacts).values({
       firstName: "Giuseppe",
       lastName: "Verdi",
       mobilePhone: "+39 338 1122334",
-      companyEmail: "", // Campo svuotato per migrazione a contact_emails
-      privateEmail: "", // Campo svuotato per migrazione a contact_emails
+      companyEmail: "", // Svuotato per migrazione a contact_emails
+      privateEmail: "", // Svuotato per migrazione a contact_emails
       officePhone: "+39 06 7654322",
       privatePhone: "",
       linkedin: "https://linkedin.com/in/giuseppeverdi",
       tags: ["ristorazione", "chef"],
       notes: "Responsabile sviluppo di Ristoranti Italiani",
       status: "active",
-      roles: ["operations", "business development"],
-      lastContactedAt: new Date(),
-      nextFollowUpAt: new Date(Date.now() + (3 * 24 * 60 * 60 * 1000)) // 3 giorni da oggi
+      roles: ["operations", "business development"]
     }).returning();
     
-    console.log('✓ Creati 3 contatti di test');
+    console.log(`✓ Creati ${contact1.length + contact2.length + contact3.length} contatti di test`);
+    
+    // Crea email di contatto
+    console.log('Creazione email di contatto...');
+    
+    // Email per il primo contatto
+    await db.insert(contactEmails).values({
+      contactId: contact1[0].id,
+      emailAddress: "marco.rossi@franchisingplus.it",
+      type: "work",
+      isPrimary: true,
+      status: "active"
+    });
+    
+    await db.insert(contactEmails).values({
+      contactId: contact1[0].id,
+      emailAddress: "marco.rossi@gmail.com",
+      type: "personal",
+      isPrimary: false,
+      status: "active"
+    });
+    
+    // Email per il secondo contatto
+    await db.insert(contactEmails).values({
+      contactId: contact2[0].id,
+      emailAddress: "laura.bianchi@franchisingplus.it",
+      type: "work",
+      isPrimary: true,
+      status: "active"
+    });
+    
+    // Email per il terzo contatto
+    await db.insert(contactEmails).values({
+      contactId: contact3[0].id,
+      emailAddress: "giuseppe.verdi@ristorantiitaliani.it",
+      type: "work",
+      isPrimary: true,
+      status: "active"
+    });
+    
+    await db.insert(contactEmails).values({
+      contactId: contact3[0].id,
+      emailAddress: "g.verdi@hotmail.com",
+      type: "personal",
+      isPrimary: false,
+      status: "active"
+    });
+    
+    console.log('✓ Create 5 email di contatto');
     
     // Crea aree di attività (associazione contatti-aziende)
+    console.log('Creazione aree di attività...');
+    
     await db.insert(areasOfActivity).values({
       contactId: contact1[0].id,
       companyId: company1[0].id,
@@ -223,9 +199,11 @@ async function resetDatabase() {
       isPrimary: true
     });
     
-    console.log('✓ Create relazioni tra contatti e aziende');
+    console.log('✓ Create 3 aree di attività');
     
     // Crea lead di test
+    console.log('Creazione lead di test...');
+    
     await db.insert(leads).values({
       firstName: "Anna",
       lastName: "Neri",
@@ -253,8 +231,7 @@ async function resetDatabase() {
     console.log('✓ Creati 2 lead di test');
     
     // Crea deal di test
-    const stageResponse = await db.select().from(pipelineStages).orderBy(pipelineStages.order);
-    const stages = stageResponse;
+    console.log('Creazione deal di test...');
     
     await db.insert(deals).values({
       name: "Consulenza strategica FranchisingPlus",
@@ -287,18 +264,19 @@ async function resetDatabase() {
     console.log('✓ Creati 2 deal di test');
     
     console.log('='.repeat(50));
-    console.log('RESET DATABASE COMPLETATO CON SUCCESSO');
+    console.log('CREAZIONE DATI DI SEED COMPLETATA CON SUCCESSO');
     console.log('='.repeat(50));
-    console.log('Dati creati per il test:');
+    console.log('Dati creati:');
     console.log('- 2 aziende (una Active Rep, una standard)');
-    console.log('- 3 contatti con relazioni alle aziende');
+    console.log('- 3 contatti con 5 email');
+    console.log('- 3 aree di attività (relazioni contatti-aziende)');
     console.log('- 2 lead');
     console.log('- 2 deal');
     console.log('- 0 sinergie (verranno create tramite Deal)');
     console.log('='.repeat(50));
     
   } catch (error) {
-    console.error('ERRORE DURANTE IL RESET DEL DATABASE:', error);
+    console.error('ERRORE DURANTE LA CREAZIONE DEI DATI DI SEED:', error);
   } finally {
     // Chiudi la connessione al database
     await pool.end();
@@ -306,4 +284,4 @@ async function resetDatabase() {
 }
 
 // Esegui lo script
-resetDatabase();
+createSeedData();
