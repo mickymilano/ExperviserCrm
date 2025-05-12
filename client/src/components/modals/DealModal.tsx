@@ -48,7 +48,9 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(
     initialData?.companyId || null
   );
-  const [synergyContact, setSynergyContact] = useState<string | null>(null);
+  const [synergyContactId, setSynergyContactId] = useState<string | null>(null);
+  const [filteredSynergyContacts, setFilteredSynergyContacts] = useState<any[]>([]);
+  const [synergyOptions, setSynergyOptions] = useState<Array<{value: string, label: string}>>([]);
   
   // Form reference for alert dialog submission
   const formRef = useRef<HTMLFormElement>(null);
@@ -56,6 +58,9 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
   const [showNoCompanyAlert, setShowNoCompanyAlert] = useState(false);
   const [showNoContactAlert, setShowNoContactAlert] = useState(false);
   const isEditMode = !!initialData;
+  
+  // Use createSynergy mutation
+  const createSynergyMutation = useCreateSynergy();
 
   // Fetch pipeline stages for dropdown
   const { data: stages = [] } = useQuery({
@@ -86,6 +91,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       expectedCloseDate: "",
       tags: [],
       notes: "",
+      synergyContactId: undefined,
     }
   });
 
@@ -165,9 +171,20 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
           return contact.areasOfActivity.some(area => area.companyId === selectedCompanyId);
         });
         setFilteredContacts(filteredContactsList);
+        
+        // Also filter synergy contacts - these are contacts NOT associated with this company
+        const synergyContactsList = contacts.filter(contact => {
+          if (!contact.areasOfActivity || !Array.isArray(contact.areasOfActivity)) {
+            return true; // Include contacts with no company associations
+          }
+          // Include only if they are NOT associated with the selected company
+          return !contact.areasOfActivity.some(area => area.companyId === selectedCompanyId);
+        });
+        setFilteredSynergyContacts(synergyContactsList);
       } else {
         // Se nessuna azienda è selezionata, mostra tutti i contatti
         setFilteredContacts(contacts);
+        setFilteredSynergyContacts([]);
       }
     }
   }, [contacts, selectedCompanyId]);
@@ -311,7 +328,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       onOpenChange(false);
       reset();
       setTagsInput("");
-      setSynergyContact(null);
+      setSynergyContactId(null);
       setShowNoCompanyAlert(false);
       setShowNoContactAlert(false);
       
@@ -338,21 +355,21 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     saveDeal.mutate(data);
   };
 
-  // Opzioni per il combobox delle sinergie
-  const synergyOptions = useMemo(() => {
-    if (!contacts || !Array.isArray(contacts)) return [];
-    
-    // Escludiamo il contatto principale selezionato
+  // Update synergy options when filtered contacts or selected contact changes
+  useEffect(() => {
+    // Get the selected contact ID
     const selectedContactId = Number(getValues("contactId"));
     
-    // Filtriamo i contatti, escludendo il contatto principale del deal
-    return contacts
+    // Create options from filtered synergy contacts, excluding the selected contact
+    const options = filteredSynergyContacts
       .filter(contact => contact.id !== selectedContactId)
       .map(contact => ({
         value: contact.id.toString(),
         label: `${contact.firstName} ${contact.lastName}`
       }));
-  }, [contacts, getValues]);
+    
+    setSynergyOptions(options);
+  }, [filteredSynergyContacts, getValues]);
   
   return (
     <>
@@ -560,9 +577,9 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
               <div className="relative">
                 <Combobox
                   options={synergyOptions}
-                  value={synergyContact || ""}
+                  value={synergyContactId || ""}
                   onChange={(value) => {
-                    setSynergyContact(value);
+                    setSynergyContactId(value);
                     setValue("synergyContactId", value ? parseInt(value) : null);
                   }}
                   placeholder="Search for a contact to create a synergy"
