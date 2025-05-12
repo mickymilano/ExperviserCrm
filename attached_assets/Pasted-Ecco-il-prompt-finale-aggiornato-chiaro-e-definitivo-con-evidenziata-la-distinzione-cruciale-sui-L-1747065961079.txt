@@ -1,0 +1,131 @@
+Ecco il prompt finale aggiornato, chiaro e definitivo, con evidenziata la distinzione cruciale sui Leads per Replit, basato sulla tua indicazione. Questo testo è pronto da inviare direttamente a Replit:
+
+⸻
+
+🚩 Prompt finale aggiornato per lo sviluppo e debug di Experviser CRM
+
+🎯 Obiettivo Principale
+
+Realizzare rapidamente un CRM robusto e scalabile, specializzato per consulenti o piccoli team nei settori Franchising, Retail, e Ristorazione, focalizzandosi subito su stabilità backend, integrità logica dei dati e correttezza delle funzioni principali. L’interfaccia grafica può essere ottimizzata successivamente.
+
+⸻
+
+📌 Indicazioni aggiuntive immediate (Cruciali)
+
+Eccezione Critica:
+	•	Leads (essendo dati temporanei, non validati) sono l’unica entità cancellabile definitivamente (operazione di DELETE fisico, non archiviazione).
+	•	Tutte le altre entità principali (Deals, Contacts, Contact Emails) prevedono invece l’archiviazione, mai la cancellazione fisica.
+
+⸻
+
+✅ Task Principali (Aggiornati con precisazione sui Leads)
+
+1️⃣ 📥 Sistema di Archiviazione Dati (ad eccezione dei Leads)
+	•	Implementazione Archiviazione:
+	•	status (enum 'active' | 'archived') o isArchived (boolean) per Deals, Contacts e Contact Emails.
+	•	MAI eliminare fisicamente record di queste entità (solo archiviarli).
+	•	Endpoint API DELETE per queste entità devono invece effettuare un’archiviazione (isArchived=true).
+	•	Gestione dei Leads (Eccezione):
+	•	Endpoint API DELETE (/api/leads/:id) deve eliminare fisicamente il record dal database.
+	•	Conversione dei Leads (POST /api/leads/:id/convert) comporta sempre eliminazione fisica del Lead originale dopo conversione.
+	•	Sinergie:
+	•	Le sinergie restano collegate ai Deal anche se archiviati (non subiscono modifiche in caso di archivio).
+
+⸻
+
+2️⃣ 📧 Gestione Avanzata Email per Contatto
+	•	Gestire più indirizzi email per ciascun contatto (tabella contact_emails).
+	•	Campi: id, contactId, emailAddress, type (work, personal, previous_work, other), isPrimary, isArchived, createdAt, updatedAt.
+	•	Eliminare campi companyEmail e privateEmail da tabella contacts.
+	•	Associazione automatica email verifica su tutti gli indirizzi email non archiviati.
+
+⸻
+
+3️⃣ ⭐️ Aziende “Active Rep” (Rapporto Contrattuale in Corso)
+	•	Campo booleano isActiveRep (default false) nella tabella companies.
+	•	UI dedicata in dashboard per mostrare esclusivamente aziende “Active Rep”.
+	•	Lista generale aziende filtra per default su isActiveRep=false (con filtro opzionale).
+
+⸻
+
+4️⃣ 🔖 Implementazione Best Practice CRM (ispirate a HubSpot, Pipedrive, ClozeCRM)
+	•	Date Chiave:
+	•	Aggiungere lastContactedAt, nextFollowUpAt per Contacts e Deals.
+	•	Attività:
+	•	Timeline dettagliata e filtrabile per tipo attività (email, meeting, note, update).
+	•	Tagging Consistente:
+	•	Campi multi-tag (brands, channels, productsOrServicesTags, locationTypes in companies; roles in contacts), con gestione autocompletamento e creazione dinamica nuovi tag.
+	•	Tipi Azienda Strutturati:
+	•	Campo companyType enum: (Indipendente, Basket Company Franchisor, Franchisor Monomarca, Multi-unit Franchisee, Master Franchisee, Gestore Centri Commerciali, Produttore, Grossista, Altro).
+	•	Tipologie di Location:
+	•	Campo multi-tag locationTypes (es. strade urbane, centri commerciali, travel retail).
+
+⸻
+
+5️⃣ 🔄 Sinergie (URGENTE: FIX e rifacimento input)
+	•	Casella “Synergy Contact” in DealModal:
+	•	Ricerca con autocompletamento (async-select), caricamento dinamico dopo digitazione almeno 1 carattere.
+	•	Escludere automaticamente contatti già affiliati all’azienda del deal corrente.
+	•	Selezione multipla obbligatoria con visualizzazione contatti scelti tramite tag blu, rimovibili con icona “x”.
+	•	Campo form React-hook-form: synergyContactIds (array di ID).
+	•	Regole Sinergie:
+	•	Nessuna cancellazione UI diretta delle Sinergie.
+	•	Visualizzazione sinergie nella scheda azienda e contatto con link diretto al Deal associato.
+	•	Eliminare tutte le false relazioni precedentemente generate per errore.
+
+⸻
+
+6️⃣ 🛡️ Pannello di Controllo Superadmin (Nuova funzionalità)
+	•	Riservato a utenti ruolo super_admin.
+	•	Gestione utenti: creazione, modifica, archiviazione (senza eliminazione fisica).
+	•	Utilizzare API sicure (es. GET /api/users, POST /api/users, PATCH /api/users/:id).
+
+⸻
+
+⚙️ Azioni Immediate per Replit
+
+Replit deve effettuare autonomamente, senza ulteriori domande o interruzioni:
+	•	Debug completo e risoluzione immediata di tutti i bug presenti.
+	•	Implementazione immediata delle nuove funzionalità richieste (Task 1-6).
+	•	Assicurare massima priorità alla correttezza logica e stabilità backend.
+	•	Simulare tutte le azioni utente possibili (CRUD e archivio per contatti, aziende, deals, cancellazione fisica per i leads, gestione sinergie e email multiple, gestione aziende “Active Rep”, pannello superadmin).
+	•	Verifica finale esaustiva e autonoma con test completo (logica dati, funzionalità e integrazioni).
+
+⸻
+
+🗃️ Schema Database - Chiarimenti Finali (Drizzle ORM)
+
+Verificare che tutte le modifiche dello schema siano applicate prima di procedere:
+	•	Archiviazione: Aggiungere campi status/isArchived (deals, contacts, contact_emails).
+	•	Leads: Nessun campo archiviazione (DELETE fisico).
+	•	Nuova tabella contact_emails.
+	•	Campi isActiveRep, lastContactedAt, nextFollowUpAt per rispettive entità.
+	•	Campi strutturati e multi-tag (vedi Task 4).
+
+⸻
+
+🔄 Reset e Seed iniziale Database (Cruciale prima dei test)
+	•	Reset totale database (eccetto utente admin michele@experviser.com, da preservare sempre con ruolo super_admin e credenziali note).
+	•	Nuovo seed minimo per test coerenti:
+	•	2 aziende (una Active Rep, una standard), 2-3 contatti collegati con email multiple, 2 lead, 1-2 deal, nessuna sinergia iniziale.
+
+⸻
+
+💡 Possibili sviluppi futuri (solo per riferimento, da non fare ora)
+	•	Integrazione Google Maps API per verifica indirizzi aziendali.
+	•	Parsing automatico email in ingresso.
+	•	Integrazione futura Google Calendar e Apple Calendar.
+
+⸻
+
+🚨 ATTENZIONE CRITICA PER REPLIT
+	•	Procedere immediatamente senza ulteriori richieste.
+	•	Confermare esecuzione al termine con breve report finale contenente:
+	1.	Conferma completamento schema, reset, implementazioni Task 1-6.
+	2.	Riepilogo sintetico bug risolti.
+	3.	Panoramica implementazioni verificate e funzionanti al 100%.
+
+⸻
+
+✅ Questo testo è definitivo, pronto per l’immediata esecuzione da parte di Replit.
+L’AI procederà con massima priorità e autonomia finché tutto non sarà risolto e verificato.

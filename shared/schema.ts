@@ -135,6 +135,9 @@ export const insertAreaOfActivitySchema = createInsertSchema(areasOfActivity).om
   updatedAt: true,
 });
 
+// Contact status enum
+export const contactStatusEnum = pgEnum("contact_status", ["active", "archived"]);
+
 // Contacts
 export const contacts = pgTable("contacts", {
   id: serial("id").primaryKey(),
@@ -159,6 +162,14 @@ export const contacts = pgTable("contacts", {
   tags: text("tags").array(),
   notes: text("notes"),
   customFields: jsonb("custom_fields"),
+  
+  // Nuovi campi come da specifiche
+  status: contactStatusEnum("status").default("active").notNull(),
+  roles: text("roles").array(),
+  lastContactedAt: timestamp("last_contacted_at"),
+  nextFollowUpAt: timestamp("next_follow_up_at"),
+  
+  // Timestamps
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -170,6 +181,22 @@ export const insertContactSchema = createInsertSchema(contacts).omit({
   createdAt: true,
   updatedAt: true,
 });
+
+// Company status enum
+export const companyStatusEnum = pgEnum("company_status", ["active", "archived"]);
+
+// Company type enum
+export const companyTypeEnum = pgEnum("company_type", [
+  "independent", 
+  "basket_company_franchisor", 
+  "mono_brand_franchisor", 
+  "multi_unit_franchisee", 
+  "master_franchisee", 
+  "mall_manager", 
+  "manufacturer", 
+  "wholesaler", 
+  "other"
+]);
 
 // Companies
 export const companies = pgTable("companies", {
@@ -183,6 +210,17 @@ export const companies = pgTable("companies", {
   tags: text("tags").array(),
   notes: text("notes"),
   customFields: jsonb("custom_fields"),
+  // Nuovi campi come da specifiche
+  status: companyStatusEnum("status").default("active").notNull(),
+  isActiveRep: boolean("is_active_rep").default(false).notNull(),
+  companyType: companyTypeEnum("company_type").default("other"),
+  brands: text("brands").array(),
+  channels: text("channels").array(),
+  productsOrServicesTags: text("products_or_services_tags").array(),
+  locationTypes: text("location_types").array(),
+  lastContactedAt: timestamp("last_contacted_at"),
+  nextFollowUpAt: timestamp("next_follow_up_at"),
+  // Timestamps
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
