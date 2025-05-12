@@ -14,6 +14,7 @@ import Companies from "@/pages/companies";
 import CompanyDetail from "@/pages/companies/[id]";
 import Deals from "@/pages/deals";
 import DealDetail from "@/pages/deals/[id]";
+import NewDeal from "@/pages/deals/new";
 import Email from "@/pages/email";
 import EmailAccounts from "@/pages/email/accounts";
 import EmailSettings from "@/pages/email/settings";
@@ -109,6 +110,7 @@ function ProtectedRoutes() {
           <Route path="/companies" component={Companies} />
           <Route path="/companies/:id" component={CompanyDetail} />
           <Route path="/deals" component={Deals} />
+          <Route path="/deals/new" component={NewDeal} />
           <Route path="/deals/:id" component={DealDetail} />
           <Route path="/email" component={Email} />
           <Route path="/email/accounts" component={EmailAccounts} />
