@@ -1,0 +1,128 @@
+🚀 **MEGA-PROMPT PER LA RICOSTRUZIONE GUIDATA DI EXPERVISER CRM** 🚀
+
+**Contesto & Obiettivo**  
+ExpertCrm è un CRM specializzato per consulenti e advisor nel mondo Franchising / Retail / Ristorazione. Deve gestire in modo integrato:  
+- Aziende (master-franchisor, multi-unit, produttori, distributori…)  
+- Contatti (ruoli ufficiali + descrizioni estese)  
+- Lead (temporanei, cancellabili)  
+- Deals (opportunità con pipeline stages)  
+- Business Synergies (relazioni “extra-ordinaria” tra contatti e aziende)  
+- Attività (task, email multi-account, meeting, timeline)  
+- Utenti con ruoli (user, admin, super_admin)
+
+**Stack Tecnologico**  
+- **Backend**: Node.js + Express, PostgreSQL, Drizzle ORM + Zod  
+- **Frontend**: React + TypeScript, TanStack Query, React Hook Form, react-select/async, Shadcn/ui (Tailwind)  
+- **Deploy**: Vite (o Next.js), Replit
+
+---
+
+## 📑 FASI DI RICOSTRUZIONE E TEST
+
+### FASE 0 – RESET TOTALE  
+1. **Elimina** tutto il codice di routes/backend (server/routes.ts), storage layer, componenti client/src e hook custom.  
+2. **Mantieni** solo:  
+   - `schema.ts` (definizioni Drizzle ORM)  
+   - Config di progetto (Vite/Next.config)  
+3. **Svuota** il DB (tranne utente `michele@experviser.com`, super_admin).  
+
+> *Rispondi “✅ Fase 0 completata” prima di procedere.*  
+
+---
+
+### FASE 1 – SCHEMA E CRUD BACKEND BASE  
+1. **Conferma/Implementa** in `schema.ts` le tabelle:  
+   - `users` (solo superadmin),  
+   - `companies` (name, industry, website, email, phone, address, companyType, tags[], locationTypes[], isActiveRep, isArchived),  
+   - `contacts` (firstName, lastName, roles[], lastContactedAt, nextFollowUpAt, isArchived),  
+   - `contact_emails` (contactId, emailAddress, type, isPrimary, isArchived),  
+   - `pipeline_stages` (name, order),  
+   - `deals` (name, value, expectedCloseDate, companyId, contactId, stageId, lastContactedAt, nextFollowUpAt, isArchived),  
+   - `areas_of_activity` (contactId, companyId, role, isPrimary),  
+   - `synergies` (dealId, contactId, companyId, type, description, status, startDate),  
+   - `leads` (DELETE fisico),  
+   - `tasks`, `emails`, `activities`, `meetings`.  
+2. **Implementa** in `server/postgresStorage.ts` funzioni CRUD minime (Create, Read all/ID, Update, Delete/archive) per Companies, Contacts, Leads, PipelineStages, Deals.  
+3. **Crea** in `server/routes.ts` endpoint REST per ciascuna entità:  
+   - `GET /api/[entity]`, `GET /api/[entity]/:id`, `POST`, `PATCH`, `DELETE` (archive per contacts/deals, hard delete per leads).  
+4. **Seed minimo** di test (solo dopo CRUD ok):  
+   - 6 pipeline stages,  
+   - 2 aziende (1 ActiveRep + 1 standard),  
+   - 2 contatti + 3 email ciascuno,  
+   - 2 lead,  
+   - 1 deal.  
+
+> *Rispondi “✅ Fase 1 completata” e mostra via `curl` un esempio di GET/POST/PATCH/DELETE.*  
+
+---
+
+### FASE 2 – UI CRUD BASE  
+1. **Crea** pagine React e modali con Shadcn/ui per:  
+   - Lista + modale Create/Edit per Companies (toggle ActiveRep, archiviazione),  
+   - Contacts (multi-email, archiviazione),  
+   - Leads (cancellazione definitiva),  
+   - Deals (stages, company, contact).  
+2. **Verifica**: ogni form chiama correttamente le API, mostra toast di successo/errore.
+
+> *Rispondi “✅ Fase 2 completata” con screenshot delle UI e log network.*  
+
+---
+
+### FASE 3 – RELAZIONI AZIENDA ↔ CONTATTO  
+1. **Backend**: endpoint `POST /api/areas-of-activity` e `DELETE /api/areas-of-activity/:id`.  
+2. **UI**: in CompanyDetail e ContactDetail, usa `react-select/async` per associare/dissociare contatti e aziende; mostra lista bidirezionale.
+
+> *Rispondi “✅ Fase 3 completata” con screenshot.*  
+
+---
+
+### FASE 4 – DEALS & PIPELINE STAGES  
+1. **Backend**: CRUD Deals, ensure no duplicate pipeline stages.  
+2. **UI DealModal**:  
+   - AsyncSelect per Company e Contact (filtrati da API),  
+   - Select pulito per pipelineStages (ordine definito).  
+
+> *Rispondi “✅ Fase 4 completata” con test di creazione deal.*  
+
+---
+
+### FASE 5 – BUSINESS SYNERGIES  
+1. **Backend**:  
+   - `POST /api/deals/:dealId/synergies { contactIds[] }` → sostituisce set,  
+   - `GET /api/deals/:dealId/synergies`, `/companies/:id/synergies`, `/contacts/:id/synergies`.  
+2. **UI DealModal**: campo `synergyContactIds` con `react-select/async` multi-select, tag blu con “×”.  
+3. **UI Detail Views**: tab “Sinergie” read-only in CompanyDetail e ContactDetail, link al deal.  
+
+> *Rispondi “✅ Fase 5 completata” con screenshot.*  
+
+---
+
+### FASE 6 – ARCHIVIAZIONE & DELETE  
+- Contacts & Deals: `isArchived` flag (DELETE → archive)  
+- Leads: hard DELETE  
+- API/UI default filter `isArchived=false`, param `includeArchived=true`.  
+
+> *“✅ Fase 6 completata”*  
+
+---
+
+### FASE 7 – EMAIL MULTIPLE PER CONTACT  
+- **DB/UI**: gestione dinamica di `contact_emails` (add/edit/archive/setPrimary) in ContactForm.  
+- **Logic**: match email in entrata/outgoing sui `contact_emails` non archiviate.  
+
+> *“✅ Fase 7 completata”*  
+
+---
+
+### FASE 8 – SUPERADMIN PANEL  
+- **Route** `/admin` protetto per ruolo `super_admin`  
+- **UI**: elenco utenti, create/edit (ruolo, stato, reset password), archive anziché delete.  
+
+> *“✅ Fase 8 completata”*  
+
+---
+
+❗ **IMPORTANTE**  
+Esegui ogni fase **in sequenza**, testala completamente (API + UI) e **riporta i risultati** (log, screenshot) prima di procedere alla successiva. Non chiedere ulteriori chiarimenti fino al completamento di tutte le fasi.  
+
+Copialo e incollalo in Replit come un unico comando. Buon lavoro! 🚀
