@@ -276,10 +276,18 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
   // per evitare cicli di aggiornamento
   }, [contacts]);
 
-  // Load existing synergy contacts in edit mode
+  // Load existing synergy contacts in edit mode - using a ref to avoid infinite loops
+  const previousSynergiesRef = useRef<any[]>([]);
+  
   useEffect(() => {
     // Solo se siamo in modalità modifica e ci sono sinergie esistenti
     if (isEditMode && dealSynergies && Array.isArray(dealSynergies) && dealSynergies.length > 0) {
+      // Verifica se le sinergie sono cambiate rispetto all'ultimo render
+      if (JSON.stringify(previousSynergiesRef.current) === JSON.stringify(dealSynergies)) {
+        console.log("Sinergie non cambiate, salto l'aggiornamento");
+        return; // Nessun cambiamento, non aggiorniamo
+      }
+      
       console.log("Caricamento sinergie esistenti in modalità modifica:", dealSynergies);
       
       // Estrai gli ID dei contatti dalle sinergie, assicurandoti che siano numeri
@@ -289,16 +297,24 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
       
       console.log("ID contatti sinergici estratti:", contactIds);
       
-      // Verifica se è necessario aggiornare il valore del campo
-      const currentValue = getValues("synergyContactIds") || [];
-      if (JSON.stringify(currentValue) !== JSON.stringify(contactIds)) {
-        console.log("Aggiornamento del campo synergyContactIds con:", contactIds);
-        setValue("synergyContactIds", contactIds);
-      }
+      // Aggiorniamo il valore solo se necessario
+      setValue("synergyContactIds", contactIds, { shouldDirty: false });
+      
+      // Aggiorna il riferimento per il prossimo confronto
+      previousSynergiesRef.current = dealSynergies;
     } else if (isEditMode) {
       console.log("Nessuna sinergia trovata per questo deal:", dealSynergies);
+      
+      // Se non ci sono sinergie e il campo ha valori, lo resettiamo
+      const currentValue = getValues("synergyContactIds") || [];
+      if (currentValue.length > 0) {
+        setValue("synergyContactIds", [], { shouldDirty: false });
+      }
+      
+      // Aggiorna il riferimento
+      previousSynergiesRef.current = [];
     }
-  }, [dealSynergies, isEditMode, getValues, setValue]);
+  }, [dealSynergies, isEditMode, setValue]);
 
   // Helper function to create synergies for contacts
   // Questo metodo gestisce le sinergie per un deal, creando o aggiornando secondo necessità
