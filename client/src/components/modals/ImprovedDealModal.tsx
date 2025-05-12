@@ -270,48 +270,13 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
   // per evitare cicli di aggiornamento
   }, [contacts]);
 
-  // Load existing synergy contacts in edit mode - using a ref to avoid infinite loops
-  const previousSynergiesRef = useRef<any[]>([]);
-  const dealSynergiesInitializedRef = useRef<boolean>(false);
+  // La funzionalità delle sinergie è stata rimossa
+  // const previousSynergiesRef = useRef<any[]>([]);
+  // const dealSynergiesInitializedRef = useRef<boolean>(false);
   
-  useEffect(() => {
-    // Solo se siamo in modalità modifica e ci sono sinergie esistenti
-    if (isEditMode && dealSynergies && Array.isArray(dealSynergies) && open) {
-      // Verifica se le sinergie sono cambiate rispetto all'ultimo render
-      // oppure se questo è il caricamento iniziale
-      const synergiesString = JSON.stringify(dealSynergies);
-      const previousSynergiesString = JSON.stringify(previousSynergiesRef.current);
-      
-      if (synergiesString === previousSynergiesString && dealSynergiesInitializedRef.current) {
-        return; // Nessun cambiamento, non aggiorniamo
-      }
-      
-      // Estrai gli ID dei contatti dalle sinergie, assicurandoti che siano numeri
-      const contactIds = dealSynergies.map(synergy => 
-        typeof synergy.contactId === 'string' ? parseInt(synergy.contactId) : synergy.contactId
-      );
-      
-      // Solo se sono diversi dall'attuale valore
-      const currentValue = getValues("synergyContactIds") || [];
-      const currentValueStr = JSON.stringify(currentValue.sort());
-      const newValueStr = JSON.stringify(contactIds.sort());
-      
-      if (currentValueStr !== newValueStr) {
-        setValue("synergyContactIds", contactIds, { shouldDirty: false });
-      }
-      
-      // Aggiorna il riferimento per il prossimo confronto
-      previousSynergiesRef.current = dealSynergies;
-      dealSynergiesInitializedRef.current = true;
-    } else if (isEditMode && open && (!dealSynergies || dealSynergies.length === 0)) {
-      // Solo se non abbiamo già inizializzato
-      if (!dealSynergiesInitializedRef.current) {
-        setValue("synergyContactIds", [], { shouldDirty: false });
-        previousSynergiesRef.current = [];
-        dealSynergiesInitializedRef.current = true;
-      }
-    }
-  }, [dealSynergies, isEditMode, setValue, getValues, open]);
+  // useEffect(() => {
+  //   // Effetto rimosso con la rimozione del modulo sinergie
+  // }, []);
 
   // Helper function to create synergies for contacts
   // Questo metodo gestisce le sinergie per un deal, creando o aggiornando secondo necessità
@@ -846,77 +811,7 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
                 )}
               </div>
 
-              {/* Synergy Contacts */}
-              <div className="space-y-2">
-                <Label htmlFor="synergyContacts">Synergy Contacts (Optional)</Label>
-                <Controller
-                  name="synergyContactIds"
-                  control={control}
-                  render={({ field }) => (
-                    <AsyncSelect
-                      cacheOptions
-                      defaultOptions={false} 
-                      isMulti
-                      isDisabled={!getSelectedCompanyId()}
-                      placeholder={getSelectedCompanyId() ? "Type at least 1 character to search contacts..." : "Select a company first"}
-                      loadOptions={loadSynergyContactOptions}
-                      value={field.value?.map((id: number) => {
-                        // Log per il debugging
-                        console.log("Rendering synergy contact option for ID:", id);
-                        
-                        // Cerca il contatto nella lista completa dei contatti
-                        const contact = Array.isArray(contacts) 
-                          ? contacts.find((c: any) => c.id === id) 
-                          : null;
-                          
-                        if (contact) {
-                          console.log("Found contact for synergy:", contact);
-                        } else {
-                          console.log("Contact not found for ID:", id);
-                        }
-                        
-                        return {
-                          value: id,
-                          label: contact 
-                            ? `${contact.firstName || ""} ${contact.lastName || ""}`.trim() || `Contact #${id}`
-                            : `Contact #${id} (not found)`
-                        };
-                      })}
-                      onChange={(selected) => {
-                        const selectedIds = selected ? selected.map((item: any) => item.value) : [];
-                        
-                        // Assicuriamoci che siano tutti numeri
-                        const validSelectedIds = selectedIds
-                          .filter(id => !isNaN(Number(id)))
-                          .map(id => Number(id));
-                          
-                        // Rimuoviamo eventuali duplicati
-                        const uniqueSelectedIds = [...new Set(validSelectedIds)];
-                        
-                        field.onChange(uniqueSelectedIds);
-                      }}
-                      className="basic-multi-select"
-                      classNamePrefix="select"
-                      // Wait until user types a character before showing options
-                      noOptionsMessage={({ inputValue }) => 
-                        !getSelectedCompanyId() 
-                          ? "Please select a company first" 
-                          : inputValue.length < 1 
-                            ? "Type at least 1 character to search" 
-                            : "No matching contacts found"
-                      }
-                    />
-                  )}
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  {getValues("synergyContactIds")?.length > 0 && !getSelectedCompanyId() ? 
-                    <span className="text-red-500">Company selection is required when adding synergy contacts</span> : 
-                    getSelectedCompanyId() ? 
-                      "Type to search for contacts to add to this deal's synergies..." :
-                      "Select a company first to enable synergy contact selection"
-                  }
-                </p>
-              </div>
+              {/* La funzionalità delle sinergie è stata rimossa */}
 
               {/* Notes */}
               <div className="space-y-2">
