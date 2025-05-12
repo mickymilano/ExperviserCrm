@@ -423,3 +423,26 @@ export type InsertSignature = z.infer<typeof insertSignatureSchema>;
 
 export type AccountSignature = typeof accountSignatures.$inferSelect;
 export type InsertAccountSignature = z.infer<typeof insertAccountSignatureSchema>;
+
+// Synergies (special relationships between contacts and companies that don't create permanent associations)
+export const synergies = pgTable("synergies", {
+  id: serial("id").primaryKey(),
+  contactId: integer("contact_id").notNull().references(() => contacts.id, { onDelete: 'cascade' }),
+  companyId: integer("company_id").notNull().references(() => companies.id, { onDelete: 'cascade' }),
+  dealId: integer("deal_id").references(() => deals.id, { onDelete: 'set null' }),
+  startDate: timestamp("start_date").defaultNow().notNull(),
+  description: text("description"),
+  type: text("type").default("business"),
+  status: text("status").default("active"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertSynergySchema = createInsertSchema(synergies).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type Synergy = typeof synergies.$inferSelect;
+export type InsertSynergy = z.infer<typeof insertSynergySchema>;

@@ -17,6 +17,7 @@ import {
   accountSignatures,
   activities,
   meetings,
+  synergies,
   type User,
   type InsertUser,
   type UserSession,
