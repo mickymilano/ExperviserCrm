@@ -3,7 +3,6 @@ import { useParams, useLocation } from "wouter";
 import { useContact } from "@/hooks/useContacts";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useDeals } from "@/hooks/useDeals";
-import { SynergiesList } from "@/components/SynergiesList";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -158,7 +157,7 @@ export default function ContactDetail() {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="companies">Companies</TabsTrigger>
           <TabsTrigger value="deals">Deals</TabsTrigger>
-          <TabsTrigger value="synergies">Synergies</TabsTrigger>
+          <TabsTrigger value="activities">Activities</TabsTrigger>
         </TabsList>
         
         {/* Overview Tab */}

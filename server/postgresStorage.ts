@@ -17,7 +17,6 @@ import {
   accountSignatures,
   activities,
   meetings,
-  synergies,
   type User,
   type InsertUser,
   type UserSession,
@@ -49,9 +48,7 @@ import {
   type Activity,
   type InsertActivity, 
   type Meeting,
-  type InsertMeeting,
-  type Synergy,
-  type InsertSynergy
+  type InsertMeeting
 } from "@shared/schema";
 import { eq, and, desc, sql, isNull, isNotNull, or, asc, inArray } from "drizzle-orm";
 
@@ -998,110 +995,5 @@ export class PostgresStorage implements IStorage {
   }
 
   // SYNERGIES
-  async getSynergies(): Promise<Synergy[]> {
-    try {
-      return await db.select().from(synergies).orderBy(desc(synergies.createdAt));
-    } catch (error) {
-      console.error("Error fetching synergies:", error);
-      return [];
-    }
-  }
-
-  async getSynergiesByContact(contactId: number): Promise<Synergy[]> {
-    try {
-      return await db
-        .select()
-        .from(synergies)
-        .where(eq(synergies.contactId, contactId))
-        .orderBy(desc(synergies.createdAt));
-    } catch (error) {
-      console.error(`Error fetching synergies for contact ${contactId}:`, error);
-      return [];
-    }
-  }
-
-  async getSynergiesByCompany(companyId: number): Promise<Synergy[]> {
-    try {
-      return await db
-        .select()
-        .from(synergies)
-        .where(eq(synergies.companyId, companyId))
-        .orderBy(desc(synergies.createdAt));
-    } catch (error) {
-      console.error(`Error fetching synergies for company ${companyId}:`, error);
-      return [];
-    }
-  }
-
-  async getSynergy(id: number): Promise<Synergy | undefined> {
-    try {
-      const [synergy] = await db
-        .select()
-        .from(synergies)
-        .where(eq(synergies.id, id));
-      return synergy;
-    } catch (error) {
-      console.error(`Error fetching synergy ${id}:`, error);
-      return undefined;
-    }
-  }
-
-  async createSynergy(synergyData: InsertSynergy): Promise<Synergy> {
-    try {
-      const [synergy] = await db
-        .insert(synergies)
-        .values(synergyData)
-        .returning();
-      
-      // Create an activity entry for the new synergy
-      await this.createActivity({
-        type: "synergy",
-        description: `New synergy created between contact and company`,
-        date: new Date(),
-        contactId: synergyData.contactId,
-        companyId: synergyData.companyId,
-        dealId: synergyData.dealId,
-        metadata: {
-          synergyId: synergy.id,
-          description: synergyData.description,
-          type: synergyData.type
-        }
-      });
-      
-      return synergy;
-    } catch (error) {
-      console.error("Error creating synergy:", error);
-      throw new Error("Failed to create synergy");
-    }
-  }
-
-  async updateSynergy(id: number, synergyData: Partial<InsertSynergy>): Promise<Synergy | undefined> {
-    try {
-      const [synergy] = await db
-        .update(synergies)
-        .set({
-          ...synergyData,
-          updatedAt: new Date()
-        })
-        .where(eq(synergies.id, id))
-        .returning();
-      return synergy;
-    } catch (error) {
-      console.error(`Error updating synergy ${id}:`, error);
-      return undefined;
-    }
-  }
-
-  async deleteSynergy(id: number): Promise<boolean> {
-    try {
-      const [synergy] = await db
-        .delete(synergies)
-        .where(eq(synergies.id, id))
-        .returning();
-      return !!synergy;
-    } catch (error) {
-      console.error(`Error deleting synergy ${id}:`, error);
-      return false;
-    }
-  }
+  // Removed all synergies functionality as per requirements.
 }

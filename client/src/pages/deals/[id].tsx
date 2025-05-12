@@ -17,7 +17,6 @@ import { formatCurrency, formatDateToLocal } from "@/lib/utils";
 import DealModal from "@/components/modals/DealModal";
 import TaskList from "@/components/tasks/TaskList";
 import { Link } from "wouter";
-import { SynergiesList } from "@/components/SynergiesList";
 import { useQuery } from "@tanstack/react-query";
 
 export default function DealDetail() {
@@ -266,12 +265,13 @@ export default function DealDetail() {
                   <Skeleton className="h-12 w-full" />
                 </div>
               ) : dealId ? (
-                <SynergiesList 
-                  companyId={deal.companyId} 
-                  showTitle={false}
-                  hideAddButton={true}
-                  hideDeleteButtons={true}
-                />
+                <div className="flex flex-col items-center justify-center p-8 text-center">
+                  <Handshake className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <h3 className="text-lg font-medium mb-2">Synergies Feature Removed</h3>
+                  <p className="text-muted-foreground mb-4 max-w-md mx-auto">
+                    The synergies functionality has been removed from the system.
+                  </p>
+                </div>
               ) : (
                 <div className="text-center py-8">
                   <Handshake className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />

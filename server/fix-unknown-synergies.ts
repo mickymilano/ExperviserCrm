@@ -1,56 +1,20 @@
 /**
  * Script per rimuovere le sinergie con contatti "Unknown" o aziende "Unknown"
  * 
- * Questo script:
- * 1. Identifica sinergie con contatti o aziende inesistenti
- * 2. Elimina queste sinergie errate dal database
+ * NOTA: Questo script è stato disabilitato come parte della rimozione completa
+ * delle funzionalità di sinergie dal sistema.
  */
 
 import { pool } from "./db";
-import { synergies } from "@shared/schema";
+// Import di synergies rimosso (non più presente nello schema)
 import { drizzle } from "drizzle-orm/neon-serverless";
 import { eq } from "drizzle-orm";
 
-const db = drizzle(pool, { schema: { synergies } });
-
+// Funzione segnaposto per non rompere le importazioni esistenti
 async function fixUnknownSynergies() {
-  console.log("Avvio rimozione delle sinergie con contatti o aziende inesistenti...");
-  
-  try {
-    // Ottieni tutte le sinergie
-    const allSynergies = await db.query.synergies.findMany();
-    console.log(`Trovate ${allSynergies.length} sinergie nel database`);
-    
-    // Ottieni tutti i contatti e aziende
-    const contacts = await pool.query('SELECT id FROM contacts');
-    const companies = await pool.query('SELECT id FROM companies');
-    
-    // Crea set per lookup veloce
-    const contactIds = new Set(contacts.rows.map(c => c.id));
-    const companyIds = new Set(companies.rows.map(c => c.id));
-    
-    // Filtra sinergie con contatti o aziende inesistenti
-    const invalidSynergies = allSynergies.filter(synergy => {
-      const hasValidContact = contactIds.has(synergy.contactId);
-      const hasValidCompany = companyIds.has(synergy.companyId);
-      return !hasValidContact || !hasValidCompany;
-    });
-    
-    console.log(`Trovate ${invalidSynergies.length} sinergie con contatti o aziende inesistenti`);
-    
-    // Elimina le sinergie invalide
-    for (const synergy of invalidSynergies) {
-      console.log(`Rimozione sinergia ${synergy.id} (Contatto: ${synergy.contactId}, Azienda: ${synergy.companyId})`);
-      await db.delete(synergies).where(eq(synergies.id, synergy.id));
-    }
-    
-    console.log(`Rimozione completata. Eliminate ${invalidSynergies.length} sinergie invalide.`);
-  } catch (error) {
-    console.error("Errore durante la rimozione delle sinergie:", error);
-  }
+  console.log("Funzione fixUnknownSynergies disabilitata: le funzionalità di sinergie sono state rimosse dal sistema");
+  // Non fa nulla, funzione segnaposto
 }
 
-// Esportiamo la funzione principale senza eseguirla automaticamente
-// In questo modo può essere importata in server/index.ts senza causare chiusura del processo
-
+// Esportiamo la funzione principale come segnaposto
 export { fixUnknownSynergies };

@@ -496,26 +496,5 @@ export const insertContactEmailSchema = createInsertSchema(contactEmails).omit({
 export type ContactEmail = typeof contactEmails.$inferSelect;
 export type InsertContactEmail = z.infer<typeof insertContactEmailSchema>;
 
-// Synergies (special relationships between contacts and companies that don't create permanent associations)
-export const synergies = pgTable("synergies", {
-  id: serial("id").primaryKey(),
-  contactId: integer("contact_id").notNull().references(() => contacts.id, { onDelete: 'cascade' }),
-  companyId: integer("company_id").notNull().references(() => companies.id, { onDelete: 'cascade' }),
-  dealId: integer("deal_id").notNull().references(() => deals.id, { onDelete: 'cascade' }),
-  type: text("type").default("business").notNull(),
-  status: text("status").default("active").notNull(),
-  description: text("description"),
-  startDate: timestamp("start_date").defaultNow().notNull(),
-  endDate: timestamp("end_date"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-export const insertSynergySchema = createInsertSchema(synergies).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export type Synergy = typeof synergies.$inferSelect;
-export type InsertSynergy = z.infer<typeof insertSynergySchema>;
+// NOTE: Synergies module è stato temporaneamente rimosso per stabilità e sarà reintrodotto
+// in un modulo isolato e testato in un secondo momento

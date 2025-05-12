@@ -23,7 +23,6 @@ import {
   insertAccountSignatureSchema,
   insertAreaOfActivitySchema,
   insertUserSchema,
-  insertSynergySchema,
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -1310,69 +1309,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log("Validated new deal data:", dealData);
       
-      // Verifiche preliminari per determinare se è possibile creare una sinergia
-      let canCreateSynergy = dealData.createSynergy && 
-                            dealData.contactId && 
-                            dealData.companyId;
-      
-      // Salva la possibilità di creare una sinergia ma la rimuove dai dati prima di passarli allo storage
-      const shouldCreateSynergy = canCreateSynergy;
-      delete dealData.createSynergy; // Rimuovi il campo non appartenente allo schema del Deal
+      // Il campo createSynergy non è più necessario (funzionalità rimossa)
+      if (dealData.createSynergy !== undefined) {
+        delete dealData.createSynergy; // Rimuovi il campo non appartenente allo schema del Deal
+        console.log("Campo createSynergy ignorato (funzionalità rimossa)");
+      }
       
       // Crea il deal
       const deal = await storage.createDeal(dealData);
       
       // Se è richiesta la creazione di una sinergia e sia contactId che companyId sono presenti
-      if (shouldCreateSynergy) {
-        try {
-          console.log(`Creating synergy for deal #${deal.id} between contact #${dealData.contactId} and company #${dealData.companyId}`);
-          
-          // Ottieni i dettagli del contatto e dell'azienda per verificare che esistano
-          const contact = await storage.getContact(dealData.contactId);
-          const company = await storage.getCompany(dealData.companyId);
-          
-          if (!contact) {
-            console.warn(`Cannot create synergy: Contact #${dealData.contactId} not found`);
-          } else if (!company) {
-            console.warn(`Cannot create synergy: Company #${dealData.companyId} not found`);
-          } else {
-            // Crea la sinergia
-            const synergy = await storage.createSynergy({
-              dealId: deal.id,
-              contactId: dealData.contactId,
-              companyId: dealData.companyId,
-              type: "business", // Tipo predefinito per le sinergie create automaticamente
-              status: "active",
-              description: `Sinergia creata automaticamente dal deal: ${deal.name}`,
-              startDate: new Date(), // Data attuale
-              endDate: null // Nessuna data di fine
-            });
-            
-            console.log(`Synergy #${synergy.id} created successfully for deal #${deal.id}`);
-            
-            // Aggiungi l'informazione sulla sinergia creata alla risposta
-            return res.status(201).json({
-              ...deal,
-              createdSynergy: {
-                id: synergy.id,
-                contactId: synergy.contactId,
-                companyId: synergy.companyId,
-                type: synergy.type
-              }
-            });
-          }
-        } catch (synergyError) {
-          console.error("Error creating synergy for deal:", synergyError);
-          // Non blocchiamo la creazione del deal se la sinergia fallisce
-          return res.status(201).json({
-            ...deal,
-            synergyError: "Failed to create synergy but deal was created successfully"
-          });
-        }
-      }
+      // La funzionalità di creazione sinergie è stata rimossa
+      console.log(`Deal #${deal.id} created successfully (synergy functionality disabled)`);
       
-      // Risposta standard se non è stata creata una sinergia
-      res.status(201).json(deal);
+      // Rispondiamo semplicemente con il deal creato
+      return res.status(201).json(deal);
     } catch (error) {
       console.error("Error creating deal:", error);
       res.status(400).json({ message: "Invalid deal data", error: error.message });
@@ -2108,291 +2059,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // SYNERGIES API ENDPOINTS
-  apiRouter.get("/synergies", async (req: Request, res: Response) => {
-    try {
-      const synergies = await storage.getSynergies();
-      
-      // Arricchisci i dati con i nomi delle entità correlate
-      const enrichedSynergies = await Promise.all(synergies.map(async (synergy) => {
-        // Ottieni i dettagli del contatto
-        let contactDetails = null;
-        if (synergy.contactId) {
-          try {
-            contactDetails = await storage.getContact(synergy.contactId);
-          } catch (err) {
-            console.error(`Error fetching contact details for synergy ${synergy.id}:`, err);
-          }
-        }
-        
-        // Ottieni i dettagli dell'azienda
-        let companyDetails = null;
-        if (synergy.companyId) {
-          try {
-            companyDetails = await storage.getCompany(synergy.companyId);
-          } catch (err) {
-            console.error(`Error fetching company details for synergy ${synergy.id}:`, err);
-          }
-        }
-        
-        // Ottieni i dettagli del deal
-        let dealDetails = null;
-        if (synergy.dealId) {
-          try {
-            dealDetails = await storage.getDeal(synergy.dealId);
-          } catch (err) {
-            console.error(`Error fetching deal details for synergy ${synergy.id}:`, err);
-          }
-        }
-        
-        // Arricchisci l'oggetto sinergia con i dettagli completi e i nomi
-        return {
-          ...synergy,
-          // Aggiungi i nomi come proprietà dirette per semplificare l'accesso frontend
-          contactName: contactDetails 
-            ? `${contactDetails.firstName || ''} ${contactDetails.lastName || ''}`.trim() 
-            : `Contact #${synergy.contactId}`,
-          companyName: companyDetails ? companyDetails.name : `Company #${synergy.companyId}`,
-          dealName: dealDetails ? dealDetails.name : `Deal #${synergy.dealId}`,
-          // Includi anche gli oggetti completi per un accesso più dettagliato se necessario
-          contact: contactDetails,
-          company: companyDetails,
-          deal: dealDetails
-        };
-      }));
-      
-      console.log(`API GET /synergies: Enriched ${enrichedSynergies.length} synergies with full entity details`);
-      if (enrichedSynergies.length > 0) {
-        console.log(`Example enriched synergy:`, {
-          id: enrichedSynergies[0].id,
-          contactId: enrichedSynergies[0].contactId,
-          contactName: enrichedSynergies[0].contactName,
-          companyId: enrichedSynergies[0].companyId,
-          companyName: enrichedSynergies[0].companyName,
-          dealId: enrichedSynergies[0].dealId,
-          dealName: enrichedSynergies[0].dealName
-        });
-      }
-      
-      res.json(enrichedSynergies);
-    } catch (error) {
-      console.error("Error fetching synergies:", error);
-      res.status(500).json({ message: "Failed to fetch synergies" });
-    }
-  });
+  // SYNERGIES API ENDPOINTS - Removed per requirements
   
-  // Get synergies for a specific contact
-  apiRouter.get("/contacts/:id/synergies", async (req: Request, res: Response) => {
-    try {
-      const contactId = Number(req.params.id);
-      if (isNaN(contactId)) {
-        return res.status(400).json({ message: "Invalid contact ID" });
-      }
-      
-      const contact = await storage.getContact(contactId);
-      if (!contact) {
-        return res.status(404).json({ message: "Contact not found" });
-      }
-      
-      // Get all synergies and filter them for this contact
-      const allSynergies = await storage.getSynergies();
-      const contactSynergies = allSynergies.filter(synergy => synergy.contactId === contactId);
-      
-      console.log(`Found ${contactSynergies.length} synergies for contact #${contactId}`);
-      
-      res.json(contactSynergies);
-    } catch (error) {
-      console.error("Error fetching contact synergies:", error);
-      res.status(500).json({ message: "Failed to fetch contact synergies" });
-    }
-  });
+  // Synergies API endpoints for specific entities - Removed per requirements
   
-  // Get synergies for a specific company
-  apiRouter.get("/companies/:id/synergies", async (req: Request, res: Response) => {
-    try {
-      const companyId = Number(req.params.id);
-      if (isNaN(companyId)) {
-        return res.status(400).json({ message: "Invalid company ID" });
-      }
-      
-      const company = await storage.getCompany(companyId);
-      if (!company) {
-        return res.status(404).json({ message: "Company not found" });
-      }
-      
-      // Get all synergies and filter them for this company
-      const allSynergies = await storage.getSynergies();
-      const companySynergies = allSynergies.filter(synergy => synergy.companyId === companyId);
-      
-      console.log(`Found ${companySynergies.length} synergies for company #${companyId}`);
-      
-      res.json(companySynergies);
-    } catch (error) {
-      console.error("Error fetching company synergies:", error);
-      res.status(500).json({ message: "Failed to fetch company synergies" });
-    }
-  });
-  
-  // Get synergies for a specific deal
-  apiRouter.get("/deals/:id/synergies", async (req: Request, res: Response) => {
-    try {
-      const dealId = Number(req.params.id);
-      if (isNaN(dealId)) {
-        return res.status(400).json({ message: "Invalid deal ID" });
-      }
-      
-      const deal = await storage.getDeal(dealId);
-      if (!deal) {
-        return res.status(404).json({ message: "Deal not found" });
-      }
-      
-      // Get all synergies and filter them for this deal
-      const allSynergies = await storage.getSynergies();
-      const dealSynergies = allSynergies.filter(synergy => synergy.dealId === dealId);
-      
-      // Arricchisci i dati delle sinergie con informazioni complete
-      const enrichedSynergies = await Promise.all(dealSynergies.map(async (synergy) => {
-        // Ottieni i dettagli del contatto
-        let contactDetails = null;
-        if (synergy.contactId) {
-          try {
-            contactDetails = await storage.getContact(synergy.contactId);
-          } catch (err) {
-            console.error(`Error fetching contact details for synergy ${synergy.id}:`, err);
-          }
-        }
-        
-        // Ottieni i dettagli dell'azienda
-        let companyDetails = null;
-        if (synergy.companyId) {
-          try {
-            companyDetails = await storage.getCompany(synergy.companyId);
-          } catch (err) {
-            console.error(`Error fetching company details for synergy ${synergy.id}:`, err);
-          }
-        }
-        
-        // Arricchisci l'oggetto sinergia con i dettagli completi
-        return {
-          ...synergy,
-          // Aggiungi i nomi come proprietà dirette per semplificare l'accesso frontend
-          contactName: contactDetails 
-            ? `${contactDetails.firstName || ''} ${contactDetails.lastName || ''}`.trim() 
-            : `Contact #${synergy.contactId}`,
-          companyName: companyDetails ? companyDetails.name : `Company #${synergy.companyId}`,
-          dealName: deal.name,
-          // Includi anche gli oggetti completi per un accesso più dettagliato
-          contact: contactDetails,
-          company: companyDetails,
-          deal: deal
-        };
-      }));
-      
-      console.log(`API GET /deals/${dealId}/synergies:`, {
-        dealId,
-        dealName: deal.name,
-        dealSynergiesFound: dealSynergies.length,
-        enrichedSynergiesCount: enrichedSynergies.length,
-        firstItem: enrichedSynergies.length > 0 ? {
-          id: enrichedSynergies[0].id,
-          contactName: enrichedSynergies[0].contactName,
-          companyName: enrichedSynergies[0].companyName,
-          dealName: enrichedSynergies[0].dealName
-        } : null
-      });
-      
-      // Restituisci le sinergie arricchite
-      res.json(enrichedSynergies);
-    } catch (error) {
-      console.error("Error fetching deal synergies:", error);
-      res.status(500).json({ message: "Failed to fetch deal synergies" });
-    }
-  });
-  
-  // Create synergies for a deal with multiple contacts
-  apiRouter.post("/deals/:id/synergies", async (req: Request, res: Response) => {
-    try {
-      const dealId = Number(req.params.id);
-      if (isNaN(dealId)) {
-        return res.status(400).json({ message: "Invalid deal ID" });
-      }
-      
-      const deal = await storage.getDeal(dealId);
-      if (!deal) {
-        return res.status(404).json({ message: "Deal not found" });
-      }
-      
-      if (!deal.companyId) {
-        return res.status(400).json({ message: "Deal must have a company to create synergies" });
-      }
-      
-      const { contactIds } = req.body;
-      
-      if (!contactIds || !Array.isArray(contactIds) || contactIds.length === 0) {
-        return res.status(400).json({ message: "Contact IDs array is required" });
-      }
-      
-      const results = [];
-      
-      // First, remove any existing synergies for this deal
-      const allSynergies = await storage.getSynergies();
-      const dealSynergies = allSynergies.filter(synergy => synergy.dealId === dealId);
-      
-      // Get list of contacts that are not in the new list to delete
-      for (const synergy of dealSynergies) {
-        if (!contactIds.includes(synergy.contactId)) {
-          await storage.deleteSynergy(synergy.id);
-        }
-      }
-      
-      // Create new synergies for each contact
-      for (const contactId of contactIds) {
-        // Skip if synergy already exists
-        const existingSynergy = dealSynergies.find(s => s.contactId === contactId);
-        if (existingSynergy) {
-          results.push(existingSynergy);
-          continue;
-        }
-        
-        const synergyData = {
-          contactId: contactId,
-          companyId: deal.companyId,
-          dealId: dealId,
-          type: "business",
-          status: "active",
-          description: "Created from deal",
-          startDate: new Date()
-        };
-        
-        const newSynergy = await storage.createSynergy(synergyData);
-        results.push(newSynergy);
-      }
-      
-      res.status(201).json(results);
-    } catch (error) {
-      console.error("Error creating deal synergies:", error);
-      res.status(500).json({ message: "Failed to create deal synergies", error: error.message });
-    }
-  });
-
-  apiRouter.get("/synergies/:id", async (req: Request, res: Response) => {
-    try {
-      const id = Number(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid synergy ID" });
-      }
-      
-      const synergy = await storage.getSynergy(id);
-      if (!synergy) {
-        return res.status(404).json({ message: "Synergy not found" });
-      }
-      
-      res.json(synergy);
-    } catch (error) {
-      console.error("Error fetching synergy:", error);
-      res.status(500).json({ message: "Failed to fetch synergy" });
-    }
-  });
+  // Create and get synergies endpoints - Removed per requirements
 
   apiRouter.get("/contacts/:id/synergies", async (req: Request, res: Response) => {
     try {

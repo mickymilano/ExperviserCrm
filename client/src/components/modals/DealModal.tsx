@@ -16,7 +16,7 @@ import { Check, ChevronsUpDown, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
-import { useCreateSynergy } from "@/hooks/useSynergies.tsx";
+// import { useCreateSynergy } from "@/hooks/useSynergies.tsx"; // Funzionalità sinergie rimossa
 import { Badge } from "@/components/ui/badge";
 import AsyncSelect from "react-select/async";
 
@@ -35,16 +35,7 @@ const dealSchema = z.object({
   expectedCloseDate: z.string().optional(),
   tags: z.array(z.string()).optional().nullable(),
   notes: z.string().optional().nullable(),
-  synergyContactIds: z.array(z.coerce.number()).default([]),
-}).refine((data) => {
-  // If synergy contacts are selected, a company is required
-  if (data.synergyContactIds && data.synergyContactIds.length > 0 && !data.companyId) {
-    return false;
-  }
-  return true;
-}, {
-  message: "A company is required when synergy contacts are selected",
-  path: ["companyId"]
+  // La proprietà synergyContactIds è stata rimossa in quanto la funzionalità sinergie non è più supportata
 });
 
 type DealFormData = z.infer<typeof dealSchema>;
@@ -69,8 +60,8 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
   const [showNoContactAlert, setShowNoContactAlert] = useState(false);
   const isEditMode = !!initialData && initialData.id !== undefined;
 
-  // Create synergy mutation
-  const createSynergyMutation = useCreateSynergy();
+  // La funzionalità delle sinergie è stata rimossa
+  // const createSynergyMutation = useCreateSynergy();
 
   // Fetch pipeline stages 
   const { data: stages = [] } = useQuery({
@@ -90,12 +81,12 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     enabled: open,
   });
 
-  // Fetch synergies for the initial deal in edit mode
-  const { data: dealSynergies = [] } = useQuery({
-    queryKey: [`/api/deals/${initialData?.id}/synergies`],
-    enabled: open && isEditMode && initialData?.id !== undefined,
-    staleTime: Infinity // Prevent refetching during component lifecycle
-  });
+  // La funzionalità delle sinergie è stata rimossa
+  // const { data: dealSynergies = [] } = useQuery({
+  //   queryKey: [`/api/deals/${initialData?.id}/synergies`],
+  //   enabled: open && isEditMode && initialData?.id !== undefined,
+  //   staleTime: Infinity
+  // });
 
   const { register, handleSubmit, reset, setValue, getValues, control, formState: { errors } } = useForm<DealFormData>({
     resolver: zodResolver(dealSchema),
@@ -108,7 +99,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       expectedCloseDate: "",
       tags: [],
       notes: "",
-      synergyContactIds: [],
+      // synergyContactIds: [], // campo rimosso dalla funzionalità
     }
   });
 
@@ -270,7 +261,8 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     
   }, [contacts, selectedCompany, setValue]);
 
-  // Load existing synergy contacts in edit mode
+  // La funzionalità delle sinergie è stata rimossa
+  /*
   useEffect(() => {
     if (isEditMode && dealSynergies && Array.isArray(dealSynergies) && dealSynergies.length > 0) {
       const contactIds = dealSynergies.map(synergy => 
@@ -283,8 +275,10 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       }
     }
   }, [dealSynergies, isEditMode, getValues, setValue]);
+  */
 
-  // Helper function to create synergies for contacts
+  // La funzionalità delle sinergie è stata rimossa
+  /*
   const createSynergiesForContacts = async (dealId: number, companyId: number, contactIds: number[]) => {
     const results = [];
 
@@ -307,6 +301,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
 
     return results;
   };
+  */
 
   // Save deal mutation
   const saveDeal = useMutation({
@@ -376,7 +371,8 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
 
       const savedDeal = await response.json();
 
-      // Create synergies if needed
+      // La funzionalità delle sinergie è stata rimossa
+      /*
       if (data.synergyContactIds && data.synergyContactIds.length > 0 && data.companyId) {
         try {
           await createSynergiesForContacts(
@@ -401,6 +397,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
           });
         }
       }
+      */
 
       return savedDeal;
     },
@@ -749,39 +746,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                 />
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="synergyContacts">Synergy Contacts (Optional)</Label>
-                <Controller
-                  name="synergyContactIds"
-                  control={control}
-                  render={({ field }) => (
-                    <AsyncSelect
-                      isMulti
-                      isDisabled={!getSelectedCompanyId()}
-                      placeholder={getSelectedCompanyId() ? "Type to search contacts..." : "Select a company first"}
-                      loadOptions={loadSynergyContactOptions}
-                      value={field.value?.map((id: number) => {
-                        const contact = contacts.find((c: any) => c.id === id);
-                        return {
-                          value: id,
-                          label: contact ? `${contact.firstName} ${contact.lastName}` : `Contact #${id}`
-                        };
-                      })}
-                      onChange={(selected) => {
-                        const selectedIds = selected ? selected.map((item: any) => item.value) : [];
-                        field.onChange(selectedIds);
-                      }}
-                      className="basic-multi-select"
-                      classNamePrefix="select"
-                    />
-                  )}
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  {getValues("synergyContactIds")?.length > 0 && !getSelectedCompanyId() ? 
-                    <span className="text-red-500">Company selection is required when adding synergy contacts</span> : 
-                    "Type to search and select synergy contacts..."}
-                </p>
-              </div>
+              {/* La sezione delle sinergie è stata rimossa */}
             </div>
             
             {/* Notes */}

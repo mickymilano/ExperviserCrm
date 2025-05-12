@@ -3,7 +3,6 @@ import { useParams, useLocation } from "wouter";
 import { useCompany } from "@/hooks/useCompanies";
 import { useContacts } from "@/hooks/useContacts";
 import { useDeals } from "@/hooks/useDeals";
-import { SynergiesList } from "@/components/SynergiesList";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -153,12 +152,11 @@ export default function CompanyDetail() {
       
       {/* Main content with tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-5 md:w-fit mb-4">
+        <TabsList className="grid grid-cols-4 md:w-fit mb-4">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="contacts">Contacts</TabsTrigger>
           <TabsTrigger value="deals">Deals</TabsTrigger>
           <TabsTrigger value="activities">Activities</TabsTrigger>
-          <TabsTrigger value="synergies">Synergies</TabsTrigger>
         </TabsList>
         
         {/* Overview Tab */}
@@ -649,11 +647,7 @@ export default function CompanyDetail() {
         
         {/* Activities Tab */}
         {/* Synergies Tab */}
-        <TabsContent value="synergies" className="space-y-4">
-          <div className="bg-white p-6 rounded-md shadow-sm">
-            <SynergiesList companyId={companyId} />
-          </div>
-        </TabsContent>
+        {/* La scheda Synergies è stata rimossa dalla piattaforma */}
         
         <TabsContent value="activities" className="space-y-4">
           <Card>

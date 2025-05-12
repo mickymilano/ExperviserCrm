@@ -15,7 +15,7 @@ import CompanyDetail from "@/pages/companies/[id]";
 import Deals from "@/pages/deals";
 import DealDetail from "@/pages/deals/[id]";
 import NewDeal from "@/pages/deals/new";
-import Synergies from "@/pages/synergies";
+// Removed Synergies import as per requirements
 import Email from "@/pages/email";
 import EmailAccounts from "@/pages/email/accounts";
 import EmailSettings from "@/pages/email/settings";
@@ -114,7 +114,7 @@ function ProtectedRoutes() {
           <Route path="/deals" component={Deals} />
           <Route path="/deals/new" component={NewDeal} />
           <Route path="/deals/:id" component={DealDetail} />
-          <Route path="/synergies" component={Synergies} />
+          {/* Synergies route removed as per requirements */}
           <Route path="/email" component={Email} />
           <Route path="/email/accounts" component={EmailAccounts} />
           <Route path="/email/accounts/add" component={EmailAccounts} />

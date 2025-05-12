@@ -1,0 +1,120 @@
+Brief Urgente di Sviluppo “Experviser CRM”
+Da: Senior Backend Architect (20 anni CRM/ERP)
+Per: Team di Sviluppo (junior), Team Debug, Team Frontend
+
+⸻
+
+Contesto e Urgenza
+
+Oggi pomeriggio ho il CDA e mi serve un CRM completamente funzionante, validato e sicuro secondo il brief internazionale. Non ci sarà tempo per interventi ad hoc: dovete portare a termine in autonomia tutte le componenti core prima della chiusura della riunione. Durante questo lasso non sarò disturbabile.
+
+⸻
+
+1. Istruzioni al Team Backend
+
+1.1. Pulizia del Codice Pregresso
+	•	Eliminate tutte le implementazioni “Synergies” (API, storage, modali, hook, tabelle DB). Anche se nel brief iniziale erano previste, abbiamo troppe regressioni: le reintrodurremo in un secondo momento, in un modulo isolato e testato.
+	•	Rimuovete da server/routes.ts qualsiasi route legata a /synergies o /api/deals/:id/synergies.
+	•	Rimuovete da server/postgresStorage.ts le funzioni createSynergy, getSynergies, updateSynergy, deleteSynergy.
+	•	Rimuovete i componenti frontend SynergyModal.tsx, useSynergies.ts, e tutte le referenze a “synergy” nei modali, hook e pagine.
+
+1.2. Schema DB e Migrations
+	•	Partendo dallo schema drift in shared/schema.ts, verificate 30 secondi di codice: confermate che siano definiti correttamente tutti i campi richiesti per Companies, Contacts, Leads, Deals, Tasks, EmailAccounts, Activities, Meetings, Users.
+	•	Generare e applicare migrazioni Drizzle che:
+	•	Creino/aggiornino tutte le tabelle secondo lo schema definitivo (vedi spec dettagliate).
+	•	Impostino tutti i vincoli FK e onDelete appropriati.
+	•	Seed minimale (2 aziende, 3 contatti, 2 deals, 2 leads, pipelineStages, un superadmin) già definito in script.
+
+1.3. API CRUD Core
+
+Per ogni modulo implementate solo endpoint REST base, con logica di archiviazione (isArchived/status) per Contacts e Deals, DELETE fisico solo per Leads:
+	1.	Companies: /api/companies (GET list with filters, GET/:id, POST, PATCH/:id, PATCH/:id/archive).
+	2.	Contacts: /api/contacts (idem, archive invece di delete).
+	3.	Leads: /api/leads (GET, GET/:id, POST, DELETE/:id hard delete, POST/:id/convert).
+	4.	Deals: /api/deals (GET list active, GET/:id, POST, PATCH/:id, PATCH/:id/archive).
+	5.	Tasks, EmailAccounts, Emails, Activities, Meetings: analoghi pattern CRUD.
+
+Tutte le list devono supportare query parametri:
+	•	?search=, ?status=active|archived, ?excludeArchived=true, ?limit=&offset=.
+
+1.4. Logging, Sicurezza, Validazione
+	•	Ogni API deve validare payload con Zod e restituire errori strutturati { field, message }.
+	•	Implementate un layer di logging (console + file) per ogni errore 5xx.
+	•	Tutti i dati sensibili (password, token) mai loggati.
+
+⸻
+
+2. Istruzioni al Team Debug
+	1.	Ricezione del Codice
+	•	Prendete il branch reset-modules e fate checkout.
+	2.	Smoke Test Endpoint
+	•	Con Postman o curl, verificate per ogni risorsa CRUD:
+	•	Creazione, lettura, aggiornamento, archiviazione/delezione.
+	•	Verificate che:
+	•	Contacts e Deals si archivino (flag), Leads si cancellino realmente.
+	•	Filtri ?status funzionino.
+	3.	Test Data Consistency
+	•	Caricate lo seed minimo e verificate vincoli FK, integrità referenziale.
+	4.	Error Report
+	•	Documentate ogni  bug con: endpoint, request, response attesa vs reale.
+	•	Classificate in Critical/High/Medium e assegnate priorità.
+	5.	Fix Rapido
+	•	Collaudate autonomamente i bug più critici (Broken FK, 500 errors, validation errors) e applicate patch sullo stesso branch.
+	6.	Report Finale
+	•	Prima del lunch meeting, consegnate un report sintetico:
+	•	Elenco endpoint testati
+	•	Bug risolti
+	•	Bug pendenti (solo se non bloccanti)
+
+⸻
+
+3. Istruzioni al Team Frontend
+
+3.1. Architettura UI
+	•	Mobile-First & Responsive: tutti i layout su Tailwind CSS devono declinare su 1-2-3 colonne a seconda del breakpoint (sm, md, lg, xl).
+	•	Component-driven: Materiale di base (Shadcn/ui) per Button, Input, Card, Modal, AsyncSelect.
+	•	Style Guide: palette neutra + accent primario (blue-600), evidenziazioni (yellow-500 per warning, red-500 per error).
+
+3.2. Pagine & Componenti Core
+	•	Companies Page
+	•	Lista con Card: immagine/logo, nome, industry, icone action (view, edit, archive).
+	•	Form Modal (CompanyModal) per Create/Edit: campi in sezioni collassabili.
+	•	Contacts Page
+	•	Lista con ricerca/autocomplete, paginazione.
+	•	ContactModal: gestione multi-email (dynamic form), role autocomplete, origin tag.
+	•	Leads
+	•	Lista e LeadModal per Create/Edit/Delete.
+	•	Deals
+	•	DealModal: form step-by-step per: Company (AsyncSelect), Primary Contact (AsyncSelect), Stage (select univoco), Value, Dates, Tags.
+	•	Tasks, Calendar, Email: viste base con lista, form modale.
+	•	News dal Mondo
+	•	Widget in Dashboard: card verticali, titolo, snippet, fonte, tag correlati. Pagina dedicata con infinite scroll.
+
+3.3. Async Select & Autocomplete
+	•	Utilizzate react-select/async per tutti i lookup: Contact, Company, Tag.
+	•	Min input length=1, debounce 300 ms, paginazione lato API.
+	•	Escludere contatti già associati (es. nelle aree di attività) tramite query param ?excludeCompany=<id>.
+
+3.4. UX Flow Critico
+	•	Archiviazione: archive buttons aprono confirm modal, dopo archive UI rimuove l’item dalla lista attiva.
+	•	Richiamata dati: dopo ogni mutate, invalidate la query TanStack Query corrispondente e ripopola la lista.
+	•	Error Handling: toast user-friendly (shadcn/ui useToast) per successi e insuccessi.
+
+⸻
+
+4. Delega Finale e Consegna Autonoma
+	•	Scadenza: entro fine giornata CDA.
+	•	Lavorate in parallelo: backend → debug → frontend.
+	•	NESSUNA richiesta di approvazione intermedia: consegnate il prodotto finito.
+	•	Dopo consegna, faremo un walkthrough veloce interno (non disturbate l’utente finale).
+
+⸻
+
+Con queste istruzioni avete la roadmap completa:
+	•	Reset codice sinergie
+	•	Ricostruzione schema + API CRUD
+	•	Debug e fix autonomi
+	•	Frontend responsive e fluido
+	•	Consegna “production-ready” al CDA
+
+Buon lavoro, e forza: abbiamo un cliente (il CDA) che ci aspetta un prodotto robusto e funzionante!

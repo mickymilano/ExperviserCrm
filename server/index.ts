@@ -104,14 +104,8 @@ app.use((req, res, next) => {
     console.error("Error executing the relationship correction script:", error);
   }
   
-  // Automatically run the synergy fix script at startup
-  console.log("Automatically running the synergy cleanup script at startup...");
-  try {
-    await fixUnknownSynergies();
-    console.log("Synergy cleanup script completed at startup.");
-  } catch (error) {
-    console.error("Error executing the synergy cleanup script:", error);
-  }
+  // Synergy cleanup script disabilitato (funzionalità synergies rimosse)
+  console.log("Il sistema delle sinergie è stato rimosso, script di pulizia non necessario.");
   
   const server = await registerRoutes(app);
 
