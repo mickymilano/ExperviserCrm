@@ -15,6 +15,7 @@ import CompanyDetail from "@/pages/companies/[id]";
 import Deals from "@/pages/deals";
 import DealDetail from "@/pages/deals/[id]";
 import NewDeal from "@/pages/deals/new";
+import Synergies from "@/pages/synergies";
 import Email from "@/pages/email";
 import EmailAccounts from "@/pages/email/accounts";
 import EmailSettings from "@/pages/email/settings";
