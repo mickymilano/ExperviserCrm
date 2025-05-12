@@ -459,14 +459,22 @@ export default function CompanyDetail() {
                   People associated with {company.name}
                 </CardDescription>
               </div>
-              <Button 
-                onClick={() => setIsContactModalOpen(true)} 
-                size="sm"
-                className="ml-auto"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Contact
-              </Button>
+              <div className="flex space-x-2">
+                <LinkContactButton 
+                  companyId={companyId} 
+                  onSuccess={() => {
+                    // Refresh the company data
+                    window.location.reload();
+                  }}
+                />
+                <Button 
+                  onClick={() => setIsContactModalOpen(true)} 
+                  size="sm"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Contact
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               {contacts && contacts.length > 0 ? (
@@ -528,9 +536,18 @@ export default function CompanyDetail() {
                   <p className="text-muted-foreground mb-4">
                     There are no contacts associated with this company yet.
                   </p>
-                  <Button onClick={() => navigate("/contacts/new?companyId=" + company.id)}>
-                    Add New Contact
-                  </Button>
+                  <div className="flex flex-col space-y-2 items-center justify-center">
+                    <Button onClick={() => navigate("/contacts/new?companyId=" + company.id)}>
+                      Add New Contact
+                    </Button>
+                    <LinkContactButton 
+                      companyId={companyId} 
+                      onSuccess={() => {
+                        // Refresh the company data
+                        window.location.reload();
+                      }}
+                    />
+                  </div>
                 </div>
               )}
             </CardContent>
