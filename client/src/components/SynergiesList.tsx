@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useContactSynergies, useCompanySynergies } from "@/hooks/useSynergies";
+import { useContactSynergies, useCompanySynergies } from "@/hooks/useSynergies.tsx";
 import { useContacts } from "@/hooks/useContacts";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useDeals } from "@/hooks/useDeals";
