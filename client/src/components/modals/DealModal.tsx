@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { DealInfo } from "@/types";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Combobox } from "@/components/ui/combobox";
 
 interface DealModalProps {
   open: boolean;
@@ -28,6 +30,7 @@ const dealSchema = z.object({
   expectedCloseDate: z.string().optional(),
   tags: z.array(z.string()).optional().nullable(),
   notes: z.string().optional().nullable(),
+  synergyContactId: z.coerce.number().optional().nullable(),
 });
 
 type DealFormData = z.infer<typeof dealSchema>;
@@ -40,7 +43,15 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
   );
   const [companySearchQuery, setCompanySearchQuery] = useState("");
   const [filteredCompanies, setFilteredCompanies] = useState<any[]>([]);
+  const [filteredContacts, setFilteredContacts] = useState<any[]>([]);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(
+    initialData?.companyId || null
+  );
+  const [showNoCompanyAlert, setShowNoCompanyAlert] = useState(false);
+  const [showNoContactAlert, setShowNoContactAlert] = useState(false);
+  const [synergyContact, setSynergyContact] = useState<string | null>(null); 
   const isEditMode = !!initialData;
+  const formRef = useRef<HTMLFormElement>(null);
 
   // Fetch pipeline stages for dropdown
   const { data: stages = [] } = useQuery({
