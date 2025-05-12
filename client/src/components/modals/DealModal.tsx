@@ -211,8 +211,10 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
         setValue("synergyContactIds", contactIds);
       }
     }
+  // Only include dealSynergies and isEditMode in dependencies to prevent infinite loops
+  // setValue and getValues shouldn't change between renders
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dealSynergies, isEditMode, setValue]);
+  }, [dealSynergies, isEditMode]);
 
   // Helper function to create multiple synergies at once for all selected contacts
   const createSynergiesForContacts = async (dealId: number, companyId: number, contactIds: number[]) => {
