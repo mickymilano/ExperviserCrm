@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -71,7 +71,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     enabled: open,
   });
 
-  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<DealFormData>({
+  const { register, handleSubmit, reset, setValue, getValues, formState: { errors } } = useForm<DealFormData>({
     resolver: zodResolver(dealSchema),
     defaultValues: {
       name: "",
@@ -93,7 +93,11 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
         if (initialData.name !== undefined) setValue("name", String(initialData.name));
         if (initialData.value !== undefined) setValue("value", Number(initialData.value));
         if (initialData.stageId !== undefined) setValue("stageId", Number(initialData.stageId));
-        if (initialData.companyId !== undefined) setValue("companyId", initialData.companyId !== null ? Number(initialData.companyId) : null);
+        if (initialData.companyId !== undefined) {
+          const companyId = initialData.companyId !== null ? Number(initialData.companyId) : null;
+          setValue("companyId", companyId);
+          setSelectedCompanyId(companyId);
+        }
         if (initialData.contactId !== undefined) setValue("contactId", initialData.contactId !== null ? Number(initialData.contactId) : null);
         
         // Format date for input field if exists
@@ -144,9 +148,79 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       }
     }
   }, [companySearchQuery, companies]);
+  
+  // Effect per filtrare i contatti in base all'azienda selezionata
+  useEffect(() => {
+    if (contacts && Array.isArray(contacts)) {
+      // Se un'azienda è selezionata, mostra solo i contatti associati a quell'azienda
+      if (selectedCompanyId) {
+        const filteredContactsList = contacts.filter(contact => {
+          if (!contact.areasOfActivity || !Array.isArray(contact.areasOfActivity)) {
+            return false;
+          }
+          return contact.areasOfActivity.some(area => area.companyId === selectedCompanyId);
+        });
+        setFilteredContacts(filteredContactsList);
+      } else {
+        // Se nessuna azienda è selezionata, mostra tutti i contatti
+        setFilteredContacts(contacts);
+      }
+    }
+  }, [contacts, selectedCompanyId]);
+
+  const createSynergy = useMutation({
+    mutationFn: async (data: { contactId: number, companyId: number, dealId: number }) => {
+      const synergyData = {
+        type: "business",
+        contactId: data.contactId,
+        companyId: data.companyId,
+        dealId: data.dealId,
+        status: "active",
+        description: "Synergy created from deal",
+        startDate: new Date()
+      };
+      
+      const response = await fetch('/api/synergies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(synergyData),
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to create synergy: ${errorText}`);
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      console.log("Synergy created successfully");
+      queryClient.invalidateQueries({ queryKey: ["/api/synergies"] });
+    },
+    onError: (error) => {
+      console.error("Failed to create synergy:", error);
+      toast({
+        title: "Warning",
+        description: "Deal was created but failed to create synergy relationship",
+        variant: "destructive",
+      });
+    }
+  });
 
   const saveDeal = useMutation({
     mutationFn: async (data: DealFormData) => {
+      // Controllo se è necessario mostrare avvisi
+      if (data.companyId && !data.contactId) {
+        setShowNoContactAlert(true);
+        throw new Error("A contact is required when creating a deal for a company");
+      }
+      
+      if (!data.companyId && !showNoCompanyAlert) {
+        setShowNoCompanyAlert(true);
+        throw new Error("Please confirm that you want to create a deal without a company");
+      }
+      
       // Create a new clean object for the request
       const dealData: any = {
         name: data.name,
@@ -205,7 +279,23 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
         throw new Error(`${response.status}: ${errorText}`);
       }
       
-      return response.json();
+      const createdDeal = await response.json();
+      
+      // Se è stata specificata una sinergia, creiamola
+      if (data.synergyContactId && data.companyId) {
+        try {
+          await createSynergy.mutateAsync({
+            contactId: data.synergyContactId,
+            companyId: data.companyId,
+            dealId: createdDeal.id
+          });
+        } catch (error) {
+          console.error("Failed to create synergy:", error);
+          // Ma continuiamo con il processo, il deal è stato comunque creato
+        }
+      }
+      
+      return createdDeal;
     },
     onSuccess: () => {
       toast({
@@ -217,12 +307,21 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       onOpenChange(false);
       reset();
       setTagsInput("");
+      setSynergyContact(null);
+      setShowNoCompanyAlert(false);
+      setShowNoContactAlert(false);
       
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ["/api/deals"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
     },
     onError: (error) => {
+      // Non mostriamo errore se è solo il warning di conferma
+      if (error.message === "Please confirm that you want to create a deal without a company" ||
+          error.message === "A contact is required when creating a deal for a company") {
+        return;
+      }
+      
       toast({
         title: "Error",
         description: `Failed to ${isEditMode ? "update" : "create"} deal: ${error.message}`,
@@ -235,195 +334,285 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     saveDeal.mutate(data);
   };
 
+  // Opzioni per il combobox delle sinergie
+  const synergyOptions = useMemo(() => {
+    if (!contacts || !Array.isArray(contacts)) return [];
+    
+    // Escludiamo il contatto principale selezionato
+    const selectedContactId = Number(getValues("contactId"));
+    
+    // Filtriamo i contatti, escludendo il contatto principale del deal
+    return contacts
+      .filter(contact => contact.id !== selectedContactId)
+      .map(contact => ({
+        value: contact.id.toString(),
+        label: `${contact.firstName} ${contact.lastName}`
+      }));
+  }, [contacts, getValues]);
+  
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle className="text-lg font-semibold">{isEditMode ? 'Edit Deal' : 'Add New Deal'}</DialogTitle>
-        </DialogHeader>
-        
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="space-y-2 mb-4">
-            <Label htmlFor="name">Deal Name</Label>
-            <Input id="name" {...register("name")} />
-            {errors.name && (
-              <p className="text-xs text-destructive">{errors.name.message}</p>
-            )}
-          </div>
+    <>
+      {/* Alert Dialog per conferma deal senza azienda */}
+      <AlertDialog open={showNoCompanyAlert} onOpenChange={setShowNoCompanyAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Create Deal Without Company?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You are about to create a deal without associating it to any company.
+              This deal will be focused solely on the individual contact.
+              Are you sure you want to proceed?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowNoCompanyAlert(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              setShowNoCompanyAlert(false);
+              if (formRef.current) {
+                handleSubmit(onSubmit)();
+              }
+            }}>
+              Yes, Proceed
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      {/* Alert Dialog per deal senza contatto */}
+      <AlertDialog open={showNoContactAlert} onOpenChange={setShowNoContactAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Contact Required</AlertDialogTitle>
+            <AlertDialogDescription>
+              A deal associated with a company must have a contact person.
+              Please select a contact before creating this deal.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setShowNoContactAlert(false)}>
+              Understood
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold">{isEditMode ? 'Edit Deal' : 'Add New Deal'}</DialogTitle>
+          </DialogHeader>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div className="space-y-2">
-              <Label htmlFor="value">Value</Label>
-              <Input id="value" type="number" min="0" step="0.01" {...register("value")} />
-              {errors.value && (
-                <p className="text-xs text-destructive">{errors.value.message}</p>
+          <form ref={formRef} onSubmit={handleSubmit(onSubmit)}>
+            <div className="space-y-2 mb-4">
+              <Label htmlFor="name">Deal Name</Label>
+              <Input id="name" {...register("name")} />
+              {errors.name && (
+                <p className="text-xs text-destructive">{errors.name.message}</p>
               )}
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="stageId">Stage</Label>
-              <Select 
-                defaultValue={initialData?.stageId?.toString() || stages[0]?.id?.toString()}
-                onValueChange={(value) => setValue("stageId", parseInt(value))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a stage" />
-                </SelectTrigger>
-                <SelectContent>
-                  {stages.map((stage) => (
-                    <SelectItem key={stage.id} value={stage.id.toString()}>
-                      {stage.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.stageId && (
-                <p className="text-xs text-destructive">{errors.stageId.message}</p>
-              )}
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div className="space-y-2">
-              <Label htmlFor="companyId">Company</Label>
-              <div className="relative">
-                {/* Campo di ricerca input */}
-                <Input
-                  type="text"
-                  placeholder="Search company or select from list"
-                  value={companySearchQuery}
-                  onChange={(e) => setCompanySearchQuery(e.target.value)}
-                  className="mb-1"
-                />
-                
-                {/* Dropdown di selezione con risultati filtrati */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="space-y-2">
+                <Label htmlFor="value">Value</Label>
+                <Input id="value" type="number" min="0" step="0.01" {...register("value")} />
+                {errors.value && (
+                  <p className="text-xs text-destructive">{errors.value.message}</p>
+                )}
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="stageId">Stage</Label>
                 <Select 
-                  defaultValue={initialData?.companyId?.toString() || "0"}
-                  onValueChange={(value) => setValue("companyId", value === "0" ? null : parseInt(value))}
+                  defaultValue={initialData?.stageId?.toString() || stages[0]?.id?.toString()}
+                  onValueChange={(value) => setValue("stageId", parseInt(value))}
                 >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select a company" />
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a stage" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {stages.map((stage) => (
+                      <SelectItem key={stage.id} value={stage.id.toString()}>
+                        {stage.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.stageId && (
+                  <p className="text-xs text-destructive">{errors.stageId.message}</p>
+                )}
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="space-y-2">
+                <Label htmlFor="companyId">Company</Label>
+                <div className="relative">
+                  {/* Campo di ricerca input */}
+                  <Input
+                    type="text"
+                    placeholder="Search company or select from list"
+                    value={companySearchQuery}
+                    onChange={(e) => setCompanySearchQuery(e.target.value)}
+                    className="mb-1"
+                  />
+                  
+                  {/* Dropdown di selezione con risultati filtrati */}
+                  <Select 
+                    defaultValue={initialData?.companyId?.toString() || "0"}
+                    onValueChange={(value) => {
+                      const companyId = value === "0" ? null : parseInt(value);
+                      setValue("companyId", companyId);
+                      setSelectedCompanyId(companyId);
+                    }}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select a company" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="0">None</SelectItem>
+                      {/* Se abbiamo un contatto selezionato, mostriamo prima la sua azienda primaria */}
+                      {filteredCompanies.map((company) => {
+                        // Creiamo una variabile per monitorare se questa è l'azienda primaria
+                        // senza utilizzare form o register direttamente, perché non sono accessibili qui
+                        let isPrimaryCompany = false;
+                        
+                        // Cerchiamo nei contatti se qualcuno ha quest'azienda come primaria
+                        if (contacts && Array.isArray(contacts)) {
+                          const selectedContactId = initialData?.contactId || null;
+                          const selectedContact = selectedContactId 
+                            ? contacts.find(c => c.id === selectedContactId) 
+                            : null;
+                          
+                          // Se troviamo un contatto selezionato, verifichiamo se ha quest'azienda come primaria
+                          if (selectedContact?.areasOfActivity?.length > 0) {
+                            isPrimaryCompany = selectedContact.areasOfActivity.some(
+                              area => area.companyId === company.id && area.isPrimary
+                            );
+                          }
+                        }
+                        
+                        return (
+                          <SelectItem key={company.id} value={company.id.toString()}>
+                            {company.name} {isPrimaryCompany ? " (Primary)" : ""}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="contactId">Contact</Label>
+                <Select 
+                  defaultValue={initialData?.contactId?.toString() || "0"} 
+                  onValueChange={(value) => {
+                    const contactId = value === "0" ? null : parseInt(value);
+                    setValue("contactId", contactId);
+                    
+                    // Se è selezionato un contatto, cerca la sua azienda primaria
+                    if (contactId && contacts && Array.isArray(contacts)) {
+                      const selectedContact = contacts.find(c => c.id === contactId);
+                      
+                      if (selectedContact?.areasOfActivity?.length > 0) {
+                        // Trova l'area di attività primaria (o prende la prima disponibile)
+                        const primaryArea = selectedContact.areasOfActivity.find(a => a.isPrimary) || 
+                                           selectedContact.areasOfActivity[0];
+                                           
+                        // Se l'area ha un'azienda associata, suggeriscila come scelta predefinita
+                        if (primaryArea?.companyId) {
+                          setValue("companyId", primaryArea.companyId);
+                          setSelectedCompanyId(primaryArea.companyId);
+                        }
+                      }
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a contact" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="0">None</SelectItem>
-                    {/* Se abbiamo un contatto selezionato, mostriamo prima la sua azienda primaria */}
-                    {filteredCompanies.map((company) => {
-                      // Creiamo una variabile per monitorare se questa è l'azienda primaria
-                      // senza utilizzare form o register direttamente, perché non sono accessibili qui
-                      let isPrimaryCompany = false;
-                      
-                      // Cerchiamo nei contatti se qualcuno ha quest'azienda come primaria
-                      if (contacts && Array.isArray(contacts)) {
-                        const selectedContactId = initialData?.contactId || null;
-                        const selectedContact = selectedContactId 
-                          ? contacts.find(c => c.id === selectedContactId) 
-                          : null;
-                        
-                        // Se troviamo un contatto selezionato, verifichiamo se ha quest'azienda come primaria
-                        if (selectedContact?.areasOfActivity?.length > 0) {
-                          isPrimaryCompany = selectedContact.areasOfActivity.some(
-                            area => area.companyId === company.id && area.isPrimary
-                          );
-                        }
-                      }
-                      
-                      return (
-                        <SelectItem key={company.id} value={company.id.toString()}>
-                          {company.name} {isPrimaryCompany ? " (Primary)" : ""}
+                    {filteredContacts.length > 0 && selectedCompanyId ? (
+                      filteredContacts.map((contact) => (
+                        <SelectItem key={contact.id} value={contact.id.toString()}>
+                          {contact.firstName} {contact.lastName}
                         </SelectItem>
-                      );
-                    })}
+                      ))
+                    ) : (
+                      contacts.map((contact) => (
+                        <SelectItem key={contact.id} value={contact.id.toString()}>
+                          {contact.firstName} {contact.lastName}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
               </div>
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="contactId">Contact</Label>
-              <Select 
-                defaultValue={initialData?.contactId?.toString() || "0"} 
-                onValueChange={(value) => {
-                  const contactId = value === "0" ? null : parseInt(value);
-                  setValue("contactId", contactId);
-                  
-                  // Se è selezionato un contatto, cerca la sua azienda primaria
-                  if (contactId && contacts && Array.isArray(contacts)) {
-                    const selectedContact = contacts.find(c => c.id === contactId);
-                    console.log("Selected contact:", selectedContact);
-                    
-                    if (selectedContact?.areasOfActivity?.length > 0) {
-                      console.log("Contact areas of activity:", selectedContact.areasOfActivity);
-                      
-                      // Trova l'area di attività primaria (o prende la prima disponibile)
-                      const primaryArea = selectedContact.areasOfActivity.find(a => a.isPrimary) || 
-                                         selectedContact.areasOfActivity[0];
-                                         
-                      // Se l'area ha un'azienda associata, suggeriscila come scelta predefinita
-                      if (primaryArea?.companyId) {
-                        console.log(`Setting company to primary company: ${primaryArea.companyId}`);
-                        setValue("companyId", primaryArea.companyId);
-                      }
-                    }
-                  }
+            {/* Campo Sinergie */}
+            <div className="space-y-2 mb-4">
+              <Label htmlFor="synergyContactId">Synergy Contact</Label>
+              <div className="relative">
+                <Combobox
+                  options={synergyOptions}
+                  value={synergyContact || ""}
+                  onChange={(value) => {
+                    setSynergyContact(value);
+                    setValue("synergyContactId", value ? parseInt(value) : null);
+                  }}
+                  placeholder="Search for a contact to create a synergy"
+                  emptyMessage="No contacts found"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Optional: Select a contact to create a synergy relationship with this deal
+                </p>
+              </div>
+            </div>
+            
+            <div className="space-y-2 mb-4">
+              <Label htmlFor="expectedCloseDate">Expected Close Date</Label>
+              <Input 
+                id="expectedCloseDate" 
+                type="date" 
+                defaultValue={initialData?.expectedCloseDate ? new Date(initialData.expectedCloseDate).toISOString().split('T')[0] : undefined}
+                {...register("expectedCloseDate")} 
+              />
+            </div>
+            
+            <div className="space-y-2 mb-4">
+              <Label htmlFor="tags">Tags</Label>
+              <Input 
+                id="tags" 
+                placeholder="Separate tags with commas" 
+                value={tagsInput}
+                onChange={(e) => setTagsInput(e.target.value)}
+              />
+            </div>
+            
+            <div className="space-y-2 mb-4">
+              <Label htmlFor="notes">Notes</Label>
+              <Textarea id="notes" {...register("notes")} />
+            </div>
+            
+            <DialogFooter className="mt-6">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  reset();
+                  onOpenChange(false);
                 }}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a contact" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">None</SelectItem>
-                  {contacts.map((contact) => (
-                    <SelectItem key={contact.id} value={contact.id.toString()}>
-                      {contact.firstName} {contact.lastName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          <div className="space-y-2 mb-4">
-            <Label htmlFor="expectedCloseDate">Expected Close Date</Label>
-            <Input 
-              id="expectedCloseDate" 
-              type="date" 
-              defaultValue={initialData?.expectedCloseDate ? new Date(initialData.expectedCloseDate).toISOString().split('T')[0] : undefined}
-              {...register("expectedCloseDate")} 
-            />
-          </div>
-          
-          <div className="space-y-2 mb-4">
-            <Label htmlFor="tags">Tags</Label>
-            <Input 
-              id="tags" 
-              placeholder="Separate tags with commas" 
-              value={tagsInput}
-              onChange={(e) => setTagsInput(e.target.value)}
-            />
-          </div>
-          
-          <div className="space-y-2 mb-4">
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea id="notes" {...register("notes")} />
-          </div>
-          
-          <DialogFooter className="mt-6">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                reset();
-                onOpenChange(false);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={saveDeal.isPending}>
-              {saveDeal.isPending ? (isEditMode ? 'Updating...' : 'Adding...') : (isEditMode ? 'Update Deal' : 'Add Deal')}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={saveDeal.isPending}>
+                {saveDeal.isPending ? (isEditMode ? 'Updating...' : 'Adding...') : (isEditMode ? 'Update Deal' : 'Add Deal')}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
