@@ -35,15 +35,6 @@ const dealSchema = z.object({
   tags: z.array(z.string()).optional().nullable(),
   notes: z.string().optional().nullable(),
   synergyContactIds: z.array(z.coerce.number()).default([]),
-}).refine((data) => {
-  // If a company is selected, require at least one synergy contact
-  if (data.companyId && (!data.synergyContactIds || data.synergyContactIds.length === 0)) {
-    return false;
-  }
-  return true;
-}, {
-  message: "At least one synergy contact is required when a company is selected",
-  path: ["synergyContactIds"]
 });
 
 type DealFormData = z.infer<typeof dealSchema>;
@@ -269,6 +260,26 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       });
     }
   });
+  
+  // Helper function to create multiple synergies at once
+  const createMultipleSynergies = async (contactIds: number[], companyId: number, dealId: number) => {
+    if (!companyId || !contactIds || contactIds.length === 0) return;
+    
+    const results = [];
+    for (const contactId of contactIds) {
+      try {
+        const result = await createSynergy.mutateAsync({
+          contactId,
+          companyId,
+          dealId
+        });
+        results.push(result);
+      } catch (error) {
+        console.error(`Failed to create synergy for contact ${contactId}:`, error);
+      }
+    }
+    return results;
+  };
 
   const saveDeal = useMutation({
     mutationFn: async (data: DealFormData) => {
@@ -613,7 +624,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
             
             {/* Campo Sinergie - Selezione multipla con autocompletamento */}
             <div className="space-y-2 mb-4">
-              <Label htmlFor="synergyContactIds">Synergy Contacts <span className="text-red-500">*</span></Label>
+              <Label htmlFor="synergyContactIds">Synergy Contacts</Label>
               <div className="relative">
                 <Popover>
                   <PopoverTrigger asChild>
@@ -628,7 +639,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-full p-0">
+                  <PopoverContent className="w-full p-0 max-h-[300px] overflow-auto">
                     <Command>
                       <CommandInput 
                         placeholder="Search for contacts..." 
@@ -637,26 +648,26 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                       />
                       <CommandEmpty>No contacts found</CommandEmpty>
                       <CommandGroup>
-                        {synergyOptions
-                          .filter(option => 
-                            option.label.toLowerCase().includes(synergySearchTerm.toLowerCase()))
-                          .map((option) => (
+                        {contacts
+                          .filter(contact => 
+                            `${contact.firstName} ${contact.lastName}`.toLowerCase().includes(synergySearchTerm.toLowerCase()))
+                          .map((contact) => (
                             <CommandItem
-                              key={option.value}
-                              value={option.value}
-                              onSelect={() => {
-                                const contactId = option.value;
+                              key={contact.id}
+                              value={contact.id.toString()}
+                              onSelect={(value) => {
+                                const contactId = value;
                                 setSelectedSynergyContacts(prev => {
-                                  // Se già selezionato, rimuovi dalla lista
+                                  // If already selected, remove from the list
                                   if (prev.includes(contactId)) {
                                     const newSelected = prev.filter(id => id !== contactId);
-                                    // Aggiorna il form value
+                                    // Update form value
                                     setValue("synergyContactIds", newSelected.map(id => parseInt(id)));
                                     return newSelected;
                                   } 
-                                  // Altrimenti, aggiungi alla lista
+                                  // Otherwise, add to the list
                                   const newSelected = [...prev, contactId];
-                                  // Aggiorna il form value
+                                  // Update form value
                                   setValue("synergyContactIds", newSelected.map(id => parseInt(id)));
                                   return newSelected;
                                 });
@@ -666,10 +677,10 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                                 <Check
                                   className={cn(
                                     "mr-2 h-4 w-4",
-                                    selectedSynergyContacts.includes(option.value) ? "opacity-100" : "opacity-0"
+                                    selectedSynergyContacts.includes(contact.id.toString()) ? "opacity-100" : "opacity-0"
                                   )}
                                 />
-                                {option.label}
+                                {contact.firstName} {contact.lastName}
                               </div>
                             </CommandItem>
                           ))}
@@ -682,13 +693,14 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                 {selectedSynergyContacts.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1">
                     {selectedSynergyContacts.map(contactId => {
-                      const label = synergyOptions.find(option => option.value === contactId)?.label;
+                      const contact = contacts.find(c => c.id.toString() === contactId);
+                      if (!contact) return null;
                       return (
                         <div 
                           key={contactId}
                           className="bg-primary/10 text-primary rounded-full px-2 py-1 text-xs flex items-center"
                         >
-                          {label}
+                          {contact.firstName} {contact.lastName}
                           <button
                             type="button"
                             className="ml-1 text-primary/70 hover:text-primary"
@@ -709,8 +721,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                 )}
                 
                 <p className="text-xs text-muted-foreground mt-1">
-                  {selectedCompanyId ? 
-                    <span className="text-red-500 font-semibold">Required:</span> : "Optional:"} Select contacts to create synergy relationships with this deal
+                  Select contacts to create synergy relationships with this deal
                 </p>
               </div>
             </div>
