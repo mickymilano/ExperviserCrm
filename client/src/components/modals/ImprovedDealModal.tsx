@@ -278,43 +278,46 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
 
   // Load existing synergy contacts in edit mode - using a ref to avoid infinite loops
   const previousSynergiesRef = useRef<any[]>([]);
+  const dealSynergiesInitializedRef = useRef<boolean>(false);
   
   useEffect(() => {
     // Solo se siamo in modalità modifica e ci sono sinergie esistenti
-    if (isEditMode && dealSynergies && Array.isArray(dealSynergies) && dealSynergies.length > 0) {
+    if (isEditMode && dealSynergies && Array.isArray(dealSynergies) && open) {
       // Verifica se le sinergie sono cambiate rispetto all'ultimo render
-      if (JSON.stringify(previousSynergiesRef.current) === JSON.stringify(dealSynergies)) {
-        console.log("Sinergie non cambiate, salto l'aggiornamento");
+      // oppure se questo è il caricamento iniziale
+      const synergiesString = JSON.stringify(dealSynergies);
+      const previousSynergiesString = JSON.stringify(previousSynergiesRef.current);
+      
+      if (synergiesString === previousSynergiesString && dealSynergiesInitializedRef.current) {
         return; // Nessun cambiamento, non aggiorniamo
       }
-      
-      console.log("Caricamento sinergie esistenti in modalità modifica:", dealSynergies);
       
       // Estrai gli ID dei contatti dalle sinergie, assicurandoti che siano numeri
       const contactIds = dealSynergies.map(synergy => 
         typeof synergy.contactId === 'string' ? parseInt(synergy.contactId) : synergy.contactId
       );
       
-      console.log("ID contatti sinergici estratti:", contactIds);
+      // Solo se sono diversi dall'attuale valore
+      const currentValue = getValues("synergyContactIds") || [];
+      const currentValueStr = JSON.stringify(currentValue.sort());
+      const newValueStr = JSON.stringify(contactIds.sort());
       
-      // Aggiorniamo il valore solo se necessario
-      setValue("synergyContactIds", contactIds, { shouldDirty: false });
+      if (currentValueStr !== newValueStr) {
+        setValue("synergyContactIds", contactIds, { shouldDirty: false });
+      }
       
       // Aggiorna il riferimento per il prossimo confronto
       previousSynergiesRef.current = dealSynergies;
-    } else if (isEditMode) {
-      console.log("Nessuna sinergia trovata per questo deal:", dealSynergies);
-      
-      // Se non ci sono sinergie e il campo ha valori, lo resettiamo
-      const currentValue = getValues("synergyContactIds") || [];
-      if (currentValue.length > 0) {
+      dealSynergiesInitializedRef.current = true;
+    } else if (isEditMode && open && (!dealSynergies || dealSynergies.length === 0)) {
+      // Solo se non abbiamo già inizializzato
+      if (!dealSynergiesInitializedRef.current) {
         setValue("synergyContactIds", [], { shouldDirty: false });
+        previousSynergiesRef.current = [];
+        dealSynergiesInitializedRef.current = true;
       }
-      
-      // Aggiorna il riferimento
-      previousSynergiesRef.current = [];
     }
-  }, [dealSynergies, isEditMode, setValue]);
+  }, [dealSynergies, isEditMode, setValue, getValues, open]);
 
   // Helper function to create synergies for contacts
   // Questo metodo gestisce le sinergie per un deal, creando o aggiornando secondo necessità
@@ -511,22 +514,17 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
   const loadSynergyContactOptions = (inputValue: string) => {
     return new Promise<any[]>((resolve) => {
       if (!getSelectedCompanyId()) {
-        console.log("No company selected, cannot search for synergy contacts");
         return resolve([]);
       }
       
       // Return empty results for very short inputs (less than 1 character)
       // This prevents unnecessary API calls but still allows typeahead search
       if (inputValue.length < 1) {
-        console.log("Search term too short for synergy contacts");
         return resolve([]);
       }
       
-      console.log(`Searching for synergy contacts with query: "${inputValue}" for company ID: ${getSelectedCompanyId()}`);
-      
       // Get current selected synergy contacts to exclude them from results (prevent duplicates)
       const currentSynergyContactIds = getValues("synergyContactIds") || [];
-      console.log("Current synergy contact IDs (will be excluded from results):", currentSynergyContactIds);
       
       // Also exclude the primary contact of the deal
       const primaryContactId = getValues("contactId");
@@ -545,8 +543,6 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
         
       const endpoint = `/api/contacts?search=${encodeURIComponent(inputValue.trim())}&excludeCompanyId=${companyId}${excludeContactsParam}&includeAreas=true`;
         
-      console.log(`Fetching contacts from: ${endpoint}`);
-      
       fetch(endpoint)
         .then(response => {
           if (!response.ok) throw new Error('Failed to search contacts');
@@ -950,10 +946,17 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
                         };
                       })}
                       onChange={(selected) => {
-                        console.log("Synergy contacts selection changed:", selected);
                         const selectedIds = selected ? selected.map((item: any) => item.value) : [];
-                        console.log("Setting synergy contact IDs:", selectedIds);
-                        field.onChange(selectedIds);
+                        
+                        // Assicuriamoci che siano tutti numeri
+                        const validSelectedIds = selectedIds
+                          .filter(id => !isNaN(Number(id)))
+                          .map(id => Number(id));
+                          
+                        // Rimuoviamo eventuali duplicati
+                        const uniqueSelectedIds = [...new Set(validSelectedIds)];
+                        
+                        field.onChange(uniqueSelectedIds);
                       }}
                       className="basic-multi-select"
                       classNamePrefix="select"
