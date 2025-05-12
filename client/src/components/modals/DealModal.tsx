@@ -113,11 +113,14 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
 
   // Helper function to set company ID safely
   const setSelectedCompanyId = (id: number | null) => {
+    console.log("Setting selected company ID to:", id);
     selectedCompanyIdRef.current = id;
+    // Update the state directly as well
+    setSelectedCompany(id);
   };
 
   // Helper function to get company ID safely
-  const getSelectedCompanyId = () => selectedCompanyIdRef.current;
+  const getSelectedCompanyId = () => selectedCompany;
 
   // Initialize form when in edit mode or reset for create mode
   useEffect(() => {
@@ -197,16 +200,46 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     }
   }, [companySearchQuery, companies]);
 
+  // Aggiorniamo i contatti filtrati quando cambia l'azienda selezionata
+  useEffect(() => {
+    // Rilevare quando cambia l'azienda selezionata
+    const companyIdFromForm = getValues("companyId");
+    console.log("Form company ID:", companyIdFromForm);
+    
+    if (companyIdFromForm) {
+      setSelectedCompanyId(Number(companyIdFromForm));
+    }
+  }, [getValues]);
+  
+  // Quando l'azienda selezionata cambia, aggiorniamo anche il form
+  useEffect(() => {
+    if (selectedCompany) {
+      console.log("Selected company changed to:", selectedCompany);
+      setValue("companyId", selectedCompany);
+    }
+  }, [selectedCompany, setValue]);
+
+  // Aggiungiamo uno stato per tracciare l'azienda selezionata
+  const [selectedCompany, setSelectedCompany] = useState<number | null>(null);
+
+  // Aggiorniamo lo stato quando cambia la ref
+  useEffect(() => {
+    if (selectedCompanyIdRef.current !== selectedCompany) {
+      setSelectedCompany(selectedCompanyIdRef.current);
+    }
+  }, [selectedCompany]);
+  
   // Filter contacts based on selected company
   useEffect(() => {
     if (!contacts || !Array.isArray(contacts)) return;
     
-    const currentCompanyId = getSelectedCompanyId();
+    const currentCompanyId = selectedCompany;
+    console.log("Filtering contacts for company ID:", currentCompanyId);
     
     if (!currentCompanyId) {
-      if (filteredContacts.length !== contacts.length) {
-        setFilteredContacts(contacts);
-      }
+      // Se non c'è un'azienda selezionata, mostra tutti i contatti
+      setFilteredContacts(contacts);
+      console.log("No company selected, showing all contacts:", contacts.length);
       return;
     }
     
@@ -215,15 +248,18 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       if (!contact.areasOfActivity || !Array.isArray(contact.areasOfActivity)) {
         return false;
       }
-      return contact.areasOfActivity.some((area: { companyId: number }) => 
+      
+      const isAssociated = contact.areasOfActivity.some((area: { companyId: number }) => 
         area.companyId === currentCompanyId
       );
+      
+      return isAssociated;
     });
     
-    if (JSON.stringify(filteredContacts) !== JSON.stringify(filteredContactsList)) {
-      setFilteredContacts(filteredContactsList);
-    }
-  }, [contacts, filteredContacts]);
+    console.log("Filtered contacts for company ID", currentCompanyId, ":", filteredContactsList.length);
+    setFilteredContacts(filteredContactsList);
+    
+  }, [contacts, selectedCompany]);
 
   // Load existing synergy contacts in edit mode
   useEffect(() => {
@@ -616,7 +652,9 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                                 onSelect={() => {
                                   field.onChange(company.id);
                                   setSelectedCompanyId(company.id);
+                                  setSelectedCompany(company.id);
                                   setValue("contactId", null);
+                                  console.log("Company selected:", company.id, company.name);
                                 }}
                               >
                                 <Check
