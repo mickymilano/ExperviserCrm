@@ -155,27 +155,20 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     }
   }, [initialData, stages, open, setValue]);
 
-  // Effect per impostare le aziende filtrate inizialmente
+  // Combined effect to initialize and filter companies based on search
   useEffect(() => {
-    if (companies && Array.isArray(companies)) {
+    if (!companies || !Array.isArray(companies)) return;
+    
+    if (companySearchQuery.trim() === '') {
+      // If no search query, show all companies
       setFilteredCompanies(companies);
-    }
-  }, [companies]);
-
-  // Effect per filtrare le aziende in base alla ricerca
-  useEffect(() => {
-    if (companies && Array.isArray(companies)) {
-      if (companySearchQuery.trim() === '') {
-        // Se non c'è una query di ricerca, mostriamo tutte le aziende
-        setFilteredCompanies(companies);
-      } else {
-        // Altrimenti filtriamo in base alla query
-        const query = companySearchQuery.toLowerCase().trim();
-        const filtered = companies.filter(company => 
-          company.name.toLowerCase().includes(query)
-        );
-        setFilteredCompanies(filtered);
-      }
+    } else {
+      // Filter based on search query
+      const query = companySearchQuery.toLowerCase().trim();
+      const filtered = companies.filter(company => 
+        company.name.toLowerCase().includes(query)
+      );
+      setFilteredCompanies(filtered);
     }
   }, [companySearchQuery, companies]);
 
