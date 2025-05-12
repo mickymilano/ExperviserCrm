@@ -95,20 +95,61 @@ export function SynergiesList({ contactId, companyId, showTitle = true, hideAddB
   
   const getContactName = (id: number) => {
     if (!id) return "Contatto rimosso";
+    
+    // Verifica se i contatti sono stati caricati correttamente
+    if (!Array.isArray(contacts) || contacts.length === 0) {
+      return `Contatto #${id}`; // Non abbiamo dati di contatti
+    }
+    
     const contact = contacts.find((c: any) => c.id === id);
-    return contact ? `${contact.firstName} ${contact.lastName}` : `Contatto #${id}`;
+    
+    // Se troviamo il contatto, restituisci nome e cognome
+    if (contact && contact.firstName) {
+      return `${contact.firstName} ${contact.lastName || ''}`.trim();
+    }
+    
+    // Se non troviamo il contatto, fai una richiesta specifica per questo contatto
+    // per ottenere i dettagli aggiornati - in una versione futura questo potrebbe
+    // essere implementato con una richiesta asincrona
+    return `Contatto #${id}`;
   };
   
   const getCompanyName = (id: number) => {
     if (!id) return "Azienda rimossa";
+    
+    // Verifica se le aziende sono state caricate correttamente
+    if (!Array.isArray(companies) || companies.length === 0) {
+      return `Azienda #${id}`; // Non abbiamo dati di aziende
+    }
+    
     const company = companies.find((c: any) => c.id === id);
-    return company ? company.name : `Azienda #${id}`;
+    
+    // Se troviamo l'azienda, restituisci il nome
+    if (company && company.name) {
+      return company.name;
+    }
+    
+    // Se non troviamo l'azienda, restituisci ID
+    return `Azienda #${id}`;
   };
   
   const getDealName = (id: number) => {
     if (!id) return "-";
+    
+    // Verifica se gli affari sono stati caricati correttamente
+    if (!Array.isArray(deals) || deals.length === 0) {
+      return `Affare #${id}`; // Non abbiamo dati degli affari
+    }
+    
     const deal = deals.find((d: any) => d.id === id);
-    return deal ? deal.name : `Affare #${id}`;
+    
+    // Se troviamo l'affare, restituisci il nome
+    if (deal && deal.name) {
+      return deal.name;
+    }
+    
+    // Se non troviamo l'affare, restituisci ID
+    return `Affare #${id}`;
   };
   
   const getStatusBadgeVariant = (status: string) => {

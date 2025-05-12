@@ -111,18 +111,38 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
 
   // Initialize form when in edit mode or set default stage if in create mode
   useEffect(() => {
-    if (initialData && open) {
+    if (!open) return; // Non fare nulla se la modale è chiusa
+    
+    // Funzione di reset per evitare ripetizioni
+    const resetFormToDefaults = () => {
+      setTagsInput("");
+      setSelectedCompanyId(null);
+      
+      // Set default stage for new deal if available
+      if (stages && Array.isArray(stages) && stages.length > 0) {
+        setValue("stageId", stages[0]?.id);
+      }
+    };
+    
+    // Se siamo in edit mode
+    if (initialData) {
       try {
         // Set form values from the existing deal
         if (initialData.name !== undefined) setValue("name", String(initialData.name));
         if (initialData.value !== undefined) setValue("value", Number(initialData.value));
         if (initialData.stageId !== undefined) setValue("stageId", Number(initialData.stageId));
+        
+        // Gestione companyId
         if (initialData.companyId !== undefined) {
           const companyId = initialData.companyId !== null ? Number(initialData.companyId) : null;
           setValue("companyId", companyId);
           setSelectedCompanyId(companyId);
         }
-        if (initialData.contactId !== undefined) setValue("contactId", initialData.contactId !== null ? Number(initialData.contactId) : null);
+        
+        // Gestione contactId
+        if (initialData.contactId !== undefined) {
+          setValue("contactId", initialData.contactId !== null ? Number(initialData.contactId) : null);
+        }
 
         // Format date for input field if exists
         if (initialData.expectedCloseDate) {
@@ -147,15 +167,9 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       }
     } else {
       // Reset the form when opening in create mode
-      setTagsInput("");
-      setSelectedCompanyId(null);
-      
-      // Set default stage for new deal if available
-      if (stages && Array.isArray(stages) && stages.length > 0 && open) {
-        setValue("stageId", stages[0]?.id);
-      }
+      resetFormToDefaults();
     }
-  // Remove setValue from dependencies to prevent infinite loops
+  // Remove form methods from dependencies to prevent infinite loops
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData, stages, open]);
 
