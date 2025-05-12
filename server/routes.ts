@@ -2042,8 +2042,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   apiRouter.post("/synergies", async (req: Request, res: Response) => {
     try {
-      const synergyData = insertSynergySchema.parse(req.body);
-      const synergy = await storage.createSynergy(synergyData);
+      // Parse and convert startDate from ISO string to Date object if it's a string
+      let synergyData = { ...req.body };
+      if (typeof synergyData.startDate === 'string') {
+        synergyData.startDate = new Date(synergyData.startDate);
+      }
+      
+      const validatedData = insertSynergySchema.parse(synergyData);
+      const synergy = await storage.createSynergy(validatedData);
       res.status(201).json(synergy);
     } catch (error) {
       console.error("Error creating synergy:", error);

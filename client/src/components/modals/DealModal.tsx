@@ -223,10 +223,17 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
 
   // Initialize selected synergy contacts from existing synergies when editing a deal
   useEffect(() => {
-    if (isEditMode && dealSynergies && dealSynergies.length > 0) {
+    if (isEditMode && dealSynergies && Array.isArray(dealSynergies) && dealSynergies.length > 0) {
+      console.log("Loading existing synergies for edit mode:", dealSynergies);
+      
+      // Extract contact IDs from synergies and convert to strings for the selected state
       const contactIds = dealSynergies.map(synergy => synergy.contactId.toString());
       setSelectedSynergyContacts(contactIds);
-      setValue("synergyContactIds", dealSynergies.map(synergy => synergy.contactId));
+      
+      // Also set the form value with numeric IDs for submission
+      setValue("synergyContactIds", dealSynergies.map(synergy => 
+        typeof synergy.contactId === 'string' ? parseInt(synergy.contactId) : synergy.contactId
+      ));
     }
   }, [dealSynergies, isEditMode, setValue]);
 
@@ -384,14 +391,33 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       const createdDeal = await response.json();
 
       // If synergy contacts are specified, create synergy relationships
-      if (data.synergyContactIds.length > 0 && data.companyId) {
+      if (data.synergyContactIds && data.synergyContactIds.length > 0 && data.companyId) {
         try {
           console.log("Creating synergies for selected contacts:", data.synergyContactIds);
 
-          // Use our new helper function to create synergies for all selected contacts
-          await createSynergiesForContacts(createdDeal.id, data.companyId, data.synergyContactIds);
+          // Use our helper function to create synergies for all selected contacts
+          const synergyResults = await createSynergiesForContacts(
+            createdDeal.id, 
+            data.companyId, 
+            data.synergyContactIds
+          );
+          
+          console.log(`Created ${synergyResults.length} synergy relationships`);
+          
+          // Invalidate synergies queries to reflect the changes
+          queryClient.invalidateQueries({ 
+            queryKey: [`/api/deals/${createdDeal.id}/synergies`] 
+          });
+          queryClient.invalidateQueries({ 
+            queryKey: ["/api/synergies"] 
+          });
         } catch (error) {
           console.error("Failed to create synergies:", error);
+          toast({
+            title: "Warning",
+            description: "Deal was saved but failed to create synergy relationships",
+            variant: "destructive",
+          });
           // Continue with the process, the deal has been created anyway
         }
       }
@@ -672,10 +698,20 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                     </PopoverTrigger>
                     <PopoverContent className="w-full p-0">
                       <Command>
-                        <CommandInput placeholder="Search contact name..." />
+                        <CommandInput 
+                          placeholder="Search contact name..." 
+                          onValueChange={setSynergySearchTerm}
+                        />
                         <CommandEmpty>No contact found.</CommandEmpty>
                         <CommandGroup className="max-h-[200px] overflow-y-auto">
                           {filteredSynergyContacts
+                            .filter(contact => {
+                              // Filter by search term
+                              if (!synergySearchTerm) return true;
+                              const fullName = `${contact.firstName} ${contact.lastName}`.toLowerCase();
+                              return fullName.includes(synergySearchTerm.toLowerCase());
+                            })
+                            // Don't show already selected contacts
                             .filter(contact => !selectedSynergyContacts.includes(contact.id.toString()))
                             .map((contact) => (
                               <CommandItem
