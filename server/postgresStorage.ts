@@ -287,6 +287,8 @@ export class PostgresStorage implements IStorage {
   
   // Ottieni le aziende associate ad un contatto attraverso le aree di attività
   async getContactCompanies(contactId: number): Promise<Company[]> {
+    console.log(`Getting companies for contact ID ${contactId}`);
+    
     // Trova tutte le aree di attività per questo contatto
     const areas = await db
       .select()
@@ -298,12 +300,15 @@ export class PostgresStorage implements IStorage {
         )
       );
     
+    console.log(`Found ${areas.length} areas of activity for contact ${contactId}`);
+    
     if (areas.length === 0) {
       return [];
     }
     
     // Ottieni gli ID delle aziende (rimuovi i duplicati)
     const companyIds = [...new Set(areas.map(area => area.companyId).filter(Boolean))];
+    console.log(`Unique company IDs for contact ${contactId}: ${companyIds.join(', ')}`);
     
     // Interroga le aziende corrispondenti
     const companiesData = await db
@@ -311,14 +316,19 @@ export class PostgresStorage implements IStorage {
       .from(companies)
       .where(inArray(companies.id, companyIds as number[]));
     
+    console.log(`Retrieved ${companiesData.length} companies by ID`);
+    
     // Aggiungi le informazioni delle aree di attività a ciascuna azienda
-    return companiesData.map(company => {
+    const result = companiesData.map(company => {
       const area = areas.find(a => a.companyId === company.id);
       return {
         ...company,
         areaOfActivity: area
       };
     });
+    
+    console.log(`Returning ${result.length} companies for contact ${contactId}`);
+    return result;
   }
 
   async getContact(id: number): Promise<Contact | undefined> {

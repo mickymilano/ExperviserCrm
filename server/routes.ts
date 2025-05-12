@@ -571,17 +571,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   apiRouter.post("/areas-of-activity", async (req: Request, res: Response) => {
     try {
+      console.log("POST /areas-of-activity - Creating new area of activity:", req.body);
+      
+      // Check if we need to create a new company
+      let companyId = req.body.companyId;
+      const companyName = req.body.companyName;
+      
+      // If we have a company name but no company ID, we need to create the company
+      if (companyName && !companyId) {
+        console.log(`Creating new company for area of activity: ${companyName}`);
+        
+        try {
+          const newCompany = await storage.createCompany({
+            name: companyName
+          });
+          
+          companyId = newCompany.id;
+          console.log(`Created new company with ID ${companyId}`);
+          
+          // Update the request body with the new company ID
+          req.body.companyId = companyId;
+        } catch (err) {
+          console.error("Failed to create new company during area creation:", err);
+          // Continue anyway, even if company creation fails
+        }
+      }
+      
       const validated = insertAreaOfActivitySchema.parse(req.body);
       const newArea = await storage.createAreaOfActivity(validated);
+      
+      console.log(`Successfully created area of activity with ID ${newArea.id}`);
+      console.log(`Area details: contactId=${newArea.contactId}, companyId=${newArea.companyId}, role=${newArea.role}, isPrimary=${newArea.isPrimary}`);
+      
       res.status(201).json(newArea);
     } catch (error) {
+      console.error("Error creating area of activity:", error);
+      
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           message: "Validation error",
           details: error.errors
         });
       }
-      res.status(500).json({ message: "Failed to create area of activity", error: error.message });
+      
+      res.status(500).json({ 
+        message: "Failed to create area of activity", 
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 
@@ -1011,11 +1047,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   apiRouter.post("/companies", async (req: Request, res: Response) => {
     try {
+      console.log("Creating new company from request:", req.body);
       const companyData = insertCompanySchema.parse(req.body);
       const company = await storage.createCompany(companyData);
+      console.log(`Successfully created company: ${company.name} with ID ${company.id}`);
       res.status(201).json(company);
     } catch (error) {
-      res.status(400).json({ message: "Invalid company data", error: error.message });
+      console.error("Error creating company:", error);
+      res.status(400).json({ 
+        message: "Invalid company data", 
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 

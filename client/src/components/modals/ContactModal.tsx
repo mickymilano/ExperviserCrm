@@ -353,37 +353,60 @@ export default function ContactModal({ open, onOpenChange, initialData }: Contac
             
             console.log("Areas to create with correct contactId:", areasToCreate);
             
-            const createPromises = areasToCreate.map(area => 
-              fetch("/api/areas-of-activity", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(area),
-                credentials: "include"
-              })
-              .then(async res => {
-                if (!res.ok) {
-                  const errorText = await res.text();
-                  console.error(`Error creating area: ${res.status}: ${errorText}`);
-                  throw new Error(`${res.status}: ${errorText}`);
+            for (const area of areasToCreate) {
+              try {
+                console.log(`Creating area for contact ID ${initialData.id} with company ${area.companyName || ''} (companyId: ${area.companyId || 'new'})`);
+                
+                // Se abbiamo un companyName ma non un companyId, dobbiamo prima creare l'azienda
+                if (area.companyName && !area.companyId) {
+                  console.log(`Area has company name "${area.companyName}" but no company ID. Creating new company first.`);
+                  
+                  const companyResponse = await fetch("/api/companies", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name: area.companyName }),
+                    credentials: "include"
+                  });
+                  
+                  if (!companyResponse.ok) {
+                    const errorText = await companyResponse.text();
+                    console.error(`Error creating company: ${companyResponse.status}: ${errorText}`);
+                    throw new Error(`Failed to create company: ${errorText}`);
+                  }
+                  
+                  const company = await companyResponse.json();
+                  console.log(`Created new company: ${company.name}, ID: ${company.id}`);
+                  
+                  // Aggiorna l'area con il nuovo companyId
+                  area.companyId = company.id;
                 }
-                return res.json();
-              })
-              .then(result => {
-                console.log("Successfully created area:", result);
-                return result;
-              })
-              .catch(error => {
-                console.error("Error in area creation promise:", error);
-                throw error;
-              })
-            );
-            
-            try {
-              const results = await Promise.all(createPromises);
-              console.log("All areas created successfully:", results);
-            } catch (error) {
-              console.error("Failed to create all areas:", error);
+                
+                // Ora crea l'area di attività
+                console.log(`POSTing area of activity to /api/areas-of-activity:`, area);
+                const areaResponse = await fetch("/api/areas-of-activity", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(area),
+                  credentials: "include"
+                });
+                
+                if (!areaResponse.ok) {
+                  const errorText = await areaResponse.text();
+                  console.error(`Error creating area: ${areaResponse.status}: ${errorText}`);
+                  throw new Error(`Failed to create area of activity: ${errorText}`);
+                }
+                
+                const areaResult = await areaResponse.json();
+                console.log(`Successfully created area of activity with ID ${areaResult.id}`);
+              } catch (error) {
+                console.error(`Failed to create area of activity:`, error);
+              }
             }
+            
+            // Dopo aver creato tutte le aree, aggiorna la cache di React Query
+            console.log(`Invalidating queries for contact ${initialData.id}`);
+            queryClient.invalidateQueries({ queryKey: [`/api/contacts/${initialData.id}`] });
+            queryClient.invalidateQueries({ queryKey: [`/api/contacts/${initialData.id}/areas-of-activity`] });
           } else {
             console.log("No areas to create");
           }

@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { PlusCircle, X, Check } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { PlusCircle, X, Check, AlertTriangle } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AreaOfActivity, Company } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/hooks/use-toast";
 
 interface AreasOfActivityManagerProps {
   contactId?: number;
@@ -22,8 +23,10 @@ export default function AreasOfActivityManager({
   initialAreas = [], 
   onChange 
 }: AreasOfActivityManagerProps) {
+  const queryClient = useQueryClient();
   const [areas, setAreas] = useState<Partial<AreaOfActivity>[]>(initialAreas);
   const [editIndex, setEditIndex] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [newArea, setNewArea] = useState<Partial<AreaOfActivity>>({
     contactId,
     companyName: "",
@@ -32,13 +35,58 @@ export default function AreasOfActivityManager({
     isPrimary: false
   });
 
+  // Reset the form when contactId changes
+  useEffect(() => {
+    console.log(`ContactId in AreasOfActivityManager changed to: ${contactId}`);
+    setNewArea(prev => ({
+      ...prev,
+      contactId
+    }));
+  }, [contactId]);
+
+  // Reset areas when initialAreas changes
+  useEffect(() => {
+    console.log(`initialAreas in AreasOfActivityManager changed:`, initialAreas);
+    setAreas(initialAreas);
+  }, [initialAreas]);
+
   // Fetch companies for dropdown
   const { data: companies = [] } = useQuery<Company[]>({
     queryKey: ["/api/companies"],
     enabled: true
   });
 
+  console.log("Available companies:", companies.map(c => `${c.id}: ${c.name}`).join(", "));
+
+  const validateArea = (area: Partial<AreaOfActivity>): boolean => {
+    setError(null);
+    
+    // Se non abbiamo un companyId, dobbiamo avere un companyName
+    if (!area.companyId && !area.companyName) {
+      setError("Please select a company or enter a new company name");
+      return false;
+    }
+    
+    // Se abbiamo un companyId, verifichiamo che esista
+    if (area.companyId && !companies.some(c => c.id === area.companyId)) {
+      setError(`Invalid company ID: ${area.companyId}`);
+      return false;
+    }
+    
+    return true;
+  };
+
   const handleAddArea = () => {
+    // Validate the area before adding
+    if (!validateArea(newArea)) {
+      toast({
+        title: "Validation Error",
+        description: error || "Please check the company information",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     // Assicuriamoci che l'area abbia tutti i campi necessari
     const areaToAdd = { 
       ...newArea, 
@@ -61,10 +109,26 @@ export default function AreasOfActivityManager({
       jobDescription: "",
       isPrimary: false
     });
+    
+    // Show success toast
+    toast({
+      title: "Company Added",
+      description: `Added ${areaToAdd.companyName || "company"} to contact`,
+    });
   };
 
   const handleUpdateArea = () => {
     if (editIndex === null) return;
+    
+    // Validate the area before updating
+    if (!validateArea(newArea)) {
+      toast({
+        title: "Validation Error",
+        description: error || "Please check the company information",
+        variant: "destructive"
+      });
+      return;
+    }
     
     const updatedAreas = [...areas];
     updatedAreas[editIndex] = { ...newArea, contactId };
@@ -79,12 +143,29 @@ export default function AreasOfActivityManager({
       jobDescription: "",
       isPrimary: false
     });
+    
+    // Show success toast
+    toast({
+      title: "Company Updated",
+      description: `Updated company information`,
+    });
   };
 
   const handleRemoveArea = (index: number) => {
+    const areaToRemove = areas[index];
+    const companyInfo = areaToRemove.companyId 
+      ? companies.find(c => c.id === areaToRemove.companyId)?.name 
+      : areaToRemove.companyName;
+      
     const updatedAreas = areas.filter((_, i) => i !== index);
     setAreas(updatedAreas);
     onChange(updatedAreas);
+    
+    // Show success toast
+    toast({
+      title: "Company Removed",
+      description: `Removed ${companyInfo || "company"} from contact`,
+    });
   };
 
   const handleEditArea = (index: number) => {
@@ -101,6 +182,7 @@ export default function AreasOfActivityManager({
       jobDescription: "",
       isPrimary: false
     });
+    setError(null);
   };
 
   const handleCompanySelect = (companyId: string) => {
@@ -125,6 +207,9 @@ export default function AreasOfActivityManager({
       setNewArea(updatedArea);
       console.log("Selected existing company, area state:", updatedArea);
     }
+    
+    // Clear any previous error
+    setError(null);
   };
 
   const handleSetPrimary = (index: number) => {
@@ -134,6 +219,16 @@ export default function AreasOfActivityManager({
     }));
     setAreas(updatedAreas);
     onChange(updatedAreas);
+    
+    // Show success toast
+    const primaryCompany = updatedAreas[index].companyId 
+      ? companies.find(c => c.id === updatedAreas[index].companyId)?.name 
+      : updatedAreas[index].companyName;
+      
+    toast({
+      title: "Primary Company Set",
+      description: `Set ${primaryCompany || "company"} as primary company`,
+    });
   };
 
   return (
