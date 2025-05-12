@@ -78,7 +78,18 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       
       if (!response.ok) throw new Error('Failed to search contacts');
       const contacts = await response.json();
+      
+      // Enhanced logging for debugging the contact data structure
       console.log(`Found ${contacts.length} contacts matching search "${synergySearchTerm}"`);
+      if (contacts.length > 0) {
+        console.log("Sample contact data structure:", contacts[0]);
+        // Ensure contact IDs are properly formatted
+        return contacts.map(contact => ({
+          ...contact,
+          id: typeof contact.id === 'string' ? parseInt(contact.id) : contact.id
+        }));
+      }
+      
       return contacts;
     },
     enabled: synergySearchTerm.length >= 2 && !!selectedCompanyId && synergySearchOpen,
@@ -684,7 +695,13 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
               <div className="relative">
                 <div className="flex flex-col gap-2">
                   {/* Async autocomplete for synergy contacts */}
-                  <Popover open={synergySearchOpen} onOpenChange={setSynergySearchOpen}>
+                  <Popover 
+                    open={synergySearchOpen} 
+                    onOpenChange={(open) => {
+                      console.log("Popover onOpenChange:", open);
+                      setSynergySearchOpen(open);
+                    }}
+                  >
                     <PopoverTrigger asChild>
                       <div className="relative flex w-full">
                         <Input
@@ -693,9 +710,13 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                           placeholder={selectedCompanyId ? "Type to search contacts..." : "Select a company first"}
                           disabled={!selectedCompanyId}
                           value={synergySearchTerm}
-                          onChange={(e) => setSynergySearchTerm(e.target.value)}
+                          onChange={(e) => {
+                            console.log("Input onChange:", e.target.value);
+                            setSynergySearchTerm(e.target.value);
+                          }}
                           onFocus={() => {
                             if (selectedCompanyId) {
+                              console.log("Input onFocus, opening search");
                               setSynergySearchOpen(true);
                             }
                           }}
@@ -716,12 +737,15 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                         </Button>
                       </div>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[calc(100vw-4rem)] md:w-[400px] p-0">
+                    <PopoverContent className="w-[calc(100vw-4rem)] md:w-[400px] p-0 z-50">
                       <Command>
                         <CommandInput 
                           placeholder="Type at least 2 characters..." 
                           value={synergySearchTerm} 
-                          onValueChange={setSynergySearchTerm}
+                          onValueChange={(value) => {
+                            console.log("CommandInput onValueChange:", value);
+                            setSynergySearchTerm(value);
+                          }}
                         />
                         <CommandEmpty>
                           {synergySearchTerm.length < 2 
@@ -730,7 +754,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                               ? "Searching..."
                               : "No contacts found"}
                         </CommandEmpty>
-                        <CommandGroup className="max-h-[200px] overflow-y-auto">
+                        <CommandGroup className="max-h-[200px] overflow-y-auto relative z-50">
                           {isSearchingContacts && (
                             <div className="flex items-center justify-center py-2">
                               <span className="text-sm text-muted-foreground">Searching contacts...</span>
@@ -745,14 +769,38 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                                 <CommandItem
                                   key={contact.id}
                                   value={`${contact.firstName} ${contact.lastName}`}
+                                  className="cursor-pointer hover:bg-accent relative z-50"
                                   onSelect={() => {
+                                    console.log("CommandItem onSelect triggered for contact:", contact);
+                                    
+                                    // Ensure we're working with a string version of the ID for consistency
                                     const contactId = contact.id.toString();
+                                    console.log("Current selected contacts:", selectedSynergyContacts);
+                                    console.log("Adding contact ID:", contactId);
+                                    
+                                    // Simulating a click event for debugging
+                                    console.log("Would trigger click at", new Date().toISOString());
+                                    
+                                    // Check if contact is already selected
                                     if (!selectedSynergyContacts.includes(contactId)) {
+                                      // Create new array with the selected contact ID
                                       const newSelected = [...selectedSynergyContacts, contactId];
-                                      setSelectedSynergyContacts(newSelected);
-                                      setValue("synergyContactIds", newSelected.map(id => parseInt(id)));
-                                      // Clear the search term after selection
-                                      setSynergySearchTerm("");
+                                      console.log("New selected array:", newSelected);
+                                      
+                                      // Directly do DOM operations (for testing)
+                                      try {
+                                        // Update React state
+                                        setSelectedSynergyContacts(newSelected);
+                                        
+                                        // Update form state for submission
+                                        setValue("synergyContactIds", newSelected.map(id => parseInt(id, 10)));
+                                        
+                                        // Reset UI state to close dropdown and clear search
+                                        setSynergySearchTerm("");
+                                        setTimeout(() => setSynergySearchOpen(false), 10);
+                                      } catch (err) {
+                                        console.error("Error in contact selection:", err);
+                                      }
                                     }
                                   }}
                                 >
