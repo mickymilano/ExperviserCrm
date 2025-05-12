@@ -660,39 +660,64 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                       isMulti
                       isDisabled={!selectedCompanyId}
                       placeholder={selectedCompanyId ? "Type to search contacts..." : "Select a company first"}
-                      loadOptions={async (inputValue) => {
-                        if (!inputValue || inputValue.length < 1 || !selectedCompanyId) return [];
-                        
-                        console.log('Searching contacts with term:', inputValue);
-                        
-                        try {
-                          const response = await fetch(
-                            `/api/contacts?search=${encodeURIComponent(inputValue)}&excludeCompanyId=${selectedCompanyId}&includeAreas=true`
-                          );
+                      loadOptions={(inputValue) => {
+                        // Assicuriamoci che ci sia un'azienda selezionata
+                        return new Promise((resolve) => {
+                          if (!selectedCompanyId) {
+                            return resolve([]);
+                          }
                           
-                          if (!response.ok) throw new Error('Failed to search contacts');
-                          const contacts = await response.json();
+                          // Se l'input è vuoto, mostriamo alcuni contatti di default
+                          if (!inputValue || inputValue.length < 1) {
+                            // Mostriamo contatti di default
+                            fetch(`/api/contacts?&includeAreas=true&limit=10`)
+                              .then(response => {
+                                if (!response.ok) throw new Error('Failed to load default contacts');
+                                return response.json();
+                              })
+                              .then(contacts => {
+                                const options = contacts.map((contact: any) => ({
+                                  value: contact.id,
+                                  label: `${contact.firstName} ${contact.lastName}`,
+                                  contact
+                                }));
+                                console.log('Default contacts loaded:', options.length);
+                                resolve(options);
+                              })
+                              .catch(err => {
+                                console.error('Error loading default contacts:', err);
+                                resolve([]);
+                              });
+                            return;
+                          }
                           
-                          console.log('Found contacts:', contacts);
+                          // Altrimenti, cerchiamo contatti che corrispondono all'input
+                          console.log('Searching contacts with term:', inputValue);
                           
-                          // Map API results to the expected format for react-select
-                          const options = contacts.map((contact: any) => ({
-                            value: contact.id,
-                            label: `${contact.firstName} ${contact.lastName}`,
-                            contact // Store the full contact data for reference
-                          }));
-                          
-                          console.log('Returning options:', options);
-                          return options;
-                        } catch (error) {
-                          console.error('Error searching contacts:', error);
-                          return [];
-                        }
+                          fetch(`/api/contacts?search=${encodeURIComponent(inputValue)}&excludeCompanyId=${selectedCompanyId}&includeAreas=true`)
+                            .then(response => {
+                              if (!response.ok) throw new Error('Failed to search contacts');
+                              return response.json();
+                            })
+                            .then(contacts => {
+                              const options = contacts.map((contact: any) => ({
+                                value: contact.id,
+                                label: `${contact.firstName} ${contact.lastName}`,
+                                contact
+                              }));
+                              console.log('Found contacts:', options.length);
+                              resolve(options);
+                            })
+                            .catch(err => {
+                              console.error('Error searching contacts:', err);
+                              resolve([]);
+                            });
+                        });
                       }}
-                      onChange={(selectedOptions) => {
+                      onChange={(selectedOptions: any) => {
                         // Extract contact IDs from selected options
                         const contactIds = selectedOptions ? 
-                          selectedOptions.map(option => typeof option.value === 'string' ? parseInt(option.value) : option.value) : 
+                          selectedOptions.map((option: any) => typeof option.value === 'string' ? parseInt(option.value) : option.value) : 
                           [];
                         
                         console.log('Selected contact IDs:', contactIds);
@@ -700,7 +725,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                         // Update form state
                         field.onChange(contactIds);
                       }}
-                      value={field.value.map(id => {
+                      value={field.value.map((id: number) => {
                         // Find the contact in our data sources
                         const contactFromDealSynergies = Array.isArray(dealSynergies) ? 
                           dealSynergies.find(synergy => 

@@ -708,6 +708,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const searchTerm = req.query.search as string | undefined;
       const excludeCompanyId = req.query.excludeCompanyId ? 
         parseInt(req.query.excludeCompanyId as string) : undefined;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
       
       let contacts;
       if (companyId) {
@@ -768,6 +769,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         return res.json(contactsWithAreas);
+      }
+      // Applico la limitazione dei risultati se specificata
+      if (limit && limit > 0 && contacts.length > limit) {
+        contacts = contacts.slice(0, limit);
       }
       
       res.json(contacts);
