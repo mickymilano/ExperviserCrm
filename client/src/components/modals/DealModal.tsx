@@ -13,11 +13,12 @@ import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { DealInfo } from "@/types";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { useCreateSynergy } from "@/hooks/useSynergies";
+import { Badge } from "@/components/ui/badge";
 
 interface DealModalProps {
   open: boolean;
@@ -710,12 +711,12 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                           <Badge 
                             key={contactId}
                             variant="secondary"
-                            className="flex items-center gap-1"
+                            className="flex items-center gap-1 pl-2 pr-1 py-1"
                           >
                             {contact.firstName} {contact.lastName}
                             <button
                               type="button"
-                              className="ml-1 hover:text-destructive"
+                              className="ml-1 rounded-full hover:bg-destructive/10 hover:text-destructive flex items-center justify-center w-4 h-4"
                               onClick={() => {
                                 setSelectedSynergyContacts(prev => {
                                   const newSelected = prev.filter(id => id !== contactId);
@@ -724,7 +725,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                                 });
                               }}
                             >
-                              ×
+                              <X className="h-3 w-3" />
                             </button>
                           </Badge>
                         );
