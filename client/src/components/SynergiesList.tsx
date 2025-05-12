@@ -94,18 +94,21 @@ export function SynergiesList({ contactId, companyId, showTitle = true, hideAddB
   };
   
   const getContactName = (id: number) => {
+    if (!id) return "Contatto rimosso";
     const contact = contacts.find((c: any) => c.id === id);
-    return contact ? `${contact.firstName} ${contact.lastName}` : "Unknown";
+    return contact ? `${contact.firstName} ${contact.lastName}` : `Contatto #${id}`;
   };
   
   const getCompanyName = (id: number) => {
+    if (!id) return "Azienda rimossa";
     const company = companies.find((c: any) => c.id === id);
-    return company ? company.name : "Unknown";
+    return company ? company.name : `Azienda #${id}`;
   };
   
   const getDealName = (id: number) => {
+    if (!id) return "-";
     const deal = deals.find((d: any) => d.id === id);
-    return deal ? deal.name : "Unknown";
+    return deal ? deal.name : `Affare #${id}`;
   };
   
   const getStatusBadgeVariant = (status: string) => {

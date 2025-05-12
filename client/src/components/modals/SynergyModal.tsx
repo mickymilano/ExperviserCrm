@@ -123,8 +123,16 @@ export function SynergyModal({
 
   const onSubmit = async (data: FormData) => {
     try {
+      // Converti campi undefined a null per compatibilità con il backend
+      const processedData = {
+        ...data,
+        description: data.description || null,
+        dealId: data.dealId || null,
+        status: data.status || null
+      };
+      
       if (mode === "create") {
-        await createSynergyMutation.mutateAsync(data);
+        await createSynergyMutation.mutateAsync(processedData);
         toast({
           title: "Success",
           description: "Synergy created successfully",
@@ -132,7 +140,7 @@ export function SynergyModal({
       } else {
         await updateSynergyMutation.mutateAsync({
           id: initialData.id,
-          data,
+          data: processedData,
         });
         toast({
           title: "Success",
@@ -186,7 +194,7 @@ export function SynergyModal({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {contacts.map((contact: any) => (
+                      {contactsList.map((contact: any) => (
                         <SelectItem key={contact.id} value={contact.id.toString()}>
                           {contact.firstName} {contact.lastName}
                         </SelectItem>
@@ -215,7 +223,7 @@ export function SynergyModal({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {companies.map((company: any) => (
+                      {companiesList.map((company: any) => (
                         <SelectItem key={company.id} value={company.id.toString()}>
                           {company.name}
                         </SelectItem>
@@ -307,7 +315,7 @@ export function SynergyModal({
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="null">None</SelectItem>
-                      {deals.map((deal: any) => (
+                      {dealsList.map((deal: any) => (
                         <SelectItem key={deal.id} value={deal.id.toString()}>
                           {deal.name}
                         </SelectItem>
