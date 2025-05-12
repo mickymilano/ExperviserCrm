@@ -1,0 +1,83 @@
+Subject: Critical Path Rectification for Synergy Module & System-Wide Data Integrity Enhancements
+
+Executive Summary:
+This directive outlines immediate actions to resolve a critical data display anomaly in the "Synergies" feature, specifically on the Company Detail page, where placeholder data is shown despite a confirmed empty synergies database table. Subsequently, a comprehensive set of tasks for refactoring core CRM logic, schema enhancements, and new feature implementation is detailed. Absolute priority is data integrity and backend logical correctness, followed by functional frontend implementation.
+
+Phase 1: Urgent - Diagnose and Resolve "Fake Synergies" Display Anomaly
+
+Context:
+
+Database synergies table is confirmed empty post-TRUNCATE/DELETE and non-population during seeding.
+User Interface (Company Detail Page -> "Synergies" tab) incorrectly displays placeholder "Business Relationship" entries.
+This points to a frontend data fetching, caching, or rendering logic flaw.
+Immediate Diagnostic & Remediation Steps:
+
+API Endpoint GET /api/companies/:companyId/synergies Deep Dive (File: server/routes.ts):
+
+Action: Rigorously audit this endpoint.
+Verification: Ensure it exclusively queries the synergies table filtered by companyId. It MUST return an empty array ([]) if no database records match. It MUST NOT synthesize, mock, or return placeholder data.
+Rectify: Correct any logic deviating from this.
+Frontend Component SynergiesList.tsx Analysis (File: client/src/components/SynergiesList.tsx):
+
+Context: This component, when used with a companyId prop, utilizes the useCompanySynergies(companyId) hook.
+Action: Inspect for:
+Hardcoded mock data or default state structures that could render as placeholder entries.
+Incorrect handling of an empty array ([]) returned from useCompanySynergies. An empty array must result in a "No synergies found" message or an empty state, not placeholder cards.
+Proper handling of isLoading and isError states from the data hook.
+Rectify: Eliminate any source of "fake" data display.
+Data Hook useCompanySynergies Scrutiny (File: client/src/hooks/useSynergies.tsx):
+
+Action: Verify this hook accurately calls GET /api/companies/:companyId/synergies and transparently passes the API's response (especially an empty array) to the consuming component.
+TanStack Query Cache Integrity:
+
+Action: Implement/confirm robust cache invalidation for TanStack Query post-DB reset and seeding, specifically for query keys associated with synergies and companies/:companyId/synergies. This is critical to prevent stale data display. Use queryClient.invalidateQueries() effectively.
+Simulated Live Debugging & Verification Protocol (AI Self-Test):
+
+Scenario: Database synergies table is EMPTY. Navigate to a seeded Company's Detail page -> "Synergies" tab.
+Inspect:
+Network Response from GET /api/companies/:companyId/synergies (expect [], HTTP 200).
+Props passed to SynergiesList.tsx.
+Browser JavaScript Console for errors.
+Expected Outcome: "Synergies" tab shows a clean "No synergies found" (or equivalent) state.
+Phase 2: Comprehensive CRM Core Refactor and Feature Implementation
+(This summarizes the detailed prompt previously constructed, assuming successful completion of Phase 1. The AI should refer to the full detailed prompt for specifics on each task here.)
+
+Directive: Upon resolving the "Fake Synergies" display issue, proceed with the full system refactor as previously detailed. Key areas include:
+
+Schema Enhancements (Task 0 from detailed prompt):
+Implement all new tables (contact_emails) and new fields (status/isArchived for archival; isActiveRep; date tracking fields; companyType; multi-tag text[] fields: companies.brands, companies.channels, companies.productsOrServicesTags, companies.locationTypes; contacts.roles).
+Ensure explicit Drizzle ORM relations.
+Database Reset & Minimal Seeding (Task 0.B):
+Execute data truncation (preserve michele@experviser.com superadmin).
+Seed minimal, interconnected data set as specified (max 2 companies, 3 contacts, etc.; NO initial Synergies).
+Data Archival System (Task 1):
+Implement "archive" logic for Deals, Contacts, contact_emails.
+Exception: Leads remain physically deletable (DELETE /api/leads/:id and on conversion).
+Update APIs for default filtering and includeArchived parameter.
+Advanced Contact Email Management (Task 2):
+Backend CRUD for contact_emails. Update email matching logic. UI for multi-email management in Contact form.
+"Active Rep" Company Feature (Task 3):
+Backend logic for isActiveRep. UI toggle. Dashboard widget for Active Reps. Main company list filtered by default.
+CRM Best Practices Implementation (Task 4):
+lastContactedAt/nextFollowUpAt fields and logic.
+Filterable Activity Timelines.
+Consistent multi-tag input UI (autocomplete, on-the-fly creation) for specified text[] fields.
+Structured companyType (enum/dropdown).
+Synergies Module Rewrite & Fix (DealModal.tsx) (Task 5):
+Input Component: react-select/async (AsyncSelect) with Controller. Search on 1+ chars. API GET /api/contacts?search=<term>&excludeCompany=<companyId>. Map results to {value, label}. Multi-select. Light blue tags with 'x' for removal.
+Rules: Non-deletable from UI. Report (don't auto-delete) suspect old synergy data.
+Display: On Contact/Company details (read-only, link to Deal). Main /synergies page (no create, default active, filters for Contact/Co/Deal/Date).
+onSubmit: Two-step save (Deal, then POST /api/deals/:dealId/synergies).
+Basic Superadmin Panel (Task 6):
+Route-protected /admin page. User management (list, create, edit role/status, archive).
+System-Wide Error Handling & Feedback (General Requirement):
+Robust backend error responses. User-friendly frontend toasts/notifications.
+Final Validation & Reporting:
+Thoroughly self-test all functionalities end-to-end. Report only upon full completion, detailing:
+1.  Resolution of the "Fake Synergies" display anomaly (Phase 1).
+2.  Confirmation of all subsequent task completions (Phase 2).
+3.  Summary of critical bugs resolved.
+4.  Overview of new features implemented and validated.
+
+Commence with Phase 1 immediately. Proceed autonomously and report upon full system stability and functionality as per this directive.
+
