@@ -3,6 +3,7 @@ import { useParams, useLocation } from "wouter";
 import { useContact } from "@/hooks/useContacts";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useDeals } from "@/hooks/useDeals";
+import { SynergiesList } from "@/components/SynergiesList";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -152,10 +153,11 @@ export default function ContactDetail() {
       
       {/* Tabs Navigation */}
       <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3 md:w-auto md:inline-flex">
+        <TabsList className="grid w-full grid-cols-4 md:w-auto md:inline-flex">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="companies">Companies</TabsTrigger>
           <TabsTrigger value="deals">Deals</TabsTrigger>
+          <TabsTrigger value="synergies">Synergies</TabsTrigger>
         </TabsList>
         
         {/* Overview Tab */}
@@ -503,6 +505,13 @@ export default function ContactDetail() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+        
+        {/* Synergies Tab */}
+        <TabsContent value="synergies" className="space-y-6">
+          <div className="bg-white p-6 rounded-md shadow-sm">
+            <SynergiesList contactId={contactId} />
+          </div>
         </TabsContent>
         
         {/* Deals Tab */}
