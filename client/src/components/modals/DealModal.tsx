@@ -151,7 +151,9 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       // Set default stage for new deal
       setValue("stageId", stages[0]?.id);
     }
-  }, [initialData, stages, open, setValue]);
+  // Remove setValue from dependencies to prevent infinite loops
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialData, stages, open]);
 
   // Combined effect to initialize and filter companies based on search
   useEffect(() => {
