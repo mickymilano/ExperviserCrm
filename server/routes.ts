@@ -23,6 +23,7 @@ import {
   insertAccountSignatureSchema,
   insertAreaOfActivitySchema,
   insertUserSchema,
+  insertSynergySchema,
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -1976,6 +1977,117 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error in debug deals endpoint:", error);
       res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // SYNERGIES API ENDPOINTS
+  apiRouter.get("/synergies", async (req: Request, res: Response) => {
+    try {
+      const synergies = await storage.getSynergies();
+      res.json(synergies);
+    } catch (error) {
+      console.error("Error fetching synergies:", error);
+      res.status(500).json({ message: "Failed to fetch synergies" });
+    }
+  });
+
+  apiRouter.get("/synergies/:id", async (req: Request, res: Response) => {
+    try {
+      const id = Number(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid synergy ID" });
+      }
+      
+      const synergy = await storage.getSynergy(id);
+      if (!synergy) {
+        return res.status(404).json({ message: "Synergy not found" });
+      }
+      
+      res.json(synergy);
+    } catch (error) {
+      console.error("Error fetching synergy:", error);
+      res.status(500).json({ message: "Failed to fetch synergy" });
+    }
+  });
+
+  apiRouter.get("/contacts/:id/synergies", async (req: Request, res: Response) => {
+    try {
+      const contactId = Number(req.params.id);
+      if (isNaN(contactId)) {
+        return res.status(400).json({ message: "Invalid contact ID" });
+      }
+      
+      const synergies = await storage.getSynergiesByContact(contactId);
+      res.json(synergies);
+    } catch (error) {
+      console.error("Error fetching contact synergies:", error);
+      res.status(500).json({ message: "Failed to fetch contact synergies" });
+    }
+  });
+
+  apiRouter.get("/companies/:id/synergies", async (req: Request, res: Response) => {
+    try {
+      const companyId = Number(req.params.id);
+      if (isNaN(companyId)) {
+        return res.status(400).json({ message: "Invalid company ID" });
+      }
+      
+      const synergies = await storage.getSynergiesByCompany(companyId);
+      res.json(synergies);
+    } catch (error) {
+      console.error("Error fetching company synergies:", error);
+      res.status(500).json({ message: "Failed to fetch company synergies" });
+    }
+  });
+
+  apiRouter.post("/synergies", async (req: Request, res: Response) => {
+    try {
+      const synergyData = insertSynergySchema.parse(req.body);
+      const synergy = await storage.createSynergy(synergyData);
+      res.status(201).json(synergy);
+    } catch (error) {
+      console.error("Error creating synergy:", error);
+      res.status(400).json({ message: "Invalid synergy data", error: error.message });
+    }
+  });
+
+  apiRouter.patch("/synergies/:id", async (req: Request, res: Response) => {
+    try {
+      const id = Number(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid synergy ID" });
+      }
+      
+      const synergyData = insertSynergySchema.partial().parse(req.body);
+      const synergy = await storage.updateSynergy(id, synergyData);
+      
+      if (!synergy) {
+        return res.status(404).json({ message: "Synergy not found" });
+      }
+      
+      res.json(synergy);
+    } catch (error) {
+      console.error("Error updating synergy:", error);
+      res.status(400).json({ message: "Invalid synergy data", error: error.message });
+    }
+  });
+
+  apiRouter.delete("/synergies/:id", async (req: Request, res: Response) => {
+    try {
+      const id = Number(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid synergy ID" });
+      }
+      
+      const success = await storage.deleteSynergy(id);
+      if (!success) {
+        return res.status(404).json({ message: "Synergy not found" });
+      }
+      
+      res.status(204).end();
+    } catch (error) {
+      console.error("Error deleting synergy:", error);
+      res.status(500).json({ message: "Failed to delete synergy" });
     }
   });
   

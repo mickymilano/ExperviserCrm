@@ -1748,6 +1748,86 @@ export class MemStorage implements IStorage {
       attendees: { internal: [1], external: [michaelRodriguez.id] }
     });
   }
+
+  // SYNERGIES
+  async getSynergies(): Promise<Synergy[]> {
+    return Array.from(this.synergies.values());
+  }
+
+  async getSynergiesByContact(contactId: number): Promise<Synergy[]> {
+    return Array.from(this.synergies.values())
+      .filter(synergy => synergy.contactId === contactId)
+      .sort((a, b) => {
+        if (!a.updatedAt || !b.updatedAt) return 0;
+        return b.updatedAt.getTime() - a.updatedAt.getTime();
+      });
+  }
+
+  async getSynergiesByCompany(companyId: number): Promise<Synergy[]> {
+    return Array.from(this.synergies.values())
+      .filter(synergy => synergy.companyId === companyId)
+      .sort((a, b) => {
+        if (!a.updatedAt || !b.updatedAt) return 0;
+        return b.updatedAt.getTime() - a.updatedAt.getTime();
+      });
+  }
+
+  async getSynergy(id: number): Promise<Synergy | undefined> {
+    return this.synergies.get(id);
+  }
+
+  async createSynergy(insertSynergy: InsertSynergy): Promise<Synergy> {
+    const id = this.synergyCurrentId++;
+    const now = new Date();
+    
+    const synergy: Synergy = {
+      ...insertSynergy,
+      id,
+      createdAt: now,
+      updatedAt: now
+    };
+    
+    this.synergies.set(id, synergy);
+    
+    // Create an activity for this new synergy
+    try {
+      await this.createActivity({
+        type: "synergy",
+        description: `New business synergy created`,
+        date: now,
+        contactId: synergy.contactId,
+        companyId: synergy.companyId,
+        dealId: synergy.dealId,
+        metadata: {
+          synergyId: synergy.id,
+          description: synergy.description,
+          type: synergy.type
+        }
+      });
+    } catch (error) {
+      console.error("Failed to create activity for synergy:", error);
+    }
+    
+    return synergy;
+  }
+
+  async updateSynergy(id: number, synergyData: Partial<InsertSynergy>): Promise<Synergy | undefined> {
+    const synergy = this.synergies.get(id);
+    if (!synergy) return undefined;
+    
+    const updatedSynergy: Synergy = {
+      ...synergy,
+      ...synergyData,
+      updatedAt: new Date()
+    };
+    
+    this.synergies.set(id, updatedSynergy);
+    return updatedSynergy;
+  }
+
+  async deleteSynergy(id: number): Promise<boolean> {
+    return this.synergies.delete(id);
+  }
 }
 
 export const storage = new PostgresStorage();
