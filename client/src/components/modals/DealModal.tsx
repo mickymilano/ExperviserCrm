@@ -53,15 +53,11 @@ type DealFormData = z.infer<typeof dealSchema>;
 export default function DealModal({ open, onOpenChange, initialData }: DealModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [tagsInput, setTagsInput] = useState(
-    initialData?.tags && initialData.tags.length > 0 ? initialData.tags.join(", ") : ""
-  );
+  const [tagsInput, setTagsInput] = useState("");
   const [companySearchQuery, setCompanySearchQuery] = useState("");
   const [filteredCompanies, setFilteredCompanies] = useState<any[]>([]);
   const [filteredContacts, setFilteredContacts] = useState<any[]>([]);
-  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(
-    initialData?.companyId || null
-  );
+  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
 
   // Form reference for alert dialog submission
   const formRef = useRef<HTMLFormElement>(null);
@@ -139,6 +135,8 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
         // Set tags for display
         if (initialData.tags && Array.isArray(initialData.tags) && initialData.tags.length > 0) {
           setTagsInput(initialData.tags.join(", "));
+        } else {
+          setTagsInput("");
         }
 
         if (initialData.notes !== undefined) {
@@ -147,9 +145,15 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       } catch (error) {
         console.error("Error setting form values:", error);
       }
-    } else if (stages && Array.isArray(stages) && stages.length > 0 && open) {
-      // Set default stage for new deal
-      setValue("stageId", stages[0]?.id);
+    } else {
+      // Reset the form when opening in create mode
+      setTagsInput("");
+      setSelectedCompanyId(null);
+      
+      // Set default stage for new deal if available
+      if (stages && Array.isArray(stages) && stages.length > 0 && open) {
+        setValue("stageId", stages[0]?.id);
+      }
     }
   // Remove setValue from dependencies to prevent infinite loops
   // eslint-disable-next-line react-hooks/exhaustive-deps
