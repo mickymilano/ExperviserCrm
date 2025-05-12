@@ -61,10 +61,11 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(
     initialData?.companyId || null
   );
-  // States for the synergy contacts autocomplete
+  // States for synergy contacts autocomplete
   const [selectedSynergyContacts, setSelectedSynergyContacts] = useState<string[]>([]);
   const [synergySearchTerm, setSynergySearchTerm] = useState("");
   const [synergySearchOpen, setSynergySearchOpen] = useState(false);
+  const [filteredSynergyContacts, setFilteredSynergyContacts] = useState<any[]>([]);
   
   // Query for async searching of contacts
   const { data: searchedContacts = [], isLoading: isSearchingContacts } = useQuery({
