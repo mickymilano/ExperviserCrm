@@ -16,7 +16,7 @@ import { DealInfo } from "@/types";
 interface DealModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  initialData?: DealInfo | null;
+  initialData?: DealInfo | Partial<DealInfo> | null;
 }
 
 const dealSchema = z.object({
@@ -75,26 +75,34 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
   // Initialize form when in edit mode or set default stage if in create mode
   useEffect(() => {
     if (initialData && open) {
-      // Set form values from the existing deal
-      setValue("name", initialData.name);
-      setValue("value", initialData.value);
-      setValue("stageId", initialData.stageId);
-      setValue("companyId", initialData.companyId);
-      setValue("contactId", initialData.contactId);
-      
-      // Format date for input field if exists
-      if (initialData.expectedCloseDate) {
-        const date = new Date(initialData.expectedCloseDate);
-        setValue("expectedCloseDate", date.toISOString().split('T')[0]);
+      try {
+        // Set form values from the existing deal
+        if (initialData.name !== undefined) setValue("name", String(initialData.name));
+        if (initialData.value !== undefined) setValue("value", Number(initialData.value));
+        if (initialData.stageId !== undefined) setValue("stageId", Number(initialData.stageId));
+        if (initialData.companyId !== undefined) setValue("companyId", initialData.companyId !== null ? Number(initialData.companyId) : null);
+        if (initialData.contactId !== undefined) setValue("contactId", initialData.contactId !== null ? Number(initialData.contactId) : null);
+        
+        // Format date for input field if exists
+        if (initialData.expectedCloseDate) {
+          const date = new Date(initialData.expectedCloseDate);
+          if (!isNaN(date.getTime())) {
+            setValue("expectedCloseDate", date.toISOString().split('T')[0]);
+          }
+        }
+        
+        // Set tags for display
+        if (initialData.tags && Array.isArray(initialData.tags) && initialData.tags.length > 0) {
+          setTagsInput(initialData.tags.join(", "));
+        }
+        
+        if (initialData.notes !== undefined) {
+          setValue("notes", initialData.notes || "");
+        }
+      } catch (error) {
+        console.error("Error setting form values:", error);
       }
-      
-      // Set tags for display
-      if (initialData.tags && initialData.tags.length > 0) {
-        setTagsInput(initialData.tags.join(", "));
-      }
-      
-      setValue("notes", initialData.notes || "");
-    } else if (stages.length > 0 && open) {
+    } else if (stages && stages.length > 0 && open) {
       // Set default stage for new deal
       setValue("stageId", stages[0].id);
     }

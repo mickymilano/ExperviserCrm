@@ -18,13 +18,17 @@ export default function NewDeal() {
   const contactId = params.get("contactId");
   const companyId = params.get("companyId");
   
-  // Prepara i dati iniziali per il modale
-  const initialData = {
+  // Prepara un oggetto di default con valori predefiniti
+  // Questo è sicuro rispetto alla tipizzazione e sarà gestito da DealModal
+  const defaultValues = {
     name: "",
     value: 0,
-    stageId: 0,
-    contactId: contactId ? parseInt(contactId) : null,
-    companyId: companyId ? parseInt(companyId) : null
+    stageId: stages && stages.length > 0 ? stages[0].id : 0,
+    contactId: contactId ? parseInt(contactId) : undefined,
+    companyId: companyId ? parseInt(companyId) : undefined,
+    notes: "",
+    tags: [],
+    expectedCloseDate: ""
   };
   
   // Quando il modale viene chiuso, torna alla pagina precedente
@@ -90,7 +94,8 @@ export default function NewDeal() {
       <DealModal
         open={showModal}
         onOpenChange={handleModalClose}
-        initialData={initialData}
+        // Il componente DealModal accetta qualsiasi oggetto valido per i campi del form
+        initialData={defaultValues}
       />
     </div>
   );
