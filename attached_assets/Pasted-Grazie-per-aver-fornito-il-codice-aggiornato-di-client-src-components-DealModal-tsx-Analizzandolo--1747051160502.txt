@@ -1,0 +1,79 @@
+Grazie per aver fornito il codice aggiornato di client/src/components/DealModal.tsx.
+
+Analizzandolo, vedo che l'AI ha effettivamente introdotto il componente <Select> da react-select e lo ha integrato usando Controller di react-hook-form. Ha anche impostato una query (useQuery) per cercare i contatti. Tuttavia, ci sono alcuni problemi chiave, in particolare uno che spiega perfettamente perché non riesci a selezionare gli elementi dalla lista:
+
+Problema Principale: Mancano getOptionValue e getOptionLabel
+
+Il componente <Select> di react-select ha bisogno di sapere come interpretare gli oggetti che riceve nell'array options (nel tuo caso, searchedContacts). Specificamente, deve sapere:
+
+Quale proprietà dell'oggetto usare come valore univoco (di solito l'ID). Questo si fa con la prop getOptionValue.
+Quale proprietà (o combinazione di proprietà) usare come testo da visualizzare nella lista (di solito nome e cognome). Questo si fa con la prop getOptionLabel.
+Nel tuo codice attuale, queste props mancano:
+
+TypeScript
+
+<Controller
+  name="synergyContactIds"
+  control={control} // Assumiamo che 'control' sia disponibile
+  render={({ field }) => (
+    <Select
+      {...field} // Passa value, onChange, etc da react-hook-form
+      isMulti // OK
+      options={searchedContacts} // OK - passa i contatti trovati
+      // !!! MANCANO getOptionValue e getOptionLabel !!!
+      onChange={(selectedOptions) => { // OK - aggiorna RHF con gli ID
+        field.onChange(selectedOptions ? selectedOptions.map(option => option.value) : []);
+      }}
+      placeholder="Select Synergy Contacts..."
+    />
+  )}
+/>
+Senza getOptionValue e getOptionLabel, react-select non sa come gestire gli oggetti contact presenti in searchedContacts (che probabilmente hanno una struttura tipo { id: 1, firstName: 'Pio', lastName: 'Tutto', ... }). Per questo motivo, anche se vedi le opzioni, il meccanismo interno di selezione non funziona correttamente.
+
+Soluzione Immediata:
+
+Aggiungi le props getOptionValue e getOptionLabel al componente <Select>:
+
+TypeScript
+
+<Controller
+  name="synergyContactIds"
+  control={control}
+  render={({ field }) => (
+    <Select
+      {...field}
+      isMulti
+      options={searchedContacts}
+      // --- AGGIUNGI QUESTE DUE PROPS ---
+      getOptionValue={(option) => option.id} // Dice a react-select di usare 'id' come valore
+      getOptionLabel={(option) => `${option.firstName} ${option.lastName}`} // Dice come creare l'etichetta
+      // ---------------------------------
+      onChange={(selectedOptions) => {
+        // Questa parte è ok, ma assicurati che `option.value` sia corretto
+        // Con getOptionValue={(option) => option.id}, option.value non esisterà direttamente,
+        // dovresti mappare l'ID direttamente dall'opzione selezionata.
+        field.onChange(selectedOptions ? selectedOptions.map(option => option.id) : []);
+      }}
+      // Modifica anche il value passato da RHF per farlo funzionare con react-select
+      // react-select si aspetta oggetti {value, label} o null, non un array di ID [1, 2]
+      // Quindi dobbiamo trovare gli oggetti corrispondenti agli ID in field.value
+      value={searchedContacts.filter(option => field.value?.includes(option.id))}
+      placeholder="Select Synergy Contacts..."
+      // Aggiungi un gestore per l'input per aggiornare il termine di ricerca
+      onInputChange={(inputValue) => setSynergySearchTerm(inputValue)}
+      isLoading={isSearchingContacts} // Mostra un indicatore di caricamento
+    />
+  )}
+/>
+Modifica onChange e value: Nota che ho leggermente modificato anche onChange per usare option.id (dato che ora specifichiamo come ottenere il valore con getOptionValue) e, cosa importante, ho aggiunto una logica per la prop value per farla funzionare correttamente con react-hook-form e react-select. Ho anche aggiunto onInputChange per aggiornare il termine di ricerca e isLoading.
+
+Altri Punti da Verificare:
+
+Logica onSubmit/saveDeal Incompleta: Come notato prima, nel codice che hai incollato manca l'implementazione effettiva della funzione saveDeal che dovrebbe contenere la logica delle due chiamate API (prima salva il deal, poi le sinergie). Questa parte deve essere implementata correttamente come discusso in precedenza.
+Pattern Asincrono: L'uso di useQuery per popolare options e onInputChange per aggiornare il termine di ricerca va bene, anche se l'uso di AsyncSelect da react-select/async con una prop loadOptions è spesso considerato un pattern più pulito per questo caso d'uso. La soluzione proposta sopra con onInputChange e isLoading dovrebbe comunque funzionare.
+Disponibilità di control: Assicurati che control sia effettivamente ottenuto da useForm (es. const { register, handleSubmit, reset, control } = useForm(...)).
+Azione Consigliata:
+
+Applica la correzione: Aggiungi getOptionValue, getOptionLabel, onInputChange, isLoading e modifica value e onChange nel componente <Select> come mostrato sopra.
+Verifica/Completa onSubmit/saveDeal: Assicurati che la logica per salvare prima il deal e poi le sinergie sia correttamente implementata.
+Testa di nuovo: Prova nuovamente a selezionare i contatti nel form del Deal. Ora dovresti essere in grado di selezionarli. Successivamente, verifica se vengono anche salvati correttamente (questo dipenderà dalla logica in onSubmit/saveDeal).

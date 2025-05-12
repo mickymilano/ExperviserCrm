@@ -1,0 +1,27 @@
+Objective: Fix the issue where Synergy Contacts selected in the Deal form (`DealModal.tsx`) are not being saved correctly. This involves replacing the current input with a proper async multi-select component and refactoring the form submission logic to call the correct backend endpoints in sequence.
+
+File to Modify: `client/src/components/DealModal.tsx`
+
+Task 1: Implement Async Multi-Select Autocomplete for Synergy Contacts
+1.1. Remove the current simple `<Input>` field used for `synergyContactIds` within the form.
+1.2. Remove the associated `useState` hook (`selectedSynergyContacts`, `setSelectedSynergyContacts`) as the state should be managed by `react-hook-form`.
+1.3. Implement a new component within the form for the "Synergy Contacts" field that functions as an **asynchronous multi-select autocomplete**. Follow the requirements previously detailed (e.g., in files like Pasted-The-Synergy-Contacts-field-in-the-Deal-form-must-be-a-type-ahead-autocomplete-not-a-full-dro-1747043915452.txt, Pasted-The-Synergy-Contacts-field-in-the-Deal-form-must-be-a-true-type-ahead-autocomplete-that-reads-dire-1747044422974.txt, Pasted-PROMPT-PER-REPLIT-AI-ASSISTANT-1-Obiettivo-Nel-form-Add-Edit-Deal-deve-comparire-un-ca-1747040054665.txt):
+    - As the user types (e.g., 2+ chars), call `GET /api/contacts?search=<term>&excludeCompany=<companyId>` to fetch matching contacts. Use the `companyId` from the deal context to exclude already affiliated contacts from the results.
+    - Display fetched contacts in a dropdown.
+    - Allow selecting multiple contacts (display selections as tags/chips).
+    - **Crucially, integrate this component with `react-hook-form`**. Register a form field named `synergyContactIds`. This field should store the **array of selected contact numeric IDs**. Use `react-hook-form`'s `Controller` component or a similar method for proper integration with custom/async components. Consider using libraries like `react-select/async` or adapting existing UI library components (e.g., Shadcn Combobox if suitable for async multi-select).
+
+Task 2: Refactor the `onSubmit` Function Logic
+2.1. Modify the existing `onSubmit` function in `DealModal.tsx`.
+2.2. The function receives the `data` object from `react-hook-form` upon submission. Extract the `synergyContactIds` array (which should now be populated correctly by the component from Task 1) from `data`. Separate the rest of the core `dealData` (name, value, etc.) from the `synergyContactIds`.
+2.3. **Step 1 (Save/Update Deal):** Make the first `apiRequest` call to `POST /api/deals` (if creating) or `PATCH /api/deals/:id` (if editing) using **only** the `dealData` (excluding `synergyContactIds` from this payload).
+2.4. **Step 2 (Handle Response & Get Deal ID):** Use `async/await`. If the first call is successful, check the response (`response.ok`) and parse the response body to get the saved deal, specifically its `id` (let's call it `savedDealId`). Handle errors for this first call.
+2.5. **Step 3 (Save Synergies):** If the first call was successful (`response.ok` is true) and the `synergyContactIds` array is not empty and contains valid IDs:
+    - Make a **second** `apiRequest` call.
+    - Method: `POST`
+    - URL: `/api/deals/${savedDealId}/synergies` (use the ID from Step 2).
+    - Body (`data`): An object like `{ contactIds: synergyContactIds }`.
+    - Handle potential errors specifically for this second call.
+2.6. **Feedback:** Update the final success/error `toast` messages to accurately reflect whether both the deal and the synergies (if any) were saved successfully.
+
+Apply these changes directly and autonomously, ensuring both the UI component replacement and the `onSubmit` logic refactoring are fully implemented in `client/src/components/DealModal.tsx`.

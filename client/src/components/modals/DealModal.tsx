@@ -82,7 +82,8 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       return contacts;
     },
     enabled: synergySearchTerm.length >= 2 && !!selectedCompanyId && synergySearchOpen,
-    staleTime: 10000, // Cache results for 10 seconds
+    staleTime: 30000, // Cache results for 30 seconds
+    refetchOnWindowFocus: false, // Prevent unnecessary refetches
   });
 
   // Form reference for alert dialog submission
@@ -117,6 +118,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
   const { data: dealSynergies = [] } = useQuery({
     queryKey: [`/api/deals/${initialData?.id}/synergies`],
     enabled: open && isEditMode && initialData?.id !== undefined,
+    staleTime: Infinity // Prevent refetching during component lifecycle to avoid infinite loop
   });
 
   const { register, handleSubmit, reset, setValue, getValues, formState: { errors } } = useForm<DealFormData>({
@@ -223,14 +225,19 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       
       // Extract contact IDs from synergies and convert to strings for the selected state
       const contactIds = dealSynergies.map(synergy => synergy.contactId.toString());
-      setSelectedSynergyContacts(contactIds);
       
-      // Also set the form value with numeric IDs for submission
-      setValue("synergyContactIds", dealSynergies.map(synergy => 
-        typeof synergy.contactId === 'string' ? parseInt(synergy.contactId) : synergy.contactId
-      ));
+      // Only update if different to avoid infinite loop
+      if (JSON.stringify(contactIds) !== JSON.stringify(selectedSynergyContacts)) {
+        setSelectedSynergyContacts(contactIds);
+        
+        // Also set the form value with numeric IDs for submission
+        setValue("synergyContactIds", dealSynergies.map(synergy => 
+          typeof synergy.contactId === 'string' ? parseInt(synergy.contactId) : synergy.contactId
+        ));
+      }
     }
-  }, [dealSynergies, isEditMode, setValue]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dealSynergies, isEditMode]);
 
   // Helper function to create multiple synergies at once for all selected contacts
   const createSynergiesForContacts = async (dealId: number, companyId: number, contactIds: number[]) => {
