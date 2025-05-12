@@ -12,7 +12,8 @@ import {
   ArrowLeft, Building, Mail, Phone, Globe, MapPin, 
   Edit, Trash, Users, FileText, PenTool, Plus,
   Briefcase, Clock, CheckCircle, AlertCircle, Inbox,
-  Calendar, Flag, Hash, Money, DollarSign, Award, MapPinned, Link
+  Calendar, Flag, Hash, Money, DollarSign, Award, MapPinned, Link,
+  Handshake
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";

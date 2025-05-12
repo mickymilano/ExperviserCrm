@@ -15,6 +15,7 @@ import {
   ArrowLeft, User, Building2, Mail, Phone, Calendar, Edit,
   Briefcase, MessageCircle, Clock, FileText, Trash, Linkedin,
   Facebook, Instagram, AlertCircle, CheckCircle, Link as LinkIcon,
+  Handshake
 } from "lucide-react";
 import { formatDateToLocal, getInitials, formatPhoneNumber, generateAvatarColor } from "@/lib/utils";
 import ContactModal from "@/components/modals/ContactModal";
@@ -414,7 +415,7 @@ export default function ContactDetail() {
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center text-lg">
-                    <MessageCircle className="h-5 w-5 mr-2" />
+                    <Handshake className="h-5 w-5 mr-2" />
                     Business Synergies
                   </CardTitle>
                   <CardDescription>
