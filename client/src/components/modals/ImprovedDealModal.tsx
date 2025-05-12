@@ -209,7 +209,7 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
       setSelectedCompanyId(null);
       
       // Set default stage if available
-      if (stages && stages.length > 0) {
+      if (stages && Array.isArray(stages) && stages.length > 0) {
         setValue("stageId", stages[0]?.id);
       }
       
