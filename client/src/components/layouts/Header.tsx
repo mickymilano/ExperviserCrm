@@ -96,6 +96,8 @@ export default function Header({ toggleSidebar }: HeaderProps) {
         return "Companies";
       case "/deals":
         return "Deals";
+      case "/synergies":
+        return "Synergies";
       case "/email":
         return "Email";
       case "/calendar":
