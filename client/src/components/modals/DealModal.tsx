@@ -179,36 +179,37 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     }
   }, [companySearchQuery, companies]);
 
-  // Effect per filtrare i contatti in base all'azienda selezionata
+  // Effect to filter contacts based on the selected company
   useEffect(() => {
-    if (contacts && Array.isArray(contacts)) {
-      // Se un'azienda è selezionata, mostra solo i contatti associati a quell'azienda
-      if (selectedCompanyId) {
-        const filteredContactsList = contacts.filter(contact => {
-          if (!contact.areasOfActivity || !Array.isArray(contact.areasOfActivity)) {
-            return false;
-          }
-          return contact.areasOfActivity.some(area => area.companyId === selectedCompanyId);
-        });
-        setFilteredContacts(filteredContactsList);
-
-        // Filter contacts for synergies - exclude those already associated with the company
-        const synergyContactsList = contacts.filter(contact => {
-          if (!selectedCompanyId) return false;
-          if (!contact.areasOfActivity || !Array.isArray(contact.areasOfActivity)) {
-            return true;
-          }
-          return !contact.areasOfActivity.some(area => 
-            area.companyId === selectedCompanyId && area.isPrimary
-          );
-        });
-        setFilteredSynergyContacts(synergyContactsList);
-      } else {
-        // Se nessuna azienda è selezionata, mostra tutti i contatti
-        setFilteredContacts(contacts);
-        setFilteredSynergyContacts([]);
-      }
+    if (!contacts || !Array.isArray(contacts)) return;
+    
+    if (!selectedCompanyId) {
+      // If no company is selected, show all contacts
+      setFilteredContacts(contacts);
+      setFilteredSynergyContacts([]);
+      return;
     }
+    
+    // Only show contacts associated with selected company in the main contact dropdown
+    const filteredContactsList = contacts.filter(contact => {
+      if (!contact.areasOfActivity || !Array.isArray(contact.areasOfActivity)) {
+        return false;
+      }
+      return contact.areasOfActivity.some(area => area.companyId === selectedCompanyId);
+    });
+    setFilteredContacts(filteredContactsList);
+    
+    // For synergy contacts, we want contacts NOT already associated with the company as primary
+    const synergyContactsList = contacts.filter(contact => {
+      if (!contact.areasOfActivity || !Array.isArray(contact.areasOfActivity)) {
+        return true; // Include contacts with no areas of activity
+      }
+      // Include if not already a primary contact for this company
+      return !contact.areasOfActivity.some(area => 
+        area.companyId === selectedCompanyId && area.isPrimary
+      );
+    });
+    setFilteredSynergyContacts(synergyContactsList);
   }, [contacts, selectedCompanyId]);
 
   // This useEffect is also redundant and contributing to the infinite loop
@@ -675,7 +676,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                     }}
                   >
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select contacts to create synergies" />
+                      <SelectValue placeholder={selectedCompanyId ? "Select contacts to create synergies..." : "Select a company first"} />
                     </SelectTrigger>
                     <SelectContent>
                       <div className="max-h-[200px] overflow-y-auto">
@@ -703,7 +704,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
 
                   {/* Display selected contacts */}
                   {selectedSynergyContacts.length > 0 && (
-                    <div className="flex flex-wrap gap-2 p-2 border rounded-md">
+                    <div className="flex flex-wrap gap-2 mt-2 p-2 border rounded-md bg-secondary/10">
                       {selectedSynergyContacts.map(contactId => {
                         const contact = contacts.find(c => c.id.toString() === contactId);
                         if (!contact) return null;
@@ -733,37 +734,6 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                     </div>
                   )}
                 </div>
-
-                {/* Display selected contacts */}
-                {selectedSynergyContacts.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {selectedSynergyContacts.map(contactId => {
-                      const contact = contacts.find(c => c.id.toString() === contactId);
-                      if (!contact) return null;
-                      return (
-                        <div 
-                          key={contactId}
-                          className="bg-primary/10 text-primary rounded-full px-2 py-1 text-xs flex items-center"
-                        >
-                          {contact.firstName} {contact.lastName}
-                          <button
-                            type="button"
-                            className="ml-1 text-primary/70 hover:text-primary"
-                            onClick={() => {
-                              setSelectedSynergyContacts(prev => {
-                                const newSelected = prev.filter(id => id !== contactId);
-                                setValue("synergyContactIds", newSelected.map(id => parseInt(id)));
-                                return newSelected;
-                              });
-                            }}
-                          >
-                            ×
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
 
                 <p className="text-xs text-muted-foreground mt-1">
                   {selectedSynergyContacts.length > 0 && !selectedCompanyId ? 
