@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { DealInfo } from "@/types";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Combobox } from "@/components/ui/combobox";
+import { useCreateSynergy } from "@/hooks/useSynergies";
 
 interface DealModalProps {
   open: boolean;

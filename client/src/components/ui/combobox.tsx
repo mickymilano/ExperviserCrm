@@ -38,12 +38,16 @@ export function Combobox({
   value,
   onChange,
   placeholder = "Select an option",
-  emptyMessage = "No results found",
+  emptyMessage = "No options found.",
   className,
   disabled = false,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false)
-  
+
+  const selectedOption = React.useMemo(() => {
+    return options.find((option) => option.value === value)
+  }, [options, value])
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -54,23 +58,21 @@ export function Combobox({
           className={cn("w-full justify-between", className)}
           disabled={disabled}
         >
-          {value
-            ? options.find((option) => option.value === value)?.label || placeholder
-            : placeholder}
+          {selectedOption ? selectedOption.label : placeholder}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-full p-0">
         <Command>
-          <CommandInput placeholder={`Search...`} />
+          <CommandInput placeholder={`Search ${placeholder.toLowerCase()}...`} />
           <CommandEmpty>{emptyMessage}</CommandEmpty>
           <CommandGroup>
             {options.map((option) => (
               <CommandItem
                 key={option.value}
                 value={option.value}
-                onSelect={(currentValue) => {
-                  onChange(currentValue === value ? "" : currentValue)
+                onSelect={() => {
+                  onChange(option.value === value ? "" : option.value)
                   setOpen(false)
                 }}
               >
