@@ -200,18 +200,11 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     if (isEditMode && dealSynergies && Array.isArray(dealSynergies) && dealSynergies.length > 0) {
       console.log("Loading existing synergies for edit mode:", dealSynergies);
       
-      // Extract contact IDs from synergies and convert to strings for the selected state
-      const contactIds = dealSynergies.map(synergy => synergy.contactId.toString());
-      
-      // Only update if different to avoid infinite loop
-      if (JSON.stringify(contactIds) !== JSON.stringify(selectedSynergyContacts)) {
-        setSelectedSynergyContacts(contactIds);
-        
-        // Also set the form value with numeric IDs for submission
-        setValue("synergyContactIds", dealSynergies.map(synergy => 
-          typeof synergy.contactId === 'string' ? parseInt(synergy.contactId) : synergy.contactId
-        ));
-      }
+      // Set the form value with numeric IDs for submission
+      const contactIds = dealSynergies.map(synergy => 
+        typeof synergy.contactId === 'string' ? parseInt(synergy.contactId) : synergy.contactId
+      );
+      setValue("synergyContactIds", contactIds);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dealSynergies, isEditMode]);
@@ -661,7 +654,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
               <div className="relative">
                 <Controller
                   name="synergyContactIds"
-                  control={form.control}
+                  control={control}
                   render={({ field }) => (
                     <AsyncSelect
                       isMulti
@@ -700,12 +693,14 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                       }}
                       value={field.value.map(id => {
                         // Find the contact in our data sources
-                        const contactFromDealSynergies = dealSynergies.find(synergy => 
-                          (typeof synergy.contactId === 'string' ? parseInt(synergy.contactId) : synergy.contactId) === id
-                        );
+                        const contactFromDealSynergies = Array.isArray(dealSynergies) ? 
+                          dealSynergies.find(synergy => 
+                            (typeof synergy.contactId === 'string' ? parseInt(synergy.contactId) : synergy.contactId) === id
+                          ) : undefined;
                         
                         // Find the contact in the main contacts query
-                        const contactFromAllContacts = contacts.find(contact => contact.id === id);
+                        const contactFromAllContacts = Array.isArray(contacts) ? 
+                          contacts.find(contact => contact.id === id) : undefined;
                         
                         // Use the first available data source
                         const contact = contactFromDealSynergies?.contact || contactFromAllContacts;
