@@ -2,6 +2,7 @@ import { db } from "./db-simple";
 import { users, pipelineStages } from "@shared/schema";
 import * as bcrypt from "bcrypt";
 import { eq } from "drizzle-orm";
+import { fixDuplicatePipelineStages } from "./fix-duplicate-pipeline-stages";
 
 /**
  * Initialize the PostgreSQL database with essential data
@@ -64,6 +65,12 @@ export async function initializePostgresDb() {
       console.log("Pipeline stages created successfully");
     } else {
       console.log(`${existingStages.length} pipeline stages already exist`);
+      
+      // Verifica e rimuovi eventuali stage duplicati
+      if (existingStages.length > 8) {
+        console.log("Rilevati possibili stage duplicati, avvio la procedura di pulizia...");
+        await fixDuplicatePipelineStages();
+      }
     }
   } catch (error) {
     console.error("Error during pipeline stages verification/creation:", error);

@@ -445,6 +445,27 @@ export default function CompanyDetail() {
               entityType="company" 
               title="Tasks"
             />
+            
+            {/* Synergies Component */}
+            <Card className="col-span-1 sm:col-span-3 mt-4">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center text-lg">
+                  <Handshake className="h-5 w-5 mr-2" />
+                  Synergies
+                </CardTitle>
+                <CardDescription>
+                  Business relationships involving this company
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <SynergiesList 
+                  companyId={companyId} 
+                  showTitle={false}
+                  hideAddButton={true}
+                  hideDeleteButtons={true}
+                />
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
         
