@@ -4,9 +4,10 @@ import cookieParser from 'cookie-parser';
 import path from 'path';
 import { initializePostgresDb, closeDbConnections } from './initPostgresDb';
 import { registerRoutes } from './routes';
+import { setupVite } from './vite';
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 5000;
 
 // Middleware
 app.use(express.json());
@@ -31,6 +32,11 @@ async function initialize() {
     
     // Registra le rotte API
     const server = registerRoutes(app);
+    
+    // In development, configura Vite per il client
+    if (process.env.NODE_ENV === 'development') {
+      await setupVite(app, server);
+    }
     
     // Avvia il server
     server.listen(port, () => {

@@ -44,7 +44,129 @@ export const isSuperAdmin = (req: any, res: any, next: any) => {
   next();
 };
 
+// Interfaccia per la richiesta Express
+interface Request {
+  user?: any;
+  cookies?: {
+    token?: string;
+  };
+  headers: {
+    authorization?: string;
+  };
+  params: {
+    [key: string]: string;
+  };
+  query: {
+    [key: string]: string;
+  };
+  body: any;
+}
+
+// Interfaccia per la risposta Express
+interface Response {
+  status(code: number): Response;
+  json(data: any): void;
+  clearCookie(name: string): Response;
+  cookie(name: string, value: string, options: any): Response;
+  redirect(url: string): void;
+}
+
 export function registerRoutes(app: any) {
+  
+  // --- STATISTICHE E DATI RECENTI ---
+  
+  // Ottieni statistiche per la dashboard
+  app.get('/api/stats/overview', authenticate, async (req: Request, res: Response) => {
+    try {
+      // Ottieni i conteggi attuali
+      const contactsCount = await storage.getContactsCount();
+      const companiesCount = await storage.getCompaniesCount();
+      const dealsCount = await storage.getDealsCount({ status: 'active' });
+      const leadsCount = await storage.getLeadsCount();
+      
+      // Percentuali di cambiamento (simulati per ora)
+      const stats = {
+        contacts: {
+          count: contactsCount,
+          percentChange: 5.2
+        },
+        companies: {
+          count: companiesCount,
+          percentChange: 2.8
+        },
+        deals: {
+          count: dealsCount,
+          percentChange: -1.5
+        },
+        leads: {
+          count: leadsCount,
+          percentChange: 8.4
+        }
+      };
+      
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching statistics:', error);
+      res.status(500).json({ message: 'Errore durante il recupero delle statistiche' });
+    }
+  });
+  
+  // Ottieni opportunità recenti
+  app.get('/api/deals/recent', authenticate, async (req: Request, res: Response) => {
+    try {
+      const recentDeals = await storage.getRecentDeals(5);
+      res.json(recentDeals);
+    } catch (error) {
+      console.error('Error fetching recent deals:', error);
+      res.status(500).json({ message: 'Errore durante il recupero delle opportunità recenti' });
+    }
+  });
+  
+  // Ottieni contatti recenti
+  app.get('/api/contacts/recent', authenticate, async (req: Request, res: Response) => {
+    try {
+      const recentContacts = await storage.getRecentContacts(5);
+      res.json(recentContacts);
+    } catch (error) {
+      console.error('Error fetching recent contacts:', error);
+      res.status(500).json({ message: 'Errore durante il recupero dei contatti recenti' });
+    }
+  });
+  
+  // Ottieni attività recenti (simulato per ora)
+  app.get('/api/activities/recent', authenticate, async (req: Request, res: Response) => {
+    try {
+      // Simuliamo alcune attività recenti
+      const recentActivities = [
+        {
+          id: 1,
+          title: 'Email inviata a Rossi Srl',
+          description: 'Promemoria per il meeting di lunedì',
+          type: 'email',
+          createdAt: new Date(Date.now() - 3600000) // 1 ora fa
+        },
+        {
+          id: 2,
+          title: 'Meeting con Mario Bianchi',
+          description: 'Discussione sul nuovo progetto',
+          type: 'meeting',
+          createdAt: new Date(Date.now() - 86400000) // 1 giorno fa
+        },
+        {
+          id: 3,
+          title: 'Telefonata a Luisa Verdi',
+          description: 'Follow-up dopo la presentazione',
+          type: 'call',
+          createdAt: new Date(Date.now() - 172800000) // 2 giorni fa
+        }
+      ];
+      
+      res.json(recentActivities);
+    } catch (error) {
+      console.error('Error fetching recent activities:', error);
+      res.status(500).json({ message: 'Errore durante il recupero delle attività recenti' });
+    }
+  });
   // --- AUTH ROUTES ---
   
   // Login

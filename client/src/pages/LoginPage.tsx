@@ -1,116 +1,191 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useLocation } from 'wouter';
-import { apiRequest } from '@/lib/queryClient';
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { useMutation } from '@tanstack/react-query';
+
+// Schema di validazione
+const loginSchema = z.object({
+  username: z.string().min(1, 'Username richiesto'),
+  password: z.string().min(1, 'Password richiesta'),
+  remember: z.boolean().optional(),
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [, setLocation] = useLocation();
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validazione di base
-    if (!username || !password) {
-      setError('Inserisci username e password');
-      return;
-    }
-    
-    setIsLoading(true);
-    setError('');
-    
-    try {
-      const response = await apiRequest('/api/auth/login', {
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
+  
+  // Configurazione del form
+  const form = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      username: '',
+      password: '',
+      remember: false,
+    },
+  });
+  
+  // Gestione login
+  const loginMutation = useMutation({
+    mutationFn: async (data: LoginFormData) => {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
-        body: { username, password },
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+        credentials: 'include',
       });
       
-      if (response.success) {
-        // Login avvenuto con successo, reindirizza alla dashboard
-        setLocation('/');
-      } else {
-        setError(response.message || 'Errore durante il login');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Errore durante il login');
       }
-    } catch (error: any) {
-      setError(error.message || 'Si è verificato un errore durante il login');
-    } finally {
-      setIsLoading(false);
-    }
+      
+      return await response.json();
+    },
+    onSuccess: () => {
+      setLocation('/');
+    },
+    onError: (error: Error) => {
+      setLoginError(error.message);
+      // Reset password field
+      form.setValue('password', '');
+    },
+  });
+  
+  const onSubmit = (data: LoginFormData) => {
+    setLoginError(null);
+    loginMutation.mutate(data);
   };
-
+  
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="flex h-screen bg-background">
+      {/* Colonna sinistra (immagine di sfondo + logo) */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary/90 to-primary-foreground/20 flex-col justify-between p-12">
         <div>
-          <h1 className="text-center text-3xl font-extrabold text-blue-600">EXPERVISER</h1>
-          <h2 className="mt-1 text-center text-sm font-medium text-gray-600">CRM</h2>
-          <h3 className="mt-6 text-center text-xl font-bold text-gray-900">Accedi al tuo account</h3>
+          <h1 className="text-4xl font-bold text-white mb-2">EXPERVISER CRM</h1>
+          <p className="text-primary-foreground/90 text-xl max-w-md">
+            La piattaforma per gestire relazioni con i clienti e incrementare le opportunità di business.
+          </p>
         </div>
-        
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="username" className="sr-only">Username</label>
-              <input
-                id="username"
-                name="username"
-                type="text"
-                autoComplete="username"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">Password</label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-          </div>
-
-          {error && (
-            <div className="text-red-600 text-sm text-center">{error}</div>
-          )}
-
-          <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? (
-                <span className="absolute left-0 inset-y-0 flex items-center pl-3">
-                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                </span>
-              ) : null}
-              Accedi
-            </button>
+        <div className="text-primary-foreground/70 text-sm">
+          &copy; {new Date().getFullYear()} Experviser. Tutti i diritti riservati.
+        </div>
+      </div>
+      
+      {/* Colonna destra (form login) */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
+        <div className="w-full max-w-md">
+          {/* Logo mobile */}
+          <div className="lg:hidden text-center mb-8">
+            <h1 className="text-3xl font-bold text-primary">EXPERVISER CRM</h1>
           </div>
           
-          <div className="text-center text-sm">
-            <p className="text-gray-600">
-              Credenziali predefinite: <br />
-              <span className="font-semibold">Admin:</span> michele@experviser.com / admin_admin_69 <br />
-              <span className="font-semibold">Debug:</span> debug / debug
-            </p>
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold mb-2">Benvenuto</h2>
+            <p className="text-muted-foreground">Accedi per continuare</p>
           </div>
-        </form>
+          
+          {/* Form di login */}
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {/* Errore di login */}
+            {loginError && (
+              <div className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded-md">
+                {loginError}
+              </div>
+            )}
+            
+            {/* Campo username */}
+            <div className="space-y-2">
+              <label htmlFor="username" className="block text-sm font-medium">
+                Username
+              </label>
+              <input
+                {...form.register('username')}
+                id="username"
+                type="text"
+                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+                placeholder="Inserisci username"
+              />
+              {form.formState.errors.username && (
+                <p className="text-destructive text-sm">
+                  {form.formState.errors.username.message}
+                </p>
+              )}
+            </div>
+            
+            {/* Campo password */}
+            <div className="space-y-2">
+              <label htmlFor="password" className="block text-sm font-medium">
+                Password
+              </label>
+              <div className="relative">
+                <input
+                  {...form.register('password')}
+                  id="password"
+                  type={passwordVisible ? 'text' : 'password'}
+                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  placeholder="Inserisci password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setPasswordVisible(!passwordVisible)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {passwordVisible ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              {form.formState.errors.password && (
+                <p className="text-destructive text-sm">
+                  {form.formState.errors.password.message}
+                </p>
+              )}
+            </div>
+            
+            {/* Checkbox Remember me */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <input
+                  {...form.register('remember')}
+                  id="remember"
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                />
+                <label htmlFor="remember" className="ml-2 block text-sm text-muted-foreground">
+                  Ricordami
+                </label>
+              </div>
+              <a href="#" className="text-sm text-primary hover:underline">
+                Password dimenticata?
+              </a>
+            </div>
+            
+            {/* Pulsante di login */}
+            <button
+              type="submit"
+              disabled={loginMutation.isPending}
+              className="w-full bg-primary text-primary-foreground py-2 px-4 rounded-md hover:bg-primary/90 transition-colors disabled:opacity-70"
+            >
+              {loginMutation.isPending ? (
+                <span className="flex items-center justify-center">
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Accesso in corso...
+                </span>
+              ) : (
+                'Accedi'
+              )}
+            </button>
+          </form>
+          
+          <div className="mt-6 text-center text-sm text-muted-foreground">
+            <p>Per assistenza o problemi di accesso contatta l'amministratore di sistema.</p>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -29,6 +29,8 @@ export interface IStorage {
   createContact(contactData: InsertContact): Promise<Contact>;
   updateContact(id: number, contactData: Partial<Contact>): Promise<Contact>;
   deleteContact(id: number): Promise<void>;
+  getContactsCount(): Promise<number>;
+  getRecentContacts(limit?: number): Promise<Contact[]>;
 
   // Company operations
   getCompany(id: number): Promise<Company | null>;
@@ -36,6 +38,7 @@ export interface IStorage {
   createCompany(companyData: InsertCompany): Promise<Company>;
   updateCompany(id: number, companyData: Partial<Company>): Promise<Company>;
   deleteCompany(id: number): Promise<void>;
+  getCompaniesCount(): Promise<number>;
 
   // Deal operations
   getDeal(id: number): Promise<Deal | null>;
@@ -44,6 +47,8 @@ export interface IStorage {
   updateDeal(id: number, dealData: Partial<Deal>): Promise<Deal>;
   deleteDeal(id: number): Promise<void>;
   getDealsByStageId(stageId: number): Promise<Deal[]>;
+  getDealsCount(options?: { status?: string }): Promise<number>;
+  getRecentDeals(limit?: number): Promise<Deal[]>;
 
   // Lead operations
   getLead(id: number): Promise<Lead | null>;
@@ -51,6 +56,7 @@ export interface IStorage {
   createLead(leadData: InsertLead): Promise<Lead>;
   updateLead(id: number, leadData: Partial<Lead>): Promise<Lead>;
   deleteLead(id: number): Promise<void>;
+  getLeadsCount(): Promise<number>;
 
   // Pipeline Stage operations
   getPipelineStage(id: number): Promise<PipelineStage | null>;
@@ -92,6 +98,39 @@ export class MemStorage implements IStorage {
     pipelineStages: 1,
     areasOfActivity: 1,
   };
+  
+  // Funzioni di conteggio
+  async getContactsCount(): Promise<number> {
+    return this.contacts.length;
+  }
+  
+  async getCompaniesCount(): Promise<number> {
+    return this.companies.length;
+  }
+  
+  async getDealsCount(options?: { status?: string }): Promise<number> {
+    if (options?.status) {
+      return this.deals.filter(deal => deal.status === options.status).length;
+    }
+    return this.deals.length;
+  }
+  
+  async getLeadsCount(): Promise<number> {
+    return this.leads.length;
+  }
+  
+  // Funzioni per ottenere elementi recenti
+  async getRecentDeals(limit: number = 5): Promise<Deal[]> {
+    return [...this.deals]
+      .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime())
+      .slice(0, limit);
+  }
+  
+  async getRecentContacts(limit: number = 5): Promise<Contact[]> {
+    return [...this.contacts]
+      .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime())
+      .slice(0, limit);
+  }
 
   constructor() {
     // Inizializza con dati di esempio se richiesto
