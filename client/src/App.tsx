@@ -113,6 +113,7 @@ function ProtectedRoutes() {
           <Route path="/deals" component={Deals} />
           <Route path="/deals/new" component={NewDeal} />
           <Route path="/deals/:id" component={DealDetail} />
+          <Route path="/synergies" component={Synergies} />
           <Route path="/email" component={Email} />
           <Route path="/email/accounts" component={EmailAccounts} />
           <Route path="/email/accounts/add" component={EmailAccounts} />

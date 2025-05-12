@@ -12,7 +12,8 @@ import {
   UserPlus,
   Network,
   LifeBuoy,
-  LogOut
+  LogOut,
+  Handshake
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -174,6 +175,12 @@ export default function Sidebar({ open, setOpen }: SidebarProps) {
               icon={<TrendingUp className="h-6 w-6" />} 
               label="Deals" 
               active={location === "/deals"} 
+            />
+            <NavItem 
+              href="/synergies" 
+              icon={<Handshake className="h-6 w-6" />} 
+              label="Synergies" 
+              active={location === "/synergies"} 
             />
             <NavItem 
               href="/email" 
