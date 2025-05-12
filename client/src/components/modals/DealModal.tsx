@@ -64,14 +64,14 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
   const [filteredSynergyContacts, setFilteredSynergyContacts] = useState<any[]>([]);
   const [synergyOptions, setSynergyOptions] = useState<Array<{value: string, label: string}>>([]);
   const [synergySearchTerm, setSynergySearchTerm] = useState("");
-  
+
   // Form reference for alert dialog submission
   const formRef = useRef<HTMLFormElement>(null);
-  
+
   const [showNoCompanyAlert, setShowNoCompanyAlert] = useState(false);
   const [showNoContactAlert, setShowNoContactAlert] = useState(false);
   const isEditMode = !!initialData;
-  
+
   // Use createSynergy mutation
   const createSynergyMutation = useCreateSynergy();
 
@@ -92,7 +92,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     queryKey: ["/api/contacts?includeAreas=true"],
     enabled: open,
   });
-  
+
   // Fetch synergies for the initial deal if in edit mode
   const { data: dealSynergies = [] } = useQuery({
     queryKey: [`/api/deals/${initialData?.id}/synergies`],
@@ -128,7 +128,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
           setSelectedCompanyId(companyId);
         }
         if (initialData.contactId !== undefined) setValue("contactId", initialData.contactId !== null ? Number(initialData.contactId) : null);
-        
+
         // Format date for input field if exists
         if (initialData.expectedCloseDate) {
           const date = new Date(initialData.expectedCloseDate);
@@ -136,12 +136,12 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
             setValue("expectedCloseDate", date.toISOString().split('T')[0]);
           }
         }
-        
+
         // Set tags for display
         if (initialData.tags && Array.isArray(initialData.tags) && initialData.tags.length > 0) {
           setTagsInput(initialData.tags.join(", "));
         }
-        
+
         if (initialData.notes !== undefined) {
           setValue("notes", initialData.notes || "");
         }
@@ -153,14 +153,14 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       setValue("stageId", stages[0].id);
     }
   }, [initialData, stages, open, setValue]);
-  
+
   // Effect per impostare le aziende filtrate inizialmente
   useEffect(() => {
     if (companies && Array.isArray(companies)) {
       setFilteredCompanies(companies);
     }
   }, [companies]);
-  
+
   // Effect per filtrare le aziende in base alla ricerca
   useEffect(() => {
     if (companies && Array.isArray(companies)) {
@@ -177,7 +177,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       }
     }
   }, [companySearchQuery, companies]);
-  
+
   // Effect per filtrare i contatti in base all'azienda selezionata
   useEffect(() => {
     if (contacts && Array.isArray(contacts)) {
@@ -190,14 +190,16 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
           return contact.areasOfActivity.some(area => area.companyId === selectedCompanyId);
         });
         setFilteredContacts(filteredContactsList);
-        
-        // Also filter synergy contacts - these are contacts NOT associated with this company
+
+        // Filter contacts for synergies - exclude those already associated with the company
         const synergyContactsList = contacts.filter(contact => {
+          if (!selectedCompanyId) return false;
           if (!contact.areasOfActivity || !Array.isArray(contact.areasOfActivity)) {
-            return true; // Include contacts with no company associations
+            return true;
           }
-          // Include only if they are NOT associated with the selected company
-          return !contact.areasOfActivity.some(area => area.companyId === selectedCompanyId);
+          return !contact.areasOfActivity.some(area => 
+            area.companyId === selectedCompanyId && area.isPrimary
+          );
         });
         setFilteredSynergyContacts(synergyContactsList);
       } else {
@@ -207,7 +209,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       }
     }
   }, [contacts, selectedCompanyId]);
-  
+
   // This useEffect is also redundant and contributing to the infinite loop
   // We can calculate these options directly in the render function
   /*
@@ -223,7 +225,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     }
   }, [filteredSynergyContacts]);
   */
-  
+
   // Initialize selected synergy contacts from existing synergies when editing a deal
   useEffect(() => {
     if (isEditMode && dealSynergies && dealSynergies.length > 0) {
@@ -237,7 +239,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
   const createSynergiesForContacts = async (dealId: number, companyId: number, contactIds: number[]) => {
     console.log("Creating synergies for contacts:", contactIds);
     const results = [];
-    
+
     for (const contactId of contactIds) {
       const synergyData = {
         type: "business",
@@ -248,7 +250,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
         description: "Synergy created from deal",
         startDate: new Date()
       };
-      
+
       try {
         const response = await fetch('/api/synergies', {
           method: 'POST',
@@ -256,23 +258,23 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
           body: JSON.stringify(synergyData),
           credentials: 'include'
         });
-        
+
         if (!response.ok) {
           const errorText = await response.text();
           console.error(`Failed to create synergy for contact ${contactId}: ${errorText}`);
           continue;
         }
-        
+
         const result = await response.json();
         results.push(result);
       } catch (error) {
         console.error(`Error creating synergy for contact ${contactId}:`, error);
       }
     }
-    
+
     return results;
   }
-  
+
   const createSynergiesMutation = useMutation({
     mutationFn: async (data: { contactIds: number[], companyId: number, dealId: number }) => {
       return createSynergiesForContacts(data.dealId, data.companyId, data.contactIds);
@@ -290,12 +292,12 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       });
     }
   });
-  
+
   // This function has been replaced by createSynergiesForContacts
   /*
   const createMultipleSynergies = async (contactIds: number[], companyId: number, dealId: number) => {
     if (!companyId || !contactIds || contactIds.length === 0) return;
-    
+
     const results = [];
     for (const contactId of contactIds) {
       try {
@@ -320,39 +322,39 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
         setShowNoContactAlert(true);
         throw new Error("A contact is required when creating a deal for a company");
       }
-      
+
       if (!data.companyId && !showNoCompanyAlert) {
         setShowNoCompanyAlert(true);
         throw new Error("Please confirm that you want to create a deal without a company");
       }
-      
+
       // Create a new clean object for the request
       const dealData: any = {
         name: data.name,
         value: data.value,
         stageId: data.stageId,
       };
-      
+
       // Only add optional fields if they have values
       if (data.companyId !== undefined) {
         dealData.companyId = data.companyId === null ? null : data.companyId;
       }
-      
+
       if (data.contactId !== undefined) {
         dealData.contactId = data.contactId === null ? null : data.contactId;
       }
-      
+
       if (data.notes) {
         dealData.notes = data.notes;
       }
-      
+
       // Convert tags string to array if provided
       if (tagsInput.trim()) {
         dealData.tags = tagsInput.split(",").map(tag => tag.trim());
       } else {
         dealData.tags = [];
       }
-      
+
       // Format the date for the API if it exists
       if (data.expectedCloseDate) {
         const dateObj = new Date(data.expectedCloseDate);
@@ -360,16 +362,16 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
           dealData.expectedCloseDate = dateObj.toISOString();
         }
       }
-      
+
       console.log("Deal data being sent:", dealData);
-      
+
       // Determine if we're updating or creating
       const method = isEditMode && initialData && 'id' in initialData ? "PATCH" : "POST";
       // Solo se stiamo modificando un deal esistente E abbiamo un ID valido, usiamo PATCH
       const url = method === "PATCH" && initialData && 'id' in initialData 
         ? `/api/deals/${initialData.id}` 
         : "/api/deals";
-      
+
       // Make the API request
       const response = await fetch(url, {
         method: method, 
@@ -377,20 +379,20 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
         body: JSON.stringify(dealData),
         credentials: "include"
       });
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error("API Error:", errorText);
         throw new Error(`${response.status}: ${errorText}`);
       }
-      
+
       const createdDeal = await response.json();
-      
+
       // If synergy contacts are specified, create synergy relationships
       if (data.synergyContactIds.length > 0 && data.companyId) {
         try {
           console.log("Creating synergies for selected contacts:", data.synergyContactIds);
-          
+
           // Use our new helper function to create synergies for all selected contacts
           await createSynergiesForContacts(createdDeal.id, data.companyId, data.synergyContactIds);
         } catch (error) {
@@ -398,7 +400,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
           // Continue with the process, the deal has been created anyway
         }
       }
-      
+
       return createdDeal;
     },
     onSuccess: () => {
@@ -406,7 +408,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
         title: "Success",
         description: isEditMode ? "Deal updated successfully" : "Deal created successfully",
       });
-      
+
       // Close modal and reset form
       onOpenChange(false);
       reset();
@@ -414,7 +416,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       setSelectedSynergyContacts([]);
       setShowNoCompanyAlert(false);
       setShowNoContactAlert(false);
-      
+
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ["/api/deals"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
@@ -425,7 +427,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
           error.message === "A contact is required when creating a deal for a company") {
         return;
       }
-      
+
       toast({
         title: "Error",
         description: `Failed to ${isEditMode ? "update" : "create"} deal: ${error.message}`,
@@ -448,11 +450,11 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
         value: contact.id.toString(),
         label: `${contact.firstName} ${contact.lastName}`
       }));
-    
+
     setSynergyOptions(options);
   }, [filteredSynergyContacts]);
   */
-  
+
   return (
     <>
       {/* Alert Dialog per conferma deal senza azienda */}
@@ -479,7 +481,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      
+
       {/* Alert Dialog per deal senza contatto */}
       <AlertDialog open={showNoContactAlert} onOpenChange={setShowNoContactAlert}>
         <AlertDialogContent>
@@ -497,13 +499,13 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    
+
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold">{isEditMode ? 'Edit Deal' : 'Add New Deal'}</DialogTitle>
           </DialogHeader>
-          
+
           <form ref={formRef} onSubmit={handleSubmit(onSubmit)}>
             <div className="space-y-2 mb-4">
               <Label htmlFor="name">Deal Name</Label>
@@ -512,7 +514,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                 <p className="text-xs text-destructive">{errors.name.message}</p>
               )}
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div className="space-y-2">
                 <Label htmlFor="value">Value</Label>
@@ -521,7 +523,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                   <p className="text-xs text-destructive">{errors.value.message}</p>
                 )}
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="stageId">Stage</Label>
                 <Select 
@@ -544,7 +546,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                 )}
               </div>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div className="space-y-2">
                 <Label htmlFor="companyId">Company</Label>
@@ -557,7 +559,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                     onChange={(e) => setCompanySearchQuery(e.target.value)}
                     className="mb-1"
                   />
-                  
+
                   {/* Dropdown di selezione con risultati filtrati */}
                   <Select 
                     defaultValue={initialData?.companyId?.toString() || "0"}
@@ -577,14 +579,14 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                         // Creiamo una variabile per monitorare se questa è l'azienda primaria
                         // senza utilizzare form o register direttamente, perché non sono accessibili qui
                         let isPrimaryCompany = false;
-                        
+
                         // Cerchiamo nei contatti se qualcuno ha quest'azienda come primaria
                         if (contacts && Array.isArray(contacts)) {
                           const selectedContactId = initialData?.contactId || null;
                           const selectedContact = selectedContactId 
                             ? contacts.find(c => c.id === selectedContactId) 
                             : null;
-                          
+
                           // Se troviamo un contatto selezionato, verifichiamo se ha quest'azienda come primaria
                           if (selectedContact?.areasOfActivity?.length > 0) {
                             isPrimaryCompany = selectedContact.areasOfActivity.some(
@@ -592,7 +594,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                             );
                           }
                         }
-                        
+
                         return (
                           <SelectItem key={company.id} value={company.id.toString()}>
                             {company.name} {isPrimaryCompany ? " (Primary)" : ""}
@@ -603,7 +605,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                   </Select>
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="contactId">Contact</Label>
                 <Select 
@@ -611,16 +613,16 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                   onValueChange={(value) => {
                     const contactId = value === "0" ? null : parseInt(value);
                     setValue("contactId", contactId);
-                    
+
                     // Se è selezionato un contatto, cerca la sua azienda primaria
                     if (contactId && contacts && Array.isArray(contacts)) {
                       const selectedContact = contacts.find(c => c.id === contactId);
-                      
+
                       if (selectedContact?.areasOfActivity?.length > 0) {
                         // Trova l'area di attività primaria (o prende la prima disponibile)
                         const primaryArea = selectedContact.areasOfActivity.find(a => a.isPrimary) || 
                                            selectedContact.areasOfActivity[0];
-                                           
+
                         // Se l'area ha un'azienda associata, suggeriscila come scelta predefinita
                         if (primaryArea?.companyId) {
                           setValue("companyId", primaryArea.companyId);
@@ -652,7 +654,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                 </Select>
               </div>
             </div>
-            
+
             {/* Campo Sinergie - Selezione multipla con autocompletamento */}
             <div className="space-y-2 mb-4">
               <Label htmlFor="synergyContactIds">Synergy Contacts</Label>
@@ -719,7 +721,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                     </Command>
                   </PopoverContent>
                 </Popover>
-                
+
                 {/* Display selected contacts */}
                 {selectedSynergyContacts.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1">
@@ -750,7 +752,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                     })}
                   </div>
                 )}
-                
+
                 <p className="text-xs text-muted-foreground mt-1">
                   {selectedSynergyContacts.length > 0 && !selectedCompanyId ? 
                     <span className="text-red-500">Company selection is required when adding synergy contacts</span> : 
@@ -758,7 +760,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                 </p>
               </div>
             </div>
-            
+
             <div className="space-y-2 mb-4">
               <Label htmlFor="expectedCloseDate">Expected Close Date</Label>
               <Input 
@@ -768,7 +770,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                 {...register("expectedCloseDate")} 
               />
             </div>
-            
+
             <div className="space-y-2 mb-4">
               <Label htmlFor="tags">Tags</Label>
               <Input 
@@ -778,12 +780,12 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                 onChange={(e) => setTagsInput(e.target.value)}
               />
             </div>
-            
+
             <div className="space-y-2 mb-4">
               <Label htmlFor="notes">Notes</Label>
               <Textarea id="notes" {...register("notes")} />
             </div>
-            
+
             <DialogFooter className="mt-6">
               <Button
                 type="button"
