@@ -79,13 +79,13 @@ export function SynergyModal({
   const createSynergyMutation = useCreateSynergy();
   const updateSynergyMutation = useUpdateSynergy();
   
-  const { data: contactsData, isLoading: isLoadingContacts } = useContacts();
-  const { data: companiesData, isLoading: isLoadingCompanies } = useCompanies();
-  const { data: dealsData, isLoading: isLoadingDeals } = useDeals();
+  const { contacts, isLoading: isLoadingContacts } = useContacts();
+  const { companies, isLoading: isLoadingCompanies } = useCompanies();
+  const { deals, isLoading: isLoadingDeals } = useDeals();
   
-  const contacts = contactsData || [];
-  const companies = companiesData || [];
-  const deals = dealsData || [];
+  const contactsList = contacts || [];
+  const companiesList = companies || [];
+  const dealsList = deals || [];
   
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -296,9 +296,9 @@ export function SynergyModal({
                   <FormLabel>Related Deal (Optional)</FormLabel>
                   <Select
                     onValueChange={(value) => 
-                      field.onChange(value ? parseInt(value) : null)
+                      field.onChange(value && value !== "null" ? parseInt(value) : null)
                     }
-                    defaultValue={field.value?.toString() || ""}
+                    defaultValue={field.value?.toString() || "null"}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -306,7 +306,7 @@ export function SynergyModal({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="null">None</SelectItem>
                       {deals.map((deal: any) => (
                         <SelectItem key={deal.id} value={deal.id.toString()}>
                           {deal.name}
