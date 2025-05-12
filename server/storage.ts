@@ -14,7 +14,8 @@ import {
   signatures, type Signature, type InsertSignature,
   accountSignatures, type AccountSignature, type InsertAccountSignature,
   userSessions, type UserSession, type InsertUserSession,
-  securityLogs, type SecurityLog, type InsertSecurityLog
+  securityLogs, type SecurityLog, type InsertSecurityLog,
+  synergies, type Synergy, type InsertSynergy
 } from "@shared/schema";
 import { PostgresStorage } from "./postgresStorage";
 
@@ -127,6 +128,15 @@ export interface IStorage {
   createMeeting(meeting: InsertMeeting): Promise<Meeting>;
   updateMeeting(id: number, meeting: Partial<InsertMeeting>): Promise<Meeting | undefined>;
   deleteMeeting(id: number): Promise<boolean>;
+  
+  // Synergies operations
+  getSynergies(): Promise<Synergy[]>;
+  getSynergiesByContact(contactId: number): Promise<Synergy[]>;
+  getSynergiesByCompany(companyId: number): Promise<Synergy[]>;
+  getSynergy(id: number): Promise<Synergy | undefined>;
+  createSynergy(synergy: InsertSynergy): Promise<Synergy>;
+  updateSynergy(id: number, synergyData: Partial<InsertSynergy>): Promise<Synergy | undefined>;
+  deleteSynergy(id: number): Promise<boolean>;
 }
 
 // Memory Storage implementation
@@ -147,6 +157,7 @@ export class MemStorage implements IStorage {
   private accountSignatures: Map<number, AccountSignature>;
   private userSessions: Map<string, UserSession>;
   private securityLogs: Map<number, SecurityLog>;
+  private synergies: Map<number, Synergy>;
 
   private userCurrentId: number;
   private leadCurrentId: number;
