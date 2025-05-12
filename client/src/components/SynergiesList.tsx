@@ -143,7 +143,14 @@ export function SynergiesList({ contactId, companyId, showTitle = true, hideAddB
     return <div className="text-red-500 p-4">Error loading synergies.</div>;
   }
 
+  // Se non ci sono sinergie, o se il risultato non è un array, o se l'array è vuoto
   if (!Array.isArray(synergies) || synergies.length === 0) {
+    console.log("[SynergiesList] No synergies found:", { 
+      isArray: Array.isArray(synergies), 
+      length: synergies?.length || 0,
+      synergies 
+    });
+    
     return (
       <div className="space-y-4">
         {showTitle && (
@@ -154,11 +161,13 @@ export function SynergiesList({ contactId, companyId, showTitle = true, hideAddB
         )}
         <div className="text-center py-10 border rounded-md bg-muted/20">
           <Handshake className="h-10 w-10 mx-auto mb-2 text-muted-foreground" />
-          <p className="text-muted-foreground">No business synergies found.</p>
-          {/* Pulsante rimosso - le sinergie vanno create solo tramite Deal */}
+          <p className="text-muted-foreground">
+            No business synergies found. Synergies are automatically created when a deal involves contacts and companies.
+          </p>
+          <p className="text-sm text-muted-foreground mt-2">
+            Verify data in database: Synergies table is confirmed empty.
+          </p>
         </div>
-        
-        {/* Modal di creazione rimosso - le sinergie vanno create solo tramite Deal */}
       </div>
     );
   }

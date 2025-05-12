@@ -25,6 +25,7 @@ import Settings from "@/pages/settings";
 import LoginPage from "@/pages/auth/login";
 // Debug imports removed
 import { useAuth } from "@/hooks/useAuth";
+import { CacheReset } from "@/components/CacheReset";
 
 // Protected route component
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
@@ -138,6 +139,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
+        <CacheReset />
         <PublicRoutes />
       </TooltipProvider>
     </QueryClientProvider>

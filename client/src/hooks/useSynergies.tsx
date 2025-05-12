@@ -68,6 +68,8 @@ export function useCompanySynergies(companyId: number) {
     queryKey: ["/api/companies", companyId, "synergies"],
     enabled: !!companyId,
     refetchOnWindowFocus: false,
+    staleTime: 0, // Forza un refetch ogni volta che il componente viene montato
+    cacheTime: 1000, // Mantiene i dati nella cache solo per 1 secondo
   });
 }
 
