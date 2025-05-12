@@ -572,11 +572,16 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                           <SelectValue placeholder="Select stage" />
                         </SelectTrigger>
                         <SelectContent>
-                          {Array.isArray(stages) && stages.map((stage: any) => (
-                            <SelectItem key={stage.id} value={stage.id.toString()}>
-                              {stage.name}
-                            </SelectItem>
-                          ))}
+                          {Array.isArray(stages) && 
+                            // Filtriamo i duplicati tenendo solo il primo stage per ogni nome
+                            [...new Map(stages.map((stage: any) => [stage.name, stage])).values()]
+                              .sort((a: any, b: any) => a.order - b.order)
+                              .map((stage: any) => (
+                                <SelectItem key={stage.id} value={stage.id.toString()}>
+                                  {stage.name}
+                                </SelectItem>
+                              ))
+                          }
                         </SelectContent>
                       </Select>
                     )}
