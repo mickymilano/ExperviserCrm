@@ -754,6 +754,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`Filtered ${contacts.length} contacts matching search term "${searchTerm}"`);
       }
       
+      // Exclude specific contact IDs if provided
+      if (excludeContactIds.length > 0) {
+        console.log(`Filtering out ${excludeContactIds.length} excluded contact IDs`);
+        contacts = contacts.filter(contact => !excludeContactIds.includes(contact.id));
+        console.log(`After filtering excluded IDs, ${contacts.length} contacts remain`);
+      }
+      
       // If includeAreas flag is set, add areas of activity data to each contact
       if ((includeAreas || excludeCompanyId) && contacts && contacts.length > 0) {
         // Fetch areas of activity for all contacts in a single batch
