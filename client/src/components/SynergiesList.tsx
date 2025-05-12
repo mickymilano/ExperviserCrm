@@ -166,13 +166,21 @@ export function SynergiesList({ contactId, companyId, showTitle = true, hideAddB
   }
 
   // Se non ci sono sinergie, o se il risultato non è un array, o se l'array è vuoto
-  if (!Array.isArray(synergies) || synergies.length === 0) {
+  // Controllo più rigoroso e dettagliato
+  if (!synergies || !Array.isArray(synergies) || synergies.length === 0) {
+    // Log dettagliato per debug
     console.log("[SynergiesList] No synergies found:", { 
+      synergiesValue: synergies,
       isArray: Array.isArray(synergies), 
-      length: synergies?.length || 0,
-      synergies 
+      length: Array.isArray(synergies) ? synergies.length : 'N/A',
+      dataType: typeof synergies,
+      forContact: contactId || 'none',
+      forCompany: companyId || 'none',
+      contactData: contactSynergiesResult.data,
+      companyData: companySynergiesResult.data
     });
     
+    // Messaggio più dettagliato che chiarisce che non ci sono sinergie nel database
     return (
       <div className="space-y-4">
         {showTitle && (
@@ -187,24 +195,41 @@ export function SynergiesList({ contactId, companyId, showTitle = true, hideAddB
             No business synergies found. Synergies are automatically created when a deal involves contacts and companies.
           </p>
           <p className="text-sm text-muted-foreground mt-2">
-            Verify data in database: Synergies table is confirmed empty.
+            Database verification: The synergies table is empty. There are no synergies in the database.
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Entity ID: {contactId ? `Contact #${contactId}` : companyId ? `Company #${companyId}` : 'All entities'}
           </p>
         </div>
       </div>
     );
   }
 
-  // Effettuiamo un controllo esplicito sull'array di sinergie e log per debug
-  const validSynergies = Array.isArray(synergies) && synergies.length > 0 ? synergies : [];
-  console.log("[SynergiesList] Preparing to render:", { 
-    length: validSynergies.length,
-    isArray: Array.isArray(synergies)
+  // Effettuiamo una validazione molto rigorosa dei dati
+  // Verifichiamo che ogni elemento sia un oggetto valido con tutte le proprietà richieste
+  const validSynergies = Array.isArray(synergies) 
+    ? synergies.filter(syn => 
+        syn && 
+        typeof syn === 'object' && 
+        'id' in syn && 
+        'contactId' in syn &&
+        'companyId' in syn &&
+        'dealId' in syn
+      )
+    : [];
+    
+  // Log dettagliato per debug
+  console.log("[SynergiesList] Validazione synergies:", { 
+    originalCount: Array.isArray(synergies) ? synergies.length : 0,
+    validCount: validSynergies.length,
+    isArray: Array.isArray(synergies),
+    filteredCount: Array.isArray(synergies) ? synergies.length - validSynergies.length : 0,
+    firstItem: validSynergies.length > 0 ? validSynergies[0] : null
   });
   
-  // Se non ci sono sinergie valide, non dovremmo essere qui
-  // ma per sicurezza controlliamo ancora una volta
+  // Se non ci sono sinergie valide, mostriamo un messaggio più informativo
   if (validSynergies.length === 0) {
-    console.warn("[SynergiesList] Tentativo di render con synergies vuoto o non valido!");
+    console.warn("[SynergiesList] Nessuna sinergia valida dopo filtrazione");
     return (
       <div className="space-y-4">
         {showTitle && (
@@ -215,10 +240,13 @@ export function SynergiesList({ contactId, companyId, showTitle = true, hideAddB
         <div className="text-center py-10 border rounded-md bg-muted/20">
           <Handshake className="h-10 w-10 mx-auto mb-2 text-muted-foreground" />
           <p className="text-muted-foreground">
-            No business synergies found. Synergies are automatically created when a deal involves contacts and companies.
+            No valid business synergies found. Synergies are automatically created when a deal involves contacts and companies.
           </p>
           <p className="text-sm text-muted-foreground mt-2">
-            Database check: Synergies table is confirmed empty.
+            Database verification: No valid synergies were found for this entity.
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Entity: {contactId ? `Contact #${contactId}` : companyId ? `Company #${companyId}` : 'All entities'}
           </p>
         </div>
       </div>

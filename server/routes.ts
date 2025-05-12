@@ -2152,8 +2152,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid contact ID" });
       }
       
-      const synergies = await storage.getSynergiesByContact(contactId);
-      res.json(synergies);
+      // Otteniamo il totale di sinergie nel database per debug
+      const allSynergies = await storage.getSynergies();
+      const totalSynergies = Array.isArray(allSynergies) ? allSynergies.length : 0;
+      
+      // Otteniamo le sinergie del contatto
+      const contactSynergies = await storage.getSynergiesByContact(contactId);
+      const contactSynergiesCount = Array.isArray(contactSynergies) ? contactSynergies.length : 0;
+      
+      console.log(`API GET /contacts/${contactId}/synergies:`, {
+        totalSynergiesInDb: totalSynergies,
+        contactSynergiesFound: contactSynergiesCount,
+        returning: Array.isArray(contactSynergies) ? contactSynergies : []
+      });
+      
+      // Assicuriamoci che la risposta sia sempre un array
+      res.json(Array.isArray(contactSynergies) ? contactSynergies : []);
     } catch (error) {
       console.error("Error fetching contact synergies:", error);
       res.status(500).json({ message: "Failed to fetch contact synergies" });
@@ -2167,8 +2181,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid company ID" });
       }
       
-      const synergies = await storage.getSynergiesByCompany(companyId);
-      res.json(synergies);
+      // Otteniamo il totale di sinergie nel database per debug
+      const allSynergies = await storage.getSynergies();
+      const totalSynergies = Array.isArray(allSynergies) ? allSynergies.length : 0;
+      
+      // Otteniamo le sinergie dell'azienda
+      const companySynergies = await storage.getSynergiesByCompany(companyId);
+      const companySynergiesCount = Array.isArray(companySynergies) ? companySynergies.length : 0;
+      
+      console.log(`API GET /companies/${companyId}/synergies:`, {
+        totalSynergiesInDb: totalSynergies,
+        companySynergiesFound: companySynergiesCount,
+        returning: Array.isArray(companySynergies) ? companySynergies : []
+      });
+      
+      // Assicuriamoci che la risposta sia sempre un array
+      res.json(Array.isArray(companySynergies) ? companySynergies : []);
     } catch (error) {
       console.error("Error fetching company synergies:", error);
       res.status(500).json({ message: "Failed to fetch company synergies" });
