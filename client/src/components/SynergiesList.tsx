@@ -81,7 +81,15 @@ export function SynergiesList({ contactId, companyId, showTitle = true, hideAddB
     setEditModalOpen(true);
   };
   
-  const getContactName = (id: number) => {
+  // Funzioni migliorate che sfruttano i nomi già disponibili nelle proprietà arricchite
+  const getContactName = (synergy: any) => {
+    // Utilizziamo direttamente i nomi che ora sono inclusi nella risposta API
+    if (synergy && synergy.contactName) {
+      return synergy.contactName;
+    }
+    
+    // Fallback al metodo precedente per retrocompatibilità
+    const id = synergy?.contactId;
     if (!id) return "Contatto rimosso";
     
     // Verifica se i contatti sono stati caricati correttamente
@@ -96,16 +104,21 @@ export function SynergiesList({ contactId, companyId, showTitle = true, hideAddB
       return `${contact.firstName} ${contact.lastName || ''}`.trim();
     }
     
-    // Se non troviamo il contatto, fai una richiesta specifica per questo contatto
-    // per ottenere i dettagli aggiornati - in una versione futura questo potrebbe
-    // essere implementato con una richiesta asincrona
+    // Fallback all'id
     return `Contatto #${id}`;
   };
   
-  const getCompanyName = (id: number) => {
+  const getCompanyName = (synergy: any) => {
+    // Utilizziamo direttamente i nomi che ora sono inclusi nella risposta API
+    if (synergy && synergy.companyName) {
+      return synergy.companyName;
+    }
+    
+    // Fallback al metodo precedente per retrocompatibilità
+    const id = synergy?.companyId;
     if (!id) return "Azienda rimossa";
     
-    // Verifica se le aziende sono state caricate correttamente
+    // Verifica se le aziende sono stati caricati correttamente
     if (!Array.isArray(companies) || companies.length === 0) {
       return `Azienda #${id}`; // Non abbiamo dati di aziende
     }
@@ -117,11 +130,18 @@ export function SynergiesList({ contactId, companyId, showTitle = true, hideAddB
       return company.name;
     }
     
-    // Se non troviamo l'azienda, restituisci ID
+    // Fallback all'id
     return `Azienda #${id}`;
   };
   
-  const getDealName = (id: number) => {
+  const getDealName = (synergy: any) => {
+    // Utilizziamo direttamente i nomi che ora sono inclusi nella risposta API
+    if (synergy && synergy.dealName) {
+      return synergy.dealName;
+    }
+    
+    // Fallback al metodo precedente per retrocompatibilità
+    const id = synergy?.dealId;
     if (!id) return "-";
     
     // Verifica se gli affari sono stati caricati correttamente
@@ -136,7 +156,7 @@ export function SynergiesList({ contactId, companyId, showTitle = true, hideAddB
       return deal.name;
     }
     
-    // Se non troviamo l'affare, restituisci ID
+    // Fallback all'id
     return `Affare #${id}`;
   };
   
@@ -271,8 +291,8 @@ export function SynergiesList({ contactId, companyId, showTitle = true, hideAddB
                   <CardTitle className="text-base">{synergy.type || 'Business'} Relationship</CardTitle>
                   <CardDescription>
                     {contactId 
-                      ? `With ${getCompanyName(synergy.companyId)}` 
-                      : `With ${getContactName(synergy.contactId)}`
+                      ? `With ${getCompanyName(synergy)}` 
+                      : `With ${getContactName(synergy)}`
                     }
                   </CardDescription>
                 </div>
@@ -298,7 +318,7 @@ export function SynergiesList({ contactId, companyId, showTitle = true, hideAddB
                 {synergy.dealId && (
                   <div className="flex justify-between">
                     <span>Related Deal:</span>
-                    <span>{getDealName(synergy.dealId)}</span>
+                    <span>{getDealName(synergy)}</span>
                   </div>
                 )}
               </div>

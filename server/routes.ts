@@ -2250,7 +2250,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const allSynergies = await storage.getSynergies();
       const dealSynergies = allSynergies.filter(synergy => synergy.dealId === dealId);
       
-      res.json(dealSynergies);
+      // Arricchisci i dati delle sinergie con informazioni complete
+      const enrichedSynergies = await Promise.all(dealSynergies.map(async (synergy) => {
+        // Ottieni i dettagli del contatto
+        let contactDetails = null;
+        if (synergy.contactId) {
+          try {
+            contactDetails = await storage.getContact(synergy.contactId);
+          } catch (err) {
+            console.error(`Error fetching contact details for synergy ${synergy.id}:`, err);
+          }
+        }
+        
+        // Ottieni i dettagli dell'azienda
+        let companyDetails = null;
+        if (synergy.companyId) {
+          try {
+            companyDetails = await storage.getCompany(synergy.companyId);
+          } catch (err) {
+            console.error(`Error fetching company details for synergy ${synergy.id}:`, err);
+          }
+        }
+        
+        // Arricchisci l'oggetto sinergia con i dettagli completi
+        return {
+          ...synergy,
+          // Aggiungi i nomi come proprietà dirette per semplificare l'accesso frontend
+          contactName: contactDetails 
+            ? `${contactDetails.firstName || ''} ${contactDetails.lastName || ''}`.trim() 
+            : `Contact #${synergy.contactId}`,
+          companyName: companyDetails ? companyDetails.name : `Company #${synergy.companyId}`,
+          dealName: deal.name,
+          // Includi anche gli oggetti completi per un accesso più dettagliato
+          contact: contactDetails,
+          company: companyDetails,
+          deal: deal
+        };
+      }));
+      
+      console.log(`API GET /deals/${dealId}/synergies:`, {
+        dealId,
+        dealName: deal.name,
+        dealSynergiesFound: dealSynergies.length,
+        enrichedSynergiesCount: enrichedSynergies.length,
+        firstItem: enrichedSynergies.length > 0 ? {
+          id: enrichedSynergies[0].id,
+          contactName: enrichedSynergies[0].contactName,
+          companyName: enrichedSynergies[0].companyName,
+          dealName: enrichedSynergies[0].dealName
+        } : null
+      });
+      
+      // Restituisci le sinergie arricchite
+      res.json(enrichedSynergies);
     } catch (error) {
       console.error("Error fetching deal synergies:", error);
       res.status(500).json({ message: "Failed to fetch deal synergies" });
