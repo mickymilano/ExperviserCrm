@@ -147,9 +147,9 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       } catch (error) {
         console.error("Error setting form values:", error);
       }
-    } else if (stages && stages.length > 0 && open) {
+    } else if (stages && Array.isArray(stages) && stages.length > 0 && open) {
       // Set default stage for new deal
-      setValue("stageId", stages[0].id);
+      setValue("stageId", stages[0]?.id);
     }
   }, [initialData, stages, open, setValue]);
 
@@ -406,7 +406,6 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       onOpenChange(false);
       reset();
       setTagsInput("");
-      setSelectedSynergyContacts([]);
       setShowNoCompanyAlert(false);
       setShowNoContactAlert(false);
 
@@ -520,14 +519,14 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
               <div className="space-y-2">
                 <Label htmlFor="stageId">Stage</Label>
                 <Select 
-                  defaultValue={initialData?.stageId?.toString() || stages[0]?.id?.toString()}
+                  defaultValue={initialData?.stageId?.toString() || (Array.isArray(stages) && stages.length > 0 ? stages[0]?.id?.toString() : undefined)}
                   onValueChange={(value) => setValue("stageId", parseInt(value))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a stage" />
                   </SelectTrigger>
                   <SelectContent>
-                    {stages.map((stage) => (
+                    {Array.isArray(stages) && stages.map((stage: any) => (
                       <SelectItem key={stage.id} value={stage.id.toString()}>
                         {stage.name}
                       </SelectItem>
