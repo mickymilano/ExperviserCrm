@@ -213,7 +213,7 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
       // Reset for new deal creation
       reset();
       setTagsInput("");
-      setSelectedCompanyId(null);
+      selectedCompanyIdRef.current = null;
       
       // Set default stage if available
       if (stages && Array.isArray(stages) && stages.length > 0) {
@@ -250,7 +250,8 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
   useEffect(() => {
     if (!contacts || !Array.isArray(contacts)) return;
     
-    const currentCompanyId = getSelectedCompanyId();
+    // Accediamo direttamente al ref
+    const currentCompanyId = selectedCompanyIdRef.current;
     
     if (!currentCompanyId) {
       setFilteredContacts(contacts);
@@ -268,7 +269,9 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
     });
     
     setFilteredContacts(filteredContactsList);
-  }, [contacts, getSelectedCompanyId]);
+  // Non includiamo selectedCompanyIdRef.current nell'array di dipendenze
+  // per evitare cicli di aggiornamento
+  }, [contacts]);
 
   // Load existing synergy contacts in edit mode
   useEffect(() => {
