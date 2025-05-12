@@ -412,74 +412,10 @@ export default function ImprovedDealModal({ open, onOpenChange, initialData }: D
     saveDeal.mutate(data);
   };
 
-  // Async function to load synergy contact options - contatti per sinergie
-  const loadSynergyContactOptions = (inputValue: string) => {
-    return new Promise<any[]>((resolve) => {
-      if (!getSelectedCompanyId()) {
-        return resolve([]);
-      }
-      
-      // Return empty results for very short inputs (less than 1 character)
-      // This prevents unnecessary API calls but still allows typeahead search
-      if (inputValue.length < 1) {
-        return resolve([]);
-      }
-      
-      // Get current selected synergy contacts to exclude them from results (prevent duplicates)
-      const currentSynergyContactIds = getValues("synergyContactIds") || [];
-      
-      // Also exclude the primary contact of the deal
-      const primaryContactId = getValues("contactId");
-      const excludeContactIds = [...currentSynergyContactIds];
-      if (primaryContactId) {
-        excludeContactIds.push(primaryContactId);
-      }
-      
-      // Build query with selected company ID (exclude contacts already in this company)
-      const companyId = getSelectedCompanyId();
-      
-      // Build the exclude contacts query parameter
-      const excludeContactsParam = excludeContactIds.length > 0 
-        ? `&excludeContactIds=${excludeContactIds.join(',')}` 
-        : '';
-        
-      const endpoint = `/api/contacts?search=${encodeURIComponent(inputValue.trim())}&excludeCompanyId=${companyId}${excludeContactsParam}&includeAreas=true`;
-        
-      fetch(endpoint)
-        .then(response => {
-          if (!response.ok) throw new Error('Failed to search contacts');
-          return response.json();
-        })
-        .then(contacts => {
-          if (!Array.isArray(contacts)) {
-            console.error("Contacts API did not return an array:", contacts);
-            return resolve([]);
-          }
-          
-          console.log(`Found ${contacts.length} potential synergy contacts`);
-          
-          // Filter out contacts that are already selected (just in case the API doesn't filter them out)
-          const filteredContacts = contacts.filter(contact => 
-            !currentSynergyContactIds.includes(contact.id) && 
-            (!primaryContactId || contact.id !== primaryContactId)
-          );
-          
-          // Map contacts to select options format
-          const options = filteredContacts.map((contact: any) => ({
-            value: contact.id,
-            label: `${contact.firstName || ""} ${contact.lastName || ""}`.trim() || `Contact #${contact.id}`,
-            data: contact // Store full contact data for reference
-          }));
-          
-          console.log("Synergy contact options:", options);
-          resolve(options);
-        })
-        .catch(error => {
-          console.error("Error searching synergy contacts:", error);
-          resolve([]);
-        });
-    });
-  };
+  // La funzionalità delle sinergie è stata rimossa
+  // const loadSynergyContactOptions = (inputValue: string) => {
+  //   // Funzione rimossa in quanto parte del modulo sinergie
+  // };
 
   return (
     <>
