@@ -213,12 +213,10 @@ export default function Header({ toggleSidebar }: HeaderProps) {
         onOpenChange={setShowCompanyModal}
         initialData={null}
       />
-      {/* Temporarily disabled due to infinite update loop issue
       <DealModal
         open={showDealModal}
         onOpenChange={setShowDealModal}
       />
-      */}
     </header>
   );
 }
