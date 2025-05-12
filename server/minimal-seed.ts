@@ -58,7 +58,7 @@ async function createMinimalSeed() {
         notes: "Azienda leader nel settore del franchising",
         status: "active",
         isActiveRep: true,
-        companyType: "partner",
+        companyType: "independent",
         channels: ["retail", "online"],
         productsOrServicesTags: ["consulenza", "formazione", "sviluppo business"],
         locationTypes: ["sede centrale", "filiali"]
