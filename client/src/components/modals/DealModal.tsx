@@ -474,7 +474,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       </AlertDialog>
       
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{isEditMode ? "Edit Deal" : "Create New Deal"}</DialogTitle>
           </DialogHeader>
