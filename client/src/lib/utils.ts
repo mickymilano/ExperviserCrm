@@ -23,6 +23,13 @@ export function formatDate(date: Date | string, locale = 'it-IT'): string {
 }
 
 /**
+ * Alias for formatDate to maintain compatibility with existing code
+ */
+export function formatDateToLocal(date: Date | string, locale = 'it-IT'): string {
+  return formatDate(date, locale);
+}
+
+/**
  * Formatta una data e ora in formato localizzato
  */
 export function formatDateTime(date: Date | string, locale = 'it-IT'): string {

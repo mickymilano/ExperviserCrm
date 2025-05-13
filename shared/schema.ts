@@ -316,6 +316,237 @@ export type ContactEmail = typeof contactEmails.$inferSelect;
 export type InsertContactEmail = z.infer<typeof insertContactEmailSchema>;
 
 /**
+ * EMAIL ACCOUNT SCHEMA
+ * Tabella degli account email 
+ */
+export const emailAccounts = pgTable('email_accounts', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id),
+  email: varchar('email', { length: 255 }).notNull(),
+  name: varchar('name', { length: 100 }),
+  server: varchar('server', { length: 255 }).notNull(),
+  port: integer('port').notNull(),
+  username: varchar('username', { length: 255 }).notNull(),
+  password: varchar('password', { length: 255 }).notNull(),
+  protocol: varchar('protocol', { length: 20 }).notNull(),
+  incomingServer: varchar('incoming_server', { length: 255 }),
+  incomingPort: integer('incoming_port'),
+  outgoingServer: varchar('outgoing_server', { length: 255 }),
+  outgoingPort: integer('outgoing_port'),
+  ssl: boolean('ssl').default(true),
+  isDefault: boolean('is_default').default(false),
+  status: varchar('status', { length: 20 })
+    .$type<typeof entityStatusEnum[number]>()
+    .default('active')
+    .notNull(),
+  lastSynced: timestamp('last_synced'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+/**
+ * SIGNATURES SCHEMA
+ * Tabella delle firme email
+ */
+export const signatures = pgTable('signatures', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id),
+  name: varchar('name', { length: 100 }).notNull(),
+  content: text('content').notNull(),
+  isDefault: boolean('is_default').default(false),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+/**
+ * ACCOUNT SIGNATURES SCHEMA
+ * Tabella per associare firme agli account email
+ */
+export const accountSignatures = pgTable('account_signatures', {
+  id: serial('id').primaryKey(),
+  accountId: integer('account_id').notNull().references(() => emailAccounts.id),
+  signatureId: integer('signature_id').notNull().references(() => signatures.id),
+  isDefault: boolean('is_default').default(false),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+/**
+ * EMAIL SCHEMA
+ * Tabella delle email
+ */
+export const emails = pgTable('emails', {
+  id: serial('id').primaryKey(),
+  accountId: integer('account_id').notNull().references(() => emailAccounts.id),
+  messageId: varchar('message_id', { length: 255 }),
+  from: varchar('from', { length: 255 }).notNull(),
+  to: text('to').array(),
+  cc: text('cc').array(),
+  bcc: text('bcc').array(),
+  subject: text('subject'),
+  body: text('body'),
+  plainText: text('plain_text'),
+  date: timestamp('date').notNull(),
+  isRead: boolean('is_read').default(false),
+  isStarred: boolean('is_starred').default(false),
+  isDeleted: boolean('is_deleted').default(false),
+  folder: varchar('folder', { length: 50 }).default('inbox'),
+  attachments: json('attachments'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// Schema for email accounts
+export const insertEmailAccountSchema = createInsertSchema(emailAccounts).omit({ id: true, createdAt: true, updatedAt: true });
+
+// Schema for signatures
+export const insertSignatureSchema = createInsertSchema(signatures).omit({ id: true, createdAt: true, updatedAt: true });
+
+// Schema for account signatures
+export const insertAccountSignatureSchema = createInsertSchema(accountSignatures).omit({ id: true, createdAt: true, updatedAt: true });
+
+// Schema for emails
+export const insertEmailSchema = createInsertSchema(emails).omit({ id: true, createdAt: true, updatedAt: true });
+
+// Types
+export type EmailAccount = typeof emailAccounts.$inferSelect;
+export type InsertEmailAccount = z.infer<typeof insertEmailAccountSchema>;
+
+export type Signature = typeof signatures.$inferSelect;
+export type InsertSignature = z.infer<typeof insertSignatureSchema>;
+
+export type AccountSignature = typeof accountSignatures.$inferSelect;
+export type InsertAccountSignature = z.infer<typeof insertAccountSignatureSchema>;
+
+export type Email = typeof emails.$inferSelect;
+export type InsertEmail = z.infer<typeof insertEmailSchema>;
+
+/**
+ * TASKS SCHEMA
+ * Tabella delle attività
+ */
+export const tasks = pgTable('tasks', {
+  id: serial('id').primaryKey(),
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description'),
+  dueDate: timestamp('due_date'),
+  completedAt: timestamp('completed_at'),
+  priority: varchar('priority', { length: 20 }).default('medium'),
+  status: varchar('status', { length: 20 }).default('open'),
+  assignedToId: integer('assigned_to_id').references(() => users.id),
+  contactId: integer('contact_id').references(() => contacts.id),
+  companyId: integer('company_id').references(() => companies.id),
+  dealId: integer('deal_id').references(() => deals.id),
+  leadId: integer('lead_id').references(() => leads.id),
+  reminder: timestamp('reminder'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+/**
+ * MEETINGS SCHEMA
+ * Tabella delle riunioni
+ */
+export const meetings = pgTable('meetings', {
+  id: serial('id').primaryKey(),
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description'),
+  startDate: timestamp('start_date').notNull(),
+  endDate: timestamp('end_date').notNull(),
+  location: varchar('location', { length: 255 }),
+  type: varchar('type', { length: 50 }).default('in_person'),
+  organizerId: integer('organizer_id').references(() => users.id),
+  contactId: integer('contact_id').references(() => contacts.id),
+  companyId: integer('company_id').references(() => companies.id),
+  dealId: integer('deal_id').references(() => deals.id),
+  leadId: integer('lead_id').references(() => leads.id),
+  notes: text('notes'),
+  reminder: timestamp('reminder'),
+  status: varchar('status', { length: 20 }).default('scheduled'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+/**
+ * ACTIVITIES SCHEMA
+ * Tabella delle attività generiche (log)
+ */
+export const activities = pgTable('activities', {
+  id: serial('id').primaryKey(),
+  type: varchar('type', { length: 50 }).notNull(),
+  description: text('description').notNull(),
+  userId: integer('user_id').references(() => users.id),
+  contactId: integer('contact_id').references(() => contacts.id),
+  companyId: integer('company_id').references(() => companies.id),
+  dealId: integer('deal_id').references(() => deals.id),
+  leadId: integer('lead_id').references(() => leads.id),
+  taskId: integer('task_id').references(() => tasks.id),
+  meetingId: integer('meeting_id').references(() => meetings.id),
+  emailId: integer('email_id').references(() => emails.id),
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+// Schema for tasks
+export const insertTaskSchema = createInsertSchema(tasks).omit({ id: true, createdAt: true, updatedAt: true });
+
+// Schema for meetings
+export const insertMeetingSchema = createInsertSchema(meetings).omit({ id: true, createdAt: true, updatedAt: true });
+
+// Schema for activities
+export const insertActivitySchema = createInsertSchema(activities).omit({ id: true, createdAt: true });
+
+// Types
+export type Task = typeof tasks.$inferSelect;
+export type InsertTask = z.infer<typeof insertTaskSchema>;
+
+export type Meeting = typeof meetings.$inferSelect;
+export type InsertMeeting = z.infer<typeof insertMeetingSchema>;
+
+export type Activity = typeof activities.$inferSelect;
+export type InsertActivity = z.infer<typeof insertActivitySchema>;
+
+/**
+ * USER SESSIONS
+ * Tabella delle sessioni utente
+ */
+export const userSessions = pgTable('user_sessions', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id),
+  token: varchar('token', { length: 255 }).notNull(),
+  ipAddress: varchar('ip_address', { length: 45 }),
+  userAgent: text('user_agent'),
+  expiresAt: timestamp('expires_at').notNull(),
+  lastActivity: timestamp('last_activity').notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+/**
+ * SECURITY LOGS
+ * Tabella dei log di sicurezza
+ */
+export const securityLogs = pgTable('security_logs', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id),
+  action: varchar('action', { length: 50 }).notNull(),
+  ipAddress: varchar('ip_address', { length: 45 }),
+  userAgent: text('user_agent'),
+  details: json('details'),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+// Schema for user sessions and security logs
+export const insertUserSessionSchema = createInsertSchema(userSessions).omit({ id: true, createdAt: true });
+export const insertSecurityLogSchema = createInsertSchema(securityLogs).omit({ id: true, createdAt: true });
+
+// Types
+export type UserSession = typeof userSessions.$inferSelect;
+export type InsertUserSession = z.infer<typeof insertUserSessionSchema>;
+
+export type SecurityLog = typeof securityLogs.$inferSelect;
+export type InsertSecurityLog = z.infer<typeof insertSecurityLogSchema>;
+
+/**
  * Relations
  */
 // Contact to ContactEmails (one-to-many)
