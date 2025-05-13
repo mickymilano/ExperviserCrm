@@ -158,94 +158,51 @@ export function PlacesAutocomplete({
         componentRestrictions: { country: "it" }
       });
 
-      // CORREZIONE: Forza la visualizzazione dei risultati sulla selezione
-      // Questa è una correzione importante per assicurarsi che i risultati
-      // dell'autocomplete siano effettivamente visibili e selezionabili
-      const handleForcedVisibility = () => {
-        // Forza la visualizzazione del container dei risultati
+      // CORREZIONE: Implementa selezione su eventi mouse e touch
+      // utilizzando gli eventi nativi di Google Maps
+      setTimeout(() => {
+        // Ottieni il container dei risultati dopo un breve ritardo
         const pacContainer = document.querySelector('.pac-container');
-        if (pacContainer instanceof HTMLElement) {
-          pacContainer.style.display = 'block';
-          pacContainer.style.visibility = 'visible';
-          pacContainer.style.opacity = '1';
-        }
-      };
-      
-      // Assicuriamoci che sia visibile quando l'utente clicca
-      inputRef.current.addEventListener('focus', handleForcedVisibility);
-      inputRef.current.addEventListener('click', handleForcedVisibility);
-      
-      // Correzione per forzare la selezione quando viene rilevato un click sui risultati
-      const handleDirectSelection = (e: MouseEvent) => {
-        const target = e.target as HTMLElement;
-        
-        // Se l'utente clicca su un elemento dei risultati
-        if (target.classList.contains('pac-item') || 
-            (target.parentElement && target.parentElement.classList.contains('pac-item'))) {
-          console.log('Direct click on result item detected');
+        if (pacContainer) {
+          // Assicurati che interazioni siano possibili
+          pacContainer.setAttribute('style', 'pointer-events: auto !important; z-index: 10000 !important;');
           
-          // Simula la pressione del tasto Enter per confermare la selezione
-          const enterEvent = new KeyboardEvent('keydown', {
-            bubbles: true,
-            cancelable: true,
-            key: 'Enter',
-            code: 'Enter',
-            keyCode: 13
-          });
-          
-          inputRef.current?.dispatchEvent(enterEvent);
-          e.stopPropagation(); // Ferma la propagazione dell'evento
-          e.preventDefault(); // Previene il comportamento di default
-        }
-      };
-      
-      // Aggiungiamo listener per click sui risultati a livello di documento
-      document.addEventListener('mousedown', handleDirectSelection, true);
-      
-      // Gestione più robusta degli eventi di tastiera
-      const handleKeyboardNavigation = (e: KeyboardEvent) => {
-        // Otteniamo il container dei risultati
-        const pacContainer = document.querySelector('.pac-container');
-        const isDropdownVisible = pacContainer instanceof HTMLElement && 
-                                  pacContainer.style.display !== 'none';
-        
-        if (isDropdownVisible) {
-          // Forza la visibilità dei risultati
-          handleForcedVisibility();
-          
-          // Gestisce INVIO, TAB, SPAZIO per confermare selezione
-          if (e.key === 'Enter' || e.key === 'Tab' || e.key === ' ') {
-            console.log('Selection key pressed while dropdown is visible:', e.key);
+          // Aggiungi un evento delegato per gestire click/tap su tutti gli elementi .pac-item
+          pacContainer.addEventListener('mousedown', function(e) {
+            const target = e.target as HTMLElement;
+            const pacItem = target.closest('.pac-item');
             
-            // Simula un click sul primo elemento selezionato
-            const selectedItem = document.querySelector('.pac-item-selected') || 
-                                document.querySelector('.pac-item:first-child');
-            
-            if (selectedItem instanceof HTMLElement) {
-              console.log('Simulating click on selected item');
-              selectedItem.click();
-              
-              // Per sicurezza forziamo anche un evento place_changed
-              setTimeout(() => {
-                if (autocompleteRef.current) {
-                  const place = autocompleteRef.current.getPlace();
-                  if (place) {
-                    onChange(place.formatted_address || inputRef.current?.value || '', place);
-                  }
-                }
-              }, 50);
-            }
-            
-            // Preveniamo il comportamento di default solo per spazio
-            if (e.key === ' ') {
+            if (pacItem) {
+              // Preveni il comportamento di default e la chiusura del menu
               e.preventDefault();
+              e.stopPropagation();
+              
+              console.log('Elemento autocomplete cliccato, attivo place_changed');
+              
+              // Trigger dell'evento di selezione tramite Google Maps API
+              if (autocompleteRef.current) {
+                google.maps.event.trigger(autocompleteRef.current, 'place_changed');
+              }
             }
-          }
+          }, true);
+          
+          // Supporto touch per dispositivi mobili
+          pacContainer.addEventListener('touchend', function(e) {
+            const target = e.target as HTMLElement;
+            const pacItem = target.closest('.pac-item');
+            
+            if (pacItem) {
+              e.preventDefault();
+              console.log('Elemento autocomplete toccato, attivo place_changed');
+              
+              // Trigger dell'evento di selezione tramite Google Maps API
+              if (autocompleteRef.current) {
+                google.maps.event.trigger(autocompleteRef.current, 'place_changed');
+              }
+            }
+          }, true);
         }
-      };
-      
-      // Registra l'ascoltatore per la navigazione da tastiera
-      inputRef.current.addEventListener('keydown', handleKeyboardNavigation);
+      }, 300); // Leggero ritardo per assicurarsi che il container sia stato creato
 
       // Gestisce l'evento di selezione del luogo
       const listener = autocompleteRef.current.addListener('place_changed', () => {
@@ -395,7 +352,9 @@ export function PlacesAutocomplete({
       console.log(`${e.key} pressed with dropdown open, confirming selection`);
       
       // Trigger diretto dell'evento place_changed usando l'API ufficiale di Google Maps
-      google.maps.event.trigger(autocompleteRef.current, 'place_changed');
+      if (google && google.maps && google.maps.event) {
+        google.maps.event.trigger(autocompleteRef.current, 'place_changed');
+      }
     }
     
     // Per Spazio durante la selezione, trattiamolo come un Enter
@@ -405,7 +364,9 @@ export function PlacesAutocomplete({
       if (pacItem && autocompleteRef.current) {
         e.preventDefault(); // Preveniamo l'inserimento dello spazio
         console.log('Space pressed with active selection, confirming selection');
-        google.maps.event.trigger(autocompleteRef.current, 'place_changed');
+        if (google && google.maps && google.maps.event) {
+          google.maps.event.trigger(autocompleteRef.current, 'place_changed');
+        }
       }
     }
   };
