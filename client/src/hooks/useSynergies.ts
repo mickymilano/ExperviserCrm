@@ -1,5 +1,6 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { toast } from '@/hooks/use-toast';
+import { Synergy } from '@shared/schema';
 
 // Tipo per la creazione di una sinergia
 interface CreateSynergyData {
@@ -17,6 +18,37 @@ interface CreateSynergyData {
 interface UpdateSynergyData {
   id: number;
   data: Partial<CreateSynergyData>;
+}
+
+/**
+ * Hook principale per gestire le sinergie
+ * Combina le funzionalità di recupero, creazione, aggiornamento ed eliminazione
+ */
+export function useSynergies() {
+  // Query per recuperare tutte le sinergie
+  const { 
+    data: synergies, 
+    isLoading, 
+    isError, 
+    error 
+  } = useQuery<Synergy[]>({
+    queryKey: ['/api/synergies'],
+  });
+  
+  // Mutazioni per operazioni CRUD
+  const createSynergy = useCreateSynergy();
+  const updateSynergy = useUpdateSynergy();
+  const deleteSynergy = useDeleteSynergy();
+  
+  return {
+    synergies: synergies || [],
+    isLoading,
+    isError,
+    error,
+    createSynergy,
+    updateSynergy,
+    deleteSynergy,
+  };
 }
 
 /**
