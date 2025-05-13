@@ -191,6 +191,64 @@ export class PostgresStorage implements IStorage {
     const result = await db.delete(areasOfActivity).where(eq(areasOfActivity.id, id));
     return result.rowCount > 0;
   }
+  
+  // SYNERGIES
+  async getAllSynergies(): Promise<Synergy[]> {
+    return await db.select().from(synergies);
+  }
+  
+  async getSynergiesByContactId(contactId: number): Promise<Synergy[]> {
+    return await db.select().from(synergies).where(eq(synergies.contactId, contactId));
+  }
+  
+  async getSynergiesByCompanyId(companyId: number): Promise<Synergy[]> {
+    return await db.select().from(synergies).where(eq(synergies.companyId, companyId));
+  }
+  
+  async getSynergiesByDealId(dealId: number): Promise<Synergy[]> {
+    return await db.select().from(synergies).where(eq(synergies.dealId, dealId));
+  }
+  
+  async getSynergyById(id: number): Promise<Synergy | undefined> {
+    const [synergy] = await db.select().from(synergies).where(eq(synergies.id, id));
+    return synergy;
+  }
+  
+  async createSynergy(synergyData: InsertSynergy): Promise<Synergy> {
+    const [newSynergy] = await db.insert(synergies).values(synergyData).returning();
+    return newSynergy;
+  }
+  
+  async updateSynergy(id: number, synergyData: Partial<InsertSynergy>): Promise<Synergy | undefined> {
+    const [updatedSynergy] = await db
+      .update(synergies)
+      .set({ ...synergyData, updatedAt: new Date() })
+      .where(eq(synergies.id, id))
+      .returning();
+    
+    return updatedSynergy;
+  }
+  
+  async deleteSynergy(id: number): Promise<boolean> {
+    const result = await db.delete(synergies).where(eq(synergies.id, id));
+    return result.rowCount > 0;
+  }
+  
+  // Metodi per AreaOfActivity
+  async getAreasOfActivityByContactId(contactId: number): Promise<AreaOfActivity[]> {
+    return await db.select()
+      .from(areasOfActivity)
+      .where(eq(areasOfActivity.contactId, contactId));
+  }
+  
+  async resetPrimaryAreasOfActivity(contactId: number): Promise<boolean> {
+    const result = await db
+      .update(areasOfActivity)
+      .set({ isPrimary: false, updatedAt: new Date() })
+      .where(eq(areasOfActivity.contactId, contactId));
+    
+    return true;
+  }
 
   async setPrimaryAreaOfActivity(id: number): Promise<boolean> {
     const [area] = await db.select().from(areasOfActivity).where(eq(areasOfActivity.id, id));
@@ -468,6 +526,26 @@ export class PostgresStorage implements IStorage {
   // PIPELINE STAGES
   async getPipelineStages(): Promise<PipelineStage[]> {
     return await db.select().from(pipelineStages).orderBy(pipelineStages.order);
+  }
+  
+  async getAllPipelineStages(): Promise<PipelineStage[]> {
+    // Metodo alias per compatibilità con l'interfaccia
+    return this.getPipelineStages();
+  }
+  
+  async updatePipelineStage(id: number, stageData: Partial<InsertPipelineStage>): Promise<PipelineStage | undefined> {
+    const [updatedStage] = await db
+      .update(pipelineStages)
+      .set({ ...stageData, updatedAt: new Date() })
+      .where(eq(pipelineStages.id, id))
+      .returning();
+    
+    return updatedStage;
+  }
+  
+  async deletePipelineStage(id: number): Promise<boolean> {
+    const result = await db.delete(pipelineStages).where(eq(pipelineStages.id, id));
+    return result.rowCount > 0;
   }
 
   async getPipelineStage(id: number): Promise<PipelineStage | undefined> {
