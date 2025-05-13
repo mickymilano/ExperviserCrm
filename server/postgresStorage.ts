@@ -54,23 +54,167 @@ export class PostgresStorage implements IStorage {
   }
 
   async getUser(id: number): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
+    try {
+      console.log(`PostgresStorage.getUser: cercando utente con id ${id}`);
+      
+      // Utilizziamo SQL nativo invece di Drizzle ORM per evitare problemi di schema
+      const result = await db.execute(
+        `SELECT 
+          id, 
+          username, 
+          password,
+          full_name as "fullName",
+          email,
+          backup_email as "backupEmail",
+          phone,
+          role,
+          status,
+          last_login as "lastLogin",
+          reset_token as "resetToken",
+          reset_token_expires as "resetTokenExpires",
+          avatar_url as "avatarUrl",
+          preferences,
+          created_at as "createdAt",
+          updated_at as "updatedAt"
+        FROM users 
+        WHERE id = $1`,
+        [id]
+      );
+      
+      if (result.rows.length === 0) {
+        console.log(`Nessun utente trovato con id ${id}`);
+        return undefined;
+      }
+      
+      console.log(`Utente trovato con id ${id}`);
+      return result.rows[0] as User;
+    } catch (error) {
+      console.error(`Errore in getUser(${id}):`, error);
+      return undefined;
+    }
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    return user;
+    try {
+      console.log(`PostgresStorage.getUserByUsername: cercando utente con username ${username}`);
+      
+      // Utilizziamo SQL nativo invece di Drizzle ORM per evitare problemi di schema
+      const result = await db.execute(
+        `SELECT 
+          id, 
+          username, 
+          password,
+          full_name as "fullName",
+          email,
+          backup_email as "backupEmail",
+          phone,
+          role,
+          status,
+          last_login as "lastLogin",
+          reset_token as "resetToken",
+          reset_token_expires as "resetTokenExpires",
+          avatar_url as "avatarUrl",
+          preferences,
+          created_at as "createdAt",
+          updated_at as "updatedAt"
+        FROM users 
+        WHERE username = $1`,
+        [username]
+      );
+      
+      if (result.rows.length === 0) {
+        console.log(`Nessun utente trovato con username ${username}`);
+        return undefined;
+      }
+      
+      console.log(`Utente trovato con username ${username}`);
+      return result.rows[0] as User;
+    } catch (error) {
+      console.error(`Errore in getUserByUsername(${username}):`, error);
+      return undefined;
+    }
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.email, email));
-    return user;
+    try {
+      console.log(`PostgresStorage.getUserByEmail: cercando utente con email ${email}`);
+      
+      // Utilizziamo SQL nativo invece di Drizzle ORM per evitare problemi di schema
+      const result = await db.execute(
+        `SELECT 
+          id, 
+          username, 
+          password,
+          full_name as "fullName",
+          email,
+          backup_email as "backupEmail",
+          phone,
+          role,
+          status,
+          last_login as "lastLogin",
+          reset_token as "resetToken",
+          reset_token_expires as "resetTokenExpires",
+          avatar_url as "avatarUrl",
+          preferences,
+          created_at as "createdAt",
+          updated_at as "updatedAt"
+        FROM users 
+        WHERE email = $1`,
+        [email]
+      );
+      
+      if (result.rows.length === 0) {
+        console.log(`Nessun utente trovato con email ${email}`);
+        return undefined;
+      }
+      
+      console.log(`Utente trovato con email ${email}`);
+      return result.rows[0] as User;
+    } catch (error) {
+      console.error(`Errore in getUserByEmail(${email}):`, error);
+      return undefined;
+    }
   }
 
   async getUserByResetToken(token: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.resetToken, token));
-    return user;
+    try {
+      console.log(`PostgresStorage.getUserByResetToken: cercando utente con token ${token}`);
+      
+      // Utilizziamo SQL nativo invece di Drizzle ORM per evitare problemi di schema
+      const result = await db.execute(
+        `SELECT 
+          id, 
+          username, 
+          password,
+          full_name as "fullName",
+          email,
+          backup_email as "backupEmail",
+          phone,
+          role,
+          status,
+          last_login as "lastLogin",
+          reset_token as "resetToken",
+          reset_token_expires as "resetTokenExpires",
+          avatar_url as "avatarUrl",
+          preferences,
+          created_at as "createdAt",
+          updated_at as "updatedAt"
+        FROM users 
+        WHERE reset_token = $1`,
+        [token]
+      );
+      
+      if (result.rows.length === 0) {
+        console.log(`Nessun utente trovato con token di reset ${token}`);
+        return undefined;
+      }
+      
+      console.log(`Utente trovato con token di reset ${token}`);
+      return result.rows[0] as User;
+    } catch (error) {
+      console.error(`Errore in getUserByResetToken(${token}):`, error);
+      return undefined;
+    }
   }
 
   async createUser(user: InsertUser): Promise<User> {
