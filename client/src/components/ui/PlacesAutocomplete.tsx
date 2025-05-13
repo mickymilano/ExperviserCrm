@@ -132,8 +132,15 @@ export function PlacesAutocomplete({
       // Inizializza Google Places Autocomplete
       // Non specificare i 'types' per consentire la massima flessibilità di ricerca
       autocompleteRef.current = new google.maps.places.Autocomplete(inputRef.current, {
-        fields: ['address_components', 'formatted_address', 'geometry', 'name', 'place_id', 'types'],
-        // Rimuoviamo la restrizione sui tipi per abilitare qualsiasi tipo di ricerca
+        fields: [
+          'address_components',
+          'formatted_address',
+          'geometry',
+          'name',
+          'place_id',
+          'types'
+        ],
+        types: ['establishment', 'geocode']
       });
 
       // Gestisce l'evento di selezione del luogo

@@ -195,26 +195,27 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
                 if (placeDetails && placeDetails.address_components) {
                   console.log("Place details received in CompanyModal:", placeDetails);
                   
-                  // Estrai il nome attività
-                  const businessName = placeDetails?.name || '';
-                  
-                  // Imposta automaticamente il campo "name" solo quando è vuoto o quando si sceglie "sostituisci"
-                  if (!initialData?.name) {
-                    setValue("name", businessName, { shouldValidate: true });
-                  } else if (businessName !== initialData.name) {
-                    // mostra prompt: "Vuoi sostituire il nome azienda esistente?"
-                    const replace = window.confirm(
-                      `Hai selezionato "${businessName}". Vuoi sostituire il nome azienda corrente "${initialData.name}"?`
-                    );
-                    if (replace) {
-                      setValue("name", businessName, { shouldValidate: true });
-                    }
-                  }
-                  
                   // Rimuovi il nome dal fullAddress, lasciando solo «formatted_address»
                   const formatted = placeDetails.formatted_address || "";
                   setValue("fullAddress", formatted, { shouldValidate: true });
                   setValue("address", formatted, { shouldValidate: true });
+                  
+                  // Se placeDetails.name è definito, gestisci l'aggiornamento del nome
+                  if (placeDetails.name) {
+                    // Se non c'è un nome azienda esistente, imposta direttamente quello nuovo
+                    if (!initialData?.name) {
+                      setValue("name", placeDetails.name, { shouldValidate: true });
+                    } 
+                    // Se il nome esistente è diverso da quello selezionato, chiedi conferma
+                    else if (initialData.name && placeDetails.name !== initialData.name) {
+                      const replace = window.confirm(
+                        `Vuoi aggiornare il nome azienda in "${placeDetails.name}"?`
+                      );
+                      if (replace) {
+                        setValue("name", placeDetails.name, { shouldValidate: true });
+                      }
+                    }
+                  }
                   
                   // Estrae il paese
                   const countryComponent = placeDetails.address_components.find(component => 
