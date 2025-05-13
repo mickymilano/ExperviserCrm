@@ -55,7 +55,7 @@ export function formatNumber(value: number, locale = 'it-IT'): string {
   return new Intl.NumberFormat(locale).format(value);
 }
 
-export function formatPhoneNumber(phone: string): string {
+export function formatPhoneNumber(phone: string | null | undefined): string {
   if (!phone) return '';
   
   // Rimuovi tutti i caratteri non numerici

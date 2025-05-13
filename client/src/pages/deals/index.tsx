@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { useDeals, usePipelineStages } from "@/hooks/useDeals";
 import { useContacts } from "@/hooks/useContacts";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -23,6 +24,7 @@ export default function Deals() {
   const { contacts, isLoading: isLoadingContacts } = useContacts();
   const { companies, isLoading: isLoadingCompanies } = useCompanies();
   const [selectedDeal, setSelectedDeal] = useState<DealInfo | null>(null);
+  const [, navigate] = useLocation();
 
   // Get contact name from id
   const getContactName = (contactId: number | null): string => {
@@ -163,7 +165,13 @@ export default function Deals() {
                       {deal.expectedCloseDate ? format(new Date(deal.expectedCloseDate), "MMM d, yyyy") : "-"}
                     </td>
                     <td className="py-3 px-4">
-                      <Button variant="ghost" size="sm" className="h-8 w-8">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-8 w-8"
+                        onClick={() => navigate(`/deals/${deal.id}`)}
+                        title="View Deal Details"
+                      >
                         <ChevronRight className="h-4 w-4" />
                       </Button>
                     </td>
