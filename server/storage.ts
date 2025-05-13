@@ -693,6 +693,113 @@ export class MemStorage implements IStorage {
       this.synergies.splice(index, 1);
     }
   }
+
+  /**
+   * Implementazione delle operazioni per ContactEmail
+   */
+  async getContactEmail(id: number): Promise<ContactEmail | null> {
+    const contactEmail = this.contactEmails.find(ce => ce.id === id);
+    return contactEmail || null;
+  }
+
+  async getContactEmails(contactId: number): Promise<ContactEmail[]> {
+    return this.contactEmails.filter(ce => ce.contactId === contactId);
+  }
+
+  async getPrimaryContactEmail(contactId: number): Promise<ContactEmail | null> {
+    const primaryEmail = this.contactEmails.find(ce => ce.contactId === contactId && ce.isPrimary);
+    return primaryEmail || null;
+  }
+
+  async createContactEmail(contactEmailData: InsertContactEmail): Promise<ContactEmail> {
+    const id = this.nextIds.contactEmails++;
+    
+    // If this is the first email for this contact, make it primary by default
+    const isFirstEmail = !this.contactEmails.some(ce => ce.contactId === contactEmailData.contactId);
+    const isPrimary = contactEmailData.isPrimary !== undefined ? contactEmailData.isPrimary : isFirstEmail;
+    
+    // If setting this email as primary, reset other emails to non-primary
+    if (isPrimary) {
+      this.contactEmails
+        .filter(ce => ce.contactId === contactEmailData.contactId)
+        .forEach(ce => ce.isPrimary = false);
+    }
+    
+    const newContactEmail: ContactEmail = {
+      id,
+      ...contactEmailData,
+      isPrimary,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    this.contactEmails.push(newContactEmail);
+    return newContactEmail;
+  }
+
+  async updateContactEmail(id: number, contactEmailData: Partial<ContactEmail>): Promise<ContactEmail> {
+    const index = this.contactEmails.findIndex(ce => ce.id === id);
+    if (index === -1) {
+      throw new Error(`ContactEmail with id ${id} not found`);
+    }
+    
+    // If setting this email as primary, reset other emails to non-primary
+    if (contactEmailData.isPrimary) {
+      const contactId = this.contactEmails[index].contactId;
+      this.contactEmails
+        .filter(ce => ce.contactId === contactId && ce.id !== id)
+        .forEach(ce => ce.isPrimary = false);
+    }
+    
+    const updatedContactEmail = {
+      ...this.contactEmails[index],
+      ...contactEmailData,
+      updatedAt: new Date()
+    };
+    
+    this.contactEmails[index] = updatedContactEmail;
+    return updatedContactEmail;
+  }
+
+  async deleteContactEmail(id: number): Promise<boolean> {
+    const index = this.contactEmails.findIndex(ce => ce.id === id);
+    if (index === -1) {
+      return false;
+    }
+    
+    const deletedEmail = this.contactEmails[index];
+    this.contactEmails.splice(index, 1);
+    
+    // If we deleted a primary email, set another one as primary if available
+    if (deletedEmail.isPrimary) {
+      const anotherEmail = this.contactEmails.find(ce => ce.contactId === deletedEmail.contactId);
+      if (anotherEmail) {
+        anotherEmail.isPrimary = true;
+      }
+    }
+    
+    return true;
+  }
+
+  async setContactEmailAsPrimary(id: number): Promise<ContactEmail> {
+    const emailIndex = this.contactEmails.findIndex(ce => ce.id === id);
+    if (emailIndex === -1) {
+      throw new Error(`ContactEmail with id ${id} not found`);
+    }
+    
+    const contactId = this.contactEmails[emailIndex].contactId;
+    
+    // Reset all emails for this contact to non-primary
+    this.contactEmails
+      .filter(ce => ce.contactId === contactId)
+      .forEach(ce => ce.isPrimary = false);
+    
+    // Set the selected email as primary
+    this.contactEmails[emailIndex].isPrimary = true;
+    this.contactEmails[emailIndex].updatedAt = new Date();
+    
+    return this.contactEmails[emailIndex];
+  }
 }
 
 // Esporta un'istanza singleton dell'implementazione di storage

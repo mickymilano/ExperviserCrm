@@ -17,6 +17,7 @@ import {
   accountSignatures,
   activities,
   meetings,
+  contactEmails,
   type User,
   type InsertUser,
   type UserSession,
@@ -48,7 +49,9 @@ import {
   type Activity,
   type InsertActivity, 
   type Meeting,
-  type InsertMeeting
+  type InsertMeeting,
+  type ContactEmail,
+  type InsertContactEmail
 } from "@shared/schema";
 import { eq, and, desc, sql, isNull, isNotNull, or, asc, inArray } from "drizzle-orm";
 
@@ -996,4 +999,131 @@ export class PostgresStorage implements IStorage {
 
   // SYNERGIES
   // Removed all synergies functionality as per requirements.
+
+  // CONTACT EMAILS
+  async getContactEmail(id: number): Promise<ContactEmail | null> {
+    const [email] = await db.select().from(contactEmails).where(eq(contactEmails.id, id));
+    return email || null;
+  }
+
+  async getContactEmails(contactId: number): Promise<ContactEmail[]> {
+    return await db
+      .select()
+      .from(contactEmails)
+      .where(eq(contactEmails.contactId, contactId))
+      .orderBy(desc(contactEmails.isPrimary), asc(contactEmails.emailType));
+  }
+
+  async getPrimaryContactEmail(contactId: number): Promise<ContactEmail | null> {
+    const [primaryEmail] = await db
+      .select()
+      .from(contactEmails)
+      .where(and(
+        eq(contactEmails.contactId, contactId),
+        eq(contactEmails.isPrimary, true)
+      ));
+    return primaryEmail || null;
+  }
+
+  async createContactEmail(contactEmailData: InsertContactEmail): Promise<ContactEmail> {
+    // If setting this email as primary, reset other emails to non-primary
+    if (contactEmailData.isPrimary) {
+      await db
+        .update(contactEmails)
+        .set({ isPrimary: false, updatedAt: new Date() })
+        .where(eq(contactEmails.contactId, contactEmailData.contactId));
+    } 
+    // If this is the first email for the contact, make it primary by default
+    else {
+      const existingEmails = await this.getContactEmails(contactEmailData.contactId);
+      if (existingEmails.length === 0) {
+        contactEmailData.isPrimary = true;
+      }
+    }
+
+    const [newEmail] = await db
+      .insert(contactEmails)
+      .values({
+        ...contactEmailData,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
+      
+    return newEmail;
+  }
+
+  async updateContactEmail(id: number, contactEmailData: Partial<ContactEmail>): Promise<ContactEmail> {
+    // If setting this email as primary, reset other emails to non-primary
+    if (contactEmailData.isPrimary) {
+      const [email] = await db.select().from(contactEmails).where(eq(contactEmails.id, id));
+      if (email) {
+        await db
+          .update(contactEmails)
+          .set({ isPrimary: false, updatedAt: new Date() })
+          .where(and(
+            eq(contactEmails.contactId, email.contactId),
+            sql`${contactEmails.id} != ${id}`
+          ));
+      }
+    }
+    
+    const [updatedEmail] = await db
+      .update(contactEmails)
+      .set({ ...contactEmailData, updatedAt: new Date() })
+      .where(eq(contactEmails.id, id))
+      .returning();
+      
+    return updatedEmail;
+  }
+
+  async deleteContactEmail(id: number): Promise<boolean> {
+    // Check if this is a primary email
+    const [email] = await db.select().from(contactEmails).where(eq(contactEmails.id, id));
+    if (!email) {
+      return false;
+    }
+    
+    const result = await db.delete(contactEmails).where(eq(contactEmails.id, id));
+    
+    // If we deleted a primary email, set another one as primary if available
+    if (email.isPrimary) {
+      const [anotherEmail] = await db
+        .select()
+        .from(contactEmails)
+        .where(eq(contactEmails.contactId, email.contactId))
+        .limit(1);
+        
+      if (anotherEmail) {
+        await db
+          .update(contactEmails)
+          .set({ isPrimary: true, updatedAt: new Date() })
+          .where(eq(contactEmails.id, anotherEmail.id));
+      }
+    }
+    
+    return result.rowCount > 0;
+  }
+
+  async setContactEmailAsPrimary(id: number): Promise<ContactEmail> {
+    const [email] = await db.select().from(contactEmails).where(eq(contactEmails.id, id));
+    if (!email) {
+      throw new Error(`ContactEmail with id ${id} not found`);
+    }
+    
+    // Reset all emails for this contact to non-primary
+    await db
+      .update(contactEmails)
+      .set({ isPrimary: false, updatedAt: new Date() })
+      .where(eq(contactEmails.contactId, email.contactId));
+    
+    // Set the selected email as primary
+    const [updatedEmail] = await db
+      .update(contactEmails)
+      .set({ isPrimary: true, updatedAt: new Date() })
+      .where(eq(contactEmails.id, id))
+      .returning();
+      
+    return updatedEmail;
+  }
 }
