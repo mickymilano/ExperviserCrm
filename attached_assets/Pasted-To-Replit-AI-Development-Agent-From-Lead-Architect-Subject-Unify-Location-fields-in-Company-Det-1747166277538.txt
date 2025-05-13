@@ -1,0 +1,108 @@
+To: Replit AI Development Agent
+From: Lead Architect
+Subject: Unify “Location” fields in Company Detail & Edit views
+
+Goal:
+Raggruppare Country, City, Address e Timezone in un’unica sezione “Location” con un solo campo fullAddress, mantenendo però i vecchi campi commentati (non cancellati) per rollback.
+
+⸻
+
+1. Database Migration
+
+-- 1. Aggiungi full_address
+ALTER TABLE companies ADD COLUMN full_address TEXT;
+
+-- 2. Popola full_address con i dati esistenti di address
+UPDATE companies SET full_address = address;
+
+2. Drizzle Schema (shared/schema.ts)
+
+// DEPRECATED: address, city, timezone
+text('address').deprecated(), 
+text('city').deprecated(), 
+varchar('timezone', { length: 100 }).deprecated(), 
+
+// NEW: fullAddress
+text('full_address').as('fullAddress'),
+
+Commenta le vecchie definizioni con // DEPRECATED:; aggiungi commento // Added 2025-05-13 by Lead Architect: unified location.
+
+3. Storage Layer (server/postgresStorage.ts)
+	•	In getCompany(id) e getCompanies():
+	•	Sostituisci company.address → company.fullAddress
+	•	Continua a leggere city e timezone ma mappali su campi commentati.
+	•	Aggiungi commenti // DEPRECATED: mapping old address sopra ogni block commentato.
+	•	In updateCompany(id, data):
+	•	Rimuovi la scrittura diretta di address, city, timezone e sostituisci con full_address: data.fullAddress
+	•	Commenta il vecchio .set({ address: data.address, ... }).
+
+4. API Routes (server/routes.ts)
+	•	In app.get('/api/companies/:id') e app.get('/api/companies'):
+	•	Assicurati di restituire fullAddress al posto di address nel JSON.
+	•	Mantieni address commentato in res.json({ address: company.address, fullAddress: company.fullAddress }).
+	•	In app.put('/api/companies/:id') e app.post('/api/companies'):
+	•	Cambia validazione Zod: usa fullAddress anziché address.
+	•	Commenta il vecchio address.
+
+5. Frontend – Detail View (client/src/pages/companies/[id].tsx)
+	•	Sostituisci il blocco separato di Address, City, Country, Timezone con:
+
+<Card>
+  <CardHeader><CardTitle>Location</CardTitle></CardHeader>
+  <CardContent>
+    <p>{company.fullAddress}</p>
+    <Badge>{company.country}</Badge>
+    <Badge>{company.timezone}</Badge>
+  </CardContent>
+</Card>
+
+
+	•	Commenta il vecchio JSX:
+
+{/* DEPRECATED:
+<p>{company.address}</p>
+<p>{company.city}</p>
+<p>{company.timezone}</p>
+*/}
+
+
+
+6. Frontend – Edit Form (client/src/components/CompanyEditForm.tsx)
+	•	Rimuovi/Commenta i campi Address, City, Timezone:
+
+{/* DEPRECATED:
+<Input name="address" ... />
+<Input name="city" ... />
+<Select name="timezone" ... />
+*/}
+
+
+	•	Aggiungi un campo fullAddress:
+
+<TextArea
+  label="Full Address"
+  name="fullAddress"
+  placeholder="Via, CAP, Città, Provincia, Nazione"
+  {...register('fullAddress')}
+/>
+
+
+
+7. Documentazione in-line
+In ogni file modificato, lascia commenti del tipo:
+
+// Added by Lead Architect on 2025-05-13: unified location field
+// DEPRECATED: old address/city/timezone, kept for rollback
+
+
+⸻
+
+Procedi con questi passaggi in ordine:
+	1.	Applica la migration SQL
+	2.	Aggiorna shared/schema.ts e genera una nuova migration Drizzle
+	3.	Modifica il storage layer
+	4.	Aggiorna le API routes
+	5.	Aggiorna il frontend Detail View
+	6.	Aggiorna il frontend Edit Form
+
+Non cancellare mai niente: commenta il vecchio codice e documenta ogni cambiamento inline. Alla fine di ciascun step, inviami un breve log di conferma.

@@ -113,9 +113,15 @@ export const companies = pgTable('companies', {
     .notNull(),
   email: varchar('email', { length: 100 }),
   phone: varchar('phone', { length: 20 }),
+  
+  // DEPRECATED: address, city, and region fields - Added 2025-05-13 by Lead Architect: unified location
   address: text('address'),
   city: varchar('city', { length: 50 }),
   region: varchar('region', { length: 50 }),
+  
+  // Added 2025-05-13 by Lead Architect: unified location field
+  fullAddress: text('full_address'),
+  
   country: varchar('country', { length: 50 }),
   postalCode: varchar('postal_code', { length: 20 }),
   website: varchar('website', { length: 255 }),
