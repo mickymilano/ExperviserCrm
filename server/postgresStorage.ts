@@ -1927,7 +1927,33 @@ export class PostgresStorage implements IStorage {
     // Get company
     let companyData = null;
     if (deal.companyId) {
-      const [company] = await db.select().from(companies).where(eq(companies.id, deal.companyId));
+      // 🚨 FIX: evita riferimento a colonna inesistente "city"
+      // -- vecchia selezione:
+      // const [company] = await db.select().from(companies).where(eq(companies.id, deal.companyId));
+      const [company] = await db
+        .select({
+          id: companies.id,
+          name: companies.name,
+          status: companies.status,
+          email: companies.email,
+          phone: companies.phone,
+          address: companies.address,
+          website: companies.website,
+          tags: companies.tags,
+          notes: companies.notes,
+          customFields: companies.customFields,
+          lastContactedAt: companies.lastContactedAt,
+          nextFollowUpAt: companies.nextFollowUpAt,
+          isActiveRep: companies.isActiveRep,
+          companyType: companies.companyType,
+          brands: companies.brands,
+          channels: companies.channels,
+          productsOrServicesTags: companies.productsOrServicesTags,
+          createdAt: companies.createdAt,
+          updatedAt: companies.updatedAt
+        })
+        .from(companies)
+        .where(eq(companies.id, deal.companyId));
       companyData = company;
     }
     

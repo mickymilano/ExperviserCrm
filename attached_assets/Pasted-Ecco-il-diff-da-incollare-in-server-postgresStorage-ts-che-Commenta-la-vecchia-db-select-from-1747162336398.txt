@@ -1,0 +1,49 @@
+Ecco il diff da incollare in server/postgresStorage.ts, che:
+	•	Commenta la vecchia db.select().from(companies)
+	•	Inserisce una select esplicita di tutte le colonne valide
+	•	Mantiene intatta la struttura esistente e lascia il vecchio codice commentato per rollback rapido
+
+--- a/server/postgresStorage.ts
++++ b/server/postgresStorage.ts
+@@ async getDeal(id: number): Promise<Deal | undefined> {
+-    if (deal.companyId) {
+-      const [company] = await db
+-        .select()
+-        .from(companies)
+-        .where(eq(companies.id, deal.companyId));
+-      companyData = company;
+-    }
++    if (deal.companyId) {
++      // 🚨 FIX: evita riferimento a colonna inesistente “city”
++      // -- vecchia selezione:
++      // const [company] = await db.select().from(companies).where(eq(companies.id, deal.companyId));
++      const [company] = await db
++        .select({
++          id: companies.id,
++          name: companies.name,
++          status: companies.status,
++          email: companies.email,
++          phone: companies.phone,
++          address: companies.address,
++          website: companies.website,
++          tags: companies.tags,
++          notes: companies.notes,
++          customFields: companies.customFields,
++          lastContactedAt: companies.lastContactedAt,
++          nextFollowUpAt: companies.nextFollowUpAt,
++          isActiveRep: companies.isActiveRep,
++          companyType: companies.companyType,
++          brands: companies.brands,
++          channels: companies.channels,
++          productsOrServicesTags: companies.productsOrServicesTags,
++          createdAt: companies.createdAt,
++          updatedAt: companies.updatedAt
++        })
++        .from(companies)
++        .where(eq(companies.id, deal.companyId));
++      companyData = company;
++    }
+
+Nota:
+	•	Se in futuro aggiungerete una colonna city, basterà decommentare la vecchia db.select().from(companies) e aggiornare sia la tabella SQL che lo schema Drizzle.
+	•	Il commento in cima vi ricorda esattamente perché è stato modificato, senza rimuovere nulla di definitivo.
