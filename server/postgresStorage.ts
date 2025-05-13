@@ -341,15 +341,17 @@ export class PostgresStorage implements IStorage {
     console.log("PostgresStorage.getContacts: retrieving all contacts regardless of status");
     try {
       // Seleziona solo le colonne che esistono sicuramente nel database
-      // Nota: la colonna 'email' non esiste nella tabella contacts, è in contactEmails
+      // La struttura della tabella è diversa da quella dello schema
       return await db.select({
         id: contacts.id,
         firstName: contacts.firstName,
         lastName: contacts.lastName,
         status: contacts.status,
-        phone: contacts.phone,
-        mobile: contacts.mobile,
-        avatar: contacts.avatar,
+        companyEmail: contacts.companyEmail,
+        privateEmail: contacts.privateEmail,
+        mobilePhone: contacts.mobilePhone,
+        officePhone: contacts.officePhone,
+        privatePhone: contacts.privatePhone,
         createdAt: contacts.createdAt,
         updatedAt: contacts.updatedAt
       })
@@ -373,15 +375,18 @@ export class PostgresStorage implements IStorage {
 
   async getRecentContacts(limit: number = 5): Promise<Contact[]> {
     try {
-      // Use explicit column selection to avoid "column not found" errors
+      console.log("PostgresStorage.getRecentContacts: retrieving recent contacts");
+      // Use explicit column selection that matches the actual database schema
       return await db.select({
         id: contacts.id,
         firstName: contacts.firstName,
         lastName: contacts.lastName,
+        companyEmail: contacts.companyEmail,
+        privateEmail: contacts.privateEmail,
         status: contacts.status,
-        phone: contacts.phone,
-        mobile: contacts.mobile,
-        avatar: contacts.avatar,
+        mobilePhone: contacts.mobilePhone,
+        officePhone: contacts.officePhone,
+        privatePhone: contacts.privatePhone,
         createdAt: contacts.createdAt,
         updatedAt: contacts.updatedAt
       })
@@ -419,9 +424,11 @@ export class PostgresStorage implements IStorage {
           firstName: contacts.firstName,
           lastName: contacts.lastName,
           status: contacts.status,
-          phone: contacts.phone,
-          mobile: contacts.mobile,
-          avatar: contacts.avatar,
+          companyEmail: contacts.companyEmail,
+          privateEmail: contacts.privateEmail,
+          mobilePhone: contacts.mobilePhone,
+          officePhone: contacts.officePhone,
+          privatePhone: contacts.privatePhone,
           createdAt: contacts.createdAt,
           updatedAt: contacts.updatedAt
         })
