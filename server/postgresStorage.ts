@@ -1344,7 +1344,7 @@ export class PostgresStorage implements IStorage {
   }
 
   async getCompany(id: number): Promise<Company | undefined> {
-    // Selezioniamo solo campi specifici per evitare errori con colonne mancanti
+    // Selezioniamo solo campi specifici che esistono sicuramente nel database
     const [company] = await db.select({
       id: companies.id,
       name: companies.name,
@@ -1354,8 +1354,7 @@ export class PostgresStorage implements IStorage {
       address: companies.address,
       website: companies.website,
       industry: companies.industry,
-      // Rimuoviamo description perché non esiste nel database
-      logo: companies.logo,
+      // Rimuoviamo le colonne problematiche (description, logo)
       tags: companies.tags,
       notes: companies.notes,
       customFields: companies.customFields,
@@ -1381,6 +1380,7 @@ export class PostgresStorage implements IStorage {
       country: null,
       postalCode: null,
       description: null, // Aggiungiamo anche questo campo per evitare errori nel frontend
+      logo: null, // Aggiungiamo anche il logo come null
       areasOfActivity: areas
     };
   }
