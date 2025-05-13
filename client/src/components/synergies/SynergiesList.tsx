@@ -80,14 +80,36 @@ export function SynergiesList({
   };
   
   // Funzioni di utilità per recuperare i nomi dalle liste
-  const getContactName = (contactId: number) => {
+  const getContactName = (contactId: number, synergy?: any) => {
+    // 1. Prima controlliamo se la sinergia ha i dati di contatto inclusi (dal backend arricchito)
+    if (synergy && synergy.contact) {
+      return `${synergy.contact.firstName} ${synergy.contact.lastName}`;
+    }
+    
+    // 2. Se non ci sono dati incorporati, cerchiamo nell'elenco dei contatti
     const contact = contacts.find((c: any) => c.id === contactId);
-    return contact ? `${contact.firstName} ${contact.lastName}` : `Contatto #${contactId}`;
+    if (contact) {
+      return `${contact.firstName} ${contact.lastName}`;
+    }
+    
+    // 3. Fallback
+    return `Contatto #${contactId}`;
   };
   
-  const getCompanyName = (companyId: number) => {
+  const getCompanyName = (companyId: number, synergy?: any) => {
+    // 1. Prima controlliamo se la sinergia ha i dati dell'azienda inclusi
+    if (synergy && synergy.company && synergy.company.name) {
+      return synergy.company.name;
+    }
+    
+    // 2. Se non ci sono dati incorporati, cerchiamo nell'elenco delle aziende
     const company = companies.find((c: any) => c.id === companyId);
-    return company ? company.name : `Azienda #${companyId}`;
+    if (company) {
+      return company.name;
+    }
+    
+    // 3. Fallback
+    return `Azienda #${companyId}`;
   };
   
   const getDealName = (dealId: number) => {
@@ -123,12 +145,12 @@ export function SynergiesList({
   // Ottieni il nome dell'entità collegata
   const getEntityName = (synergy: any) => {
     if (entityType === 'contact' && synergy.companyId) {
-      return getCompanyName(synergy.companyId);
+      return getCompanyName(synergy.companyId, synergy);
     } else if (entityType === 'company' && synergy.contactId) {
-      return getContactName(synergy.contactId);
+      return getContactName(synergy.contactId, synergy);
     } else if (entityType === 'deal') {
-      if (synergy.contactId) return getContactName(synergy.contactId);
-      if (synergy.companyId) return getCompanyName(synergy.companyId);
+      if (synergy.contactId) return getContactName(synergy.contactId, synergy);
+      if (synergy.companyId) return getCompanyName(synergy.companyId, synergy);
     }
     return 'Entità sconosciuta';
   };
