@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { PlacesAutocomplete } from "@/components/ui/PlacesAutocomplete";
 import { 
   Select,
   SelectContent,
@@ -63,6 +64,7 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
     register, 
     handleSubmit, 
     setValue,
+    watch,
     formState: { errors, isSubmitting } 
   } = useForm<CompanyFormData>({
     resolver: zodResolver(companySchema),
@@ -320,12 +322,38 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
             
             <div>
               <Label htmlFor="fullAddress">Location</Label>
-              <Textarea 
+              <PlacesAutocomplete 
                 id="fullAddress"
-                {...register("fullAddress")}
+                value={watch("fullAddress") || ""}
+                onChange={(value, placeDetails) => {
+                  setValue("fullAddress", value, { shouldValidate: true });
+                  
+                  // Imposta anche il campo nascosto address per retrocompatibilità
+                  setValue("address", value, { shouldValidate: true });
+                  
+                  // Se il componente ha restituito dettagli del luogo e troviamo il paese
+                  if (placeDetails?.address_components) {
+                    const countryComponent = placeDetails.address_components.find(component => 
+                      component.types.includes('country')
+                    );
+                    
+                    if (countryComponent) {
+                      setValue("country", countryComponent.long_name, { shouldValidate: true });
+                    }
+                    
+                    // Estrae anche la città se disponibile
+                    const cityComponent = placeDetails.address_components.find(component => 
+                      component.types.includes('locality') || 
+                      component.types.includes('administrative_area_level_3')
+                    );
+                    
+                    if (cityComponent) {
+                      setValue("city", cityComponent.long_name, { shouldValidate: true });
+                    }
+                  }
+                }}
                 className="mt-1"
-                rows={3}
-                placeholder="Enter complete address information"
+                placeholder="Cerca o inserisci l'indirizzo completo"
               />
               {errors.fullAddress && (
                 <p className="text-sm text-destructive mt-1">{errors.fullAddress.message}</p>

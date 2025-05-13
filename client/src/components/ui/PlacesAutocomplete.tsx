@@ -1,6 +1,8 @@
-import { useRef, useState, useEffect } from 'react';
-import { Input } from "@/components/ui/input";
+import React, { useRef, useEffect, useState } from 'react';
+import { Input } from '@/components/ui/input';
+import { getGoogleMapsApiKey } from '@/lib/environment';
 
+// Definisce le proprietà del componente
 interface PlacesAutocompleteProps {
   value: string;
   onChange: (value: string, placeDetails?: google.maps.places.PlaceResult) => void;
@@ -10,98 +12,135 @@ interface PlacesAutocompleteProps {
   onCountrySelect?: (country: string) => void;
 }
 
-export function PlacesAutocomplete({
-  value,
-  onChange,
-  placeholder = "Enter address",
-  className = "",
-  id,
-  onCountrySelect
-}: PlacesAutocompleteProps) {
-  const autoCompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
-  const inputRef = useRef<HTMLInputElement | null>(null);
-  const [loaded, setLoaded] = useState(false);
-  const [inputValue, setInputValue] = useState(value || "");
-
-  // Load Google Maps API script
-  useEffect(() => {
-    // Check if the script is already loaded
-    if (window.google && window.google.maps) {
-      setLoaded(true);
+// Carica Google Maps API in modo dinamico
+const loadGoogleMapsScript = (apiKey: string) => {
+  return new Promise<void>((resolve, reject) => {
+    if (window.google && window.google.maps && window.google.maps.places) {
+      resolve();
       return;
     }
 
-    const googleMapsScript = document.createElement('script');
-    googleMapsScript.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.GOOGLE_MAPS_API_KEY}&libraries=places`;
-    googleMapsScript.async = true;
-    googleMapsScript.defer = true;
-    googleMapsScript.onload = () => setLoaded(true);
-    
-    document.head.appendChild(googleMapsScript);
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('Google Maps API caricamento fallito'));
+    document.head.appendChild(script);
+  });
+};
 
-    return () => {
-      // Remove the script when component unmounts
-      const script = document.querySelector(`script[src="${googleMapsScript.src}"]`);
-      if (script) {
-        document.head.removeChild(script);
+export function PlacesAutocomplete({
+  value,
+  onChange,
+  placeholder = 'Cerca indirizzo...',
+  className = '',
+  id,
+  onCountrySelect
+}: PlacesAutocompleteProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const [apiKey, setApiKey] = useState<string | null>(null);
+  const [scriptLoaded, setScriptLoaded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Carica la chiave API dal server
+  useEffect(() => {
+    const fetchApiKey = async () => {
+      try {
+        const key = await getGoogleMapsApiKey();
+        
+        if (!key) {
+          setError('Google Maps API key non trovata');
+          return;
+        }
+        
+        setApiKey(key);
+      } catch (err) {
+        console.error('Error fetching Google Maps API key:', err);
+        setError('Impossibile caricare la chiave API di Google Maps');
       }
     };
+
+    fetchApiKey();
   }, []);
 
-  // Initialize the autocomplete when script is loaded and input ref is available
+  // Carica lo script Google Maps quando la chiave API è disponibile
   useEffect(() => {
-    if (!loaded || !inputRef.current) return;
+    if (!apiKey) return;
 
-    // Initialize Google Maps Autocomplete
-    autoCompleteRef.current = new window.google.maps.places.Autocomplete(
-      inputRef.current,
-      { types: ['address'], fields: ['address_components', 'formatted_address'] }
-    );
+    loadGoogleMapsScript(apiKey)
+      .then(() => {
+        setScriptLoaded(true);
+        setError(null);
+      })
+      .catch((err) => {
+        console.error('Error loading Google Maps script:', err);
+        setError('Errore nel caricamento di Google Maps. Riprova più tardi.');
+      });
+  }, [apiKey]);
 
-    // Add event listener for place selection
-    const listener = autoCompleteRef.current.addListener('place_changed', () => {
-      const place = autoCompleteRef.current?.getPlace();
-      
-      if (place && place.formatted_address) {
-        setInputValue(place.formatted_address);
-        onChange(place.formatted_address, place);
+  // Inizializza l'autocomplete quando lo script è caricato
+  useEffect(() => {
+    if (!scriptLoaded || !inputRef.current) return;
+
+    try {
+      // Inizializza Google Places Autocomplete
+      autocompleteRef.current = new google.maps.places.Autocomplete(inputRef.current, {
+        fields: ['address_components', 'formatted_address', 'geometry'],
+      });
+
+      // Gestisce l'evento di selezione del luogo
+      const listener = autocompleteRef.current.addListener('place_changed', () => {
+        const place = autocompleteRef.current?.getPlace();
         
-        // Extract country from address components if available
+        if (!place || !place.formatted_address) {
+          return;
+        }
+
+        // Aggiorna il valore con l'indirizzo formattato
+        onChange(place.formatted_address, place);
+
+        // Estrae il paese selezionato
         if (onCountrySelect && place.address_components) {
-          const countryComponent = place.address_components.find(
-            (component) => component.types.includes('country')
+          const countryComponent = place.address_components.find(component => 
+            component.types.includes('country')
           );
           
           if (countryComponent) {
             onCountrySelect(countryComponent.long_name);
           }
         }
-      }
-    });
+      });
 
-    return () => {
-      // Clean up listener
-      if (window.google && window.google.maps && autoCompleteRef.current) {
-        window.google.maps.event.removeListener(listener);
-      }
-    };
-  }, [loaded, onChange, onCountrySelect]);
-
-  // Handle input changes directly
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
-    onChange(e.target.value);
-  };
+      // Pulizia dell'evento al dismount
+      return () => {
+        if (listener) {
+          google.maps.event.removeListener(listener);
+        }
+      };
+    } catch (err) {
+      console.error('Error initializing Google Places Autocomplete:', err);
+      setError('Errore nell\'inizializzazione dell\'autocomplete indirizzi');
+    }
+  }, [scriptLoaded, onChange, onCountrySelect]);
 
   return (
-    <Input
-      ref={inputRef}
-      id={id}
-      type="text"
-      value={inputValue}
-      onChange={handleInputChange}
-      placeholder={placeholder}
-      className={className}
-    />
+    <div className="places-autocomplete">
+      <Input
+        ref={inputRef}
+        id={id}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className={className}
+        aria-label="Indirizzo"
+      />
+      {error && (
+        <p className="text-sm text-red-500 mt-1">
+          {error}
+        </p>
+      )}
+    </div>
   );
 }

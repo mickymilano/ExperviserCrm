@@ -1673,6 +1673,21 @@ export function registerRoutes(app: any) {
     }
   });
   
+  // =====================================
+  // API CONFIGURATION ROUTES
+  // =====================================
+  app.get('/api/config', (req, res) => {
+    try {
+      // Espone solo le chiavi API che possono essere utilizzate in modo sicuro sul client
+      res.json({
+        googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || null,
+      });
+    } catch (error) {
+      console.error('Error fetching API configuration:', error);
+      res.status(500).json({ error: 'Failed to fetch API configuration' });
+    }
+  });
+  
   // Crea il server HTTP
   const httpServer = createServer(app);
   
