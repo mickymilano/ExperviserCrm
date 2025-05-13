@@ -147,16 +147,20 @@ export function SynergiesList({
             <Handshake className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
             <h4 className="text-sm font-medium mb-2">Nessuna sinergia trovata</h4>
             <p className="text-sm text-muted-foreground mb-4">
-              Non ci sono ancora sinergie associate a questa entità.
+              {entityType === 'deal' 
+                ? "Non ci sono ancora sinergie associate a questa trattativa."
+                : "Le sinergie possono essere create solo all'interno delle trattative (Deals)."}
             </p>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setIsCreateModalOpen(true)}
-            >
-              <Plus className="h-4 w-4 mr-1" />
-              Crea sinergia
-            </Button>
+            {entityType === 'deal' && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setIsCreateModalOpen(true)}
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Crea sinergia
+              </Button>
+            )}
           </CardContent>
         </Card>
       ) : (
