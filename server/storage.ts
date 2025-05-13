@@ -147,6 +147,46 @@ export class MemStorage implements IStorage {
 
   constructor() {
     // Inizializza con dati di esempio se richiesto
+    
+    // Aggiungi utente amministratore di default
+    if (this.users.length === 0) {
+      this.users.push({
+        id: this.nextIds.users++,
+        username: 'michele',
+        password: '$2b$10$xP/0vn6gaY5DmxjgfOp.WejfD4WuO1h80RUMQqHwPPRoKqc1dpmcK', // admin_admin_69
+        email: 'michele@experviser.com',
+        fullName: 'Michele Amministratore',
+        role: 'super_admin',
+        status: 'active',
+        avatar: null,
+        backupEmail: null,
+        emailVerified: true,
+        preferences: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        lastLogin: null
+      });
+      
+      // Utente di debug per sviluppo
+      this.users.push({
+        id: this.nextIds.users++,
+        username: 'debug',
+        password: '$2b$10$xP/0vn6gaY5DmxjgfOp.WejfD4WuO1h80RUMQqHwPPRoKqc1dpmcK', // admin_admin_69
+        email: 'debug@example.com',
+        fullName: 'Utente Debug',
+        role: 'super_admin',
+        status: 'active',
+        avatar: null,
+        backupEmail: null,
+        emailVerified: true,
+        preferences: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        lastLogin: null
+      });
+      
+      console.log('Utenti predefiniti aggiunti al sistema');
+    }
   }
 
   // USER OPERATIONS
