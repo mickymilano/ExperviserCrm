@@ -65,6 +65,7 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
     handleSubmit, 
     setValue,
     watch,
+    trigger,
     formState: { errors, isSubmitting } 
   } = useForm<CompanyFormData>({
     resolver: zodResolver(companySchema),
@@ -364,7 +365,7 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
                   }
                   
                   // Forza la validazione del form
-                  trigger();
+                  trigger(["fullAddress", "country"]);
                 }}
                 className="mt-1"
                 placeholder="Cerca o inserisci l'indirizzo completo"

@@ -45,7 +45,7 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
   const [tagsInput, setTagsInput] = useState(initialData?.tags ? initialData.tags.join(", ") : "");
   const isEditMode = !!initialData;
 
-  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<CompanyFormData>({
+  const { register, handleSubmit, reset, setValue, watch, trigger, formState: { errors } } = useForm<CompanyFormData>({
     resolver: zodResolver(companySchema),
     defaultValues: {
       name: initialData?.name || "",
