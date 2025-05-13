@@ -1116,6 +1116,131 @@ export function registerRoutes(app: any) {
     }
   });
   
+  // --- SYNERGY ROUTES ---
+  
+  // Ottieni tutte le sinergie
+  app.get('/api/synergies', authenticateJWT, async (req: Request, res: Response) => {
+    try {
+      const synergies = await storage.getAllSynergies();
+      res.json(synergies);
+    } catch (error) {
+      console.error('Error fetching synergies:', error);
+      res.status(500).json({ message: 'Errore durante il recupero delle sinergie' });
+    }
+  });
+  
+  // Ottieni sinergie per un contatto specifico
+  app.get('/api/synergies/contact/:contactId', authenticateJWT, async (req: Request, res: Response) => {
+    try {
+      const contactId = parseInt(req.params.contactId);
+      if (isNaN(contactId)) {
+        return res.status(400).json({ message: 'ID contatto non valido' });
+      }
+      
+      const synergies = await storage.getSynergiesByContactId(contactId);
+      res.json(synergies);
+    } catch (error) {
+      console.error('Error fetching synergies for contact:', error);
+      res.status(500).json({ message: 'Errore durante il recupero delle sinergie per il contatto' });
+    }
+  });
+  
+  // Ottieni sinergie per un'azienda specifica
+  app.get('/api/synergies/company/:companyId', authenticateJWT, async (req: Request, res: Response) => {
+    try {
+      const companyId = parseInt(req.params.companyId);
+      if (isNaN(companyId)) {
+        return res.status(400).json({ message: 'ID azienda non valido' });
+      }
+      
+      const synergies = await storage.getSynergiesByCompanyId(companyId);
+      res.json(synergies);
+    } catch (error) {
+      console.error('Error fetching synergies for company:', error);
+      res.status(500).json({ message: 'Errore durante il recupero delle sinergie per l\'azienda' });
+    }
+  });
+  
+  // Ottieni sinergie per un deal specifico
+  app.get('/api/synergies/deal/:dealId', authenticateJWT, async (req: Request, res: Response) => {
+    try {
+      const dealId = parseInt(req.params.dealId);
+      if (isNaN(dealId)) {
+        return res.status(400).json({ message: 'ID opportunità non valido' });
+      }
+      
+      const synergies = await storage.getSynergiesByDealId(dealId);
+      res.json(synergies);
+    } catch (error) {
+      console.error('Error fetching synergies for deal:', error);
+      res.status(500).json({ message: 'Errore durante il recupero delle sinergie per l\'opportunità' });
+    }
+  });
+  
+  // Crea una nuova sinergia
+  app.post('/api/synergies', authenticateJWT, async (req: Request, res: Response) => {
+    try {
+      const synergyData = req.body;
+      
+      // Validazione base dei dati
+      if (!synergyData.contactId || !synergyData.companyId || !synergyData.type) {
+        return res.status(400).json({ message: 'Dati sinergia incompleti' });
+      }
+      
+      const newSynergy = await storage.createSynergy(synergyData);
+      res.status(201).json(newSynergy);
+    } catch (error) {
+      console.error('Error creating synergy:', error);
+      res.status(500).json({ message: 'Errore durante la creazione della sinergia' });
+    }
+  });
+  
+  // Aggiorna una sinergia esistente
+  app.patch('/api/synergies/:id', authenticateJWT, async (req: Request, res: Response) => {
+    try {
+      const synergyId = parseInt(req.params.id);
+      if (isNaN(synergyId)) {
+        return res.status(400).json({ message: 'ID sinergia non valido' });
+      }
+      
+      const synergyData = req.body;
+      
+      // Verifica che la sinergia esista
+      const existingSynergy = await storage.getSynergyById(synergyId);
+      if (!existingSynergy) {
+        return res.status(404).json({ message: 'Sinergia non trovata' });
+      }
+      
+      const updatedSynergy = await storage.updateSynergy(synergyId, synergyData);
+      res.json(updatedSynergy);
+    } catch (error) {
+      console.error('Error updating synergy:', error);
+      res.status(500).json({ message: 'Errore durante l\'aggiornamento della sinergia' });
+    }
+  });
+  
+  // Elimina una sinergia
+  app.delete('/api/synergies/:id', authenticateJWT, async (req: Request, res: Response) => {
+    try {
+      const synergyId = parseInt(req.params.id);
+      if (isNaN(synergyId)) {
+        return res.status(400).json({ message: 'ID sinergia non valido' });
+      }
+      
+      // Verifica che la sinergia esista
+      const existingSynergy = await storage.getSynergyById(synergyId);
+      if (!existingSynergy) {
+        return res.status(404).json({ message: 'Sinergia non trovata' });
+      }
+      
+      await storage.deleteSynergy(synergyId);
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting synergy:', error);
+      res.status(500).json({ message: 'Errore durante l\'eliminazione della sinergia' });
+    }
+  });
+  
   // --- DASHBOARD ROUTES ---
   
   // Statistiche dashboard

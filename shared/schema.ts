@@ -223,6 +223,26 @@ export const insertPipelineStageSchema = createInsertSchema(pipelineStages).omit
 export const insertAreaOfActivitySchema = createInsertSchema(areasOfActivity).omit({ id: true, createdAt: true, updatedAt: true });
 
 /**
+ * SYNERGIES
+ * Tabella delle sinergie tra contatti e aziende
+ */
+export const synergies = pgTable('synergies', {
+  id: serial('id').primaryKey(),
+  contactId: integer('contact_id').notNull().references(() => contacts.id),
+  companyId: integer('company_id').notNull().references(() => companies.id),
+  type: varchar('type', { length: 50 }).notNull(),
+  description: text('description'),
+  dealId: integer('deal_id').references(() => deals.id),
+  status: varchar('status', { length: 50 }).default('Active'),
+  startDate: date('start_date').notNull(),
+  endDate: date('end_date'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const insertSynergySchema = createInsertSchema(synergies).omit({ id: true, createdAt: true, updatedAt: true });
+
+/**
  * Types
  */
 export type User = typeof users.$inferSelect;
@@ -245,3 +265,6 @@ export type InsertPipelineStage = z.infer<typeof insertPipelineStageSchema>;
 
 export type AreaOfActivity = typeof areasOfActivity.$inferSelect;
 export type InsertAreaOfActivity = z.infer<typeof insertAreaOfActivitySchema>;
+
+export type Synergy = typeof synergies.$inferSelect;
+export type InsertSynergy = z.infer<typeof insertSynergySchema>;

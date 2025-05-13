@@ -6,6 +6,7 @@ import {
   leads, Lead, InsertLead,
   pipelineStages, PipelineStage, InsertPipelineStage,
   areasOfActivity, AreaOfActivity, InsertAreaOfActivity,
+  synergies, Synergy, InsertSynergy,
 } from '@shared/schema';
 import { db } from './db';
 import { eq } from 'drizzle-orm';
@@ -73,6 +74,16 @@ export interface IStorage {
   updateAreaOfActivity(id: number, areaData: Partial<AreaOfActivity>): Promise<AreaOfActivity>;
   deleteAreaOfActivity(id: number): Promise<void>;
   resetPrimaryAreasOfActivity(contactId: number): Promise<void>;
+  
+  // Synergy operations
+  getSynergyById(id: number): Promise<Synergy | null>;
+  getAllSynergies(): Promise<Synergy[]>;
+  getSynergiesByContactId(contactId: number): Promise<Synergy[]>;
+  getSynergiesByCompanyId(companyId: number): Promise<Synergy[]>;
+  getSynergiesByDealId(dealId: number): Promise<Synergy[]>;
+  createSynergy(synergyData: InsertSynergy): Promise<Synergy>;
+  updateSynergy(id: number, synergyData: Partial<Synergy>): Promise<Synergy>;
+  deleteSynergy(id: number): Promise<void>;
 }
 
 /**
@@ -88,6 +99,7 @@ export class MemStorage implements IStorage {
   private leads: Lead[] = [];
   private pipelineStages: PipelineStage[] = [];
   private areasOfActivity: AreaOfActivity[] = [];
+  private synergies: Synergy[] = [];
 
   private nextIds = {
     users: 1,
@@ -97,6 +109,7 @@ export class MemStorage implements IStorage {
     leads: 1,
     pipelineStages: 1,
     areasOfActivity: 1,
+    synergies: 1,
   };
   
   // Funzioni di conteggio
