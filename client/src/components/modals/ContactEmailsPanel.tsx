@@ -122,8 +122,8 @@ export function ContactEmailsPanel({ contactId }: ContactEmailsPanelProps) {
   // Archive email mutation
   const archiveEmailMutation = useMutation({
     mutationFn: async (emailId: number) => {
-      const response = await fetch(`/api/contacts/${contactId}/emails/${emailId}`, {
-        method: "PATCH",
+      const response = await fetch(`/api/contact-emails/${emailId}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "archived" }),
         credentials: "include"
@@ -188,11 +188,47 @@ export function ContactEmailsPanel({ contactId }: ContactEmailsPanelProps) {
     });
   };
 
+  // Set primary email mutation
+  const setPrimaryMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await fetch(`/api/contact-emails/${id}/set-primary`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include"
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to set primary email: ${errorText}`);
+      }
+
+      return await response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Primary Email Updated",
+        description: "Primary email has been updated successfully."
+      });
+      
+      // Invalidate queries
+      queryClient.invalidateQueries({
+        queryKey: [`/api/contacts/${contactId}/emails`]
+      });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/contacts/${contactId}`]
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+  
   const handleSetPrimary = (emailId: number) => {
-    updateEmailMutation.mutate({
-      emailId,
-      data: { isPrimary: true }
-    });
+    setPrimaryMutation.mutate(emailId);
   };
 
   const getEmailTypeLabel = (type: string) => {

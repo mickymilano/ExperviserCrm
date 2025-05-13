@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import AreasOfActivityManager from "@/components/forms/AreasOfActivityManager";
+import { ContactEmailsPanel } from "@/components/modals/ContactEmailsPanel";
 import { InsertAreaOfActivity } from "@shared/schema";
 
 interface ContactModalProps {
@@ -561,6 +562,13 @@ export default function ContactModal({ open, onOpenChange, initialData }: Contac
               onChange={setAreasOfActivity}
             />
           </div>
+          
+          {/* Email Addresses Management - Only shown when editing an existing contact */}
+          {isEditing && initialData?.id && (
+            <div className="mb-6">
+              <ContactEmailsPanel contactId={initialData.id} />
+            </div>
+          )}
           
           {/* Additional Information */}
           <div className="mb-6">
