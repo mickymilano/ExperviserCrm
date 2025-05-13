@@ -904,11 +904,24 @@ export class PostgresStorage implements IStorage {
         }
       }
       
-      // Get stage
+      // Get stage using SQL native query with correct column names
       let stageData = null;
       if (deal.stageId) {
-        const [stage] = await db.select().from(pipelineStages).where(eq(pipelineStages.id, deal.stageId));
-        stageData = stage;
+        const stageResult = await pool.query(
+          `SELECT 
+            id, 
+            name, 
+            position, 
+            color,
+            created_at as "createdAt", 
+            updated_at as "updatedAt" 
+          FROM pipeline_stages 
+          WHERE id = $1`,
+          [deal.stageId]
+        );
+        if (stageResult.rows.length > 0) {
+          stageData = stageResult.rows[0];
+        }
       }
       
       result.push({
