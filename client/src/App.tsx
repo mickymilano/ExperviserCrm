@@ -13,6 +13,7 @@ const CompaniesPage = lazy(() => import('@/pages/companies'));
 const DealsPage = lazy(() => import('@/pages/deals'));
 const LeadsPage = lazy(() => import('@/pages/leads'));
 const SynergiesPage = lazy(() => import('@/pages/synergies'));
+const TasksPage = lazy(() => import('@/pages/tasks'));
 const CalendarPage = lazy(() => import('@/pages/calendar'));
 const EmailPage = lazy(() => import('@/pages/email'));
 const SettingsPage = lazy(() => import('@/pages/settings'));
