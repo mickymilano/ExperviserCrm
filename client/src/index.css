@@ -128,9 +128,13 @@ html {
 
 .pac-item:hover, 
 .pac-item-selected, 
-.pac-item-focused {
-  background-color: #f0f4f8 !important;
+.pac-item-focused,
+.pac-item.hovered {
+  background-color: #e0e7ff !important; /* Blu più intenso */
   color: #1a202c !important;
+  font-weight: bold !important;
+  cursor: pointer !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
 }
 
 .pac-icon {

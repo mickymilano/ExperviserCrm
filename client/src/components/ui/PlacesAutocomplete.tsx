@@ -167,6 +167,22 @@ export function PlacesAutocomplete({
           // Assicurati che interazioni siano possibili
           pacContainer.setAttribute('style', 'pointer-events: auto !important; z-index: 10000 !important;');
           
+          // Aggiungiamo un gestore per l'evento hover (mouseover) per migliorare il feedback visivo
+          pacContainer.addEventListener('mouseover', function(e) {
+            const target = e.target as HTMLElement;
+            const hoveredItem = target.closest('.pac-item');
+            
+            if (hoveredItem) {
+              // Rimuoviamo la classe "hovered" da tutti gli elementi
+              pacContainer.querySelectorAll('.pac-item').forEach((item) => {
+                item.classList.remove('hovered');
+              });
+              
+              // Aggiungiamo la classe "hovered" all'elemento corrente
+              hoveredItem.classList.add('hovered');
+            }
+          }, true);
+          
           // Aggiungi un evento delegato per gestire click/tap su tutti gli elementi .pac-item
           pacContainer.addEventListener('mousedown', function(e) {
             const target = e.target as HTMLElement;
@@ -180,8 +196,8 @@ export function PlacesAutocomplete({
               console.log('Elemento autocomplete cliccato, attivo place_changed');
               
               // Trigger dell'evento di selezione tramite Google Maps API
-              if (autocompleteRef.current) {
-                google.maps.event.trigger(autocompleteRef.current, 'place_changed');
+              if (autocompleteRef.current && window.google && window.google.maps && window.google.maps.event) {
+                window.google.maps.event.trigger(autocompleteRef.current, 'place_changed');
               }
             }
           }, true);
@@ -196,8 +212,8 @@ export function PlacesAutocomplete({
               console.log('Elemento autocomplete toccato, attivo place_changed');
               
               // Trigger dell'evento di selezione tramite Google Maps API
-              if (autocompleteRef.current) {
-                google.maps.event.trigger(autocompleteRef.current, 'place_changed');
+              if (autocompleteRef.current && window.google && window.google.maps && window.google.maps.event) {
+                window.google.maps.event.trigger(autocompleteRef.current, 'place_changed');
               }
             }
           }, true);
