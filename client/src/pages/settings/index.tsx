@@ -434,7 +434,7 @@ export default function SettingsPage() {
                   <Mail className="h-5 w-5 mr-2" />
                   Email Accounts
                 </h3>
-                <Button onClick={() => setShowEmailModal(true)}>
+                <Button disabled title="Funzionalità in fase di sviluppo">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Account
                 </Button>
@@ -446,8 +446,22 @@ export default function SettingsPage() {
                     <Skeleton key={i} className="h-20 w-full" />
                   ))}
                 </div>
-              ) : accounts && accounts.length > 0 ? (
+              ) : accounts && Array.isArray(accounts) && accounts.length > 0 ? (
                 <div className="space-y-4">
+                  {/* Mostra un messaggio che indica che la funzionalità è temporaneamente disabilitata */}
+                  <div className="bg-blue-50 border border-blue-200 text-blue-800 p-4 rounded-lg mb-4">
+                    <div className="flex">
+                      <Info className="h-5 w-5 mr-2 mt-0.5" />
+                      <div>
+                        <h3 className="font-medium">Funzionalità in fase di sviluppo</h3>
+                        <p className="text-sm mt-1">
+                          La gestione degli account email è temporaneamente disabilitata durante l'aggiornamento del sistema.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Mostra gli account in modalità di sola lettura */}
                   {accounts.map(account => (
                     <Card key={account.id}>
                       <CardContent className="p-4 flex justify-between items-center">
@@ -460,11 +474,11 @@ export default function SettingsPage() {
                           </div>
                         </div>
                         <div className="flex space-x-2">
-                          <Button variant="outline" size="sm">Edit</Button>
+                          <Button variant="outline" size="sm" disabled>Edit</Button>
                           <Button 
                             variant="destructive" 
                             size="sm"
-                            onClick={() => handleDeleteAccount(account)}
+                            disabled
                           >
                             Remove
                           </Button>
