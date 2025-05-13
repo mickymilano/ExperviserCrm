@@ -538,11 +538,14 @@ export class PostgresStorage implements IStorage {
     try {
       console.log("PostgresStorage.getRecentContacts: retrieving recent contacts");
       // Seleziona colonne esattamente come sono definite nel database
+      // Aggiunge fullName come concatenazione di first_name e last_name
       const result = await pool.query(
         `SELECT 
           id, 
           first_name as "firstName", 
-          last_name as "lastName", 
+          last_name as "lastName",
+          CONCAT(first_name, ' ', last_name) as "fullName",
+          company_email as "email", 
           status, 
           company_email as "companyEmail", 
           private_email as "privateEmail", 

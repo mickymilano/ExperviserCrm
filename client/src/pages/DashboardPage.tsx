@@ -139,15 +139,18 @@ interface ContactItemProps {
 }
 
 function ContactItem({ id, fullName, email, company }: ContactItemProps) {
+  // Usa un valore di default per fullName nel caso sia undefined o null
+  const displayName = fullName || "Senza Nome";
+  
   return (
     <div className="py-3 border-b border-border last:border-0">
       <div className="flex items-center">
         <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center mr-3">
-          {fullName.charAt(0).toUpperCase()}
+          {displayName.charAt(0).toUpperCase()}
         </div>
         <div className="flex-1">
-          <h4 className="text-sm font-medium">{fullName}</h4>
-          <p className="text-xs text-muted-foreground">{email}</p>
+          <h4 className="text-sm font-medium">{displayName}</h4>
+          <p className="text-xs text-muted-foreground">{email || "Email non disponibile"}</p>
           {company && <p className="text-xs text-muted-foreground">Azienda: {company}</p>}
         </div>
         <a href={`/contacts/${id}`} className="text-xs font-medium text-primary hover:underline">
