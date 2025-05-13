@@ -376,27 +376,27 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
                 defaultValue={customFields.timezone || ""}
               >
                 <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select timezone" />
+                  <SelectValue placeholder="Seleziona fuso orario" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectLabel>Europe</SelectLabel>
-                    <SelectItem value="Europe/Rome">Europe/Rome</SelectItem>
-                    <SelectItem value="Europe/London">Europe/London</SelectItem>
-                    <SelectItem value="Europe/Paris">Europe/Paris</SelectItem>
-                    <SelectItem value="Europe/Berlin">Europe/Berlin</SelectItem>
+                    <SelectLabel>Europa</SelectLabel>
+                    <SelectItem value="Europe/Rome">Roma</SelectItem>
+                    <SelectItem value="Europe/London">Londra</SelectItem>
+                    <SelectItem value="Europe/Paris">Parigi</SelectItem>
+                    <SelectItem value="Europe/Berlin">Berlino</SelectItem>
                   </SelectGroup>
                   <SelectGroup>
-                    <SelectLabel>North America</SelectLabel>
-                    <SelectItem value="America/New_York">Eastern Time (ET)</SelectItem>
-                    <SelectItem value="America/Chicago">Central Time (CT)</SelectItem>
-                    <SelectItem value="America/Denver">Mountain Time (MT)</SelectItem>
-                    <SelectItem value="America/Los_Angeles">Pacific Time (PT)</SelectItem>
+                    <SelectLabel>Nord America</SelectLabel>
+                    <SelectItem value="America/New_York">New York (ET)</SelectItem>
+                    <SelectItem value="America/Chicago">Chicago (CT)</SelectItem>
+                    <SelectItem value="America/Denver">Denver (MT)</SelectItem>
+                    <SelectItem value="America/Los_Angeles">Los Angeles (PT)</SelectItem>
                   </SelectGroup>
                   <SelectGroup>
                     <SelectLabel>Asia</SelectLabel>
-                    <SelectItem value="Asia/Tokyo">Japan (JST)</SelectItem>
-                    <SelectItem value="Asia/Shanghai">China (CST)</SelectItem>
+                    <SelectItem value="Asia/Tokyo">Giappone (JST)</SelectItem>
+                    <SelectItem value="Asia/Shanghai">Cina (CST)</SelectItem>
                     <SelectItem value="Asia/Kolkata">India (IST)</SelectItem>
                   </SelectGroup>
                 </SelectContent>

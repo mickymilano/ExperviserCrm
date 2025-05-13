@@ -138,7 +138,7 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
         
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-2 mb-4">
-            <Label htmlFor="name">Company Name</Label>
+            <Label htmlFor="name">Nome Azienda</Label>
             <Input id="name" {...register("name")} />
             {errors.name && (
               <p className="text-xs text-destructive">{errors.name.message}</p>
