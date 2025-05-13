@@ -213,6 +213,12 @@ export function SynergyModal({
   }, [contactId, companyId, form]);
 
   const onSubmit = async (data: FormData) => {
+    // If in view mode, don't submit the form
+    if (isViewMode) {
+      onOpenChange(false);
+      return;
+    }
+    
     try {
       // Convert undefined fields to null for backend compatibility
       const processedData = {
@@ -283,7 +289,7 @@ export function SynergyModal({
                 <FormItem>
                   <FormLabel>Contact</FormLabel>
                   <Select
-                    disabled={!!contactId || isLoadingContacts}
+                    disabled={!!contactId || isLoadingContacts || isViewMode}
                     onValueChange={(value) => field.onChange(parseInt(value))}
                     defaultValue={field.value?.toString() || ""}
                   >
@@ -312,7 +318,7 @@ export function SynergyModal({
                 <FormItem>
                   <FormLabel>Company</FormLabel>
                   <Select
-                    disabled={!!companyId || isLoadingCompanies}
+                    disabled={!!companyId || isLoadingCompanies || isViewMode}
                     onValueChange={(value) => field.onChange(parseInt(value))}
                     defaultValue={field.value?.toString() || ""}
                   >
