@@ -526,7 +526,7 @@ export class PostgresStorage implements IStorage {
           created_at,
           updated_at
         FROM synergies
-        WHERE deal_id = $1
+        WHERE deal_id = $1 AND is_active = true
         ORDER BY created_at DESC
       `, [dealId]);
       
@@ -570,7 +570,7 @@ export class PostgresStorage implements IStorage {
           created_at,
           updated_at
         FROM synergies
-        WHERE id = $1
+        WHERE id = $1 AND is_active = true
       `, [id]);
       
       if (result.rows.length === 0) {
