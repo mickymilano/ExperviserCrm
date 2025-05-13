@@ -69,6 +69,14 @@ export function PlacesAutocomplete({
   useEffect(() => {
     if (!apiKey) return;
 
+    // Verifica se la chiave API sembra avere un formato valido
+    // Le chiavi API di Google Maps generalmente iniziano con "AIza"
+    if (!apiKey.startsWith('AIza')) {
+      console.error('Google Maps API key appears to be invalid:', apiKey.substring(0, 6) + '...');
+      setError('Chiave API di Google Maps non valida. Contatta l\'amministratore.');
+      return;
+    }
+
     loadGoogleMapsScript(apiKey)
       .then(() => {
         setScriptLoaded(true);
