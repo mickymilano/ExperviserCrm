@@ -21,8 +21,8 @@ interface CompanyModalProps {
 import { Company } from "@/types";
 
 const companySchema = z.object({
-  name: z.string().min(1, "Company name is required"),
-  email: z.string().email("Invalid email address").optional().or(z.literal('')),
+  name: z.string().min(1, "Nome azienda obbligatorio"),
+  email: z.string().email("Indirizzo email non valido").optional().or(z.literal('')),
   phone: z.string().optional(),
   website: z.string().optional(),
   industry: z.string().optional(),
@@ -101,8 +101,8 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
     },
     onSuccess: () => {
       toast({
-        title: "Success",
-        description: isEditMode ? "Company updated successfully" : "Company created successfully",
+        title: "Successo",
+        description: isEditMode ? "Azienda aggiornata con successo" : "Azienda creata con successo",
       });
       
       // Close modal and reset form
@@ -240,12 +240,12 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
                 onOpenChange(false);
               }}
             >
-              Cancel
+              Annulla
             </Button>
             <Button type="submit" disabled={saveCompany.isPending}>
               {saveCompany.isPending 
-                ? (isEditMode ? 'Saving...' : 'Adding...') 
-                : (isEditMode ? 'Save Changes' : 'Add Company')}
+                ? (isEditMode ? 'Salvataggio...' : 'Aggiunta...') 
+                : (isEditMode ? 'Salva Modifiche' : 'Aggiungi Azienda')}
             </Button>
           </DialogFooter>
         </form>
