@@ -42,8 +42,9 @@ export default function ContactDetail() {
   // Helper functions
   const getCompanyName = (companyId: number | null) => {
     if (!companyId) return null;
-    const company = companies?.find(c => c.id === companyId);
-    return company ? company.name : "Unknown Company";
+    if (!companies || !Array.isArray(companies)) return "Unknown Company";
+    const company = companies.find(c => c && c.id === companyId);
+    return company && company.name ? company.name : "Unknown Company";
   };
   
   const getPrimaryCompany = () => {
@@ -552,7 +553,7 @@ export default function ContactDetail() {
             <CardContent>
               {isLoadingDeals ? (
                 <Skeleton className="h-48 w-full" />
-              ) : relatedDeals && relatedDeals.length > 0 ? (
+              ) : Array.isArray(relatedDeals) && relatedDeals.length > 0 ? (
                 <div className="space-y-4">
                   <div className="overflow-x-auto">
                     <table className="w-full">
@@ -567,12 +568,12 @@ export default function ContactDetail() {
                         </tr>
                       </thead>
                       <tbody>
-                        {relatedDeals.map((deal) => (
-                          <tr key={deal.id} className="hover:bg-muted/50">
-                            <td className="p-2 font-medium">{deal.name}</td>
-                            <td className="p-2">${deal.value?.toLocaleString()}</td>
+                        {relatedDeals.map((deal) => deal ? (
+                          <tr key={deal.id || 'unknown-deal'} className="hover:bg-muted/50">
+                            <td className="p-2 font-medium">{deal.name || 'Unnamed Deal'}</td>
+                            <td className="p-2">${deal.value?.toLocaleString() || '0'}</td>
                             <td className="p-2">{getCompanyName(deal.companyId) || "-"}</td>
-                            <td className="p-2">{deal.stageName}</td>
+                            <td className="p-2">{deal.stageName || 'No Stage'}</td>
                             <td className="p-2">
                               {deal.expectedCloseDate ? (
                                 formatDateToLocal(new Date(deal.expectedCloseDate))
@@ -582,13 +583,13 @@ export default function ContactDetail() {
                               <Button 
                                 variant="ghost" 
                                 size="sm" 
-                                onClick={() => navigate(`/deals/${deal.id}`)}
+                                onClick={() => navigate(`/deals/${deal.id || 0}`)}
                               >
                                 View
                               </Button>
                             </td>
                           </tr>
-                        ))}
+                        ) : null)}
                       </tbody>
                     </table>
                   </div>
