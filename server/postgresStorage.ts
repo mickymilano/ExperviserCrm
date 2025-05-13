@@ -260,10 +260,10 @@ export class PostgresStorage implements IStorage {
   // CONTACTS
   async getContacts(): Promise<Contact[]> {
     // Simplified query without relational features to prevent 'map' errors
-    // Aggiungiamo filtro solo per contatti attivi
+    // Rimosso filtro per status per ottenere tutti i contatti, come per leads
+    console.log("PostgresStorage.getContacts: retrieving all contacts regardless of status");
     return await db.select()
       .from(contacts)
-      .where(eq(contacts.status, 'active')) // Filtro per contatti attivi
       .orderBy(contacts.firstName, contacts.lastName);
   }
 
@@ -387,9 +387,10 @@ export class PostgresStorage implements IStorage {
   // COMPANIES
   async getCompanies(): Promise<Company[]> {
     // Simplified query without relational features
+    // Rimosso filtro per status per ottenere tutte le aziende, come per contatti e leads
+    console.log("PostgresStorage.getCompanies: retrieving all companies regardless of status");
     return await db.select()
       .from(companies)
-      .where(eq(companies.status, 'active')) // Filtro per aziende attive
       .orderBy(companies.name);
   }
 
@@ -453,8 +454,9 @@ export class PostgresStorage implements IStorage {
   // DEALS
   async getDeals(): Promise<Deal[]> {
     // This method is kept for backward compatibility
-    // It now calls getDealsWithFilters with just active status filter
-    return this.getDealsWithFilters({ status: 'active' });
+    // Rimosso filtro per status per ottenere tutti i deal, come per contatti e aziende
+    console.log("PostgresStorage.getDeals: retrieving all deals regardless of status");
+    return this.getDealsWithFilters({}); // Nessun filtro per ottenere tutti i deal
   }
   
   async getDealsWithFilters(filters: {
