@@ -116,8 +116,8 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
     },
     onError: (error) => {
       toast({
-        title: "Error",
-        description: `Failed to ${isEditMode ? 'update' : 'create'} company: ${error.message}`,
+        title: "Errore",
+        description: `Impossibile ${isEditMode ? 'aggiornare' : 'creare'} l'azienda: ${error.message}`,
         variant: "destructive",
       });
     }

@@ -23,9 +23,9 @@ import {
 
 // Schema for form validation
 const companySchema = z.object({
-  name: z.string().min(1, "Company name is required"),
+  name: z.string().min(1, "Nome azienda obbligatorio"),
   industry: z.string().nullable().optional(),
-  email: z.string().email("Please enter a valid email").nullable().optional(),
+  email: z.string().email("Inserisci un'email valida").nullable().optional(),
   phone: z.string().nullable().optional(),
   website: z.string().nullable().optional(),
   // DEPRECATED: old address field - Added 2025-05-13 by Lead Architect: unified location
@@ -147,8 +147,8 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
     },
     onSuccess: () => {
       toast({
-        title: "Success",
-        description: "Company updated successfully",
+        title: "Successo",
+        description: "Azienda aggiornata con successo",
       });
       
       // Invalidate relevant queries
@@ -161,8 +161,8 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: `Failed to update company: ${error.message}`,
+        title: "Errore",
+        description: `Impossibile aggiornare l'azienda: ${error.message}`,
         variant: "destructive",
       });
     }
@@ -178,10 +178,10 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
       <div className="space-y-4">
         {/* Basic Information Section */}
         <div className="mb-6">
-          <h3 className="text-lg font-medium mb-4">Basic Information</h3>
+          <h3 className="text-lg font-medium mb-4">Informazioni di Base</h3>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="name">Company Name *</Label>
+              <Label htmlFor="name">Nome Azienda *</Label>
               <Input 
                 id="name"
                 {...register("name")}
@@ -194,7 +194,7 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="industry">Industry</Label>
+                <Label htmlFor="industry">Settore</Label>
                 <Input 
                   id="industry"
                   {...register("industry")}
@@ -206,21 +206,21 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
               </div>
               
               <div>
-                <Label htmlFor="size">Company Size</Label>
+                <Label htmlFor="size">Dimensione Azienda</Label>
                 <Select 
                   onValueChange={(value) => handleSelectChange("size", value)}
                   defaultValue={customFields.size || ""}
                 >
                   <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select company size" />
+                    <SelectValue placeholder="Seleziona dimensione" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1-10">1-10 employees</SelectItem>
-                    <SelectItem value="11-50">11-50 employees</SelectItem>
-                    <SelectItem value="51-200">51-200 employees</SelectItem>
-                    <SelectItem value="201-500">201-500 employees</SelectItem>
-                    <SelectItem value="501-1000">501-1000 employees</SelectItem>
-                    <SelectItem value="1001+">1001+ employees</SelectItem>
+                    <SelectItem value="1-10">1-10 dipendenti</SelectItem>
+                    <SelectItem value="11-50">11-50 dipendenti</SelectItem>
+                    <SelectItem value="51-200">51-200 dipendenti</SelectItem>
+                    <SelectItem value="201-500">201-500 dipendenti</SelectItem>
+                    <SelectItem value="501-1000">501-1000 dipendenti</SelectItem>
+                    <SelectItem value="1001+">1001+ dipendenti</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -228,22 +228,22 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="yearFounded">Year Founded</Label>
+                <Label htmlFor="yearFounded">Anno di Fondazione</Label>
                 <Input 
                   id="yearFounded"
                   {...register("yearFounded")}
                   className="mt-1"
-                  placeholder="e.g. 2010"
+                  placeholder="es. 2010"
                 />
               </div>
               
               <div>
-                <Label htmlFor="revenue">Annual Revenue</Label>
+                <Label htmlFor="revenue">Fatturato Annuo</Label>
                 <Input 
                   id="revenue"
                   {...register("revenue")}
                   className="mt-1"
-                  placeholder="e.g. $1M - $5M"
+                  placeholder="es. €1M - €5M"
                 />
               </div>
             </div>
@@ -252,7 +252,7 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
         
         {/* Contact Information Section */}
         <div className="mb-6">
-          <h3 className="text-lg font-medium mb-4">Contact Information</h3>
+          <h3 className="text-lg font-medium mb-4">Informazioni di Contatto</h3>
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -269,7 +269,7 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
               </div>
               
               <div>
-                <Label htmlFor="phone">Phone</Label>
+                <Label htmlFor="phone">Telefono</Label>
                 <Input 
                   id="phone"
                   {...register("phone")}
