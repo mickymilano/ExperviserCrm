@@ -372,20 +372,62 @@ export function PlacesAutocomplete({
 
   // Gestione degli eventi di tastiera per permettere selezione con frecce, tab, spazio
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Ottieni il container dei dropdown
+    const pacContainer = document.querySelector('.pac-container');
+    const isDropdownVisible = pacContainer instanceof HTMLElement && 
+                              pacContainer.style.display !== 'none';
+    
+    // Forzare l'evidenziazione sul primo elemento quando si usa la tastiera
+    if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && inputRef.current) {
+      if (!isDropdownVisible) {
+        // Se il dropdown non è visibile, forziamo l'apertura
+        const openDropdownEvent = new Event('focus');
+        inputRef.current.dispatchEvent(openDropdownEvent);
+        
+        // Aggiungi un po' di ritardo per dare tempo al dropdown di aprirsi
+        setTimeout(() => {
+          // Simula un tasto freccia giù per selezionare il primo elemento
+          const arrowDownEvent = new KeyboardEvent('keydown', {
+            bubbles: true,
+            cancelable: true,
+            key: 'ArrowDown',
+            code: 'ArrowDown',
+            keyCode: 40
+          });
+          inputRef.current?.dispatchEvent(arrowDownEvent);
+        }, 50);
+      } else {
+        // Se il dropdown è già aperto, evidenzia il primo elemento se non c'è già una selezione
+        const selectedItem = document.querySelector('.pac-item-selected');
+        if (!selectedItem && e.key === 'ArrowDown') {
+          const firstItem = document.querySelector('.pac-item:first-child');
+          if (firstItem instanceof HTMLElement) {
+            firstItem.classList.add('pac-item-selected');
+          }
+        }
+      }
+    }
+    
     // Gestione specifica per Tab (conferma selezione corrente)
-    if (e.key === 'Tab') {
-      // Permettiamo di completare la selezione, non facciamo nulla di speciale
-      console.log('Tab pressed, selection confirmed');
+    if (e.key === 'Tab' && isDropdownVisible) {
+      console.log('Tab pressed with dropdown open, selecting item');
+      // Seleziona l'elemento attivo o il primo elemento
+      const selectedItem = document.querySelector('.pac-item-selected') || 
+                         document.querySelector('.pac-item:first-child');
+      
+      if (selectedItem instanceof HTMLElement) {
+        selectedItem.click();
+        e.preventDefault(); // Preveniamo il tabbing standard
+      }
     }
     
     // Gestione del tasto Spazio (premuto in un menu dropdown)
     // Se lo spazio viene premuto durante una selezione attiva del dropdown
     // Preveniamo il comportamento di default (aggiungi spazio)
-    if (e.key === ' ' && document.activeElement === inputRef.current) {
-      const pacContainer = document.querySelector('.pac-container');
+    if (e.key === ' ' && document.activeElement === inputRef.current && isDropdownVisible) {
       const pacItem = document.querySelector('.pac-item-selected');
       
-      if (pacContainer && pacContainer.style.display !== 'none' && pacItem) {
+      if (pacItem) {
         // Se c'è un menu autocomplete aperto con selezione attiva,
         // simuliamo un Enter per confermare
         console.log('Space pressed with active selection, simulating Enter');
@@ -398,6 +440,16 @@ export function PlacesAutocomplete({
         });
         inputRef.current?.dispatchEvent(enterEvent);
         e.preventDefault(); // Previene l'inserimento dello spazio
+      }
+    }
+    
+    // Gestione di Enter con dropdown visibile
+    if (e.key === 'Enter' && isDropdownVisible) {
+      const selectedItem = document.querySelector('.pac-item-selected');
+      if (selectedItem instanceof HTMLElement) {
+        console.log('Enter pressed with active selection, forcing click');
+        selectedItem.click();
+        e.preventDefault();
       }
     }
   };
