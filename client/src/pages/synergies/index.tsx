@@ -123,6 +123,22 @@ export default function SynergiesPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-4">
+                {/* Informazioni principali in evidenza */}
+                <div className="grid grid-cols-3 gap-2 mb-4 bg-muted/20 p-2 rounded">
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground">Contatto</p>
+                    <p className="text-sm font-medium">Contatto #{synergy.contactId}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground">Deal</p>
+                    <p className="text-sm font-medium">{synergy.dealId ? `Deal #${synergy.dealId}` : 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground">Data inizio</p>
+                    <p className="text-sm font-medium">{synergy.startDate ? format(new Date(synergy.startDate), 'dd/MM/yyyy') : 'N/A'}</p>
+                  </div>
+                </div>
+                
                 <div className="mb-4">
                   <p className="text-sm text-muted-foreground mb-1">Description</p>
                   <p className="text-sm">
