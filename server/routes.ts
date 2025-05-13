@@ -448,7 +448,9 @@ export function registerRoutes(app: any) {
   // Ottieni tutti i contatti
   app.get('/api/contacts', authenticate, async (req, res) => {
     try {
-      const contacts = await storage.getAllContacts();
+      console.log("API /api/contacts: retrieving contacts from storage");
+      const contacts = await storage.getContacts(); // Cambiato getAllContacts con getContacts
+      console.log(`API /api/contacts: found ${contacts.length} contacts in storage`);
       res.json(contacts);
     } catch (error) {
       console.error('Error fetching contacts:', error);

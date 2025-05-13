@@ -225,9 +225,10 @@ export class PostgresStorage implements IStorage {
 
   // LEADS
   async getLeads(): Promise<Lead[]> {
+    // I lead hanno status diversi (New, Qualified, ecc.)
+    // Rimuoviamo il filtro status e restituiamo tutti
     return await db.select()
       .from(leads)
-      .where(eq(leads.status, 'active')) // Filtro per lead attivi
       .orderBy(leads.firstName, leads.lastName);
   }
 
