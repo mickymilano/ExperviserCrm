@@ -322,9 +322,24 @@ export class PostgresStorage implements IStorage {
     // Simplified query without relational features to prevent 'map' errors
     // Rimosso filtro per status per ottenere tutti i contatti, come per leads
     console.log("PostgresStorage.getContacts: retrieving all contacts regardless of status");
-    return await db.select()
+    try {
+      // Seleziona solo le colonne che esistono sicuramente
+      return await db.select({
+        id: contacts.id,
+        firstName: contacts.firstName,
+        lastName: contacts.lastName,
+        email: contacts.email,
+        status: contacts.status,
+        avatar: contacts.avatar,
+        createdAt: contacts.createdAt,
+        updatedAt: contacts.updatedAt
+      })
       .from(contacts)
       .orderBy(contacts.firstName, contacts.lastName);
+    } catch (error) {
+      console.error("Error in getContacts:", error);
+      return [];
+    }
   }
   
   async getAllContacts(): Promise<Contact[]> {
@@ -481,9 +496,23 @@ export class PostgresStorage implements IStorage {
     // Simplified query without relational features
     // Rimosso filtro per status per ottenere tutte le aziende, come per contatti e leads
     console.log("PostgresStorage.getCompanies: retrieving all companies regardless of status");
-    return await db.select()
+    try {
+      // Seleziona solo le colonne che esistono sicuramente
+      return await db.select({
+        id: companies.id,
+        name: companies.name,
+        website: companies.website,
+        email: companies.email,
+        status: companies.status,
+        createdAt: companies.createdAt,
+        updatedAt: companies.updatedAt
+      })
       .from(companies)
       .orderBy(companies.name);
+    } catch (error) {
+      console.error("Error in getCompanies:", error);
+      return [];
+    }
   }
   
   async getAllCompanies(): Promise<Company[]> {
