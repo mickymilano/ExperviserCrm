@@ -354,44 +354,385 @@ export class PostgresStorage implements IStorage {
   
   // SYNERGIES
   async getAllSynergies(): Promise<Synergy[]> {
-    return await db.select().from(synergies);
+    try {
+      console.log("PostgresStorage.getAllSynergies: recuperando tutte le sinergie");
+      
+      // Utilizziamo SQL nativo per avere più controllo
+      const result = await pool.query(`
+        SELECT 
+          id,
+          contact_id, 
+          company_id, 
+          deal_id,
+          type,
+          description,
+          status,
+          created_at,
+          updated_at
+        FROM synergies
+        ORDER BY created_at DESC
+      `);
+      
+      console.log(`getAllSynergies: Found ${result.rows.length} synergies`);
+      
+      // Adattiamo il formato per essere compatibile con quello che si aspetta il frontend
+      return result.rows.map(synergy => {
+        return {
+          id: synergy.id,
+          contactId: synergy.contact_id,
+          companyId: synergy.company_id,
+          dealId: synergy.deal_id,
+          type: synergy.type || "business",
+          description: synergy.description || "",
+          status: synergy.status || "Active",
+          createdAt: synergy.created_at,
+          updatedAt: synergy.updated_at
+        };
+      });
+    } catch (error) {
+      console.error("Error in getAllSynergies:", error);
+      return [];
+    }
+  }
+  
+  async getSynergiesCount(): Promise<number> {
+    try {
+      console.log("PostgresStorage.getSynergiesCount: retrieving synergies count");
+      
+      const queryStr = `SELECT COUNT(*) as count FROM synergies`;
+      const result = await pool.query(queryStr);
+      
+      console.log(`Retrieved ${result.rows[0].count} synergies count`);
+      
+      return parseInt(result.rows[0].count) || 0;
+    } catch (error) {
+      console.error("Error in getSynergiesCount:", error);
+      return 0;
+    }
   }
   
   async getSynergiesByContactId(contactId: number): Promise<Synergy[]> {
-    return await db.select().from(synergies).where(eq(synergies.contactId, contactId));
+    try {
+      console.log(`PostgresStorage.getSynergiesByContactId: retrieving synergies for contact ${contactId}`);
+      
+      const result = await pool.query(`
+        SELECT 
+          id,
+          contact_id, 
+          company_id, 
+          deal_id,
+          type,
+          description,
+          status,
+          created_at,
+          updated_at
+        FROM synergies
+        WHERE contact_id = $1
+        ORDER BY created_at DESC
+      `, [contactId]);
+      
+      // Adattiamo il formato per essere compatibile con quello che si aspetta il frontend
+      return result.rows.map(synergy => {
+        return {
+          id: synergy.id,
+          contactId: synergy.contact_id,
+          companyId: synergy.company_id,
+          dealId: synergy.deal_id,
+          type: synergy.type || "business",
+          description: synergy.description || "",
+          status: synergy.status || "Active",
+          createdAt: synergy.created_at,
+          updatedAt: synergy.updated_at
+        };
+      });
+    } catch (error) {
+      console.error(`Error in getSynergiesByContactId(${contactId}):`, error);
+      return [];
+    }
   }
   
   async getSynergiesByCompanyId(companyId: number): Promise<Synergy[]> {
-    return await db.select().from(synergies).where(eq(synergies.companyId, companyId));
+    try {
+      console.log(`PostgresStorage.getSynergiesByCompanyId: retrieving synergies for company ${companyId}`);
+      
+      const result = await pool.query(`
+        SELECT 
+          id,
+          contact_id, 
+          company_id, 
+          deal_id,
+          type,
+          description,
+          status,
+          created_at,
+          updated_at
+        FROM synergies
+        WHERE company_id = $1
+        ORDER BY created_at DESC
+      `, [companyId]);
+      
+      // Adattiamo il formato per essere compatibile con quello che si aspetta il frontend
+      return result.rows.map(synergy => {
+        return {
+          id: synergy.id,
+          contactId: synergy.contact_id,
+          companyId: synergy.company_id,
+          dealId: synergy.deal_id,
+          type: synergy.type || "business",
+          description: synergy.description || "",
+          status: synergy.status || "Active",
+          createdAt: synergy.created_at,
+          updatedAt: synergy.updated_at
+        };
+      });
+    } catch (error) {
+      console.error(`Error in getSynergiesByCompanyId(${companyId}):`, error);
+      return [];
+    }
   }
   
   async getSynergiesByDealId(dealId: number): Promise<Synergy[]> {
-    return await db.select().from(synergies).where(eq(synergies.dealId, dealId));
+    try {
+      console.log(`PostgresStorage.getSynergiesByDealId: retrieving synergies for deal ${dealId}`);
+      
+      const result = await pool.query(`
+        SELECT 
+          id,
+          contact_id, 
+          company_id, 
+          deal_id,
+          type,
+          description,
+          status,
+          created_at,
+          updated_at
+        FROM synergies
+        WHERE deal_id = $1
+        ORDER BY created_at DESC
+      `, [dealId]);
+      
+      // Adattiamo il formato per essere compatibile con quello che si aspetta il frontend
+      return result.rows.map(synergy => {
+        return {
+          id: synergy.id,
+          contactId: synergy.contact_id,
+          companyId: synergy.company_id,
+          dealId: synergy.deal_id,
+          type: synergy.type || "business",
+          description: synergy.description || "",
+          status: synergy.status || "Active",
+          createdAt: synergy.created_at,
+          updatedAt: synergy.updated_at
+        };
+      });
+    } catch (error) {
+      console.error(`Error in getSynergiesByDealId(${dealId}):`, error);
+      return [];
+    }
   }
   
   async getSynergyById(id: number): Promise<Synergy | undefined> {
-    const [synergy] = await db.select().from(synergies).where(eq(synergies.id, id));
-    return synergy;
+    try {
+      console.log(`PostgresStorage.getSynergyById: retrieving synergy ${id}`);
+      
+      const result = await pool.query(`
+        SELECT 
+          id,
+          contact_id, 
+          company_id, 
+          deal_id,
+          type,
+          description,
+          status,
+          created_at,
+          updated_at
+        FROM synergies
+        WHERE id = $1
+      `, [id]);
+      
+      if (result.rows.length === 0) {
+        return undefined;
+      }
+      
+      const synergy = result.rows[0];
+      
+      // Adattiamo il formato per essere compatibile con quello che si aspetta il frontend
+      return {
+        id: synergy.id,
+        contactId: synergy.contact_id,
+        companyId: synergy.company_id,
+        dealId: synergy.deal_id,
+        type: synergy.type || "business",
+        description: synergy.description || "",
+        status: synergy.status || "Active",
+        createdAt: synergy.created_at,
+        updatedAt: synergy.updated_at
+      };
+    } catch (error) {
+      console.error(`Error in getSynergyById(${id}):`, error);
+      return undefined;
+    }
   }
   
   async createSynergy(synergyData: InsertSynergy): Promise<Synergy> {
-    const [newSynergy] = await db.insert(synergies).values(synergyData).returning();
-    return newSynergy;
+    try {
+      console.log(`PostgresStorage.createSynergy: creating new synergy`);
+      
+      const result = await pool.query(`
+        INSERT INTO synergies (
+          contact_id, 
+          company_id, 
+          deal_id,
+          type,
+          description,
+          status,
+          created_at,
+          updated_at
+        ) VALUES (
+          $1, $2, $3, $4, $5, $6, NOW(), NOW()
+        ) RETURNING 
+          id,
+          contact_id, 
+          company_id, 
+          deal_id,
+          type,
+          description,
+          status,
+          created_at,
+          updated_at
+      `, [
+        synergyData.contactId,
+        synergyData.companyId,
+        synergyData.dealId || null,
+        synergyData.type || "business",
+        synergyData.description || "",
+        synergyData.status || "Active"
+      ]);
+      
+      const newSynergy = result.rows[0];
+      
+      // Adattiamo il formato per essere compatibile con quello che si aspetta il frontend
+      return {
+        id: newSynergy.id,
+        contactId: newSynergy.contact_id,
+        companyId: newSynergy.company_id,
+        dealId: newSynergy.deal_id,
+        type: newSynergy.type || "business",
+        description: newSynergy.description || "",
+        status: newSynergy.status || "Active",
+        createdAt: newSynergy.created_at,
+        updatedAt: newSynergy.updated_at
+      };
+    } catch (error) {
+      console.error("Error in createSynergy:", error);
+      throw new Error("Failed to create synergy");
+    }
   }
   
   async updateSynergy(id: number, synergyData: Partial<InsertSynergy>): Promise<Synergy | undefined> {
-    const [updatedSynergy] = await db
-      .update(synergies)
-      .set({ ...synergyData, updatedAt: new Date() })
-      .where(eq(synergies.id, id))
-      .returning();
-    
-    return updatedSynergy;
+    try {
+      console.log(`PostgresStorage.updateSynergy: updating synergy ${id}`);
+      
+      // Costruiamo dinamicamente la query di aggiornamento
+      let updateFields = [];
+      let params = [];
+      let paramCounter = 1;
+      
+      // Aggiungiamo solo i campi che esistono nel synergyData
+      if (synergyData.contactId !== undefined) {
+        updateFields.push(`contact_id = $${paramCounter++}`);
+        params.push(synergyData.contactId);
+      }
+      
+      if (synergyData.companyId !== undefined) {
+        updateFields.push(`company_id = $${paramCounter++}`);
+        params.push(synergyData.companyId);
+      }
+      
+      if (synergyData.dealId !== undefined) {
+        updateFields.push(`deal_id = $${paramCounter++}`);
+        params.push(synergyData.dealId);
+      }
+      
+      if (synergyData.type !== undefined) {
+        updateFields.push(`type = $${paramCounter++}`);
+        params.push(synergyData.type);
+      }
+      
+      if (synergyData.description !== undefined) {
+        updateFields.push(`description = $${paramCounter++}`);
+        params.push(synergyData.description);
+      }
+      
+      if (synergyData.status !== undefined) {
+        updateFields.push(`status = $${paramCounter++}`);
+        params.push(synergyData.status);
+      }
+      
+      // Aggiungiamo sempre l'updated_at
+      updateFields.push(`updated_at = NOW()`);
+      
+      // Se non ci sono campi da aggiornare, restituiamo la sinergia esistente
+      if (updateFields.length === 1) {
+        return this.getSynergyById(id);
+      }
+      
+      // Aggiungiamo l'id come ultimo parametro
+      params.push(id);
+      
+      const result = await pool.query(`
+        UPDATE synergies SET ${updateFields.join(', ')}
+        WHERE id = $${paramCounter}
+        RETURNING 
+          id,
+          contact_id, 
+          company_id, 
+          deal_id,
+          type,
+          description,
+          status,
+          created_at,
+          updated_at
+      `, params);
+      
+      if (result.rows.length === 0) {
+        return undefined;
+      }
+      
+      const updatedSynergy = result.rows[0];
+      
+      // Adattiamo il formato per essere compatibile con quello che si aspetta il frontend
+      return {
+        id: updatedSynergy.id,
+        contactId: updatedSynergy.contact_id,
+        companyId: updatedSynergy.company_id,
+        dealId: updatedSynergy.deal_id,
+        type: updatedSynergy.type || "business",
+        description: updatedSynergy.description || "",
+        status: updatedSynergy.status || "Active",
+        createdAt: updatedSynergy.created_at,
+        updatedAt: updatedSynergy.updated_at
+      };
+    } catch (error) {
+      console.error(`Error in updateSynergy(${id}):`, error);
+      return undefined;
+    }
   }
   
   async deleteSynergy(id: number): Promise<boolean> {
-    const result = await db.delete(synergies).where(eq(synergies.id, id));
-    return result.rowCount > 0;
+    try {
+      console.log(`PostgresStorage.deleteSynergy: deleting synergy ${id}`);
+      
+      const result = await pool.query(`
+        DELETE FROM synergies
+        WHERE id = $1
+      `, [id]);
+      
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error(`Error in deleteSynergy(${id}):`, error);
+      return false;
+    }
   }
   
   // Metodi per AreaOfActivity
