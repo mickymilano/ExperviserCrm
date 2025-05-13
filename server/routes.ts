@@ -1455,29 +1455,16 @@ export function registerRoutes(app: any) {
         };
       });
       
-      // Crea oggetto dashboard
+      // Crea oggetto dashboard con il formato che il frontend si aspetta
       const dashboardData = {
         summary: {
-          contacts: {
-            count: contactsCount,
-            percentChange: 5.2 // Simulato, implementare logica reale in futuro
-          },
-          companies: {
-            count: companiesCount,
-            percentChange: 2.8 // Simulato, implementare logica reale in futuro
-          },
-          deals: {
-            count: dealsCount,
-            percentChange: -1.5 // Simulato, implementare logica reale in futuro
-          },
-          leads: {
-            count: leadsCount,
-            percentChange: 8.4 // Simulato, implementare logica reale in futuro
-          },
-          emails: {
-            count: emails.length,
-            unread: emails.filter(email => !email.read).length
-          }
+          // Adattiamo i dati al formato che il componente SummaryCards si aspetta
+          openDeals: dealsCount,
+          totalDealValue: activeDeals.reduce((sum, deal) => sum + (parseFloat(deal.value || '0') || 0), 0),
+          activeContacts: contactsCount,
+          totalCompanies: companiesCount,
+          upcomingTasksCount: 0, // Da implementare
+          overdueTasksCount: 0   // Da implementare
         },
         dealsByStage,
         recentActivities: sortedActivities,
