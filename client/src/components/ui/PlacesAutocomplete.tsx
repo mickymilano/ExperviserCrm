@@ -158,37 +158,94 @@ export function PlacesAutocomplete({
         componentRestrictions: { country: "it" }
       });
 
-      // Aggiunta di un event listener per Enter e click, per supportare
-      // la conferma della selezione anche con click del mouse o tastiera
-      const handleSelect = () => {
-        console.log('Selection confirmed via Enter, Tab, Space, or click');
-        
-        // Piccolo ritardo per assicurarsi che il valore sia stato aggiornato
-        setTimeout(() => {
-          if (inputRef.current) {
-            setInputValue(inputRef.current.value);
-            onChange(inputRef.current.value);
-          }
-        }, 10); 
+      // CORREZIONE: Forza la visualizzazione dei risultati sulla selezione
+      // Questa è una correzione importante per assicurarsi che i risultati
+      // dell'autocomplete siano effettivamente visibili e selezionabili
+      const handleForcedVisibility = () => {
+        // Forza la visualizzazione del container dei risultati
+        const pacContainer = document.querySelector('.pac-container');
+        if (pacContainer instanceof HTMLElement) {
+          pacContainer.style.display = 'block';
+          pacContainer.style.visibility = 'visible';
+          pacContainer.style.opacity = '1';
+        }
       };
       
-      // Aggiungiamo listener per click sui risultati
-      document.addEventListener('mousedown', (e) => {
-        const target = e.target as HTMLElement;
-        if (target.classList.contains('pac-item') || 
-            target.parentElement?.classList.contains('pac-item')) {
-          handleSelect();
-        }
-      });
+      // Assicuriamoci che sia visibile quando l'utente clicca
+      inputRef.current.addEventListener('focus', handleForcedVisibility);
+      inputRef.current.addEventListener('click', handleForcedVisibility);
       
-      // Aggiungiamo listener per tastiera
-      inputRef.current.addEventListener('keydown', (e) => {
-        // Se viene premuto Enter, Tab o Space mentre il dropdown è aperto
-        if ((e.key === 'Enter' || e.key === 'Tab' || e.key === ' ') && 
-            document.querySelector('.pac-container')?.style.display !== 'none') {
-          handleSelect();
+      // Correzione per forzare la selezione quando viene rilevato un click sui risultati
+      const handleDirectSelection = (e: MouseEvent) => {
+        const target = e.target as HTMLElement;
+        
+        // Se l'utente clicca su un elemento dei risultati
+        if (target.classList.contains('pac-item') || 
+            (target.parentElement && target.parentElement.classList.contains('pac-item'))) {
+          console.log('Direct click on result item detected');
+          
+          // Simula la pressione del tasto Enter per confermare la selezione
+          const enterEvent = new KeyboardEvent('keydown', {
+            bubbles: true,
+            cancelable: true,
+            key: 'Enter',
+            code: 'Enter',
+            keyCode: 13
+          });
+          
+          inputRef.current?.dispatchEvent(enterEvent);
+          e.stopPropagation(); // Ferma la propagazione dell'evento
+          e.preventDefault(); // Previene il comportamento di default
         }
-      });
+      };
+      
+      // Aggiungiamo listener per click sui risultati a livello di documento
+      document.addEventListener('mousedown', handleDirectSelection, true);
+      
+      // Gestione più robusta degli eventi di tastiera
+      const handleKeyboardNavigation = (e: KeyboardEvent) => {
+        // Otteniamo il container dei risultati
+        const pacContainer = document.querySelector('.pac-container');
+        const isDropdownVisible = pacContainer instanceof HTMLElement && 
+                                  pacContainer.style.display !== 'none';
+        
+        if (isDropdownVisible) {
+          // Forza la visibilità dei risultati
+          handleForcedVisibility();
+          
+          // Gestisce INVIO, TAB, SPAZIO per confermare selezione
+          if (e.key === 'Enter' || e.key === 'Tab' || e.key === ' ') {
+            console.log('Selection key pressed while dropdown is visible:', e.key);
+            
+            // Simula un click sul primo elemento selezionato
+            const selectedItem = document.querySelector('.pac-item-selected') || 
+                                document.querySelector('.pac-item:first-child');
+            
+            if (selectedItem instanceof HTMLElement) {
+              console.log('Simulating click on selected item');
+              selectedItem.click();
+              
+              // Per sicurezza forziamo anche un evento place_changed
+              setTimeout(() => {
+                if (autocompleteRef.current) {
+                  const place = autocompleteRef.current.getPlace();
+                  if (place) {
+                    onChange(place.formatted_address || inputRef.current?.value || '', place);
+                  }
+                }
+              }, 50);
+            }
+            
+            // Preveniamo il comportamento di default solo per spazio
+            if (e.key === ' ') {
+              e.preventDefault();
+            }
+          }
+        }
+      };
+      
+      // Registra l'ascoltatore per la navigazione da tastiera
+      inputRef.current.addEventListener('keydown', handleKeyboardNavigation);
 
       // Gestisce l'evento di selezione del luogo
       const listener = autocompleteRef.current.addListener('place_changed', () => {
