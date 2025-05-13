@@ -442,16 +442,16 @@ export class PostgresStorage implements IStorage {
       const result = await pool.query(`
         SELECT 
           id, 
-          first_name as "firstName",
-          middle_name as "middleName",
-          last_name as "lastName",
-          company_name as "companyName", 
+          first_name,
+          middle_name,
+          last_name,
+          company_name, 
           role,
-          mobile_phone as "mobilePhone",
-          company_email as "companyEmail",
-          private_email as "privateEmail",
-          office_phone as "officePhone",
-          private_phone as "privatePhone",
+          mobile_phone,
+          company_email,
+          private_email,
+          office_phone,
+          private_phone,
           linkedin,
           facebook,
           instagram,
@@ -461,28 +461,42 @@ export class PostgresStorage implements IStorage {
           status, 
           tags,
           notes, 
-          assigned_to_id as "assignedToId",
-          custom_fields as "customFields",
-          created_at as "createdAt", 
-          updated_at as "updatedAt"
+          assigned_to_id,
+          custom_fields,
+          created_at, 
+          updated_at
         FROM leads 
         ORDER BY first_name, last_name
       `);
       
       console.log(`getLeads: Found ${result.rows.length} leads`);
       
-      // Adattiamo il formato per essere compatibile con lo schema
+      // Adattiamo il formato per essere compatibile con quello che si aspetta il frontend
       return result.rows.map(lead => {
+        const phone = lead.mobile_phone || lead.office_phone || lead.private_phone || '';
+        const email = lead.company_email || lead.private_email || '';
+        
         return {
           id: lead.id,
-          firstName: lead.firstName || "",
-          lastName: lead.lastName || "",
-          name: `${lead.firstName || ""} ${lead.lastName || ""}`.trim(),
-          status: lead.status || "New",
+          firstName: lead.first_name || "",
+          lastName: lead.last_name || "",
+          // Il frontend usa name in alcuni punti
+          name: `${lead.first_name || ""} ${lead.last_name || ""}`.trim(),
+          // Il frontend usa email/phone invece delle versioni specifiche
+          email: email,
+          phone: phone,
+          companyName: lead.company_name || "",
+          companyEmail: lead.company_email || "",
+          privateEmail: lead.private_email || "",
+          mobilePhone: lead.mobile_phone || "",
+          officePhone: lead.office_phone || "",
+          privatePhone: lead.private_phone || "",
+          status: lead.status || "new",
           source: lead.source || "",
-          companyName: lead.companyName || "",
           notes: lead.notes || "",
-          ...lead
+          tags: lead.tags || [],
+          createdAt: lead.created_at,
+          updatedAt: lead.updated_at
         };
       });
     } catch (error) {
