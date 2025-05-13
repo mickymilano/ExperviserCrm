@@ -527,22 +527,64 @@ export class PostgresStorage implements IStorage {
       const result = await pool.query(`
         SELECT 
           id, 
-          name, 
-          status, 
+          first_name,
+          middle_name,
+          last_name,
+          company_name, 
+          role,
+          mobile_phone,
+          company_email,
+          private_email,
+          office_phone,
+          private_phone,
+          linkedin,
+          facebook,
+          instagram,
+          tiktok,
+          website,
           source, 
+          status, 
+          tags,
           notes, 
-          company_name as "companyName", 
-          job_title as "jobTitle", 
-          lead_owner as "leadOwner", 
-          created_at as "createdAt", 
-          updated_at as "updatedAt"
+          assigned_to_id,
+          custom_fields,
+          created_at, 
+          updated_at
         FROM leads 
         WHERE id = $1
       `, [id]);
       
-      return result.rows.length > 0 ? result.rows[0] : undefined;
+      if (result.rows.length === 0) {
+        return undefined;
+      }
+      
+      const lead = result.rows[0];
+      const phone = lead.mobile_phone || lead.office_phone || lead.private_phone || '';
+      const email = lead.company_email || lead.private_email || '';
+      
+      // Adaptiamo il formato per essere compatibile con il frontend
+      return {
+        id: lead.id,
+        firstName: lead.first_name || "",
+        lastName: lead.last_name || "",
+        name: `${lead.first_name || ""} ${lead.last_name || ""}`.trim(),
+        email: email,
+        phone: phone,
+        companyName: lead.company_name || "",
+        companyEmail: lead.company_email || "",
+        privateEmail: lead.private_email || "",
+        mobilePhone: lead.mobile_phone || "",
+        officePhone: lead.office_phone || "",
+        privatePhone: lead.private_phone || "",
+        status: lead.status || "new",
+        source: lead.source || "",
+        notes: lead.notes || "",
+        tags: lead.tags || [],
+        createdAt: lead.created_at,
+        updatedAt: lead.updated_at
+      };
     } catch (error) {
-      console.error("Error in getLead:", error);
+      console.error(`Error in getLead(${id}):`, error);
       return undefined;
     }
   }
