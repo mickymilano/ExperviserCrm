@@ -15,9 +15,38 @@ export default function SynergiesPage() {
   // const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingSynergy, setEditingSynergy] = useState<any>(null);
   const [, navigate] = useLocation();
+  // Recuperare dati di contatti e aziende per mostrare i nomi invece degli ID
+  const { data: contacts = [] } = useQuery<any[]>({
+    queryKey: ['/api/contacts'],
+  });
+  
+  const { data: companies = [] } = useQuery<any[]>({
+    queryKey: ['/api/companies'],
+  });
+  
+  const { data: deals = [] } = useQuery<any[]>({
+    queryKey: ['/api/deals'],
+  });
+  
   const { data: synergies = [], isLoading, refetch } = useQuery<any[]>({
     queryKey: ['/api/synergies'],
   });
+
+  // Funzioni di utilità per recuperare i nomi dalle liste
+  const getContactName = (contactId: number) => {
+    const contact = contacts.find((c: any) => c.id === contactId);
+    return contact ? `${contact.firstName} ${contact.lastName}` : `Contatto #${contactId}`;
+  };
+  
+  const getCompanyName = (companyId: number) => {
+    const company = companies.find((c: any) => c.id === companyId);
+    return company ? company.name : `Azienda #${companyId}`;
+  };
+  
+  const getDealName = (dealId: number) => {
+    const deal = deals.find((d: any) => d.id === dealId);
+    return deal ? deal.title || `Deal #${dealId}` : `Deal #${dealId}`;
+  };
 
   const handleEditSynergy = (synergy: any) => {
     // DISABLED: Synergy actions only allowed in DealModal
@@ -127,11 +156,11 @@ export default function SynergiesPage() {
                 <div className="grid grid-cols-3 gap-2 mb-4 bg-muted/20 p-2 rounded">
                   <div>
                     <p className="text-xs font-medium text-muted-foreground">Contatto</p>
-                    <p className="text-sm font-medium">Contatto #{synergy.contactId}</p>
+                    <p className="text-sm font-medium">{getContactName(synergy.contactId)}</p>
                   </div>
                   <div>
                     <p className="text-xs font-medium text-muted-foreground">Deal</p>
-                    <p className="text-sm font-medium">{synergy.dealId ? `Deal #${synergy.dealId}` : 'N/A'}</p>
+                    <p className="text-sm font-medium">{synergy.dealId ? getDealName(synergy.dealId) : 'N/A'}</p>
                   </div>
                   <div>
                     <p className="text-xs font-medium text-muted-foreground">Data inizio</p>
@@ -157,7 +186,7 @@ export default function SynergiesPage() {
                       }}
                     >
                       <User className="h-3 w-3 mr-1" />
-                      View Contact
+                      {getContactName(synergy.contactId)}
                     </Button>
                   </div>
                   <div>
@@ -171,7 +200,7 @@ export default function SynergiesPage() {
                       }}
                     >
                       <Building className="h-3 w-3 mr-1" />
-                      View Company
+                      {getCompanyName(synergy.companyId)}
                     </Button>
                   </div>
                 </div>
@@ -187,7 +216,7 @@ export default function SynergiesPage() {
                       }}
                     >
                       <DollarSign className="h-3 w-3 mr-1" />
-                      View Deal #{synergy.dealId}
+                      {getDealName(synergy.dealId)}
                     </Button>
                   </div>
                 )}
