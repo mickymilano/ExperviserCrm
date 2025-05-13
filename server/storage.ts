@@ -45,6 +45,7 @@ export interface IStorage {
   // Deal operations
   getDeal(id: number): Promise<Deal | null>;
   getAllDeals(): Promise<Deal[]>;
+  getDealsWithFilters(filters: { status?: string; companyId?: number; contactId?: number }): Promise<Deal[]>;
   createDeal(dealData: InsertDeal): Promise<Deal>;
   updateDeal(id: number, dealData: Partial<Deal>): Promise<Deal>;
   deleteDeal(id: number): Promise<void>;
@@ -131,6 +132,24 @@ export class MemStorage implements IStorage {
   
   async getCompaniesCount(): Promise<number> {
     return this.companies.length;
+  }
+  
+  async getDealsWithFilters(filters: { status?: string; companyId?: number; contactId?: number }): Promise<Deal[]> {
+    let filteredDeals = [...this.deals];
+    
+    if (filters.status) {
+      filteredDeals = filteredDeals.filter(deal => deal.status === filters.status);
+    }
+    
+    if (filters.companyId) {
+      filteredDeals = filteredDeals.filter(deal => deal.companyId === filters.companyId);
+    }
+    
+    if (filters.contactId) {
+      filteredDeals = filteredDeals.filter(deal => deal.contactId === filters.contactId);
+    }
+    
+    return filteredDeals;
   }
   
   async getDealsCount(options?: { status?: string }): Promise<number> {

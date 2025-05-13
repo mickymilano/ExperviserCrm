@@ -18,7 +18,7 @@ export default function Deals() {
   const [showModal, setShowModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [viewType, setViewType] = useState<"board" | "list">("board");
-  const { deals, isLoading } = useDeals();
+  const { deals, isLoading } = useDeals({ status: 'active' });
   const { data: stages, isLoading: isLoadingStages } = usePipelineStages();
   const { contacts, isLoading: isLoadingContacts } = useContacts();
   const { companies, isLoading: isLoadingCompanies } = useCompanies();

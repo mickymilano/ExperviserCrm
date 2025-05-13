@@ -958,7 +958,12 @@ export function registerRoutes(app: any) {
   // Ottieni tutti i deal
   app.get('/api/deals', authenticate, async (req, res) => {
     try {
-      const deals = await storage.getAllDeals();
+      const { status } = req.query;
+      // Filtra i deals in base allo status (se specificato)
+      const deals = status 
+        ? await storage.getDealsWithFilters({ status: status as string }) 
+        : await storage.getDealsWithFilters({ status: 'active' }); // Default a 'active'
+      
       res.json(deals);
     } catch (error) {
       console.error('Error fetching deals:', error);

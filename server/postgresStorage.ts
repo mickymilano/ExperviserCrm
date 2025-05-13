@@ -441,8 +441,34 @@ export class PostgresStorage implements IStorage {
 
   // DEALS
   async getDeals(): Promise<Deal[]> {
-    // Using a simpler approach without relational queries
-    const dealsResult = await db.select().from(deals).orderBy(asc(deals.stageId), desc(deals.value));
+    // This method is kept for backward compatibility
+    // It now calls getDealsWithFilters without any filters
+    return this.getDealsWithFilters({});
+  }
+  
+  async getDealsWithFilters(filters: {
+    status?: string;
+    companyId?: number;
+    contactId?: number;
+  }): Promise<Deal[]> {
+    // Build query with appropriate filters
+    let query = db.select().from(deals);
+    
+    // Apply filters
+    if (filters.status) {
+      query = query.where(eq(deals.status, filters.status));
+    }
+    
+    if (filters.companyId) {
+      query = query.where(eq(deals.companyId, filters.companyId));
+    }
+    
+    if (filters.contactId) {
+      query = query.where(eq(deals.contactId, filters.contactId));
+    }
+    
+    // Order the results
+    const dealsResult = await query.orderBy(asc(deals.stageId), desc(deals.value));
     
     // Manually populate relations
     const result = [];
