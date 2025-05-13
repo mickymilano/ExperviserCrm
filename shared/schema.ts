@@ -47,9 +47,9 @@ export const users = pgTable('users', {
     .$type<typeof userStatusEnum[number]>()
     .default('active')
     .notNull(),
-  // email_verified non esiste nel database reale, quindi lo rimuoviamo
-  // emailVerified: boolean('email_verified').default(false),
-  // Campi allineati con il database reale
+  // Colonna email_verified aggiunta al database
+  emailVerified: boolean('email_verified').default(false),
+  // Altri campi allineati con il database reale
   loginAttempts: integer('login_attempts').default(0),
   resetPasswordToken: varchar('reset_password_token', { length: 255 }),
   resetPasswordExpires: timestamp('reset_password_expires'),

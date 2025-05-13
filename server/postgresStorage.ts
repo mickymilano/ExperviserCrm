@@ -258,6 +258,23 @@ export class PostgresStorage implements IStorage {
       .from(contacts)
       .orderBy(contacts.firstName, contacts.lastName);
   }
+  
+  async getAllContacts(): Promise<Contact[]> {
+    // Metodo alias per compatibilità con l'interfaccia
+    return this.getContacts();
+  }
+
+  async getContactsCount(): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)` }).from(contacts);
+    return result[0].count;
+  }
+
+  async getRecentContacts(limit: number = 5): Promise<Contact[]> {
+    return db.select()
+      .from(contacts)
+      .orderBy(desc(contacts.updatedAt))
+      .limit(limit);
+  }
 
   async getContactsByCompany(companyId: number): Promise<Contact[]> {
     // Simplified query without relational features - find contacts by areas of activity
