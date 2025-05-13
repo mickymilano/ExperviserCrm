@@ -1250,7 +1250,7 @@ export class PostgresStorage implements IStorage {
           updated_at as "updatedAt" 
         FROM contacts 
         WHERE id = $1`,
-        [id]
+        [id.toString()]  // Assicurati che il parametro sia passato come stringa
       );
       
       if (!result.rows || result.rows.length === 0) {
@@ -1258,6 +1258,7 @@ export class PostgresStorage implements IStorage {
       }
       
       const contact = result.rows[0];
+      console.log("Retrieved contact:", contact);
       
       // Separately get areas of activity
       const areas = await db.select().from(areasOfActivity).where(eq(areasOfActivity.contactId, id));
