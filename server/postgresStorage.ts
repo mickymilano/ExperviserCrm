@@ -1226,49 +1226,49 @@ export class PostgresStorage implements IStorage {
 
   async getContact(id: number): Promise<Contact | undefined> {
     try {
-      // Usa SQL esplicito per evitare errori di mapping colonne
-      const result = await db.execute(
-        `SELECT 
-          id, 
-          first_name as "firstName", 
-          last_name as "lastName",
-          middle_name as "middleName",
-          status, 
-          company_email as "companyEmail", 
-          private_email as "privateEmail", 
-          mobile_phone as "mobilePhone", 
-          office_phone as "officePhone",
-          private_phone as "privatePhone",
-          linkedin,
-          facebook,
-          instagram,
-          tiktok,
-          tags,
-          notes,
-          custom_fields as "customFields",
-          created_at as "createdAt", 
-          updated_at as "updatedAt" 
-        FROM contacts 
-        WHERE id = $1`,
-        [id.toString()]  // Assicurati che il parametro sia passato come stringa
-      );
+      const [row] = await db
+        .select({
+          id: contacts.id,
+          firstName: contacts.first_name,
+          middleName: contacts.middle_name,
+          lastName: contacts.last_name,
+          mobilePhone: contacts.mobile_phone,
+          officePhone: contacts.office_phone,
+          privatePhone: contacts.private_phone,
+          companyEmail: contacts.company_email,
+          privateEmail: contacts.private_email,
+          linkedin: contacts.linkedin,
+          facebook: contacts.facebook,
+          instagram: contacts.instagram,
+          tiktok: contacts.tiktok,
+          tags: contacts.tags,
+          roles: contacts.roles,
+          notes: contacts.notes,
+          customFields: contacts.custom_fields,
+          status: contacts.status,
+          lastContactedAt: contacts.last_contacted_at,
+          nextFollowUpAt: contacts.next_follow_up_at,
+          createdAt: contacts.created_at,
+          updatedAt: contacts.updated_at,
+        })
+        .from(contacts)
+        .where(eq(contacts.id, id));
       
-      if (!result.rows || result.rows.length === 0) {
+      if (!row) {
         return undefined;
       }
       
-      const contact = result.rows[0];
-      console.log("Retrieved contact:", contact);
+      console.log("Retrieved contact:", row);
       
       // Separately get areas of activity
       const areas = await db.select().from(areasOfActivity).where(eq(areasOfActivity.contactId, id));
       
       // Create compatibility fields for backward compatibility
       const compatibleContact: Contact = {
-        ...contact,
+        ...row,
         // Backward compatibility fields
-        email: contact.companyEmail || contact.privateEmail || null,
-        phone: contact.mobilePhone || contact.officePhone || contact.privatePhone || null,
+        email: row.companyEmail || row.privateEmail || null,
+        phone: row.mobilePhone || row.officePhone || row.privatePhone || null,
         areasOfActivity: areas || []
       };
       
