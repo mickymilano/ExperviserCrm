@@ -25,10 +25,7 @@ export function useCreateEmailAccount() {
   
   return useMutation({
     mutationFn: async (account: Omit<EmailAccount, "id">) => {
-      return await apiRequest("/api/email/accounts", {
-        method: "POST",
-        body: JSON.stringify(account)
-      });
+      return await apiRequest("/api/email/accounts", "POST", account);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/email/accounts"] });
@@ -42,10 +39,7 @@ export function useUpdateEmailAccount() {
   
   return useMutation({
     mutationFn: async ({ id, account }: { id: number, account: Partial<EmailAccount> }) => {
-      return await apiRequest(`/api/email/accounts/${id}`, {
-        method: "PATCH",
-        body: JSON.stringify(account)
-      });
+      return await apiRequest(`/api/email/accounts/${id}`, "PATCH", account);
     },
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ["/api/email/accounts", id] });
@@ -60,9 +54,7 @@ export function useDeleteEmailAccount() {
   
   return useMutation({
     mutationFn: async (id: number) => {
-      return await apiRequest(`/api/email/accounts/${id}`, {
-        method: "DELETE"
-      });
+      return await apiRequest(`/api/email/accounts/${id}`, "DELETE");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/email/accounts"] });
@@ -76,9 +68,7 @@ export function useSyncAllEmailAccounts() {
   
   return useMutation({
     mutationFn: async () => {
-      return await apiRequest("/api/email/sync", {
-        method: "POST"
-      });
+      return await apiRequest("/api/email/sync", "POST");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/emails"] });
@@ -93,9 +83,7 @@ export function useSyncEmailAccount() {
   
   return useMutation({
     mutationFn: async (id: number) => {
-      return await apiRequest(`/api/email/accounts/${id}/sync`, {
-        method: "POST"
-      });
+      return await apiRequest(`/api/email/accounts/${id}/sync`, "POST");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/emails"] });
@@ -108,10 +96,7 @@ export function useSyncEmailAccount() {
 export function useVerifyEmailAccount() {
   return useMutation({
     mutationFn: async (account: Partial<EmailAccount>) => {
-      return await apiRequest("/api/email/verify-account", {
-        method: "POST",
-        body: JSON.stringify(account)
-      });
+      return await apiRequest("/api/email/verify-account", "POST", account);
     }
   });
 }

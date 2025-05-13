@@ -2,8 +2,8 @@ import { QueryClient } from '@tanstack/react-query';
 
 // Funzione per fare le chiamate API
 export async function apiRequest(
-  method: string, 
   url: string, 
+  method: string = 'GET',
   data?: any,
   customOptions: RequestInit = {}
 ): Promise<any> {
@@ -73,7 +73,7 @@ export const defaultMutationOptions = {
 const defaultQueryFn = async ({ queryKey }: { queryKey: unknown[] }) => {
   // Usiamo il primo elemento della queryKey come URL
   const url = queryKey[0] as string;
-  return apiRequest("GET", url);
+  return apiRequest(url);
 };
 
 // Crea l'istanza di QueryClient

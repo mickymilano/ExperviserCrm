@@ -25,9 +25,7 @@ export function useMarkEmailAsRead() {
   
   return useMutation({
     mutationFn: async (emailId: number) => {
-      return await apiRequest(`/api/emails/${emailId}/read`, {
-        method: "PATCH"
-      });
+      return await apiRequest(`/api/emails/${emailId}/read`, "PATCH");
     },
     onSuccess: (_, emailId) => {
       // Aggiorna l'email specifica
@@ -48,9 +46,7 @@ export function useMarkEmailAsUnread() {
   
   return useMutation({
     mutationFn: async (emailId: number) => {
-      return await apiRequest(`/api/emails/${emailId}/unread`, {
-        method: "PATCH"
-      });
+      return await apiRequest(`/api/emails/${emailId}/unread`, "PATCH");
     },
     onSuccess: (_, emailId) => {
       queryClient.invalidateQueries({ queryKey: ["/api/emails", emailId] });
@@ -65,10 +61,7 @@ export function useToggleEmailStarred() {
   
   return useMutation({
     mutationFn: async ({ emailId, isStarred }: { emailId: number, isStarred: boolean }) => {
-      return await apiRequest(`/api/emails/${emailId}/star`, {
-        method: "PATCH",
-        body: JSON.stringify({ isStarred })
-      });
+      return await apiRequest(`/api/emails/${emailId}/star`, "PATCH", { isStarred });
     },
     onSuccess: (_, { emailId }) => {
       queryClient.invalidateQueries({ queryKey: ["/api/emails", emailId] });
@@ -83,10 +76,7 @@ export function useMoveEmailToFolder() {
   
   return useMutation({
     mutationFn: async ({ emailId, folder }: { emailId: number, folder: string }) => {
-      return await apiRequest(`/api/emails/${emailId}/move`, {
-        method: "PATCH",
-        body: JSON.stringify({ folder })
-      });
+      return await apiRequest(`/api/emails/${emailId}/move`, "PATCH", { folder });
     },
     onSuccess: (_, { emailId }) => {
       queryClient.invalidateQueries({ queryKey: ["/api/emails", emailId] });
@@ -101,10 +91,7 @@ export function useUpdateEmailLabels() {
   
   return useMutation({
     mutationFn: async ({ emailId, labels }: { emailId: number, labels: string[] }) => {
-      return await apiRequest(`/api/emails/${emailId}/labels`, {
-        method: "PATCH",
-        body: JSON.stringify({ labels })
-      });
+      return await apiRequest(`/api/emails/${emailId}/labels`, "PATCH", { labels });
     },
     onSuccess: (_, { emailId }) => {
       queryClient.invalidateQueries({ queryKey: ["/api/emails", emailId] });
@@ -119,9 +106,7 @@ export function useDeleteEmail() {
   
   return useMutation({
     mutationFn: async (emailId: number) => {
-      return await apiRequest(`/api/emails/${emailId}`, {
-        method: "DELETE"
-      });
+      return await apiRequest(`/api/emails/${emailId}`, "DELETE");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/emails"] });
@@ -135,10 +120,7 @@ export function useSendEmail() {
   
   return useMutation({
     mutationFn: async (emailData: Partial<Email>) => {
-      return await apiRequest("/api/emails/send", {
-        method: "POST",
-        body: JSON.stringify(emailData)
-      });
+      return await apiRequest("/api/emails/send", "POST", emailData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/emails"] });
