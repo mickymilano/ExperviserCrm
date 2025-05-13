@@ -139,7 +139,41 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-2 mb-4">
             <Label htmlFor="name">Nome Azienda</Label>
-            <Input id="name" {...register("name")} />
+            <PlacesAutocomplete 
+              id="name"
+              value={watch("name") || ""}
+              onChange={(value, placeDetails) => {
+                console.log("PlacesAutocomplete onChange triggered for company name:", { value, placeDetails });
+                
+                // Verifica se abbiamo ricevuto i dettagli del luogo
+                if (placeDetails) {
+                  console.log("Place details received for company name:", placeDetails);
+                  
+                  // Imposta il nome azienda
+                  setValue("name", placeDetails.name || value, { shouldValidate: true });
+                  
+                  // Se abbiamo l'indirizzo formattato, aggiornalo nei campi corrispondenti
+                  if (placeDetails.formatted_address) {
+                    setValue("fullAddress", placeDetails.formatted_address, { shouldValidate: true });
+                    setValue("address", placeDetails.formatted_address, { shouldValidate: true });
+                  }
+                  
+                  // Estrae il paese se disponibile
+                  if (placeDetails.address_components) {
+                    const countryComponent = placeDetails.address_components.find(component => 
+                      component.types.includes('country')
+                    );
+                    
+                    if (countryComponent) {
+                      console.log("Country found:", countryComponent.long_name);
+                      setValue("country", countryComponent.long_name, { shouldValidate: true });
+                    }
+                  }
+                }
+              }}
+              placeholder="Cerca o inserisci nome dell'azienda" 
+              className="w-full"
+            />
             {errors.name && (
               <p className="text-xs text-destructive">{errors.name.message}</p>
             )}
@@ -182,69 +216,17 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
             />
           </div>
 
-          {/* Full Address Field (Unified location) with Google Maps integration */}
+          {/* Full Address Field (campo normale senza autocomplete) */}
           <div className="space-y-2 mb-4">
             <Label htmlFor="fullAddress">Indirizzo</Label>
-            <PlacesAutocomplete 
+            <Input 
               id="fullAddress"
-              value={watch("fullAddress") || ""}
-              onChange={(value, placeDetails) => {
-                console.log("PlacesAutocomplete onChange triggered in CompanyModal with:", { value, placeDetails });
-                
-                // Verifica se abbiamo ricevuto i dettagli del luogo
-                if (placeDetails && placeDetails.address_components) {
-                  console.log("Place details received in CompanyModal:", placeDetails);
-                  
-                  // Rimuovi il nome dal fullAddress, lasciando solo «formatted_address»
-                  const formatted = placeDetails.formatted_address || "";
-                  setValue("fullAddress", formatted, { shouldValidate: true });
-                  setValue("address", formatted, { shouldValidate: true });
-                  
-                  // Se placeDetails.name è definito, gestisci l'aggiornamento del nome
-                  if (placeDetails.name) {
-                    // Se non c'è un nome azienda esistente, imposta direttamente quello nuovo
-                    if (!initialData?.name) {
-                      setValue("name", placeDetails.name, { shouldValidate: true });
-                    } 
-                    // Se il nome esistente è diverso da quello selezionato, chiedi conferma
-                    else if (initialData.name && placeDetails.name !== initialData.name) {
-                      const replace = window.confirm(
-                        `Vuoi aggiornare il nome azienda in "${placeDetails.name}"?`
-                      );
-                      if (replace) {
-                        setValue("name", placeDetails.name, { shouldValidate: true });
-                      }
-                    }
-                  }
-                  
-                  // Estrae il paese
-                  const countryComponent = placeDetails.address_components.find(component => 
-                    component.types.includes('country')
-                  );
-                  
-                  if (countryComponent) {
-                    console.log("Country found in CompanyModal:", countryComponent.long_name);
-                    setValue("country", countryComponent.long_name, { shouldValidate: true });
-                  }
-                  
-                  // Estrae anche la città se disponibile (potrebbe essere aggiunta al customFields)
-                  const cityComponent = placeDetails.address_components.find(component => 
-                    component.types.includes('locality') || 
-                    component.types.includes('administrative_area_level_3')
-                  );
-                  
-                  if (cityComponent) {
-                    console.log("City found in CompanyModal:", cityComponent.long_name);
-                    // Se necessario, aggiungere la città ai customFields
-                  }
-                } else {
-                  console.warn("No place details available in CompanyModal onChange");
-                }
-                
-                // Forza la validazione del form
-                trigger(["fullAddress", "country", "name"]);
+              {...register("fullAddress")}
+              onChange={(e) => {
+                // Aggiorna anche il campo address per retrocompatibilità
+                setValue("address", e.target.value, { shouldValidate: true });
               }}
-              placeholder="Cerca o inserisci l'indirizzo completo" 
+              placeholder="Inserisci l'indirizzo completo" 
               className="w-full"
             />
           </div>
