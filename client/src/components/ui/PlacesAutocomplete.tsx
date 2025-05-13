@@ -150,27 +150,20 @@ export function PlacesAutocomplete({
         console.log('Original input value before update:', inputRef.current?.value);
         
         // Determina l'indirizzo da usare con priorità
-        // 1. Nome dell'azienda + indirizzo formattato (se entrambi disponibili)
-        // 2. Indirizzo formattato
-        // 3. Nome
-        // 4. Indirizzo ricostruito dai componenti
+        // 1. Indirizzo formattato
+        // 2. Nome (solo se non c'è indirizzo formattato)
+        // 3. Indirizzo ricostruito dai componenti (fallback)
         let addressToUse = '';
         
-        // Se è un'attività commerciale e ha un nome
-        if (place.name && place.types?.includes('establishment')) {
-          // Se ha anche un indirizzo formattato, usa entrambi
-          if (place.formatted_address && place.formatted_address !== place.name) {
-            addressToUse = `${place.name}, ${place.formatted_address}`;
-          } else {
-            // Altrimenti usa solo il nome
-            addressToUse = place.name;
-          }
-          console.log('Using establishment name:', addressToUse);
-        } 
-        // Altrimenti usa l'indirizzo formattato se disponibile
-        else if (place.formatted_address) {
+        // Usa sempre l'indirizzo formattato se disponibile
+        if (place.formatted_address) {
           addressToUse = place.formatted_address;
           console.log('Using formatted address:', addressToUse);
+        } 
+        // Se non c'è indirizzo formattato ma c'è un nome di attività
+        else if (place.name) {
+          addressToUse = place.name;
+          console.log('Using establishment name only:', addressToUse);
         }
         
         // Se ancora non abbiamo un indirizzo e abbiamo i componenti, ricostruiscilo
