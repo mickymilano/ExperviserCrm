@@ -389,6 +389,8 @@ export class PostgresStorage implements IStorage {
           type: synergy.type || "business",
           description: synergy.description || "",
           status: synergy.status || "Active",
+          startDate: synergy.start_date,
+          endDate: synergy.end_date,
           createdAt: synergy.created_at,
           updatedAt: synergy.updated_at
         };
@@ -445,6 +447,8 @@ export class PostgresStorage implements IStorage {
           companyId: synergy.company_id,
           dealId: synergy.deal_id,
           type: synergy.type || "business",
+          startDate: synergy.start_date,
+          endDate: synergy.end_date,
           description: synergy.description || "",
           status: synergy.status || "Active",
           createdAt: synergy.created_at,
@@ -485,6 +489,8 @@ export class PostgresStorage implements IStorage {
           id: synergy.id,
           contactId: synergy.contact_id,
           companyId: synergy.company_id,
+          startDate: synergy.start_date,
+          endDate: synergy.end_date,
           dealId: synergy.deal_id,
           type: synergy.type || "business",
           description: synergy.description || "",
@@ -525,6 +531,8 @@ export class PostgresStorage implements IStorage {
       return result.rows.map(synergy => {
         return {
           id: synergy.id,
+          startDate: synergy.start_date,
+          endDate: synergy.end_date,
           contactId: synergy.contact_id,
           companyId: synergy.company_id,
           dealId: synergy.deal_id,
