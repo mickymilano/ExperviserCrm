@@ -68,6 +68,7 @@ const getMainMenuItems = (stats?: any): MenuItemProps[] => [
     label: 'Sinergie',
     path: '/synergies',
     icon: <Handshake className="h-5 w-5" />,
+    badge: stats?.synergies
   },
   {
     label: 'Calendario',
