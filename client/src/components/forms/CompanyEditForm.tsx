@@ -83,7 +83,8 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
       size: customFields.size || "",
       yearFounded: customFields.yearFounded || "",
       revenue: customFields.revenue || "",
-      country: customFields.country || "",
+      // Utilizziamo country come campo principale anziché da customFields
+      country: company.country || customFields.country || "",
       city: customFields.city || "",
       timezone: customFields.timezone || "",
     }
@@ -114,10 +115,13 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
         size: data.size,
         yearFounded: data.yearFounded,
         revenue: data.revenue,
-        country: data.country,
+        // Removed country from customFields as it's now a direct field on the company
         city: data.city,
         timezone: data.timezone,
       };
+      
+      // Ensure country is saved as a direct property of the company
+      companyData.country = data.country;
       
       // Remove fields that aren't directly in the company table
       delete companyData.vatNumber;

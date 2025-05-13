@@ -29,7 +29,9 @@ const companySchema = z.object({
   address: z.string().optional(),
   // Added 2025-05-13 by Lead Architect: unified location field
   fullAddress: z.string().optional(),
-  // Rimuoviamo city, region, country e postalCode dallo schema poiché non esistono nel database
+  // Added 2025-05-13: country field is now a direct property on companies table
+  country: z.string().optional(),
+  // Rimuoviamo city, region e postalCode dallo schema poiché non esistono nel database
   tags: z.array(z.string()).optional().nullable(),
   notes: z.string().optional().nullable(),
 });
@@ -54,6 +56,8 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
       address: initialData?.address || "",
       // Added 2025-05-13 by Lead Architect: unified location field
       fullAddress: initialData?.fullAddress || initialData?.address || "",
+      // Added 2025-05-13: country field is now a direct property on companies table
+      country: initialData?.country || "",
       tags: initialData?.tags || [],
       notes: initialData?.notes || "",
     }
