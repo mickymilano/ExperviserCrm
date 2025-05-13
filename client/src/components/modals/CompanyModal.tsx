@@ -132,7 +132,7 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">
-            {isEditMode ? 'Edit Company' : 'Add New Company'}
+            {isEditMode ? 'Modifica Azienda' : 'Aggiungi Nuova Azienda'}
           </DialogTitle>
         </DialogHeader>
         
@@ -155,19 +155,19 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
+              <Label htmlFor="phone">Telefono</Label>
               <Input id="phone" {...register("phone")} />
             </div>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div className="space-y-2">
-              <Label htmlFor="website">Website</Label>
+              <Label htmlFor="website">Sito Web</Label>
               <Input id="website" {...register("website")} />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="industry">Industry</Label>
+              <Label htmlFor="industry">Settore</Label>
               <Input id="industry" {...register("industry")} />
             </div>
           </div>
@@ -217,17 +217,17 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
           </div>
           
           <div className="space-y-2 mb-4">
-            <Label htmlFor="tags">Tags</Label>
+            <Label htmlFor="tags">Tag</Label>
             <Input 
               id="tags" 
-              placeholder="Separate tags with commas" 
+              placeholder="Separa i tag con le virgole" 
               value={tagsInput}
               onChange={(e) => setTagsInput(e.target.value)}
             />
           </div>
           
           <div className="space-y-2 mb-4">
-            <Label htmlFor="notes">Notes</Label>
+            <Label htmlFor="notes">Note</Label>
             <Textarea id="notes" {...register("notes")} />
           </div>
           
