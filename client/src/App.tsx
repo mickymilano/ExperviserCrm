@@ -8,6 +8,7 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 // Lazy loading delle pagine
 const LoginPage = lazy(() => import('@/pages/LoginPage'));
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
+const SynergiesPage = lazy(() => import('@/pages/synergies'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
 // Componente di caricamento
@@ -43,6 +44,13 @@ export default function App() {
           <Route path="/">
             <ProtectedRoute>
               <LayoutPage component={DashboardPage} />
+            </ProtectedRoute>
+          </Route>
+
+          {/* Pagina sinergie */}
+          <Route path="/synergies">
+            <ProtectedRoute>
+              <LayoutPage component={SynergiesPage} />
             </ProtectedRoute>
           </Route>
           
