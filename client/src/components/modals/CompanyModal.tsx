@@ -25,7 +25,10 @@ const companySchema = z.object({
   phone: z.string().optional(),
   website: z.string().optional(),
   industry: z.string().optional(),
+  // DEPRECATED: old address field - Added 2025-05-13 by Lead Architect: unified location
   address: z.string().optional(),
+  // Added 2025-05-13 by Lead Architect: unified location field
+  fullAddress: z.string().optional(),
   // Rimuoviamo city, region, country e postalCode dallo schema poiché non esistono nel database
   tags: z.array(z.string()).optional().nullable(),
   notes: z.string().optional().nullable(),
@@ -47,7 +50,10 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
       phone: initialData?.phone || "",
       website: initialData?.website || "",
       industry: initialData?.industry || "",
+      // DEPRECATED: old address field - Added 2025-05-13 by Lead Architect: unified location
       address: initialData?.address || "",
+      // Added 2025-05-13 by Lead Architect: unified location field
+      fullAddress: initialData?.fullAddress || initialData?.address || "",
       tags: initialData?.tags || [],
       notes: initialData?.notes || "",
     }

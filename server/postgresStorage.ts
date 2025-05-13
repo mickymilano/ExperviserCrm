@@ -1559,11 +1559,26 @@ export class PostgresStorage implements IStorage {
   }
 
   async createCompany(company: InsertCompany): Promise<Company> {
+    // Added 2025-05-13 by Lead Architect: unified location field
+    // Se abbiamo address ma non fullAddress, inizializziamo fullAddress con address
+    if (company.address && !company.fullAddress) {
+      company.fullAddress = company.address;
+    }
+    
     const [newCompany] = await db.insert(companies).values(company).returning();
     return newCompany;
   }
 
   async updateCompany(id: number, companyData: Partial<InsertCompany>): Promise<Company | undefined> {
+    // Added 2025-05-13 by Lead Architect: unified location field
+    // Se abbiamo address ma non fullAddress, inizializziamo fullAddress con address
+    if (companyData.address && !companyData.fullAddress) {
+      companyData.fullAddress = companyData.address;
+    }
+    
+    // DEPRECATED: old implementation - Added 2025-05-13 by Lead Architect: unified location
+    // .set({ ...companyData, updatedAt: new Date() })
+    
     const [updatedCompany] = await db
       .update(companies)
       .set({ ...companyData, updatedAt: new Date() })
