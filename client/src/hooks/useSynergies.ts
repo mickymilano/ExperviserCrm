@@ -1,153 +1,150 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { toast } from "@/hooks/use-toast";
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from '@/hooks/use-toast';
 
-// Fetch all synergies
-export function useSynergies(options = {}) {
-  return useQuery({
-    queryKey: ['/api/synergies'],
-    ...options,
-  });
+// Tipo per la creazione di una sinergia
+interface CreateSynergyData {
+  contactId: number;
+  companyId: number;
+  type: string;
+  status?: string | null;
+  description?: string | null;
+  dealId?: number | null;
+  startDate: Date;
+  endDate?: Date | null;
 }
 
-// Fetch synergies for a specific contact
-export function useContactSynergies(contactId: number, options = {}) {
-  return useQuery({
-    queryKey: ['/api/synergies/contact', contactId],
-    queryFn: async () => {
-      if (!contactId) return [];
-      return apiRequest(`/api/synergies/contact/${contactId}`);
-    },
-    enabled: !!contactId,
-    ...options,
-  });
+// Tipo per l'aggiornamento di una sinergia
+interface UpdateSynergyData {
+  id: number;
+  data: Partial<CreateSynergyData>;
 }
 
-// Fetch synergies for a specific company
-export function useCompanySynergies(companyId: number, options = {}) {
-  return useQuery({
-    queryKey: ['/api/synergies/company', companyId],
-    queryFn: async () => {
-      if (!companyId) return [];
-      return apiRequest(`/api/synergies/company/${companyId}`);
-    },
-    enabled: !!companyId,
-    ...options,
-  });
-}
-
-// Fetch synergies for a specific deal
-export function useDealSynergies(dealId: number, options = {}) {
-  return useQuery({
-    queryKey: ['/api/synergies/deal', dealId],
-    queryFn: async () => {
-      if (!dealId) return [];
-      return apiRequest(`/api/synergies/deal/${dealId}`);
-    },
-    enabled: !!dealId,
-    ...options,
-  });
-}
-
-// Create a new synergy
+/**
+ * Hook per ottenere una mutazione per creare una nuova sinergia
+ */
 export function useCreateSynergy() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (data: any) => {
-      return apiRequest('/api/synergies', {
-        method: 'POST',
-        data,
-      });
+    mutationFn: async (data: CreateSynergyData) => {
+      try {
+        // Converti le date in formato stringa YYYY-MM-DD
+        const formattedData = {
+          ...data,
+          startDate: data.startDate.toISOString().split('T')[0],
+          endDate: data.endDate ? data.endDate.toISOString().split('T')[0] : null,
+        };
+        
+        const response = await fetch('/api/synergies', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formattedData),
+        });
+        
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Failed to create synergy');
+        }
+        
+        return await response.json();
+      } catch (error) {
+        console.error('Error creating synergy:', error);
+        toast({
+          title: 'Error',
+          description: error instanceof Error ? error.message : 'Failed to create synergy',
+          variant: 'destructive',
+        });
+        throw error;
+      }
     },
     onSuccess: () => {
-      // Invalidate all queries that might be affected
+      // Invalida le query per forzare un aggiornamento dei dati
       queryClient.invalidateQueries({ queryKey: ['/api/synergies'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/synergies/contact'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/synergies/company'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/synergies/deal'] });
-    },
-    onError: (error: any) => {
-      console.error('Error creating synergy:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to create synergy. Please try again.',
-        variant: 'destructive',
-      });
     },
   });
 }
 
-// Update an existing synergy
+/**
+ * Hook per ottenere una mutazione per aggiornare una sinergia esistente
+ */
 export function useUpdateSynergy() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: any }) => {
-      return apiRequest(`/api/synergies/${id}`, {
-        method: 'PATCH',
-        data,
-      });
+    mutationFn: async ({ id, data }: UpdateSynergyData) => {
+      try {
+        // Converti le date in formato stringa YYYY-MM-DD
+        const formattedData = {
+          ...data,
+          startDate: data.startDate ? data.startDate.toISOString().split('T')[0] : undefined,
+          endDate: data.endDate ? data.endDate.toISOString().split('T')[0] : null,
+        };
+        
+        const response = await fetch(`/api/synergies/${id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formattedData),
+        });
+        
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Failed to update synergy');
+        }
+        
+        return await response.json();
+      } catch (error) {
+        console.error('Error updating synergy:', error);
+        toast({
+          title: 'Error',
+          description: error instanceof Error ? error.message : 'Failed to update synergy',
+          variant: 'destructive',
+        });
+        throw error;
+      }
     },
-    onSuccess: (_, variables) => {
-      // Invalidate all queries that might be affected
+    onSuccess: () => {
+      // Invalida le query per forzare un aggiornamento dei dati
       queryClient.invalidateQueries({ queryKey: ['/api/synergies'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/synergies/contact'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/synergies/company'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/synergies/deal'] });
-      
-      // Also invalidate specific synergy queries
-      if (variables.data.contactId) {
-        queryClient.invalidateQueries({ 
-          queryKey: ['/api/synergies/contact', variables.data.contactId]
-        });
-      }
-      if (variables.data.companyId) {
-        queryClient.invalidateQueries({ 
-          queryKey: ['/api/synergies/company', variables.data.companyId]
-        });
-      }
-      if (variables.data.dealId) {
-        queryClient.invalidateQueries({ 
-          queryKey: ['/api/synergies/deal', variables.data.dealId]
-        });
-      }
-    },
-    onError: (error: any) => {
-      console.error('Error updating synergy:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to update synergy. Please try again.',
-        variant: 'destructive',
-      });
     },
   });
 }
 
-// Delete a synergy
+/**
+ * Hook per ottenere una mutazione per eliminare una sinergia
+ */
 export function useDeleteSynergy() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (id: number) => {
-      return apiRequest(`/api/synergies/${id}`, {
-        method: 'DELETE',
-      });
+    mutationFn: async (id: number) => {
+      try {
+        const response = await fetch(`/api/synergies/${id}`, {
+          method: 'DELETE',
+        });
+        
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Failed to delete synergy');
+        }
+        
+        return await response.json();
+      } catch (error) {
+        console.error('Error deleting synergy:', error);
+        toast({
+          title: 'Error',
+          description: error instanceof Error ? error.message : 'Failed to delete synergy',
+          variant: 'destructive',
+        });
+        throw error;
+      }
     },
     onSuccess: () => {
-      // Invalidate all synergy queries
+      // Invalida le query per forzare un aggiornamento dei dati
       queryClient.invalidateQueries({ queryKey: ['/api/synergies'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/synergies/contact'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/synergies/company'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/synergies/deal'] });
-    },
-    onError: (error: any) => {
-      console.error('Error deleting synergy:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to delete synergy. Please try again.',
-        variant: 'destructive',
-      });
     },
   });
 }

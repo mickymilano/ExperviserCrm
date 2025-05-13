@@ -9,6 +9,7 @@ import {
   Clock,
   Calendar
 } from 'lucide-react';
+import { SynergiesOverview } from '@/components/dashboard/SynergiesOverview';
 
 // Componente per mostrare lo stato di caricamento
 function DashboardSkeleton() {
@@ -326,17 +327,8 @@ export default function DashboardPage() {
           </div>
         </div>
         
-        {/* Statistiche e grafici (come espansione futura) */}
-        <div className="bg-card border border-border rounded-lg shadow-sm">
-          <div className="p-4 border-b border-border">
-            <h2 className="text-lg font-medium">Statistiche acquisizione clienti</h2>
-          </div>
-          <div className="p-4 h-64 flex items-center justify-center">
-            <p className="text-center text-muted-foreground">
-              I grafici delle statistiche saranno disponibili presto.
-            </p>
-          </div>
-        </div>
+        {/* Panoramica delle sinergie */}
+        <SynergiesOverview />
       </div>
     </div>
   );
