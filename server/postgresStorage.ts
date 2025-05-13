@@ -340,23 +340,24 @@ export class PostgresStorage implements IStorage {
     // Rimosso filtro per status per ottenere tutti i contatti, come per leads
     console.log("PostgresStorage.getContacts: retrieving all contacts regardless of status");
     try {
-      // Seleziona solo le colonne che esistono sicuramente nel database
-      // La struttura della tabella è diversa da quella dello schema
-      return await db.select({
-        id: contacts.id,
-        firstName: contacts.firstName,
-        lastName: contacts.lastName,
-        status: contacts.status,
-        companyEmail: contacts.companyEmail,
-        privateEmail: contacts.privateEmail,
-        mobilePhone: contacts.mobilePhone,
-        officePhone: contacts.officePhone,
-        privatePhone: contacts.privatePhone,
-        createdAt: contacts.createdAt,
-        updatedAt: contacts.updatedAt
-      })
-      .from(contacts)
-      .orderBy(contacts.firstName, contacts.lastName);
+      // Seleziona colonne esattamente come sono definite nel database
+      const result = await db.execute(
+        `SELECT 
+          id, 
+          first_name as "firstName", 
+          last_name as "lastName", 
+          status, 
+          company_email as "companyEmail", 
+          private_email as "privateEmail", 
+          mobile_phone as "mobilePhone", 
+          office_phone as "officePhone",
+          private_phone as "privatePhone",
+          created_at as "createdAt", 
+          updated_at as "updatedAt" 
+        FROM contacts 
+        ORDER BY first_name, last_name`
+      );
+      return result.rows as Contact[];
     } catch (error) {
       console.error("Error in getContacts:", error);
       return [];
@@ -376,23 +377,26 @@ export class PostgresStorage implements IStorage {
   async getRecentContacts(limit: number = 5): Promise<Contact[]> {
     try {
       console.log("PostgresStorage.getRecentContacts: retrieving recent contacts");
-      // Use explicit column selection that matches the actual database schema
-      return await db.select({
-        id: contacts.id,
-        firstName: contacts.firstName,
-        lastName: contacts.lastName,
-        companyEmail: contacts.companyEmail,
-        privateEmail: contacts.privateEmail,
-        status: contacts.status,
-        mobilePhone: contacts.mobilePhone,
-        officePhone: contacts.officePhone,
-        privatePhone: contacts.privatePhone,
-        createdAt: contacts.createdAt,
-        updatedAt: contacts.updatedAt
-      })
-      .from(contacts)
-      .orderBy(desc(contacts.updatedAt))
-      .limit(limit);
+      // Seleziona colonne esattamente come sono definite nel database
+      const result = await db.execute(
+        `SELECT 
+          id, 
+          first_name as "firstName", 
+          last_name as "lastName", 
+          status, 
+          company_email as "companyEmail", 
+          private_email as "privateEmail", 
+          mobile_phone as "mobilePhone", 
+          office_phone as "officePhone",
+          private_phone as "privatePhone",
+          created_at as "createdAt", 
+          updated_at as "updatedAt" 
+        FROM contacts 
+        ORDER BY updated_at DESC
+        LIMIT $1`,
+        [limit]
+      );
+      return result.rows as Contact[];
     } catch (error) {
       console.error("Error in getRecentContacts:", error);
       return [];
@@ -417,27 +421,28 @@ export class PostgresStorage implements IStorage {
         return [];
       }
       
-      // Get all contacts with these IDs - use explicit selection to avoid column not found errors
-      const result = await db
-        .select({
-          id: contacts.id,
-          firstName: contacts.firstName,
-          lastName: contacts.lastName,
-          status: contacts.status,
-          companyEmail: contacts.companyEmail,
-          privateEmail: contacts.privateEmail,
-          mobilePhone: contacts.mobilePhone,
-          officePhone: contacts.officePhone,
-          privatePhone: contacts.privatePhone,
-          createdAt: contacts.createdAt,
-          updatedAt: contacts.updatedAt
-        })
-        .from(contacts)
-        .where(inArray(contacts.id, contactIds.map(c => c.contactId)))
-        .orderBy(contacts.firstName, contacts.lastName);
+      // Get all contacts with these IDs usando SQL nativo
+      const idsList = contactIds.map(c => c.contactId).join(',');
+      const result = await db.execute(
+        `SELECT 
+          id, 
+          first_name as "firstName", 
+          last_name as "lastName", 
+          status, 
+          company_email as "companyEmail", 
+          private_email as "privateEmail", 
+          mobile_phone as "mobilePhone", 
+          office_phone as "officePhone",
+          private_phone as "privatePhone",
+          created_at as "createdAt", 
+          updated_at as "updatedAt" 
+        FROM contacts 
+        WHERE id IN (${idsList})
+        ORDER BY first_name, last_name`
+      );
       
-      console.log(`Retrieved ${result.length} contacts for company ${companyId}`);
-      return result;
+      console.log(`Retrieved ${result.rows.length} contacts for company ${companyId}`);
+      return result.rows as Contact[];
     } catch (error) {
       console.error(`Error in getContactsByCompany(${companyId}):`, error);
       return [];

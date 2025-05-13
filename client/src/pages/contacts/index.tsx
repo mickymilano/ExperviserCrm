@@ -84,9 +84,11 @@ export default function Contacts() {
     return (
       (contact.firstName?.toLowerCase() || "").includes(searchTermLower) ||
       (contact.lastName?.toLowerCase() || "").includes(searchTermLower) ||
-      (contact.email?.toLowerCase() || "").includes(searchTermLower) ||
-      (contact.phone?.toLowerCase() || "").includes(searchTermLower) ||
-      (contact.mobile?.toLowerCase() || "").includes(searchTermLower)
+      (contact.companyEmail?.toLowerCase() || "").includes(searchTermLower) ||
+      (contact.privateEmail?.toLowerCase() || "").includes(searchTermLower) ||
+      (contact.mobilePhone?.toLowerCase() || "").includes(searchTermLower) ||
+      (contact.officePhone?.toLowerCase() || "").includes(searchTermLower) ||
+      (contact.privatePhone?.toLowerCase() || "").includes(searchTermLower)
     );
   });
 
@@ -163,7 +165,7 @@ export default function Contacts() {
                 <tr key={contact.id} className="border-b border-border hover:bg-muted/50">
                   <td className="py-3 px-4">
                     <div className="flex items-center">
-                      <Avatar className={`h-8 w-8 ${generateAvatarColor(contact.id)}`}>
+                      <Avatar className={`h-8 w-8 ${generateAvatarColor(String(contact.id))}`}>
                         <AvatarFallback>
                           {getInitials(contact.firstName, contact.lastName)}
                         </AvatarFallback>
@@ -174,8 +176,8 @@ export default function Contacts() {
                       </div>
                     </div>
                   </td>
-                  <td className="py-3 px-4 text-sm">{contact.email || "-"}</td>
-                  <td className="py-3 px-4 text-sm">{formatPhoneNumber(contact.mobile || contact.phone) || "-"}</td>
+                  <td className="py-3 px-4 text-sm">{contact.companyEmail || contact.privateEmail || "-"}</td>
+                  <td className="py-3 px-4 text-sm">{formatPhoneNumber(contact.mobilePhone || contact.officePhone || contact.privatePhone) || "-"}</td>
                   <td className="py-3 px-4 text-sm">{getCompanyName(contact)}</td>
                   <td className="py-3 px-4">
                     <div className="flex flex-wrap gap-1">
