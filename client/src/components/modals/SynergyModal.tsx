@@ -65,7 +65,7 @@ interface SynergyModalProps {
   initialData?: any;
   contactId?: number;
   companyId?: number;
-  mode?: "create" | "edit";
+  mode?: "create" | "edit" | "view";
   onSuccess?: () => void;
 }
 
@@ -158,6 +158,9 @@ export function SynergyModal({
   const contactsList = contacts || [];
   const companiesList = companies || [];
   const dealsList = deals || [];
+  
+  // Flag per disabilitare tutti i campi in modalità view
+  const isViewMode = mode === "view";
   
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -257,12 +260,18 @@ export function SynergyModal({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {mode === "create" ? "Create New Synergy" : "Edit Synergy"}
+            {mode === "create" 
+              ? "Create New Synergy" 
+              : mode === "view" 
+                ? "View Synergy" 
+                : "Edit Synergy"}
           </DialogTitle>
           <DialogDescription>
             {mode === "create"
               ? "Create a new business relationship between a contact and a company"
-              : "Edit details of this business relationship"}
+              : mode === "view"
+                ? "View the details of this business relationship"
+                : "Edit details of this business relationship"}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -467,24 +476,35 @@ export function SynergyModal({
             />
 
             <DialogFooter>
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => onOpenChange(false)}
-              >
-                Cancel
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={createSynergyMutation.isPending || updateSynergyMutation.isPending}
-              >
-                {createSynergyMutation.isPending || updateSynergyMutation.isPending
-                  ? "Saving..."
-                  : mode === "create" 
-                    ? "Create Synergy" 
-                    : "Update Synergy"
-                }
-              </Button>
+              {mode === "view" ? (
+                <Button 
+                  type="button" 
+                  onClick={() => onOpenChange(false)}
+                >
+                  Close
+                </Button>
+              ) : (
+                <>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => onOpenChange(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    disabled={createSynergyMutation.isPending || updateSynergyMutation.isPending}
+                  >
+                    {createSynergyMutation.isPending || updateSynergyMutation.isPending
+                      ? "Saving..."
+                      : mode === "create" 
+                        ? "Create Synergy" 
+                        : "Update Synergy"
+                    }
+                  </Button>
+                </>
+              )}
             </DialogFooter>
           </form>
         </Form>
