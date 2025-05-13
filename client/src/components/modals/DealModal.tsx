@@ -571,8 +571,29 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                         <SelectContent>
                           {Array.isArray(stages) && 
                             // Filtriamo i duplicati tenendo solo il primo stage per ogni nome
-                            [...new Map(stages.map((stage: any) => [stage.name, stage])).values()]
-                              .sort((a: any, b: any) => a.order - b.order)
+                            // Usiamo un approccio più sicuro per evitare errori di Map().values() con spread
+                            // Prima creiamo un oggetto per raggruppare per nome
+                            (() => {
+                              const uniqueStages: Record<string, any> = {};
+                              
+                              // Riempi l'oggetto con uno stage per ogni nome
+                              if (Array.isArray(stages)) {
+                                stages.forEach((stage: any) => {
+                                  if (stage && stage.name && !uniqueStages[stage.name]) {
+                                    uniqueStages[stage.name] = stage;
+                                  }
+                                });
+                              }
+                              
+                              // Converti l'oggetto in array e ordinalo
+                              return Object.values(uniqueStages || {})
+                                .sort((a: any, b: any) => {
+                                  // Controllo difensivo per order
+                                  const orderA = typeof a?.order === 'number' ? a.order : 0;
+                                  const orderB = typeof b?.order === 'number' ? b.order : 0;
+                                  return orderA - orderB;
+                                });
+                            })()
                               .map((stage: any) => (
                                 <SelectItem key={stage.id} value={stage.id.toString()}>
                                   {stage.name}
