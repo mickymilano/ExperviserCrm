@@ -438,21 +438,24 @@ export class PostgresStorage implements IStorage {
     // I lead hanno status diversi (New, Qualified, ecc.)
     // Rimuoviamo il filtro status e restituiamo tutti
     try {
-      // Seleziona esplicitamente solo le colonne che esistono nel database
-      return await db.select({
-        id: leads.id,
-        name: leads.name,
-        status: leads.status,
-        source: leads.source,
-        notes: leads.notes,
-        companyName: leads.companyName,
-        jobTitle: leads.jobTitle,
-        leadOwner: leads.leadOwner,
-        createdAt: leads.createdAt,
-        updatedAt: leads.updatedAt
-      })
-      .from(leads)
-      .orderBy(leads.name);
+      // Sostituiamo con una query SQL nativa per evitare problemi con Drizzle ORM
+      const result = await pool.query(`
+        SELECT 
+          id, 
+          name, 
+          status, 
+          source, 
+          notes, 
+          company_name as "companyName", 
+          job_title as "jobTitle", 
+          lead_owner as "leadOwner", 
+          created_at as "createdAt", 
+          updated_at as "updatedAt"
+        FROM leads 
+        ORDER BY name
+      `);
+      
+      return result.rows || [];
     } catch (error) {
       console.error("Error in getLeads:", error);
       return [];
@@ -465,33 +468,165 @@ export class PostgresStorage implements IStorage {
   }
   
   async getLeadsCount(): Promise<number> {
-    const result = await db.select({ count: sql<number>`count(*)` }).from(leads);
-    return result[0].count;
+    try {
+      // Utilizziamo SQL nativo per evitare problemi con l'ORM
+      const result = await pool.query(`SELECT COUNT(*) as count FROM leads`);
+      return parseInt(result.rows[0].count) || 0;
+    } catch (error) {
+      console.error("Error in getLeadsCount:", error);
+      return 0;
+    }
   }
 
   async getLead(id: number): Promise<Lead | undefined> {
-    const [lead] = await db.select().from(leads).where(eq(leads.id, id));
-    return lead;
+    try {
+      // Utilizziamo SQL nativo per evitare problemi con l'ORM
+      const result = await pool.query(`
+        SELECT 
+          id, 
+          name, 
+          status, 
+          source, 
+          notes, 
+          company_name as "companyName", 
+          job_title as "jobTitle", 
+          lead_owner as "leadOwner", 
+          created_at as "createdAt", 
+          updated_at as "updatedAt"
+        FROM leads 
+        WHERE id = $1
+      `, [id]);
+      
+      return result.rows.length > 0 ? result.rows[0] : undefined;
+    } catch (error) {
+      console.error("Error in getLead:", error);
+      return undefined;
+    }
   }
 
   async createLead(lead: InsertLead): Promise<Lead> {
-    const [newLead] = await db.insert(leads).values(lead).returning();
-    return newLead;
+    try {
+      // Estraiamo i campi dal lead object
+      const { name, status, source, notes, companyName, jobTitle, leadOwner } = lead;
+      
+      // Usando una query SQL nativa
+      const result = await pool.query(`
+        INSERT INTO leads (
+          name, 
+          status, 
+          source, 
+          notes, 
+          company_name, 
+          job_title, 
+          lead_owner, 
+          created_at, 
+          updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+        RETURNING 
+          id, 
+          name, 
+          status, 
+          source, 
+          notes, 
+          company_name as "companyName", 
+          job_title as "jobTitle", 
+          lead_owner as "leadOwner", 
+          created_at as "createdAt", 
+          updated_at as "updatedAt"
+      `, [name, status, source, notes, companyName, jobTitle, leadOwner]);
+      
+      return result.rows[0];
+    } catch (error) {
+      console.error("Error in createLead:", error);
+      throw new Error("Failed to create lead");
+    }
   }
 
   async updateLead(id: number, leadData: Partial<InsertLead>): Promise<Lead | undefined> {
-    const [updatedLead] = await db
-      .update(leads)
-      .set({ ...leadData, updatedAt: new Date() })
-      .where(eq(leads.id, id))
-      .returning();
-    
-    return updatedLead;
+    try {
+      // Costruiamo dinamicamente la query di aggiornamento
+      let updateFields = [];
+      let params = [];
+      let paramCounter = 1;
+      
+      // Aggiungiamo solo i campi che esistono nel leadData
+      if (leadData.name !== undefined) {
+        updateFields.push(`name = $${paramCounter++}`);
+        params.push(leadData.name);
+      }
+      
+      if (leadData.status !== undefined) {
+        updateFields.push(`status = $${paramCounter++}`);
+        params.push(leadData.status);
+      }
+      
+      if (leadData.source !== undefined) {
+        updateFields.push(`source = $${paramCounter++}`);
+        params.push(leadData.source);
+      }
+      
+      if (leadData.notes !== undefined) {
+        updateFields.push(`notes = $${paramCounter++}`);
+        params.push(leadData.notes);
+      }
+      
+      if (leadData.companyName !== undefined) {
+        updateFields.push(`company_name = $${paramCounter++}`);
+        params.push(leadData.companyName);
+      }
+      
+      if (leadData.jobTitle !== undefined) {
+        updateFields.push(`job_title = $${paramCounter++}`);
+        params.push(leadData.jobTitle);
+      }
+      
+      if (leadData.leadOwner !== undefined) {
+        updateFields.push(`lead_owner = $${paramCounter++}`);
+        params.push(leadData.leadOwner);
+      }
+      
+      // Aggiungiamo sempre l'updated_at
+      updateFields.push(`updated_at = NOW()`);
+      
+      // Se non ci sono campi da aggiornare, restituiamo il lead esistente
+      if (updateFields.length === 1) {
+        return this.getLead(id);
+      }
+      
+      // Aggiungiamo l'id come ultimo parametro
+      params.push(id);
+      
+      const result = await pool.query(`
+        UPDATE leads SET ${updateFields.join(', ')}
+        WHERE id = $${paramCounter}
+        RETURNING 
+          id, 
+          name, 
+          status, 
+          source, 
+          notes, 
+          company_name as "companyName", 
+          job_title as "jobTitle", 
+          lead_owner as "leadOwner", 
+          created_at as "createdAt", 
+          updated_at as "updatedAt"
+      `, params);
+      
+      return result.rows.length > 0 ? result.rows[0] : undefined;
+    } catch (error) {
+      console.error("Error in updateLead:", error);
+      return undefined;
+    }
   }
 
   async deleteLead(id: number): Promise<boolean> {
-    const result = await db.delete(leads).where(eq(leads.id, id));
-    return result.rowCount > 0;
+    try {
+      const result = await pool.query('DELETE FROM leads WHERE id = $1', [id]);
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error("Error in deleteLead:", error);
+      return false;
+    }
   }
 
   // CONTACTS
