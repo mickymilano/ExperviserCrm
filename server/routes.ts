@@ -1401,19 +1401,103 @@ export function registerRoutes(app: any) {
   
   // --- DASHBOARD ROUTES ---
   
+  // Endpoint principale dashboard
+  app.get('/api/dashboard', authenticate, async (req: Request, res: Response) => {
+    try {
+      // Ottieni conteggi e percentuali
+      const contacts = await storage.getAllContacts();
+      const companies = await storage.getAllCompanies();
+      const activeDeals = await storage.getDealsWithFilters({ status: 'active' });
+      const leads = await storage.getAllLeads();
+      const emails = await storage.getEmails();
+      const stages = await storage.getPipelineStages();
+      
+      // Ottieni le attività recenti
+      const activities = await storage.getActivities();
+      const sortedActivities = Array.isArray(activities) ? 
+        activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 5) : 
+        [];
+      
+      // Ottieni i prossimi meeting
+      const meetings = await storage.getMeetings();
+      const upcomingMeetings = Array.isArray(meetings) ? 
+        meetings.filter(m => new Date(m.startTime) > new Date()).sort((a, b) => 
+          new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+        ).slice(0, 5) : 
+        [];
+      
+      // Ottieni contatti recenti
+      const recentContacts = contacts
+        .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+        .slice(0, 5);
+      
+      // Raggruppa deals per pipeline stage
+      const dealsByStage = stages.map(stage => {
+        const stageDeals = activeDeals.filter(deal => deal.stageId === stage.id);
+        const totalValue = stageDeals.reduce((sum, deal) => sum + (parseFloat(deal.value || '0') || 0), 0);
+        
+        return {
+          stageId: stage.id,
+          stageName: stage.name,
+          count: stageDeals.length,
+          value: totalValue,
+          deals: stageDeals.slice(0, 3) // Solo 3 per evitare payload troppo grandi
+        };
+      });
+      
+      // Crea oggetto dashboard
+      const dashboardData = {
+        summary: {
+          contacts: {
+            count: contacts.length,
+            percentChange: 5.2 // Simulato, implementare logica reale in futuro
+          },
+          companies: {
+            count: companies.length,
+            percentChange: 2.8 // Simulato, implementare logica reale in futuro
+          },
+          deals: {
+            count: activeDeals.length,
+            percentChange: -1.5 // Simulato, implementare logica reale in futuro
+          },
+          leads: {
+            count: leads.length,
+            percentChange: 8.4 // Simulato, implementare logica reale in futuro
+          },
+          emails: {
+            count: emails.length,
+            unread: emails.filter(email => !email.read).length
+          }
+        },
+        dealsByStage,
+        recentActivities: sortedActivities,
+        upcomingMeetings,
+        recentContacts
+      };
+      
+      res.json(dashboardData);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      res.status(500).json({ message: 'Errore durante il recupero dei dati della dashboard' });
+    }
+  });
+  
   // Statistiche dashboard
   app.get('/api/dashboard/stats', authenticate, async (req, res) => {
     try {
       const contacts = await storage.getAllContacts();
       const companies = await storage.getAllCompanies();
-      const deals = await storage.getAllDeals();
+      const activeDeals = await storage.getDealsWithFilters({ status: 'active' });
       const leads = await storage.getAllLeads();
+      const emails = await storage.getEmails();
       
       res.json({
         contacts: contacts.length,
         companies: companies.length,
-        deals: deals.length,
+        deals: activeDeals.length,
         leads: leads.length,
+        emails: emails.length,
+        unreadEmails: emails.filter(email => !email.read).length
       });
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
