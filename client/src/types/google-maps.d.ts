@@ -55,3 +55,8 @@ declare namespace google.maps {
     function removeListener(listener: MapsEventListener): void;
   }
 }
+
+// Estendi l'interfaccia Window per includere il callback di inizializzazione
+interface Window {
+  initMap?: () => void;
+}

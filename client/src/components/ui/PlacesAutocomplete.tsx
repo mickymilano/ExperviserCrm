@@ -15,31 +15,52 @@ interface PlacesAutocompleteProps {
 // Carica Google Maps API in modo dinamico
 const loadGoogleMapsScript = (apiKey: string) => {
   return new Promise<void>((resolve, reject) => {
-    if (window.google && window.google.maps && window.google.maps.places) {
-      console.log('Google Maps già caricato in memoria');
-      resolve();
-      return;
-    }
+    try {
+      // Verifica se Google Maps è già caricato
+      if (window.google && window.google.maps && window.google.maps.places) {
+        console.log('Google Maps già caricato in memoria');
+        resolve();
+        return;
+      }
 
-    // Rimuovi eventuali script di Google Maps già presenti
-    const existingScripts = document.querySelectorAll('script[src*="maps.googleapis.com"]');
-    existingScripts.forEach((script) => script.remove());
-    
-    console.log('Caricamento di Google Maps con chiave API (ultimi caratteri):', '...' + apiKey.substring(apiKey.length - 4));
-    
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
-    script.async = true;
-    script.defer = true;
-    script.onload = () => {
-      console.log('Google Maps caricato con successo');
-      resolve();
-    };
-    script.onerror = (err) => {
-      console.error('Errore durante il caricamento di Google Maps:', err);
-      reject(new Error('Google Maps API caricamento fallito'));
-    };
-    document.head.appendChild(script);
+      // Rimuovi eventuali script di Google Maps già presenti
+      const existingScripts = document.querySelectorAll('script[src*="maps.googleapis.com"]');
+      existingScripts.forEach((script) => script.remove());
+      
+      console.log('Caricamento di Google Maps con chiave API (formato):', 
+        apiKey.substring(0, 6) + '...' + apiKey.substring(apiKey.length - 4));
+      
+      // Timeout di sicurezza per evitare attese infinite
+      const timeoutId = setTimeout(() => {
+        reject(new Error('Timeout durante il caricamento di Google Maps API'));
+      }, 10000); // 10 secondi di timeout
+      
+      // Crea e aggiungi lo script
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&v=weekly&callback=initMap`;
+      script.async = true;
+      script.defer = true;
+      
+      // Callback globale che Google Maps chiamerà quando sarà caricato
+      window.initMap = () => {
+        console.log('Google Maps caricato con successo via callback');
+        clearTimeout(timeoutId);
+        resolve();
+      };
+      
+      // Gestione errori
+      script.onerror = (err) => {
+        clearTimeout(timeoutId);
+        console.error('Errore durante il caricamento di Google Maps:', err);
+        reject(new Error('Google Maps API caricamento fallito'));
+      };
+      
+      // Aggiungi lo script al documento
+      document.head.appendChild(script);
+    } catch (error) {
+      console.error('Eccezione durante il setup di Google Maps:', error);
+      reject(error);
+    }
   });
 };
 

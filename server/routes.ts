@@ -1681,15 +1681,36 @@ export function registerRoutes(app: any) {
       // Espone solo le chiavi API che possono essere utilizzate in modo sicuro sul client
       const googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY || null;
       
-      // Log la chiave API per debug (solo i primi caratteri per sicurezza)
-      if (googleMapsApiKey) {
-        console.log('Sending Google Maps API key (starts with):', googleMapsApiKey.substring(0, 6) + '...');
-      } else {
-        console.log('No Google Maps API key available');
+      // Verifica se la chiave è vuota o null
+      if (!googleMapsApiKey) {
+        console.error('GOOGLE_MAPS_API_KEY non è impostata o è vuota nell\'ambiente');
+        return res.status(500).json({ 
+          error: 'Chiave API di Google Maps non configurata', 
+          googleMapsApiKey: null 
+        });
       }
       
+      // Verifica che la chiave API abbia un formato valido (inizia con AIza)
+      if (!googleMapsApiKey.startsWith('AIza')) {
+        console.error('GOOGLE_MAPS_API_KEY non ha un formato valido. Dovrebbe iniziare con "AIza".');
+        return res.status(500).json({ 
+          error: 'Formato della chiave API di Google Maps non valido', 
+          googleMapsApiKey: null 
+        });
+      }
+      
+      // Log la chiave API per debug (solo i primi caratteri per sicurezza)
+      console.log('Sending Google Maps API key (starts with):', googleMapsApiKey.substring(0, 6) + '...');
+      
+      // Cache-busting header per evitare che il browser memorizzi nella cache questa risposta
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      
+      // Invia la risposta
       res.json({
         googleMapsApiKey,
+        timestamp: Date.now() // Aggiunge timestamp per ulteriore sicurezza contro la cache
       });
     } catch (error) {
       console.error('Error fetching API configuration:', error);

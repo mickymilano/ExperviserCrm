@@ -15,32 +15,52 @@ export async function fetchApiConfig() {
   }
 }
 
+// Interfaccia per la configurazione API
+interface ApiConfig {
+  googleMapsApiKey: string | null;
+  timestamp?: number;
+  error?: string;
+}
+
 // Cached configuration ma con invalidazione per impedire caching eccessivo
-let cachedConfig: { googleMapsApiKey: string | null } | null = null;
+let cachedConfig: ApiConfig | null = null;
 let cacheTimestamp = 0;
 
 // Function to get Google Maps API key
 export async function getGoogleMapsApiKey(): Promise<string | null> {
   const now = Date.now();
-  const cacheLifetime = 60 * 1000; // 1 minuto
+  const cacheLifetime = 30 * 1000; // 30 secondi
 
-  // Invalida cache se più vecchia di 1 minuto o se non valida
+  // Invalida cache se più vecchia di 30 secondi o se non valida
   if (cachedConfig && now - cacheTimestamp < cacheLifetime) {
     console.log('Using cached Google Maps API key');
     return cachedConfig.googleMapsApiKey;
   }
   
   console.log('Fetching fresh Google Maps API key');
-  cachedConfig = await fetchApiConfig();
-  cacheTimestamp = now;
   
-  // Log solo per debug, non mostra la chiave completa
-  if (cachedConfig.googleMapsApiKey) {
+  try {
+    const config = await fetchApiConfig();
+    cachedConfig = config;
+    cacheTimestamp = now;
+    
+    // Log solo per debug
+    if (config.error) {
+      console.error('Error from API config endpoint:', config.error);
+      return null;
+    }
+    
+    if (!config.googleMapsApiKey) {
+      console.warn('No Google Maps API key received from server');
+      return null;
+    }
+    
     console.log('API key fetched and cached (format check):', 
-      cachedConfig.googleMapsApiKey.substring(0, 6) + '...');
-  } else {
-    console.log('No Google Maps API key received from server');
+      config.googleMapsApiKey.substring(0, 6) + '...');
+    
+    return config.googleMapsApiKey;
+  } catch (error) {
+    console.error('Failed to fetch API config:', error);
+    return null;
   }
-  
-  return cachedConfig.googleMapsApiKey;
 }
