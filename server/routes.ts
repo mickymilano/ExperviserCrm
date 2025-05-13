@@ -28,6 +28,36 @@ export const authenticate = (req: any, res: any, next: any) => {
   }
 };
 
+// Middleware di autenticazione JWT specifico
+export const authenticateJWT = (req: any, res: any, next: any) => {
+  // Ottieni il token dal cookie o dall'header Authorization
+  const token = req.cookies?.token || req.headers.authorization?.split(' ')[1];
+
+  // Consenti l'autenticazione come utente di debug in sviluppo
+  if (process.env.NODE_ENV === 'development' && !token) {
+    console.log('Using debug authentication');
+    req.user = {
+      id: 1,
+      username: 'debug',
+      role: 'super_admin'
+    };
+    return next();
+  }
+
+  if (!token) {
+    return res.status(401).json({ message: 'Autenticazione richiesta' });
+  }
+
+  try {
+    // Verifica il token
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    return res.status(401).json({ message: 'Token non valido' });
+  }
+};
+
 // Middleware per verificare i ruoli admin
 export const isAdmin = (req: any, res: any, next: any) => {
   if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'super_admin')) {
@@ -76,7 +106,7 @@ export function registerRoutes(app: any) {
   // --- STATISTICHE E DATI RECENTI ---
   
   // Ottieni statistiche per la dashboard
-  app.get('/api/stats/overview', authenticate, async (req: Request, res: Response) => {
+  app.get('/api/stats/overview', authenticateJWT, async (req: Request, res: Response) => {
     try {
       // Ottieni i conteggi attuali
       const contactsCount = await storage.getContactsCount();
@@ -224,6 +254,26 @@ export function registerRoutes(app: any) {
   // Verifica dello stato di autenticazione
   app.get('/api/auth/status', authenticate, (req, res) => {
     res.json({ authenticated: true, user: req.user });
+  });
+  
+  // Ottieni dati utente corrente
+  app.get('/api/auth/me', authenticate, async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: 'Utente non trovato' });
+      }
+      
+      // Rimuovi la password dalla risposta
+      const { password, ...userWithoutPassword } = user;
+      
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error('Error fetching current user:', error);
+      res.status(500).json({ message: 'Errore durante il recupero dati utente' });
+    }
   });
   
   // Logout

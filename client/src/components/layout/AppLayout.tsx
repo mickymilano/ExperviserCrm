@@ -93,9 +93,9 @@ function MenuItem({ item, isOpen }: { item: MenuItemProps; isOpen: boolean }) {
   
   return (
     <Link href={item.path}>
-      <a
+      <div
         className={cn(
-          'flex items-center gap-3 px-3 py-2 rounded-md transition-colors',
+          'flex items-center gap-3 px-3 py-2 rounded-md transition-colors cursor-pointer',
           isActive
             ? 'bg-primary/10 text-primary'
             : 'text-muted-foreground hover:bg-accent hover:text-foreground'
@@ -112,7 +112,7 @@ function MenuItem({ item, isOpen }: { item: MenuItemProps; isOpen: boolean }) {
             )}
           </div>
         )}
-      </a>
+      </div>
     </Link>
   );
 }
