@@ -1,3 +1,5 @@
+// DISABLED: Synergy creation only allowed in Deal context.
+// Questo file è stato disabilitato per garantire che le sinergie possano essere create solo nel contesto di un Deal.
 import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
