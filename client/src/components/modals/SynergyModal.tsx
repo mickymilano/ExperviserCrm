@@ -52,6 +52,7 @@ const formSchema = z.object({
   dealId: z.number().optional().nullable(),
   status: z.string().optional().nullable(),
   startDate: z.date(),
+  endDate: z.date().optional().nullable(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -78,74 +79,62 @@ export function SynergyModal({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // Mutazione per creare una nuova sinergia
+  // Create synergy mutation
   const createSynergyMutation = useMutation({
     mutationFn: async (data: FormData) => {
-      try {
-        // Converti le date in formato stringa YYYY-MM-DD
-        const formattedData = {
-          ...data,
-          startDate: data.startDate.toISOString().split('T')[0],
-          endDate: data.endDate ? data.endDate.toISOString().split('T')[0] : null,
-        };
-        
-        const response = await fetch('/api/synergies', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(formattedData),
-        });
-        
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.message || 'Failed to create synergy');
-        }
-        
-        return await response.json();
-      } catch (error) {
-        console.error('Error creating synergy:', error);
-        throw error;
+      // Convert dates to string format YYYY-MM-DD
+      const formattedData = {
+        ...data,
+        startDate: data.startDate.toISOString().split('T')[0],
+        endDate: data.endDate ? data.endDate.toISOString().split('T')[0] : null,
+      };
+      
+      const response = await fetch('/api/synergies', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formattedData),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to create synergy');
       }
+      
+      return await response.json();
     },
     onSuccess: () => {
-      // Invalida le query per forzare un aggiornamento dei dati
       queryClient.invalidateQueries({ queryKey: ['/api/synergies'] });
     },
   });
   
-  // Mutazione per aggiornare una sinergia esistente
+  // Update synergy mutation
   const updateSynergyMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number, data: FormData }) => {
-      try {
-        // Converti le date in formato stringa YYYY-MM-DD
-        const formattedData = {
-          ...data,
-          startDate: data.startDate ? data.startDate.toISOString().split('T')[0] : undefined,
-          endDate: data.endDate ? data.endDate.toISOString().split('T')[0] : null,
-        };
-        
-        const response = await fetch(`/api/synergies/${id}`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(formattedData),
-        });
-        
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.message || 'Failed to update synergy');
-        }
-        
-        return await response.json();
-      } catch (error) {
-        console.error('Error updating synergy:', error);
-        throw error;
+      // Convert dates to string format YYYY-MM-DD
+      const formattedData = {
+        ...data,
+        startDate: data.startDate ? data.startDate.toISOString().split('T')[0] : undefined,
+        endDate: data.endDate ? data.endDate.toISOString().split('T')[0] : null,
+      };
+      
+      const response = await fetch(`/api/synergies/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formattedData),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to update synergy');
       }
+      
+      return await response.json();
     },
     onSuccess: () => {
-      // Invalida le query per forzare un aggiornamento dei dati
       queryClient.invalidateQueries({ queryKey: ['/api/synergies'] });
     },
   });
@@ -168,6 +157,7 @@ export function SynergyModal({
       dealId: null,
       status: "Active",
       startDate: new Date(),
+      endDate: null,
     },
   });
 
@@ -178,6 +168,7 @@ export function SynergyModal({
         const formData = {
           ...initialData,
           startDate: initialData.startDate ? new Date(initialData.startDate) : new Date(),
+          endDate: initialData.endDate ? new Date(initialData.endDate) : null,
         };
         form.reset(formData);
       } else {
@@ -190,12 +181,13 @@ export function SynergyModal({
           dealId: null,
           status: "Active",
           startDate: new Date(),
+          endDate: null,
         });
       }
     }
-  }, [initialData, form, open, contactId, companyId]);
+  }, [open, initialData, form, contactId, companyId]);
 
-  // Update form when contactId/companyId props change
+  // Set contactId and companyId if provided as props
   useEffect(() => {
     if (contactId) {
       form.setValue("contactId", contactId);
@@ -207,13 +199,14 @@ export function SynergyModal({
 
   const onSubmit = async (data: FormData) => {
     try {
-      // Converti campi undefined a null per compatibilità con il backend
+      // Convert undefined fields to null for backend compatibility
       const processedData = {
         ...data,
         description: data.description || null,
         dealId: data.dealId || null,
         status: data.status || null,
-        startDate: data.startDate || new Date() // Assicuriamo che startDate non sia mai undefined
+        startDate: data.startDate || new Date(),
+        endDate: data.endDate || null,
       };
       
       if (mode === "create") {
@@ -234,15 +227,14 @@ export function SynergyModal({
       }
       
       onOpenChange(false);
-      
       if (onSuccess) {
         onSuccess();
       }
     } catch (error) {
-      console.error("Error saving synergy:", error);
+      console.error(error);
       toast({
         title: "Error",
-        description: "Failed to save synergy",
+        description: error instanceof Error ? error.message : "An error occurred",
         variant: "destructive",
       });
     }
@@ -250,16 +242,17 @@ export function SynergyModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {mode === "create" ? "Create New Business Synergy" : "Edit Business Synergy"}
+            {mode === "create" ? "Create New Synergy" : "Edit Synergy"}
           </DialogTitle>
           <DialogDescription>
-            Track special business relationships between contacts and companies
+            {mode === "create"
+              ? "Create a new business relationship between a contact and a company"
+              : "Edit details of this business relationship"}
           </DialogDescription>
         </DialogHeader>
-
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -325,26 +318,20 @@ export function SynergyModal({
               name="type"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Relationship Type</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+                  <FormLabel>Type</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a relationship type" />
+                        <SelectValue placeholder="Select a synergy type" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="Supplier">Supplier</SelectItem>
-                      <SelectItem value="Partner">Partner</SelectItem>
-                      <SelectItem value="Customer">Customer</SelectItem>
-                      <SelectItem value="Investor">Investor</SelectItem>
-                      <SelectItem value="Advisor">Advisor</SelectItem>
-                      <SelectItem value="Strategic Alliance">Strategic Alliance</SelectItem>
-                      <SelectItem value="Joint Venture">Joint Venture</SelectItem>
-                      <SelectItem value="Contractor">Contractor</SelectItem>
+                      <SelectItem value="Employee">Employee</SelectItem>
                       <SelectItem value="Consultant">Consultant</SelectItem>
+                      <SelectItem value="Partner">Partner</SelectItem>
+                      <SelectItem value="Supplier">Supplier</SelectItem>
+                      <SelectItem value="Client">Client</SelectItem>
+                      <SelectItem value="Investor">Investor</SelectItem>
                       <SelectItem value="Other">Other</SelectItem>
                     </SelectContent>
                   </Select>
@@ -370,8 +357,8 @@ export function SynergyModal({
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="Active">Active</SelectItem>
-                      <SelectItem value="Inactive">Inactive</SelectItem>
                       <SelectItem value="Pending">Pending</SelectItem>
+                      <SelectItem value="Inactive">Inactive</SelectItem>
                       <SelectItem value="On Hold">On Hold</SelectItem>
                       <SelectItem value="Completed">Completed</SelectItem>
                     </SelectContent>
@@ -386,12 +373,10 @@ export function SynergyModal({
               name="dealId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Related Deal (Optional)</FormLabel>
+                  <FormLabel>Associated Deal (Optional)</FormLabel>
                   <Select
-                    onValueChange={(value) => 
-                      field.onChange(value && value !== "null" ? parseInt(value) : null)
-                    }
-                    defaultValue={field.value?.toString() || "null"}
+                    onValueChange={(value) => field.onChange(parseInt(value))}
+                    defaultValue={field.value?.toString() || ""}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -399,10 +384,10 @@ export function SynergyModal({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="null">None</SelectItem>
+                      <SelectItem value="">No associated deal</SelectItem>
                       {dealsList.map((deal: any) => (
                         <SelectItem key={deal.id} value={deal.id.toString()}>
-                          {deal.name}
+                          {deal.name || `Deal #${deal.id}`}
                         </SelectItem>
                       ))}
                     </SelectContent>
