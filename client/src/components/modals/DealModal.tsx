@@ -187,6 +187,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     } else {
       const query = companySearchQuery.toLowerCase().trim();
       const filtered = companies.filter(company => 
+        company && company.name && typeof company.name === 'string' && 
         company.name.toLowerCase().includes(query)
       );
       setFilteredCompanies(filtered);
@@ -228,6 +229,12 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     }
     
     // Only show contacts associated with selected company
+    if (!Array.isArray(contacts)) {
+      console.log("Contacts is not an array");
+      setFilteredContacts([]);
+      return;
+    }
+    
     const filteredContactsList = contacts.filter(contact => {
       // Check if the contact has areasOfActivity data
       if (!contact.areasOfActivity || !Array.isArray(contact.areasOfActivity)) {
@@ -456,9 +463,17 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
           return response.json();
         })
         .then(contacts => {
+          if (!contacts || !Array.isArray(contacts)) {
+            console.error("Invalid contacts data received:", contacts);
+            resolve([]);
+            return;
+          }
+          
           const options = contacts.map((contact: any) => ({
-            value: contact.id,
-            label: `${contact.firstName} ${contact.lastName}`
+            value: contact && contact.id ? contact.id : 0,
+            label: contact ? 
+              `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || "Unnamed Contact" 
+              : "Unknown Contact"
           }));
           resolve(options);
         })
