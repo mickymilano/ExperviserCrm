@@ -8,9 +8,20 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 // Lazy loading delle pagine
 const LoginPage = lazy(() => import('@/pages/LoginPage'));
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
+
+// Contacts
 const ContactsPage = lazy(() => import('@/pages/contacts'));
+const ContactDetailPage = lazy(() => import('@/pages/contacts/[id]'));
+
+// Companies
 const CompaniesPage = lazy(() => import('@/pages/companies'));
+const CompanyDetailPage = lazy(() => import('@/pages/companies/[id]'));
+
+// Deals
 const DealsPage = lazy(() => import('@/pages/deals'));
+const DealDetailPage = lazy(() => import('@/pages/deals/[id]'));
+
+// Other modules
 const LeadsPage = lazy(() => import('@/pages/leads'));
 const SynergiesPage = lazy(() => import('@/pages/synergies'));
 const TasksPage = lazy(() => import('@/pages/tasks'));
@@ -56,24 +67,39 @@ export default function App() {
             </ProtectedRoute>
           </Route>
           
-          {/* Route for Contacts */}
+          {/* Routes for Contacts */}
           <Route path="/contacts">
             <ProtectedRoute>
               <LayoutPage component={ContactsPage} />
             </ProtectedRoute>
           </Route>
+          <Route path="/contacts/:id">
+            <ProtectedRoute>
+              <LayoutPage component={ContactDetailPage} />
+            </ProtectedRoute>
+          </Route>
           
-          {/* Route for Companies */}
+          {/* Routes for Companies */}
           <Route path="/companies">
             <ProtectedRoute>
               <LayoutPage component={CompaniesPage} />
             </ProtectedRoute>
           </Route>
+          <Route path="/companies/:id">
+            <ProtectedRoute>
+              <LayoutPage component={CompanyDetailPage} />
+            </ProtectedRoute>
+          </Route>
           
-          {/* Route for Deals */}
+          {/* Routes for Deals */}
           <Route path="/deals">
             <ProtectedRoute>
               <LayoutPage component={DealsPage} />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/deals/:id">
+            <ProtectedRoute>
+              <LayoutPage component={DealDetailPage} />
             </ProtectedRoute>
           </Route>
           
