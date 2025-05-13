@@ -168,11 +168,7 @@ export const deals = pgTable('deals', {
 export const pipelineStages = pgTable('pipeline_stages', {
   id: serial('id').primaryKey(),
   name: varchar('name', { length: 50 }).notNull(),
-  description: text('description'),
-  position: integer('position').notNull(),
-  color: varchar('color', { length: 20 }),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
+  order: integer('order').notNull(),
 });
 
 /**
