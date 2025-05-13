@@ -1235,11 +1235,41 @@ export class PostgresStorage implements IStorage {
     // Separately get areas of activity
     const areas = await db.select().from(areasOfActivity).where(eq(areasOfActivity.contactId, id));
     
-    // Return the contact with areas attached
-    return {
-      ...contact,
-      areasOfActivity: areas
+    // Create a compatible contact object that maps DB fields to interface fields
+    // and handles backward compatibility
+    const compatibleContact: Contact = {
+      id: contact.id,
+      firstName: contact.first_name,
+      lastName: contact.last_name,
+      middleName: contact.middle_name || null,
+      
+      // Contact methods - new fields
+      mobilePhone: contact.mobile_phone || null,
+      companyEmail: contact.company_email || null,
+      privateEmail: contact.private_email || null,
+      officePhone: contact.office_phone || null,
+      privatePhone: contact.private_phone || null,
+      
+      // Backward compatibility fields
+      email: contact.company_email || contact.private_email || null,
+      phone: contact.mobile_phone || contact.office_phone || contact.private_phone || null,
+      
+      // Social profiles
+      linkedin: contact.linkedin || null,
+      facebook: contact.facebook || null,
+      instagram: contact.instagram || null,
+      tiktok: contact.tiktok || null,
+      
+      // Rest of the fields
+      tags: Array.isArray(contact.tags) ? contact.tags : [],
+      notes: contact.notes || null,
+      customFields: contact.custom_fields || null,
+      createdAt: contact.created_at ? new Date(contact.created_at).toISOString() : new Date().toISOString(),
+      updatedAt: contact.updated_at ? new Date(contact.updated_at).toISOString() : new Date().toISOString(),
+      areasOfActivity: areas || []
     };
+    
+    return compatibleContact;
   }
 
   async createContact(contact: InsertContact): Promise<Contact> {
