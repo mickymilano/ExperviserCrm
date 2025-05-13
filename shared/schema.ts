@@ -47,10 +47,18 @@ export const users = pgTable('users', {
     .$type<typeof userStatusEnum[number]>()
     .default('active')
     .notNull(),
-  emailVerified: boolean('email_verified').default(false),
+  // email_verified non esiste nel database reale, quindi lo rimuoviamo
+  // emailVerified: boolean('email_verified').default(false),
+  // Campi allineati con il database reale
+  loginAttempts: integer('login_attempts').default(0),
+  resetPasswordToken: varchar('reset_password_token', { length: 255 }),
+  resetPasswordExpires: timestamp('reset_password_expires'),
+  jobTitle: varchar('job_title', { length: 100 }),
+  timezone: varchar('timezone', { length: 50 }),
+  language: varchar('language', { length: 10 }),
+  phone: varchar('phone', { length: 20 }),
   avatar: text('avatar'),
-  preferences: json('preferences'),
-  lastLogin: timestamp('last_login'),
+  lastLogin: timestamp('last_login_at'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
