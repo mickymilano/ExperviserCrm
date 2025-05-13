@@ -754,7 +754,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                       <PopoverContent className="w-full p-0">
                         <Command>
                           <CommandInput placeholder="Search contact..." />
-                          <CommandEmpty>No contact found.</CommandEmpty>
+                          <CommandEmpty value="no-contacts-found">No contact found.</CommandEmpty>
                           <CommandGroup className="max-h-64 overflow-y-auto">
                             {Array.isArray(filteredContacts) && filteredContacts.length > 0 ? (
                               filteredContacts.map((contact: any) => (
@@ -774,7 +774,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                                 </CommandItem>
                               ))
                             ) : (
-                              <CommandItem disabled>No contacts for this company</CommandItem>
+                              <CommandItem value="no-contacts" disabled>No contacts for this company</CommandItem>
                             )}
                           </CommandGroup>
                         </Command>
