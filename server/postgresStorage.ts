@@ -1354,7 +1354,7 @@ export class PostgresStorage implements IStorage {
       address: companies.address,
       website: companies.website,
       industry: companies.industry,
-      description: companies.description,
+      // Rimuoviamo description perché non esiste nel database
       logo: companies.logo,
       tags: companies.tags,
       notes: companies.notes,
@@ -1380,6 +1380,7 @@ export class PostgresStorage implements IStorage {
       region: null,
       country: null,
       postalCode: null,
+      description: null, // Aggiungiamo anche questo campo per evitare errori nel frontend
       areasOfActivity: areas
     };
   }
