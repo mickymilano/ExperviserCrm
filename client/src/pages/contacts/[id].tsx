@@ -19,6 +19,7 @@ import {
 import { formatDateToLocal, getInitials, formatPhoneNumber, generateAvatarColor } from "@/lib/utils";
 import ContactModal from "@/components/modals/ContactModal";
 import TaskList from "@/components/tasks/TaskList";
+import SynergiesList from "@/components/synergies/SynergiesList";
 import { Link } from "wouter";
 import { LinkCompanyButton } from "@/components/forms/LinkCompanyButton";
 
