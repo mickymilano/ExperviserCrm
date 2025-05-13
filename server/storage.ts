@@ -854,4 +854,8 @@ export class MemStorage implements IStorage {
 }
 
 // Esporta un'istanza singleton dell'implementazione di storage
-export const storage = new MemStorage();
+// Importiamo PostgresStorage dal file postgresStorage.ts
+import { PostgresStorage } from './postgresStorage';
+
+// Utilizziamo PostgresStorage invece di MemStorage per connetterci al database reale
+export const storage = new PostgresStorage();

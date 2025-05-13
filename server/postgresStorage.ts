@@ -1,22 +1,14 @@
-import { db } from "./db-simple";
+import { db } from "./db";
 import { IStorage } from "./storage";
 import { 
   users, 
-  userSessions, 
-  securityLogs, 
   leads, 
   contacts, 
   companies,
   areasOfActivity,
   pipelineStages,
   deals,
-  tasks,
-  emailAccounts,
-  emails,
-  signatures,
-  accountSignatures,
-  activities,
-  meetings,
+  synergies,
   contactEmails,
   type User,
   type InsertUser,
