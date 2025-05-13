@@ -8,7 +8,15 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 // Lazy loading delle pagine
 const LoginPage = lazy(() => import('@/pages/LoginPage'));
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
+const ContactsPage = lazy(() => import('@/pages/contacts'));
+const CompaniesPage = lazy(() => import('@/pages/companies'));
+const DealsPage = lazy(() => import('@/pages/deals'));
+const LeadsPage = lazy(() => import('@/pages/leads'));
 const SynergiesPage = lazy(() => import('@/pages/synergies'));
+const CalendarPage = lazy(() => import('@/pages/calendar'));
+const EmailPage = lazy(() => import('@/pages/email'));
+const SettingsPage = lazy(() => import('@/pages/settings'));
+const HelpPage = lazy(() => import('@/pages/help'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
 // Componente di caricamento
@@ -46,15 +54,71 @@ export default function App() {
               <LayoutPage component={DashboardPage} />
             </ProtectedRoute>
           </Route>
-
-          {/* Pagina sinergie */}
+          
+          {/* Route for Contacts */}
+          <Route path="/contacts">
+            <ProtectedRoute>
+              <LayoutPage component={ContactsPage} />
+            </ProtectedRoute>
+          </Route>
+          
+          {/* Route for Companies */}
+          <Route path="/companies">
+            <ProtectedRoute>
+              <LayoutPage component={CompaniesPage} />
+            </ProtectedRoute>
+          </Route>
+          
+          {/* Route for Deals */}
+          <Route path="/deals">
+            <ProtectedRoute>
+              <LayoutPage component={DealsPage} />
+            </ProtectedRoute>
+          </Route>
+          
+          {/* Route for Leads */}
+          <Route path="/leads">
+            <ProtectedRoute>
+              <LayoutPage component={LeadsPage} />
+            </ProtectedRoute>
+          </Route>
+          
+          {/* Route for Synergies */}
           <Route path="/synergies">
             <ProtectedRoute>
               <LayoutPage component={SynergiesPage} />
             </ProtectedRoute>
           </Route>
           
-          {/* Pagina non trovata */}
+          {/* Route for Calendar */}
+          <Route path="/calendar">
+            <ProtectedRoute>
+              <LayoutPage component={CalendarPage} />
+            </ProtectedRoute>
+          </Route>
+          
+          {/* Route for Email */}
+          <Route path="/emails">
+            <ProtectedRoute>
+              <LayoutPage component={EmailPage} />
+            </ProtectedRoute>
+          </Route>
+          
+          {/* Route for Settings */}
+          <Route path="/settings">
+            <ProtectedRoute>
+              <LayoutPage component={SettingsPage} />
+            </ProtectedRoute>
+          </Route>
+          
+          {/* Route for Help */}
+          <Route path="/help">
+            <ProtectedRoute>
+              <LayoutPage component={HelpPage} />
+            </ProtectedRoute>
+          </Route>
+          
+          {/* Pagina non trovata - catch all route */}
           <Route>
             <ProtectedRoute>
               <LayoutPage component={NotFoundPage} />
