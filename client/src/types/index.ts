@@ -164,18 +164,25 @@ export interface EmailAccount {
   username: string;
   password: string;
   userId: number;
+  isPrimary?: boolean;
+  lastSynced?: string | null;
 }
 
 export interface Email {
   id: number;
   subject: string;
   body: string;
+  plainText?: string | null;
   from: string;
-  to: string[];
+  to: string[] | string;
   cc: string[] | null;
   bcc: string[] | null;
   date: string;
-  read: boolean;
+  isRead: boolean;
+  isStarred?: boolean;
+  folder?: string;
+  labels?: string[] | null;
+  attachments?: Record<string, any> | null;
   accountId: number;
   contactId: number | null;
   companyId: number | null;
