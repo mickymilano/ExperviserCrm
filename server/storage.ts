@@ -819,6 +819,23 @@ export class MemStorage implements IStorage {
     
     return this.contactEmails[emailIndex];
   }
+  
+  // Metodi aggiuntivi per compatibilità con l'API dashboard
+  async getEmails(): Promise<Email[]> {
+    return []; // Implementazione mock vuota per MemStorage
+  }
+  
+  async getPipelineStages(): Promise<PipelineStage[]> {
+    return this.pipelineStages; // Restituisci gli stage esistenti
+  }
+  
+  async getActivities(): Promise<Activity[]> {
+    return []; // Implementazione mock vuota per MemStorage
+  }
+  
+  async getMeetings(): Promise<Meeting[]> {
+    return []; // Implementazione mock vuota per MemStorage
+  }
 }
 
 // Esporta un'istanza singleton dell'implementazione di storage

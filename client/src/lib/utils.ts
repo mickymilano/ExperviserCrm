@@ -87,3 +87,18 @@ export function generateAvatarColor(text: string): string {
   const hue = Math.abs(hash % 360);
   return `hsl(${hue}, 65%, 50%)`;
 }
+
+/**
+ * Estrae le iniziali da un nome completo
+ * Es: "Mario Rossi" -> "MR"
+ */
+export function getInitials(name: string): string {
+  if (!name) return '';
+  
+  // Dividi il nome negli spazi e ottieni la prima lettera di ogni parte
+  return name
+    .split(' ')
+    .map(part => part.charAt(0).toUpperCase())
+    .join('')
+    .substring(0, 2); // Prendi massimo 2 lettere
+}
