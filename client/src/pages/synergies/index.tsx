@@ -199,21 +199,26 @@ export default function SynergiesPage() {
         </Card>
       )}
 
-      {/* Create Synergy Modal */}
+      {/* DISABLED: Synergy actions only allowed in DealModal
       <SynergyModal
         open={isCreateModalOpen}
         onOpenChange={setIsCreateModalOpen}
         mode="create"
         onSuccess={() => refetch()}
       />
+      */}
 
-      {/* Edit Synergy Modal */}
+      {/* 
+        Edit Synergy Modal trasformato in ReadOnly
+        Cambiato da "edit" a "view" per mostrare in sola lettura in conformità con
+        la regola di business che le sinergie possono essere modificate solo nel contesto Deal
+      */}
       {editingSynergy && (
         <SynergyModal
           open={!!editingSynergy}
           onOpenChange={handleCloseEditModal}
           initialData={editingSynergy}
-          mode="edit"
+          mode="view"
           onSuccess={() => refetch()}
         />
       )}
