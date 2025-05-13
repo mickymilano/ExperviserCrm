@@ -47,23 +47,25 @@ export default function ContactDetail() {
   };
   
   const getPrimaryCompany = () => {
-    if (!contact?.areasOfActivity || contact.areasOfActivity.length === 0) return null;
+    if (!contact?.areasOfActivity || !Array.isArray(contact.areasOfActivity) || contact.areasOfActivity.length === 0) return null;
     
     // Find primary area of activity
-    const primaryArea = contact.areasOfActivity.find(area => area.isPrimary);
+    const primaryArea = contact.areasOfActivity.find(area => area && area.isPrimary);
     
     // If no primary, return the first one
     const firstArea = contact.areasOfActivity[0];
     
     const processArea = (area) => {
+      if (!area) return null;
+      
       // Se abbiamo il companyId, recuperiamo il nome dell'azienda dal nostro elenco delle compagnie
       const companyNameFromId = area.companyId ? getCompanyName(area.companyId) : null;
       
       return {
-        id: area.companyId,
+        id: area.companyId || null,
         name: area.companyName || companyNameFromId || "Company not specified",
-        role: area.role,
-        jobDescription: area.jobDescription
+        role: area.role || "No role specified",
+        jobDescription: area.jobDescription || ""
       };
     };
     
@@ -308,13 +310,13 @@ export default function ContactDetail() {
                   </div>
                   
                   {/* Tags if available */}
-                  {contact.tags && contact.tags.length > 0 && (
+                  {contact.tags && Array.isArray(contact.tags) && contact.tags.length > 0 && (
                     <div className="pt-2">
                       <h4 className="text-sm font-medium mb-2">Tags</h4>
                       <div className="flex flex-wrap gap-1">
                         {contact.tags.map((tag, index) => (
                           <Badge key={index} variant="secondary" className="text-xs">
-                            {tag}
+                            {tag || ""}
                           </Badge>
                         ))}
                       </div>
@@ -355,27 +357,27 @@ export default function ContactDetail() {
                 <CardContent>
                   {isLoadingDeals ? (
                     <Skeleton className="h-24 w-full" />
-                  ) : relatedDeals && relatedDeals.length > 0 ? (
+                  ) : Array.isArray(relatedDeals) && relatedDeals.length > 0 ? (
                     <div className="space-y-2">
                       {relatedDeals.slice(0, 3).map((deal) => (
-                        <div key={deal.id} className="flex items-center justify-between p-2 rounded-md hover:bg-muted">
+                        <div key={deal?.id || 'unknown'} className="flex items-center justify-between p-2 rounded-md hover:bg-muted">
                           <div>
-                            <h4 className="font-medium">{deal.name}</h4>
+                            <h4 className="font-medium">{deal?.name || 'Unnamed Deal'}</h4>
                             <p className="text-sm text-muted-foreground">
-                              Value: ${deal.value?.toLocaleString()}
+                              Value: ${deal?.value?.toLocaleString() || '0'}
                             </p>
                           </div>
                           <Button 
                             variant="ghost" 
                             size="sm" 
-                            onClick={() => navigate(`/deals/${deal.id}`)}
+                            onClick={() => navigate(`/deals/${deal?.id || 0}`)}
                           >
                             View
                           </Button>
                         </div>
                       ))}
                       
-                      {relatedDeals.length > 3 && (
+                      {Array.isArray(relatedDeals) && relatedDeals.length > 3 && (
                         <div className="text-center pt-2">
                           <Button variant="link" onClick={() => setActiveTab("deals")}>
                             View all {relatedDeals.length} deals
