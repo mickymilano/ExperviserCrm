@@ -48,6 +48,18 @@ import {
 import { eq, and, desc, sql, isNull, isNotNull, or, asc, inArray } from "drizzle-orm";
 
 export class PostgresStorage implements IStorage {
+  
+  // Metodo per dashboard stats
+  async getEmails(): Promise<Email[]> {
+    try {
+      // Implementazione temporanea che restituisce un array vuoto
+      // ma potrebbe essere aggiornata in futuro quando il modulo email sarà implementato
+      return [];
+    } catch (error) {
+      console.error("Error in getEmails:", error);
+      return [];
+    }
+  }
   // USERS
   async getUsers(): Promise<User[]> {
     return await db.select().from(users).orderBy(users.fullName);
@@ -1045,8 +1057,7 @@ export class PostgresStorage implements IStorage {
               `SELECT 
                 id, 
                 name, 
-                email,
-                logo
+                email
               FROM companies 
               WHERE id = $1`, 
               [deal.companyId]
@@ -1068,8 +1079,7 @@ export class PostgresStorage implements IStorage {
               `SELECT 
                 id, 
                 name, 
-                "order" as position,
-                color
+                "order" as position
               FROM pipeline_stages 
               WHERE id = $1`, 
               [deal.stageId]
