@@ -28,6 +28,7 @@ export interface IStorage {
   // Contact operations
   getContact(id: number): Promise<Contact | null>;
   getAllContacts(): Promise<Contact[]>;
+  getContacts(): Promise<Contact[]>; // Aggiunto per compatibilità
   createContact(contactData: InsertContact): Promise<Contact>;
   updateContact(id: number, contactData: Partial<Contact>): Promise<Contact>;
   deleteContact(id: number): Promise<void>;
@@ -37,6 +38,7 @@ export interface IStorage {
   // Company operations
   getCompany(id: number): Promise<Company | null>;
   getAllCompanies(): Promise<Company[]>;
+  getCompanies(): Promise<Company[]>; // Aggiunto per compatibilità
   createCompany(companyData: InsertCompany): Promise<Company>;
   updateCompany(id: number, companyData: Partial<Company>): Promise<Company>;
   deleteCompany(id: number): Promise<void>;
@@ -56,6 +58,7 @@ export interface IStorage {
   // Lead operations
   getLead(id: number): Promise<Lead | null>;
   getAllLeads(): Promise<Lead[]>;
+  getLeads(): Promise<Lead[]>; // Aggiunto per compatibilità
   createLead(leadData: InsertLead): Promise<Lead>;
   updateLead(id: number, leadData: Partial<Lead>): Promise<Lead>;
   deleteLead(id: number): Promise<void>;
@@ -281,6 +284,10 @@ export class MemStorage implements IStorage {
   async getAllContacts(): Promise<Contact[]> {
     return [...this.contacts];
   }
+  
+  async getContacts(): Promise<Contact[]> {
+    return this.getAllContacts();
+  }
 
   async createContact(contactData: InsertContact): Promise<Contact> {
     const now = new Date();
@@ -352,6 +359,10 @@ export class MemStorage implements IStorage {
 
   async getAllCompanies(): Promise<Company[]> {
     return [...this.companies];
+  }
+  
+  async getCompanies(): Promise<Company[]> {
+    return this.getAllCompanies();
   }
 
   async createCompany(companyData: InsertCompany): Promise<Company> {
@@ -491,6 +502,10 @@ export class MemStorage implements IStorage {
 
   async getAllLeads(): Promise<Lead[]> {
     return [...this.leads];
+  }
+  
+  async getLeads(): Promise<Lead[]> {
+    return this.getAllLeads();
   }
 
   async createLead(leadData: InsertLead): Promise<Lead> {

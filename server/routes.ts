@@ -698,7 +698,9 @@ export function registerRoutes(app: any) {
   // Ottieni tutte le aziende
   app.get('/api/companies', authenticate, async (req, res) => {
     try {
-      const companies = await storage.getAllCompanies();
+      console.log("API /api/companies: retrieving companies from storage");
+      const companies = await storage.getCompanies(); // Cambiato getAllCompanies con getCompanies
+      console.log(`API /api/companies: found ${companies.length} companies in storage`);
       res.json(companies);
     } catch (error) {
       console.error('Error fetching companies:', error);
