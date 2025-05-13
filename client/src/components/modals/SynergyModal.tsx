@@ -41,7 +41,7 @@ import {
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useCreateSynergy, useUpdateSynergy } from "@/hooks/useSynergies";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 // Form schema
 const formSchema = z.object({
@@ -76,8 +76,79 @@ export function SynergyModal({
   onSuccess,
 }: SynergyModalProps) {
   const { toast } = useToast();
-  const createSynergyMutation = useCreateSynergy();
-  const updateSynergyMutation = useUpdateSynergy();
+  const queryClient = useQueryClient();
+  
+  // Mutazione per creare una nuova sinergia
+  const createSynergyMutation = useMutation({
+    mutationFn: async (data: FormData) => {
+      try {
+        // Converti le date in formato stringa YYYY-MM-DD
+        const formattedData = {
+          ...data,
+          startDate: data.startDate.toISOString().split('T')[0],
+          endDate: data.endDate ? data.endDate.toISOString().split('T')[0] : null,
+        };
+        
+        const response = await fetch('/api/synergies', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formattedData),
+        });
+        
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Failed to create synergy');
+        }
+        
+        return await response.json();
+      } catch (error) {
+        console.error('Error creating synergy:', error);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      // Invalida le query per forzare un aggiornamento dei dati
+      queryClient.invalidateQueries({ queryKey: ['/api/synergies'] });
+    },
+  });
+  
+  // Mutazione per aggiornare una sinergia esistente
+  const updateSynergyMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number, data: FormData }) => {
+      try {
+        // Converti le date in formato stringa YYYY-MM-DD
+        const formattedData = {
+          ...data,
+          startDate: data.startDate ? data.startDate.toISOString().split('T')[0] : undefined,
+          endDate: data.endDate ? data.endDate.toISOString().split('T')[0] : null,
+        };
+        
+        const response = await fetch(`/api/synergies/${id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formattedData),
+        });
+        
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Failed to update synergy');
+        }
+        
+        return await response.json();
+      } catch (error) {
+        console.error('Error updating synergy:', error);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      // Invalida le query per forzare un aggiornamento dei dati
+      queryClient.invalidateQueries({ queryKey: ['/api/synergies'] });
+    },
+  });
   
   const { contacts, isLoading: isLoadingContacts } = useContacts();
   const { companies, isLoading: isLoadingCompanies } = useCompanies();
