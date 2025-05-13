@@ -171,9 +171,19 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
             </div>
           </div>
           
+          {/* Country field */}
+          <div className="space-y-2 mb-4">
+            <Label htmlFor="country">Country</Label>
+            <Input 
+              id="country" 
+              {...register("country")} 
+              placeholder="Enter country" 
+            />
+          </div>
+
           {/* Full Address Field (Unified location) */}
           <div className="space-y-2 mb-4">
-            <Label htmlFor="fullAddress">Location</Label>
+            <Label htmlFor="fullAddress">Complete Address</Label>
             <Input 
               id="fullAddress" 
               {...register("fullAddress")} 

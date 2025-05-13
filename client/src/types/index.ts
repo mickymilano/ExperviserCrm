@@ -97,6 +97,7 @@ export interface Company {
   phone: string | null;
   address: string | null; // Deprecated: Use fullAddress instead
   fullAddress: string | null; // Unified location field
+  country: string | null; // Direct property for country (Added 2025-05-13)
   tags: string[] | null;
   notes: string | null;
   customFields: Record<string, any> | null;

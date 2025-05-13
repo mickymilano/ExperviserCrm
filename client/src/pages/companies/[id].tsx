@@ -293,12 +293,14 @@ export default function CompanyDetail() {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   <div className="space-y-4">
-                    {company.customFields?.country && (
+                    {(company.country || company.customFields?.country) && (
                       <div className="flex items-start">
                         <Flag className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
                         <div>
                           <p className="text-sm font-medium mb-1">Country</p>
-                          <p>{company.customFields.country}</p>
+                          <Badge variant="outline" className="font-normal mt-1">
+                            {company.country || company.customFields?.country}
+                          </Badge>
                         </div>
                       </div>
                     )}
