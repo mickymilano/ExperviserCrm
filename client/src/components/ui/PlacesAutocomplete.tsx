@@ -93,10 +93,10 @@ export function PlacesAutocomplete({
     if (!scriptLoaded || !inputRef.current) return;
 
     try {
-      // Inizializza Google Places Autocomplete con opzioni avanzate
+      // Inizializza Google Places Autocomplete con opzioni che permettono ricerca per nome aziendale e indirizzo
       autocompleteRef.current = new google.maps.places.Autocomplete(inputRef.current, {
         fields: ['address_components', 'formatted_address', 'geometry', 'name', 'place_id'],
-        types: ['address'],  // Limitato a indirizzi specifici
+        types: ['establishment', 'address', 'geocode'],  // Permette sia ricerche aziendali che indirizzi
       });
 
       // Gestisce l'evento di selezione del luogo
@@ -112,10 +112,31 @@ export function PlacesAutocomplete({
         console.log('Place selected:', place);
         console.log('Original input value before update:', inputRef.current?.value);
         
-        // Se formatted_address non è disponibile, prova a utilizzare direttamente
-        // i componenti dell'indirizzo per ricostruire l'indirizzo completo
-        let addressToUse = place.formatted_address;
+        // Determina l'indirizzo da usare con priorità
+        // 1. Nome dell'azienda + indirizzo formattato (se entrambi disponibili)
+        // 2. Indirizzo formattato
+        // 3. Nome
+        // 4. Indirizzo ricostruito dai componenti
+        let addressToUse = '';
         
+        // Se è un'attività commerciale e ha un nome
+        if (place.name && place.types?.includes('establishment')) {
+          // Se ha anche un indirizzo formattato, usa entrambi
+          if (place.formatted_address && place.formatted_address !== place.name) {
+            addressToUse = `${place.name}, ${place.formatted_address}`;
+          } else {
+            // Altrimenti usa solo il nome
+            addressToUse = place.name;
+          }
+          console.log('Using establishment name:', addressToUse);
+        } 
+        // Altrimenti usa l'indirizzo formattato se disponibile
+        else if (place.formatted_address) {
+          addressToUse = place.formatted_address;
+          console.log('Using formatted address:', addressToUse);
+        }
+        
+        // Se ancora non abbiamo un indirizzo e abbiamo i componenti, ricostruiscilo
         if (!addressToUse && place.address_components) {
           // Ricostruisci un indirizzo da address_components
           const components = [];
