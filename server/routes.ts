@@ -1470,6 +1470,25 @@ export function registerRoutes(app: any) {
         };
       });
       
+      // Ottieni le tasks
+      const tasks = await storage.getTasks();
+      
+      // Calcola le attività imminenti e in ritardo
+      const currentDate = new Date();
+      const upcomingTasks = Array.isArray(tasks) ? 
+        tasks.filter(task => 
+          !task.completed && 
+          task.dueDate && 
+          new Date(task.dueDate) >= currentDate
+        ) : [];
+      
+      const overdueTasks = Array.isArray(tasks) ? 
+        tasks.filter(task => 
+          !task.completed && 
+          task.dueDate && 
+          new Date(task.dueDate) < currentDate
+        ) : [];
+
       // Crea oggetto dashboard con il formato che il frontend si aspetta
       const dashboardData = {
         summary: {
@@ -1478,12 +1497,18 @@ export function registerRoutes(app: any) {
           totalDealValue: activeDeals.reduce((sum, deal) => sum + (parseFloat(deal.value || '0') || 0), 0),
           activeContacts: contactsCount,
           totalCompanies: companiesCount,
-          upcomingTasksCount: 0, // Da implementare
-          overdueTasksCount: 0   // Da implementare
+          tasks: {
+            upcomingCount: upcomingTasks.length,
+            overdueCount: overdueTasks.length
+          },
+          // Manteniamo anche il vecchio formato per retrocompatibilità
+          upcomingTasksCount: upcomingTasks.length,
+          overdueTasksCount: overdueTasks.length
         },
         dealsByStage,
         recentActivities: sortedActivities,
         upcomingMeetings,
+        upcomingTasks: upcomingTasks.slice(0, 5),
         recentContacts
       };
       
