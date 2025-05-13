@@ -55,77 +55,35 @@ export function formatNumber(value: number, locale = 'it-IT'): string {
   return new Intl.NumberFormat(locale).format(value);
 }
 
-/**
- * Tronca il testo se è più lungo di maxLength
- */
-export function truncateText(text: string, maxLength: number): string {
-  if (text.length <= maxLength) return text;
-  return `${text.slice(0, maxLength).trim()}...`;
-}
-
-/**
- * Restituisce le iniziali da una stringa (es. "John Doe" -> "JD")
- */
-export function getInitials(name: string): string {
-  if (!name) return '';
-  
-  const parts = name.split(' ').filter(Boolean);
-  
-  if (parts.length === 0) return '';
-  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
-  
-  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
-}
-
-/**
- * Ritardo di esecuzione (utile per debounce)
- */
-export function delay(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-/**
- * Restituisce un colore casuale ma coerente basato su una stringa
- */
-export function stringToColor(str: string): string {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  
-  const hue = Math.abs(hash % 360);
-  return `hsl(${hue}, 70%, 40%)`;
-}
-
-/**
- * Genera un array di elementi, utile per dummy lists e skeletons
- */
-export function generateArray(length: number): number[] {
-  return Array.from({ length }, (_, i) => i);
-}
-
-/** 
- * Rimuove i caratteri non numerici e inserisce uno spazio ogni 3 cifre
- * es. "1234567890" → "123 456 789 0"
- */
 export function formatPhoneNumber(phone: string): string {
-  const digits = phone.replace(/\D+/g, "");
-  return digits.replace(/(\d{3})(?=\d)/g, "$1 ");
+  if (!phone) return '';
+  
+  // Rimuovi tutti i caratteri non numerici
+  const cleaned = phone.replace(/\D/g, '');
+  
+  // Formatta in base alla lunghezza
+  if (cleaned.length === 10) { // US format: (XXX) XXX-XXXX
+    return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6, 10)}`;
+  } else if (cleaned.length === 11 && cleaned.startsWith('1')) { // US with country code
+    return `+1 (${cleaned.slice(1, 4)}) ${cleaned.slice(4, 7)}-${cleaned.slice(7, 11)}`;
+  } else if (cleaned.length > 10) { // International format
+    return `+${cleaned.slice(0, cleaned.length-10)} ${cleaned.slice(cleaned.length-10, cleaned.length-7)} ${cleaned.slice(cleaned.length-7, cleaned.length-4)} ${cleaned.slice(cleaned.length-4)}`;
+  }
+  
+  // Fallback per formati sconosciuti o incompleti
+  return phone;
 }
 
-/**
- * Genera un colore esadecimale a partire da un nome.
- * Utilizza un semplice hashing per ottenere sempre lo stesso colore per lo stesso input.
- */
-export function generateAvatarColor(name: string): string {
+export function generateAvatarColor(text: string): string {
+  if (!text) return 'hsl(0, 0%, 75%)';
+  
+  // Generazione deterministica del colore basata sulla stringa
   let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    // calcolo hash
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  for (let i = 0; i < text.length; i++) {
+    hash = text.charCodeAt(i) + ((hash << 5) - hash);
   }
-  // genera 3 componenti RGB da hash
-  const c = (hash & 0x00FFFFFF)
-    .toString(16)
-    .toUpperCase();
-  return "#" + "00000".substring(0, 6 - c.length) + c;
+  
+  // Usa il valore hash per creare un colore HSL con saturazione e luminosità fisse
+  const hue = Math.abs(hash % 360);
+  return `hsl(${hue}, 65%, 50%)`;
 }

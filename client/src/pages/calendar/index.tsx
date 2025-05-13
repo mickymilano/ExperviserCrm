@@ -78,11 +78,13 @@ export default function Calendar() {
   const getMeetingsForDate = (date: Date) => {
     // Garantisco che meetings sia sempre un Array
     const meetingsList = Array.isArray(meetings) ? meetings : [];
-    return meetingsList.filter(meeting => 
-      isSameDay(parseISO(meeting.startTime), date)
-    ).sort((a, b) => 
-      new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
-    );
+    return meetingsList
+      .filter(meeting => 
+        isSameDay(parseISO(meeting.startTime), date)
+      )
+      .sort((a, b) => 
+        new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+      );
   };
 
   const handleAddMeeting = () => {

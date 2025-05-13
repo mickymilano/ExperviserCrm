@@ -37,6 +37,13 @@ export default function Email() {
 
   // Garantisco che emails sia sempre un Array
   const emailsList = Array.isArray(emails) ? emails : [];
+  const filteredEmails = emailsList.filter(email => 
+    (currentFolder === "inbox" && !email.isSent && !email.isTrash && !email.isArchived) ||
+    (currentFolder === "sent" && email.isSent) ||
+    (currentFolder === "archived" && email.isArchived) ||
+    (currentFolder === "trash" && email.isTrash) ||
+    (currentFolder === "starred" && email.isStarred)
+  );
 
   // Filter emails based on search term
   const filteredEmails = emailsList.filter((email) => {
