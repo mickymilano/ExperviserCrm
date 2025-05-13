@@ -340,13 +340,15 @@ export class PostgresStorage implements IStorage {
     // Rimosso filtro per status per ottenere tutti i contatti, come per leads
     console.log("PostgresStorage.getContacts: retrieving all contacts regardless of status");
     try {
-      // Seleziona solo le colonne che esistono sicuramente
+      // Seleziona solo le colonne che esistono sicuramente nel database
+      // Nota: la colonna 'email' non esiste nella tabella contacts, è in contactEmails
       return await db.select({
         id: contacts.id,
         firstName: contacts.firstName,
         lastName: contacts.lastName,
-        email: contacts.email,
         status: contacts.status,
+        phone: contacts.phone,
+        mobile: contacts.mobile,
         avatar: contacts.avatar,
         createdAt: contacts.createdAt,
         updatedAt: contacts.updatedAt
@@ -376,8 +378,9 @@ export class PostgresStorage implements IStorage {
         id: contacts.id,
         firstName: contacts.firstName,
         lastName: contacts.lastName,
-        email: contacts.email,
         status: contacts.status,
+        phone: contacts.phone,
+        mobile: contacts.mobile,
         avatar: contacts.avatar,
         createdAt: contacts.createdAt,
         updatedAt: contacts.updatedAt
