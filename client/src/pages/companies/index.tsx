@@ -178,10 +178,10 @@ export default function Companies() {
                         </div>
                       )}
                       
-                      {company.address && !company.customFields?.country && (
+                      {(company.fullAddress || company.address) && !company.customFields?.country && (
                         <div className="flex items-center text-sm">
                           <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
-                          <span className="truncate max-w-[200px]">{company.address}</span>
+                          <span className="truncate max-w-[200px]">{company.fullAddress || company.address}</span>
                         </div>
                       )}
                       
