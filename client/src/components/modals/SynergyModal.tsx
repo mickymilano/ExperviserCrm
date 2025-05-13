@@ -406,6 +406,7 @@ export function SynergyModal({
                 <FormItem>
                   <FormLabel>Associated Deal (Optional)</FormLabel>
                   <Select
+                    disabled={isViewMode}
                     onValueChange={(value) => field.onChange(parseInt(value))}
                     defaultValue={field.value?.toString() || ""}
                   >
@@ -439,6 +440,7 @@ export function SynergyModal({
                       <FormControl>
                         <Button
                           variant={"outline"}
+                          disabled={isViewMode}
                           className={cn(
                             "w-full pl-3 text-left font-normal",
                             !field.value && "text-muted-foreground"
