@@ -90,15 +90,22 @@ export function generateAvatarColor(text: string): string {
 
 /**
  * Estrae le iniziali da un nome completo
- * Es: "Mario Rossi" -> "MR"
+ * Es: "Mario Rossi" -> "MR" o da nome e cognome separati
  */
-export function getInitials(name: string): string {
-  if (!name) return '';
+export function getInitials(firstName: string, lastName?: string): string {
+  if (!firstName && !lastName) return '';
   
-  // Dividi il nome negli spazi e ottieni la prima lettera di ogni parte
-  return name
-    .split(' ')
-    .map(part => part.charAt(0).toUpperCase())
-    .join('')
-    .substring(0, 2); // Prendi massimo 2 lettere
+  if (lastName) {
+    // Se abbiamo nome e cognome separati
+    const firstInitial = firstName ? firstName.charAt(0).toUpperCase() : '';
+    const lastInitial = lastName ? lastName.charAt(0).toUpperCase() : '';
+    return `${firstInitial}${lastInitial}`;
+  } else {
+    // Modalità compatibile all'indietro per un singolo nome completo
+    return firstName
+      .split(' ')
+      .map(part => part.charAt(0).toUpperCase())
+      .join('')
+      .substring(0, 2); // Prendi massimo 2 lettere
+  }
 }

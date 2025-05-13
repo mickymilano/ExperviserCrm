@@ -178,7 +178,41 @@ export default function Contacts() {
                   </td>
                   <td className="py-3 px-4 text-sm">{contact.companyEmail || contact.privateEmail || "-"}</td>
                   <td className="py-3 px-4 text-sm">{formatPhoneNumber(contact.mobilePhone || contact.officePhone || contact.privatePhone) || "-"}</td>
-                  <td className="py-3 px-4 text-sm">{getCompanyName(contact)}</td>
+                  <td className="py-3 px-4 text-sm">
+                    {(() => {
+                      // First identify if there's a company to link to
+                      let companyId: number | undefined;
+                      
+                      if (contact.areasOfActivity && contact.areasOfActivity.length > 0) {
+                        // Try to get the primary company first
+                        const primaryArea = contact.areasOfActivity.find(area => area.isPrimary);
+                        if (primaryArea && primaryArea.companyId) {
+                          companyId = primaryArea.companyId;
+                        } else if (contact.areasOfActivity[0].companyId) {
+                          // Fallback to first company
+                          companyId = contact.areasOfActivity[0].companyId;
+                        }
+                      } else if (contact.companyId) {
+                        // Legacy fallback
+                        companyId = contact.companyId;
+                      }
+                      
+                      const companyName = getCompanyName(contact);
+                      
+                      if (companyId && companyName !== "-") {
+                        return (
+                          <span 
+                            className="text-primary hover:underline cursor-pointer" 
+                            onClick={() => navigate(`/companies/${companyId}`)}
+                          >
+                            {companyName}
+                          </span>
+                        );
+                      }
+                      
+                      return companyName;
+                    })()}
+                  </td>
                   <td className="py-3 px-4">
                     <div className="flex flex-wrap gap-1">
                       {contact.tags && contact.tags.map((tag, index) => (
@@ -190,7 +224,16 @@ export default function Contacts() {
                   </td>
                   <td className="py-3 px-4">
                     <div className="flex items-center space-x-2">
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8"
+                        onClick={() => {
+                          const email = contact.companyEmail || contact.privateEmail;
+                          if (email) window.location.href = `mailto:${email}`;
+                        }}
+                        disabled={!contact.companyEmail && !contact.privateEmail}
+                      >
                         <Mail className="h-4 w-4" />
                       </Button>
                       <Button 
