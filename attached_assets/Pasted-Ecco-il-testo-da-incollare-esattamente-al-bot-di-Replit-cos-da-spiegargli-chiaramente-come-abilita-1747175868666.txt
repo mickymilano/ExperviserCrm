@@ -1,0 +1,60 @@
+Ecco il testo da incollare esattamente al bot di Replit, così da spiegargli chiaramente come abilitare la selezione dei suggerimenti Google Places con mouse, tastiera e touch:
+
+⸻
+
+Ciao Replit,
+per favore applica solo queste modifiche sul componente PlacesAutocomplete spostato ora sul campo “Nome Azienda” in CompanyModal.tsx:
+
+1) Esponi e instrada tutti gli eventi di selezione Google Places verso il nostro onChange
+	•	Assicurati che l’<Input> usato dentro PlacesAutocomplete sia un <input> HTML nativo che riceve tutti questi eventi:
+	•	keydown (frecce ↑↓, Tab, Enter)
+	•	click sulle voci del dropdown
+	•	touchstart/touchend (per schermi touch)
+	•	Per ciascuno, fai in modo di chiamare:
+
+const place = autocompleteRef.current?.getPlace();
+if (place) onChange(place.name/*o reconstructed address*/, place);
+
+
+
+2) Keyboard navigation
+	•	Sul inputRef.current, aggiungi (se non già presente) un listener:
+
+inputRef.current.addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    // lascia che Google Places muova la selezione interna
+    return;
+  }
+  if (e.key === 'Enter' || e.key === 'Tab') {
+    e.preventDefault();
+    google.maps.event.trigger(autocompleteRef.current!, 'place_changed');
+  }
+});
+
+
+
+3) Mouse & touch
+	•	Verifica che il container dei risultati (.pac-container) non sia coperto da altri elementi e abbia pointer-events: auto.
+	•	Su ogni voce (.pac-item), assicurati che il click/tap chiami:
+
+google.maps.event.trigger(autocompleteRef.current!, 'place_changed');
+
+
+
+4) Mappatura finale
+	•	Quando place_changed scatta, dentro il tuo listener:
+
+const place = autocompleteRef.current!.getPlace();
+setValue('name', place.name);
+setValue('fullAddress', place.formatted_address);
+const country = place.address_components?.find(c=>c.types.includes('country'))?.long_name;
+if (country) setValue('country', country);
+
+
+
+Con queste istruzioni il dropdown sarà navigabile con frecce, Tab, Enter, click e touch, e alla conferma sposterà ragione sociale → name, indirizzo → fullAddress e nazione → country.
+Grazie!
+
+⸻
+
+Incolla esattamente questo messaggio al bot di Replit.
