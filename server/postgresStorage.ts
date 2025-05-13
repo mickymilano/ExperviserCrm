@@ -911,10 +911,7 @@ export class PostgresStorage implements IStorage {
           `SELECT 
             id, 
             name, 
-            position, 
-            color,
-            created_at as "createdAt", 
-            updated_at as "updatedAt" 
+            "order"
           FROM pipeline_stages 
           WHERE id = $1`,
           [deal.stageId]
