@@ -220,7 +220,11 @@ export default function Companies() {
                   >
                     <Eye className="h-4 w-4 mr-1" /> View Details
                   </Button>
-                  <Button size="sm">
+                  <Button 
+                    size="sm"
+                    onClick={() => company.email ? window.location.href = `mailto:${company.email}` : null}
+                    disabled={!company.email}
+                  >
                     <Mail className="h-4 w-4 mr-1" /> Contact
                   </Button>
                 </div>
