@@ -1565,7 +1565,14 @@ export class PostgresStorage implements IStorage {
       company.fullAddress = company.address;
     }
     
-    const [newCompany] = await db.insert(companies).values(company).returning();
+    // HOTFIX: Rimuovi i campi city e region che non esistono più nel database
+    // ma che potrebbero essere passati da componenti non aggiornati
+    const { city, region, ...companyData } = company as any;
+    
+    // Log di debug
+    console.log('Creating company with data:', companyData);
+    
+    const [newCompany] = await db.insert(companies).values(companyData).returning();
     return newCompany;
   }
 
@@ -1576,12 +1583,19 @@ export class PostgresStorage implements IStorage {
       companyData.fullAddress = companyData.address;
     }
     
+    // HOTFIX: Rimuovi i campi city e region che non esistono più nel database
+    // ma che potrebbero essere passati da componenti non aggiornati
+    const { city, region, ...cleanCompanyData } = companyData as any;
+    
+    // Log di debug
+    console.log('Updating company with data:', cleanCompanyData);
+    
     // DEPRECATED: old implementation - Added 2025-05-13 by Lead Architect: unified location
     // .set({ ...companyData, updatedAt: new Date() })
     
     const [updatedCompany] = await db
       .update(companies)
-      .set({ ...companyData, updatedAt: new Date() })
+      .set({ ...cleanCompanyData, updatedAt: new Date() })
       .where(eq(companies.id, id))
       .returning();
     

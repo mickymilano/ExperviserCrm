@@ -158,6 +158,38 @@ export function PlacesAutocomplete({
         componentRestrictions: { country: "it" }
       });
 
+      // Aggiunta di un event listener per Enter e click, per supportare
+      // la conferma della selezione anche con click del mouse o tastiera
+      const handleSelect = () => {
+        console.log('Selection confirmed via Enter, Tab, Space, or click');
+        
+        // Piccolo ritardo per assicurarsi che il valore sia stato aggiornato
+        setTimeout(() => {
+          if (inputRef.current) {
+            setInputValue(inputRef.current.value);
+            onChange(inputRef.current.value);
+          }
+        }, 10); 
+      };
+      
+      // Aggiungiamo listener per click sui risultati
+      document.addEventListener('mousedown', (e) => {
+        const target = e.target as HTMLElement;
+        if (target.classList.contains('pac-item') || 
+            target.parentElement?.classList.contains('pac-item')) {
+          handleSelect();
+        }
+      });
+      
+      // Aggiungiamo listener per tastiera
+      inputRef.current.addEventListener('keydown', (e) => {
+        // Se viene premuto Enter, Tab o Space mentre il dropdown è aperto
+        if ((e.key === 'Enter' || e.key === 'Tab' || e.key === ' ') && 
+            document.querySelector('.pac-container')?.style.display !== 'none') {
+          handleSelect();
+        }
+      });
+
       // Gestisce l'evento di selezione del luogo
       const listener = autocompleteRef.current.addListener('place_changed', () => {
         const place = autocompleteRef.current?.getPlace();
@@ -281,6 +313,38 @@ export function PlacesAutocomplete({
     }
   }, [scriptLoaded, onChange, onCountrySelect]);
 
+  // Gestione degli eventi di tastiera per permettere selezione con frecce, tab, spazio
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Gestione specifica per Tab (conferma selezione corrente)
+    if (e.key === 'Tab') {
+      // Permettiamo di completare la selezione, non facciamo nulla di speciale
+      console.log('Tab pressed, selection confirmed');
+    }
+    
+    // Gestione del tasto Spazio (premuto in un menu dropdown)
+    // Se lo spazio viene premuto durante una selezione attiva del dropdown
+    // Preveniamo il comportamento di default (aggiungi spazio)
+    if (e.key === ' ' && document.activeElement === inputRef.current) {
+      const pacContainer = document.querySelector('.pac-container');
+      const pacItem = document.querySelector('.pac-item-selected');
+      
+      if (pacContainer && pacContainer.style.display !== 'none' && pacItem) {
+        // Se c'è un menu autocomplete aperto con selezione attiva,
+        // simuliamo un Enter per confermare
+        console.log('Space pressed with active selection, simulating Enter');
+        const enterEvent = new KeyboardEvent('keydown', { 
+          bubbles: true, 
+          cancelable: true, 
+          key: 'Enter',
+          code: 'Enter',
+          keyCode: 13 
+        });
+        inputRef.current?.dispatchEvent(enterEvent);
+        e.preventDefault(); // Previene l'inserimento dello spazio
+      }
+    }
+  };
+
   return (
     <div className="places-autocomplete">
       <Input
@@ -300,6 +364,7 @@ export function PlacesAutocomplete({
           // Propagare il cambiamento manuale al componente parent
           onChange(e.target.value);
         }}
+        onKeyDown={handleKeyDown}
         placeholder={placeholder}
         className={className}
         aria-label="Indirizzo"
