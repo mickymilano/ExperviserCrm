@@ -13,7 +13,7 @@ import { format } from "date-fns";
 export default function SynergiesPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingSynergy, setEditingSynergy] = useState<any>(null);
-  const { data: synergies, isLoading, refetch } = useSynergies();
+  const { data: synergies = [], isLoading, refetch } = useSynergies();
 
   const handleEditSynergy = (synergy: any) => {
     setEditingSynergy(synergy);

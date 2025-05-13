@@ -18,7 +18,8 @@ import {
   LogOut,
   User,
   ChevronDown,
-  BellRing
+  BellRing,
+  Handshake
 } from 'lucide-react';
 import { useTheme } from '@/hooks/useTheme';
 import { cn } from '@/lib/utils';
@@ -58,6 +59,11 @@ const mainMenuItems: MenuItemProps[] = [
     label: 'Lead',
     path: '/leads',
     icon: <Target className="h-5 w-5" />,
+  },
+  {
+    label: 'Sinergie',
+    path: '/synergies',
+    icon: <Handshake className="h-5 w-5" />,
   },
   {
     label: 'Calendario',
