@@ -22,7 +22,7 @@ import { LinkContactButton } from "@/components/forms/LinkContactButton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import TaskList from "@/components/tasks/TaskList";
 import ContactModal from "@/components/modals/ContactModal";
-import SynergiesList from "@/components/synergies/SynergiesList";
+import { SynergiesList } from "@/components/synergies/SynergiesList";
 
 export default function CompanyDetail() {
   const params = useParams();
@@ -458,10 +458,9 @@ export default function CompanyDetail() {
               </CardHeader>
               <CardContent>
                 <SynergiesList 
-                  companyId={companyId} 
+                  entityId={companyId} 
+                  entityType="company"
                   showTitle={false}
-                  hideAddButton={true}
-                  hideDeleteButtons={true}
                 />
               </CardContent>
             </Card>
