@@ -58,7 +58,7 @@ export default function Tasks() {
   };
 
   // Filter tasks based on search term and view
-  const filteredTasks = tasks?.filter((task) => {
+  const filteredTasks = tasks && Array.isArray(tasks) ? tasks.filter((task) => {
     // First apply the tab filter
     if (taskView === "today" && (!task.dueDate || !isToday(new Date(task.dueDate)))) {
       return false;
@@ -82,20 +82,20 @@ export default function Tasks() {
 
   // Group tasks based on due date
   const groupedTasks = {
-    overdue: filteredTasks?.filter(task => 
+    overdue: filteredTasks ? filteredTasks.filter((task: Task) => 
       !task.completed && task.dueDate && isPast(new Date(task.dueDate)) && !isToday(new Date(task.dueDate))
-    ),
-    today: filteredTasks?.filter(task => 
+    ) : [],
+    today: filteredTasks ? filteredTasks.filter((task: Task) => 
       task.dueDate && isToday(new Date(task.dueDate))
-    ),
-    tomorrow: filteredTasks?.filter(task => 
+    ) : [],
+    tomorrow: filteredTasks ? filteredTasks.filter((task: Task) => 
       task.dueDate && isTomorrow(new Date(task.dueDate))
-    ),
-    upcoming: filteredTasks?.filter(task => 
+    ) : [],
+    upcoming: filteredTasks ? filteredTasks.filter((task: Task) => 
       task.dueDate && !isPast(new Date(task.dueDate)) && !isToday(new Date(task.dueDate)) && !isTomorrow(new Date(task.dueDate))
-    ),
-    noDueDate: filteredTasks?.filter(task => !task.dueDate),
-    completed: filteredTasks?.filter(task => task.completed),
+    ) : [],
+    noDueDate: filteredTasks ? filteredTasks.filter((task: Task) => !task.dueDate) : [],
+    completed: filteredTasks ? filteredTasks.filter((task: Task) => task.completed) : [],
   };
 
   // Handle complete task
