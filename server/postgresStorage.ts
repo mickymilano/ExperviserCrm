@@ -538,7 +538,7 @@ export class PostgresStorage implements IStorage {
     try {
       console.log("PostgresStorage.getRecentContacts: retrieving recent contacts");
       // Seleziona colonne esattamente come sono definite nel database
-      const result = await db.execute(
+      const result = await pool.query(
         `SELECT 
           id, 
           first_name as "firstName", 
@@ -858,18 +858,50 @@ export class PostgresStorage implements IStorage {
       // Manually populate relations as needed
       const result = [];
       for (const deal of dealsResult) {
-        // Get contact
+        // Get contact using SQL native query with correct column names
         let contactData = null;
         if (deal.contactId) {
-          const [contact] = await db.select().from(contacts).where(eq(contacts.id, deal.contactId));
-          contactData = contact;
+          const contactResult = await pool.query(
+            `SELECT 
+              id, 
+              first_name as "firstName", 
+              last_name as "lastName", 
+              status, 
+              company_email as "companyEmail", 
+              private_email as "privateEmail", 
+              mobile_phone as "mobilePhone", 
+              office_phone as "officePhone",
+              private_phone as "privatePhone",
+              created_at as "createdAt", 
+              updated_at as "updatedAt" 
+            FROM contacts 
+            WHERE id = $1`,
+            [deal.contactId]
+          );
+          if (contactResult.rows.length > 0) {
+            contactData = contactResult.rows[0];
+          }
         }
       
-      // Get company
+      // Get company using SQL native query with correct column names
       let companyData = null;
       if (deal.companyId) {
-        const [company] = await db.select().from(companies).where(eq(companies.id, deal.companyId));
-        companyData = company;
+        const companyResult = await pool.query(
+          `SELECT 
+            id, 
+            name, 
+            website, 
+            industry, 
+            status,
+            created_at as "createdAt", 
+            updated_at as "updatedAt" 
+          FROM companies 
+          WHERE id = $1`,
+          [deal.companyId]
+        );
+        if (companyResult.rows.length > 0) {
+          companyData = companyResult.rows[0];
+        }
       }
       
       // Get stage
