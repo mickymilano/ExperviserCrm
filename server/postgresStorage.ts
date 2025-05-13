@@ -1229,11 +1229,11 @@ export class PostgresStorage implements IStorage {
   async getContact(id: number): Promise<Contact | undefined> {
     console.log(`getContact: Processing request for contact id ${id}`);
     
-    // Utilizziamo una query SQL diretta per aggirare problemi con Drizzle ORM
+    // Utilizzando direttamente il pool invece di Drizzle ORM
     try {
       // Query SQL per ottenere i dati del contatto
-      const contactResult = await db.execute(
-        `SELECT 
+      const contactQuery = {
+        text: `SELECT 
           id, first_name, middle_name, last_name, status, 
           mobile_phone, company_email, private_email, 
           office_phone, private_phone, linkedin, facebook,
@@ -1241,8 +1241,11 @@ export class PostgresStorage implements IStorage {
           last_contacted_at, next_follow_up_at, created_at, updated_at
         FROM contacts 
         WHERE id = $1`,
-        [id]
-      );
+        values: [id]
+      };
+      
+      console.log(`getContact: Executing contact query: ${contactQuery.text}`);
+      const contactResult = await pool.query(contactQuery);
       
       // Verifico se abbiamo trovato il contatto
       if (contactResult.rows.length === 0) {
@@ -1254,12 +1257,15 @@ export class PostgresStorage implements IStorage {
       console.log(`getContact: Found contact:`, contactData);
       
       // Query per ottenere le aree di attività del contatto
-      const areasResult = await db.execute(
-        `SELECT id, contact_id, company_id, company_name, role, job_description, is_primary, created_at, updated_at
-         FROM areas_of_activity 
-         WHERE contact_id = $1`,
-        [id]
-      );
+      const areasQuery = {
+        text: `SELECT id, contact_id, company_id, company_name, role, job_description, is_primary, created_at, updated_at
+               FROM areas_of_activity 
+               WHERE contact_id = $1`,
+        values: [id]
+      };
+      
+      console.log(`getContact: Executing areas query: ${areasQuery.text}`);
+      const areasResult = await pool.query(areasQuery);
       
       // Mappatura degli oggetti dalle righe di risultato
       const areas = areasResult.rows.map(row => ({

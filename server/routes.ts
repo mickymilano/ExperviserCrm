@@ -3,6 +3,7 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import { storage } from './storage';
+import { pool } from './db'; // Importiamo il pool di connessione PostgreSQL
 import { z } from 'zod';
 import { insertUserSchema, insertContactSchema, insertCompanySchema, insertDealSchema, insertPipelineStageSchema, insertLeadSchema, insertAreaOfActivitySchema, insertContactEmailSchema } from '@shared/schema';
 
@@ -479,8 +480,8 @@ export function registerRoutes(app: any) {
       
       // Verifica con raw SQL
       try {
-        const sqlResult = await storage.db.execute(
-          `SELECT id, first_name, last_name FROM contacts WHERE id = $1`,
+        const sqlResult = await pool.query(
+          'SELECT id, first_name, last_name FROM contacts WHERE id = $1',
           [contactId]
         );
         console.log(`API Direct SQL check for contact ${contactId}:`, sqlResult.rows);
