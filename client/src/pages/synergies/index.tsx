@@ -11,7 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 
 export default function SynergiesPage() {
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  // DISABLED: Synergy actions only allowed in DealModal
+  // const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingSynergy, setEditingSynergy] = useState<any>(null);
   const [, navigate] = useLocation();
   const { data: synergies = [], isLoading, refetch } = useQuery<any[]>({
@@ -19,6 +20,8 @@ export default function SynergiesPage() {
   });
 
   const handleEditSynergy = (synergy: any) => {
+    // DISABLED: Synergy actions only allowed in DealModal
+    // Permettiamo solo la visualizzazione, non l'editing
     setEditingSynergy(synergy);
   };
 
@@ -65,6 +68,16 @@ export default function SynergiesPage() {
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
+          {/* DISABLED: Synergy actions only allowed in DealModal
+          <Button 
+            size="sm" 
+            onClick={() => setIsCreateModalOpen(true)}
+            className="h-9"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            New Synergy
+          </Button>
+          */}
         </div>
       </div>
 

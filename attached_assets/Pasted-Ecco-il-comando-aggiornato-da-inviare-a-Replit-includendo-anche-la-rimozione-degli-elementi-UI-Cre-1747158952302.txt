@@ -1,0 +1,46 @@
+Ecco il comando aggiornato da inviare a Replit, includendo anche la rimozione degli elementi UI “Create Synergy” fuori dal modulo Deal:
+
+⸻
+
+Titolo: Enforce Synergies Scope & Soft-Delete Only (v2)
+
+Obiettivo:
+	1.	Far sì che le Sinergie siano create/modificate solo all’interno di DealModal.tsx (o API /api/deals/:dealId/synergies).
+	2.	Impedire ogni pulsante o form di creazione/modifica/cancellazione di sinergie in altri moduli (Contatti, Aziende, Lead, Email, Dashboard, ecc.).
+	3.	Implementare la soft-delete per le sinergie (campo isActive).
+
+⸻
+
+Comando per Replit AI:
+
+1. Disabilita tutta la logica di Sinergie fuori da Deal
+	•	Commenta o flagga come @deprecated qualsiasi richiamo a useCreateSynergy, useDeleteSynergy, useUpdateSynergy e ogni endpoint API synergies NON sotto /api/deals/:dealId/synergies.
+	•	Rimuovi/nascondi tutti i pulsanti o link UI di “Create Synergy”, “Edit Synergy” o “Delete Synergy” presenti in:
+	•	ContactDetail, CompanyDetail, LeadDetail, EmailPage, DashboardPage, SynergiesList, ecc.
+	•	Qualsiasi menu a tendina, dropdown o icona “+ Synergy” al di fuori di DealModal.tsx.
+	•	Documenta ogni riga/commento con:
+
+// DISABLED: Synergy actions only allowed in DealModal
+
+
+
+2. Implementa Soft-Delete per Sinergie
+	•	Elimina o disabilita l’endpoint DELETE /api/synergies/:id e le chiamate storage.deleteSynergy.
+	•	Aggiungi booleano isActive in tabella synergies (default true).
+	•	Modifica endpoint di “cancellazione” per eseguire PATCH synergies SET isActive = false.
+	•	Aggiorna tutte le query GET synergies per filtrare WHERE isActive = true.
+	•	Commenta con:
+
+// SOFT-DELETE: deactivation only, do not remove record
+
+
+
+3. Verifica & Report
+	•	Controlla che solo in DealModal.tsx si possano aggiungere/rimuovere contatti sinergia.
+	•	Assicurati che nessun altro modulo mostri pulsanti o esegua azioni di sinergia.
+	•	Le “cancellazioni” effettuino ora la soft-delete.
+	•	Fornisci un elenco dei file modificati, con le sezioni commentate e una breve descrizione di ciascuna modifica.
+
+Non procedere con altri cambiamenti finché questo non sarà completato e validato, per preservare la stabilità esistente.
+
+⸻
