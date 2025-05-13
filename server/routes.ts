@@ -795,7 +795,9 @@ export function registerRoutes(app: any) {
   // Ottieni tutti i lead
   app.get('/api/leads', authenticate, async (req, res) => {
     try {
-      const leads = await storage.getAllLeads();
+      console.log("API /api/leads: retrieving leads from storage");
+      const leads = await storage.getLeads();
+      console.log(`API /api/leads: found ${leads.length} leads in storage`);
       res.json(leads);
     } catch (error) {
       console.error('Error fetching leads:', error);
