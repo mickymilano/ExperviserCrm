@@ -297,8 +297,8 @@ export default function Tasks() {
       )}
 
       <TaskModal
-        open={showModal}
-        onOpenChange={setShowModal}
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
         initialData={selectedTask}
       />
     </div>
