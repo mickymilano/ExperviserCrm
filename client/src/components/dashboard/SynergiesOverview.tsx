@@ -61,7 +61,7 @@ export function SynergiesOverview() {
         </CardTitle>
       </CardHeader>
       <CardContent className="pb-2">
-        {synergies.length === 0 ? (
+        {!Array.isArray(synergies) || synergies.length === 0 ? (
           <div className="text-center py-6">
             <Handshake className="h-8 w-8 mx-auto mb-2 text-muted-foreground opacity-50" />
             <p className="text-sm text-muted-foreground">
@@ -72,19 +72,19 @@ export function SynergiesOverview() {
           <div className="space-y-3">
             {synergies.slice(0, 5).map((synergy: any) => (
               <div 
-                key={synergy.id}
+                key={synergy?.id || 'no-id'}
                 className="flex items-center justify-between border-b border-border pb-2 last:border-0 last:pb-0"
               >
                 <div>
                   <div className="font-medium text-sm">
-                    {synergy.type}
+                    {synergy?.type || 'Tipo non specificato'}
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    Contatto #{synergy.contactId} ↔ Azienda #{synergy.companyId}
+                    Contatto #{synergy?.contactId || 'N/A'} ↔ Azienda #{synergy?.companyId || 'N/A'}
                   </div>
                 </div>
-                <Badge className={getSynergyStatusColor(synergy.status)}>
-                  {synergy.status}
+                <Badge className={getSynergyStatusColor(synergy?.status || '')}>
+                  {synergy?.status || 'Sconosciuto'}
                 </Badge>
               </div>
             ))}

@@ -233,29 +233,29 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="Contatti"
-          value={stats?.contacts.count || 0}
-          percentChange={stats?.contacts.percentChange || 0}
+          value={stats && typeof stats === 'object' && stats.contacts && typeof stats.contacts === 'object' ? stats.contacts.count || 0 : 0}
+          percentChange={stats && typeof stats === 'object' && stats.contacts && typeof stats.contacts === 'object' ? stats.contacts.percentChange || 0 : 0}
           icon={<User className="h-5 w-5 text-blue-500" />}
           color="bg-blue-100 dark:bg-blue-900/20"
         />
         <StatCard
           title="Aziende"
-          value={stats?.companies.count || 0}
-          percentChange={stats?.companies.percentChange || 0}
+          value={stats && typeof stats === 'object' && stats.companies && typeof stats.companies === 'object' ? stats.companies.count || 0 : 0}
+          percentChange={stats && typeof stats === 'object' && stats.companies && typeof stats.companies === 'object' ? stats.companies.percentChange || 0 : 0}
           icon={<Building2 className="h-5 w-5 text-violet-500" />}
           color="bg-violet-100 dark:bg-violet-900/20"
         />
         <StatCard
           title="Opportunità"
-          value={stats?.deals.count || 0}
-          percentChange={stats?.deals.percentChange || 0}
+          value={stats && typeof stats === 'object' && stats.deals && typeof stats.deals === 'object' ? stats.deals.count || 0 : 0}
+          percentChange={stats && typeof stats === 'object' && stats.deals && typeof stats.deals === 'object' ? stats.deals.percentChange || 0 : 0}
           icon={<Briefcase className="h-5 w-5 text-green-500" />}
           color="bg-green-100 dark:bg-green-900/20"
         />
         <StatCard
           title="Lead"
-          value={stats?.leads.count || 0}
-          percentChange={stats?.leads.percentChange || 0}
+          value={stats && typeof stats === 'object' && stats.leads && typeof stats.leads === 'object' ? stats.leads.count || 0 : 0}
+          percentChange={stats && typeof stats === 'object' && stats.leads && typeof stats.leads === 'object' ? stats.leads.percentChange || 0 : 0}
           icon={<Target className="h-5 w-5 text-orange-500" />}
           color="bg-orange-100 dark:bg-orange-900/20"
         />
@@ -269,14 +269,14 @@ export default function DashboardPage() {
             <h2 className="text-lg font-medium">Attività recenti</h2>
           </div>
           <div className="p-4">
-            {activities && activities.length > 0 ? (
+            {Array.isArray(activities) && activities.length > 0 ? (
               activities.map((activity: any) => (
                 <ActivityItem
                   key={activity.id}
-                  title={activity.title}
-                  description={activity.description}
-                  type={activity.type}
-                  createdAt={new Date(activity.createdAt)}
+                  title={activity.title || "Attività"}
+                  description={activity.description || "Nessuna descrizione"}
+                  type={activity.type || "note"}
+                  createdAt={new Date(activity.createdAt || new Date())}
                 />
               ))
             ) : (
@@ -291,13 +291,13 @@ export default function DashboardPage() {
             <h2 className="text-lg font-medium">Contatti recenti</h2>
           </div>
           <div className="p-4">
-            {contacts && contacts.length > 0 ? (
+            {Array.isArray(contacts) && contacts.length > 0 ? (
               contacts.map((contact: any) => (
                 <ContactItem
                   key={contact.id}
-                  id={contact.id}
-                  fullName={contact.fullName}
-                  email={contact.email}
+                  id={contact.id || 0}
+                  fullName={contact.fullName || ""}
+                  email={contact.email || ""}
                   company={contact.companyName}
                 />
               ))
@@ -313,15 +313,15 @@ export default function DashboardPage() {
             <h2 className="text-lg font-medium">Opportunità recenti</h2>
           </div>
           <div className="p-4">
-            {deals && deals.length > 0 ? (
+            {Array.isArray(deals) && deals.length > 0 ? (
               deals.map((deal: any) => (
                 <DealItem
                   key={deal.id}
-                  id={deal.id}
-                  title={deal.title}
-                  value={deal.value}
+                  id={deal.id || 0}
+                  title={deal.title || "Opportunità senza titolo"}
+                  value={deal.value || 0}
                   company={deal.companyName}
-                  stage={deal.stageName}
+                  stage={deal.stageName || "Fase non specificata"}
                 />
               ))
             ) : (

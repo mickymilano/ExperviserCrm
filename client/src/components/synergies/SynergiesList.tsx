@@ -155,24 +155,24 @@ export function SynergiesList({
         <div className="space-y-3">
           {Array.isArray(synergies) && synergies.map((synergy: any) => (
             <Card 
-              key={synergy.id} 
+              key={synergy?.id || 'no-id'} 
               className="overflow-hidden hover:shadow-sm transition-shadow cursor-pointer"
               onClick={() => handleOpenEdit(synergy)}
             >
               <CardContent className="p-4">
                 <div className="flex justify-between items-start mb-2">
                   <div className="flex items-center">
-                    <span className="font-medium">{synergy.type}</span>
-                    <Badge className={`ml-2 ${getSynergyStatusColor(synergy.status)}`}>
-                      {synergy.status}
+                    <span className="font-medium">{synergy?.type || 'Tipo non specificato'}</span>
+                    <Badge className={`ml-2 ${getSynergyStatusColor(synergy?.status || '')}`}>
+                      {synergy?.status || 'Sconosciuto'}
                     </Badge>
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    {synergy.createdAt && format(new Date(synergy.createdAt), 'dd/MM/yyyy')}
+                    {synergy?.createdAt && format(new Date(synergy.createdAt), 'dd/MM/yyyy')}
                   </div>
                 </div>
                 
-                {synergy.description && (
+                {synergy?.description && (
                   <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
                     {synergy.description}
                   </p>
@@ -180,9 +180,9 @@ export function SynergiesList({
                 
                 <div className="flex justify-between items-center mt-2">
                   <div className="text-xs text-muted-foreground">
-                    ID: {synergy.id}
+                    ID: {synergy?.id || 'N/A'}
                   </div>
-                  <Link href={getEntityUrl(synergy)}>
+                  <Link href={getEntityUrl(synergy) || '#'}>
                     <Button 
                       size="sm" 
                       variant="ghost" 
