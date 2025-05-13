@@ -530,13 +530,17 @@ export class PostgresStorage implements IStorage {
         ORDER BY created_at DESC
       `, [dealId]);
       
+      console.log(`Found ${result.rows.length} synergies for deal ${dealId}`);
+      
       // Array per memorizzare i risultati finali
       const synergiesWithRelations = [];
       
       // Per ogni sinergia, recupera i dati del contatto associato
       for (const synergy of result.rows) {
+        console.log(`Processing synergy ID=${synergy.id}, contactId=${synergy.contact_id}`);
+        
         // Prepara l'oggetto base della sinergia
-        const synergyObject = {
+        const synergyObject: any = {
           id: synergy.id,
           startDate: synergy.start_date,
           endDate: synergy.end_date,
@@ -547,46 +551,59 @@ export class PostgresStorage implements IStorage {
           description: synergy.description || "",
           status: synergy.status || "Active",
           createdAt: synergy.created_at,
-          updatedAt: synergy.updated_at,
-          contact: null, // Placeholder per i dati del contatto
-          company: null  // Placeholder per i dati dell'azienda
+          updatedAt: synergy.updated_at
         };
         
         // Se c'è un contatto associato, recuperane i dati
         if (synergy.contact_id) {
-          const contactQuery = await pool.query(`
-            SELECT 
-              id, first_name, middle_name, last_name, status, 
-              mobile_phone, company_email, private_email, 
-              office_phone, private_phone, linkedin, facebook,
-              instagram, tiktok, tags, roles, notes, custom_fields,
-              last_contacted_at, next_follow_up_at, created_at, updated_at
-            FROM contacts 
-            WHERE id = $1
-          `, [synergy.contact_id]);
-          
-          if (contactQuery.rows.length > 0) {
-            const contactData = contactQuery.rows[0];
-            // Trasforma i dati del contatto nel formato atteso dal frontend
-            synergyObject.contact = {
-              id: contactData.id,
-              firstName: contactData.first_name,
-              lastName: contactData.last_name,
-              middleName: contactData.middle_name,
-              status: contactData.status,
-              mobilePhone: contactData.mobile_phone,
-              companyEmail: contactData.company_email,
-              privateEmail: contactData.private_email,
-              officePhone: contactData.office_phone,
-              privatePhone: contactData.private_phone,
-              // Include altri campi se necessario
-            };
+          try {
+            console.log(`Retrieving contact data for contactId=${synergy.contact_id}`);
+            
+            const contactQuery = await pool.query(`
+              SELECT 
+                id, first_name, middle_name, last_name, status, 
+                mobile_phone, company_email, private_email, 
+                office_phone, private_phone, linkedin, facebook,
+                instagram, tiktok, tags, roles, notes, custom_fields,
+                last_contacted_at, next_follow_up_at, created_at, updated_at
+              FROM contacts 
+              WHERE id = $1
+            `, [synergy.contact_id]);
+            
+            if (contactQuery.rows.length > 0) {
+              const contactData = contactQuery.rows[0];
+              console.log(`Contact data found for ID=${synergy.contact_id}: ${contactData.first_name} ${contactData.last_name}`);
+              
+              // Trasforma i dati del contatto nel formato atteso dal frontend
+              synergyObject.contact = {
+                id: contactData.id,
+                firstName: contactData.first_name,
+                lastName: contactData.last_name,
+                middleName: contactData.middle_name,
+                status: contactData.status,
+                mobilePhone: contactData.mobile_phone,
+                companyEmail: contactData.company_email,
+                privateEmail: contactData.private_email,
+                officePhone: contactData.office_phone,
+                privatePhone: contactData.private_phone
+              };
+              
+              // Validazione debug: verifica che i dati del contatto siano effettivamente inclusi
+              console.log(`Contact info added to synergy: firstName=${synergyObject.contact.firstName}, lastName=${synergyObject.contact.lastName}`);
+            } else {
+              console.log(`No contact found with ID=${synergy.contact_id}`);
+            }
+          } catch (contactError) {
+            console.error(`Error retrieving contact data for ID=${synergy.contact_id}:`, contactError);
           }
         }
         
         // Aggiungi la sinergia arricchita all'array dei risultati
         synergiesWithRelations.push(synergyObject);
       }
+      
+      console.log(`Returning ${synergiesWithRelations.length} synergies with relations for deal ${dealId}`);
+      console.log('First synergy sample:', JSON.stringify(synergiesWithRelations[0], null, 2));
       
       return synergiesWithRelations;
     } catch (error) {
