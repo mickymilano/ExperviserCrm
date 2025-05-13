@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Handshake, Plus, Filter, RefreshCw } from "lucide-react";
+import { useLocation } from "wouter";
+import { Handshake, Plus, Filter, RefreshCw, User, Building, DollarSign, ExternalLink } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { SynergyModal } from "@/components/modals/SynergyModal";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +13,7 @@ import { format } from "date-fns";
 export default function SynergiesPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingSynergy, setEditingSynergy] = useState<any>(null);
+  const [, navigate] = useLocation();
   const { data: synergies = [], isLoading, refetch } = useQuery<any[]>({
     queryKey: ['/api/synergies'],
   });
@@ -124,18 +126,48 @@ export default function SynergiesPage() {
                 </div>
                 <div className="flex justify-between text-sm">
                   <div>
-                    <p className="text-muted-foreground mb-1">Contact ID</p>
-                    <p>{synergy.contactId}</p>
+                    <p className="text-muted-foreground mb-1">Contact</p>
+                    <Button 
+                      variant="link" 
+                      className="p-0 h-auto text-sm flex items-center"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/contacts/${synergy.contactId}`);
+                      }}
+                    >
+                      <User className="h-3 w-3 mr-1" />
+                      View Contact
+                    </Button>
                   </div>
                   <div>
-                    <p className="text-muted-foreground mb-1">Company ID</p>
-                    <p>{synergy.companyId}</p>
+                    <p className="text-muted-foreground mb-1">Company</p>
+                    <Button 
+                      variant="link" 
+                      className="p-0 h-auto text-sm flex items-center"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/companies/${synergy.companyId}`);
+                      }}
+                    >
+                      <Building className="h-3 w-3 mr-1" />
+                      View Company
+                    </Button>
                   </div>
                 </div>
                 {synergy.dealId && (
                   <div className="mt-2">
                     <p className="text-muted-foreground mb-1 text-sm">Associated Deal</p>
-                    <p className="text-sm">Deal #{synergy.dealId}</p>
+                    <Button 
+                      variant="link" 
+                      className="p-0 h-auto text-sm flex items-center"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/deals/${synergy.dealId}`);
+                      }}
+                    >
+                      <DollarSign className="h-3 w-3 mr-1" />
+                      View Deal #{synergy.dealId}
+                    </Button>
                   </div>
                 )}
               </CardContent>
