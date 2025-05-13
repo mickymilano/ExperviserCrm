@@ -191,15 +191,30 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
               onChange={(value, placeDetails) => {
                 console.log("PlacesAutocomplete onChange triggered in CompanyModal with:", { value, placeDetails });
                 
-                // Aggiorna il campo fullAddress
-                setValue("fullAddress", value, { shouldValidate: true });
-                
-                // Imposta anche il campo nascosto address per retrocompatibilità
-                setValue("address", value, { shouldValidate: true });
-                
                 // Verifica se abbiamo ricevuto i dettagli del luogo
                 if (placeDetails && placeDetails.address_components) {
                   console.log("Place details received in CompanyModal:", placeDetails);
+                  
+                  // Estrai il nome attività
+                  const businessName = placeDetails?.name || '';
+                  
+                  // Imposta automaticamente il campo "name" solo quando è vuoto o quando si sceglie "sostituisci"
+                  if (!initialData?.name) {
+                    setValue("name", businessName, { shouldValidate: true });
+                  } else if (businessName !== initialData.name) {
+                    // mostra prompt: "Vuoi sostituire il nome azienda esistente?"
+                    const replace = window.confirm(
+                      `Hai selezionato "${businessName}". Vuoi sostituire il nome azienda corrente "${initialData.name}"?`
+                    );
+                    if (replace) {
+                      setValue("name", businessName, { shouldValidate: true });
+                    }
+                  }
+                  
+                  // Rimuovi il nome dal fullAddress, lasciando solo «formatted_address»
+                  const formatted = placeDetails.formatted_address || "";
+                  setValue("fullAddress", formatted, { shouldValidate: true });
+                  setValue("address", formatted, { shouldValidate: true });
                   
                   // Estrae il paese
                   const countryComponent = placeDetails.address_components.find(component => 
@@ -226,7 +241,7 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
                 }
                 
                 // Forza la validazione del form
-                trigger(["fullAddress", "country"]);
+                trigger(["fullAddress", "country", "name"]);
               }}
               placeholder="Cerca o inserisci l'indirizzo completo" 
               className="w-full"
