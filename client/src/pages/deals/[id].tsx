@@ -18,6 +18,8 @@ import DealModal from "@/components/modals/DealModal";
 import TaskList from "@/components/tasks/TaskList";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
+// Ripristinato: mostra la lista delle sinergie collegate al deal
+import { SynergiesList } from "@/components/synergies/SynergiesList";
 
 export default function DealDetail() {
   const params = useParams();
@@ -265,13 +267,12 @@ export default function DealDetail() {
                   <Skeleton className="h-12 w-full" />
                 </div>
               ) : dealId ? (
-                <div className="flex flex-col items-center justify-center p-8 text-center">
-                  <Handshake className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                  <h3 className="text-lg font-medium mb-2">Synergies Feature Removed</h3>
-                  <p className="text-muted-foreground mb-4 max-w-md mx-auto">
-                    The synergies functionality has been removed from the system.
-                  </p>
-                </div>
+                /*
+                  Restore Synergy-Contacts: 
+                  Questo blocco era stato disabilitato erroneamente.
+                  Se dovesse dare problemi, commentare nuovamente o rimuovere questa riga.
+                */
+                <SynergiesList entityId={dealId} entityType="deal" showTitle={false} />
               ) : (
                 <div className="text-center py-8">
                   <Handshake className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
