@@ -338,10 +338,25 @@ export class PostgresStorage implements IStorage {
   }
 
   async getRecentContacts(limit: number = 5): Promise<Contact[]> {
-    return db.select()
+    try {
+      // Use explicit column selection to avoid "column not found" errors
+      return await db.select({
+        id: contacts.id,
+        firstName: contacts.firstName,
+        lastName: contacts.lastName,
+        email: contacts.email,
+        status: contacts.status,
+        avatar: contacts.avatar,
+        createdAt: contacts.createdAt,
+        updatedAt: contacts.updatedAt
+      })
       .from(contacts)
       .orderBy(desc(contacts.updatedAt))
       .limit(limit);
+    } catch (error) {
+      console.error("Error in getRecentContacts:", error);
+      return [];
+    }
   }
 
   async getContactsByCompany(companyId: number): Promise<Contact[]> {
