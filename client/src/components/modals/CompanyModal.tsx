@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { PlacesAutocomplete } from "@/components/ui/PlacesAutocomplete";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -44,7 +45,7 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
   const [tagsInput, setTagsInput] = useState(initialData?.tags ? initialData.tags.join(", ") : "");
   const isEditMode = !!initialData;
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<CompanyFormData>({
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<CompanyFormData>({
     resolver: zodResolver(companySchema),
     defaultValues: {
       name: initialData?.name || "",
@@ -181,13 +182,31 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
             />
           </div>
 
-          {/* Full Address Field (Unified location) */}
+          {/* Full Address Field (Unified location) with Google Maps integration */}
           <div className="space-y-2 mb-4">
             <Label htmlFor="fullAddress">Complete Address</Label>
-            <Input 
-              id="fullAddress" 
-              {...register("fullAddress")} 
-              placeholder="Enter the complete address" 
+            <PlacesAutocomplete 
+              id="fullAddress"
+              value={watch("fullAddress") || ""}
+              onChange={(value, placeDetails) => {
+                setValue("fullAddress", value, { shouldValidate: true });
+                
+                // Imposta anche il campo nascosto address per retrocompatibilità
+                setValue("address", value, { shouldValidate: true });
+                
+                // Se il componente ha restituito dettagli del luogo e troviamo il paese
+                if (placeDetails?.address_components) {
+                  const countryComponent = placeDetails.address_components.find(component => 
+                    component.types.includes('country')
+                  );
+                  
+                  if (countryComponent) {
+                    setValue("country", countryComponent.long_name, { shouldValidate: true });
+                  }
+                }
+              }}
+              placeholder="Search for an address..." 
+              className="w-full"
             />
           </div>
           
