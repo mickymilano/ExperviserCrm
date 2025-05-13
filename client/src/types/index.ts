@@ -95,7 +95,8 @@ export interface Company {
   website: string | null;
   email: string | null;
   phone: string | null;
-  address: string | null;
+  address: string | null; // Deprecated: Use fullAddress instead
+  fullAddress: string | null; // Unified location field
   tags: string[] | null;
   notes: string | null;
   customFields: Record<string, any> | null;
