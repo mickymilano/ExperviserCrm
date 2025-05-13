@@ -103,3 +103,12 @@ export function stringToColor(str: string): string {
 export function generateArray(length: number): number[] {
   return Array.from({ length }, (_, i) => i);
 }
+
+/** 
+ * Rimuove i caratteri non numerici e inserisce uno spazio ogni 3 cifre
+ * es. "1234567890" → "123 456 789 0"
+ */
+export function formatPhoneNumber(phone: string): string {
+  const digits = phone.replace(/\D+/g, "");
+  return digits.replace(/(\d{3})(?=\d)/g, "$1 ");
+}
