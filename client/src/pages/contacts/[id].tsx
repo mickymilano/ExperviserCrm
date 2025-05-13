@@ -19,7 +19,7 @@ import {
 import { formatDateToLocal, getInitials, formatPhoneNumber, generateAvatarColor } from "@/lib/utils";
 import ContactModal from "@/components/modals/ContactModal";
 import TaskList from "@/components/tasks/TaskList";
-import SynergiesList from "@/components/synergies/SynergiesList";
+import { SynergiesList } from "@/components/synergies/SynergiesList";
 import { Link } from "wouter";
 import { LinkCompanyButton } from "@/components/forms/LinkCompanyButton";
 
@@ -427,10 +427,9 @@ export default function ContactDetail() {
                 </CardHeader>
                 <CardContent>
                   <SynergiesList 
-                    contactId={contactId} 
+                    entityId={contactId} 
+                    entityType="contact"
                     showTitle={false}
-                    hideAddButton={true}
-                    hideDeleteButtons={true}
                   />
                 </CardContent>
               </Card>
@@ -535,7 +534,7 @@ export default function ContactDetail() {
         {/* Synergies Tab */}
         <TabsContent value="synergies" className="space-y-6">
           <div className="bg-white p-6 rounded-md shadow-sm">
-            <SynergiesList contactId={contactId} />
+            <SynergiesList entityId={contactId} entityType="contact" />
           </div>
         </TabsContent>
         
