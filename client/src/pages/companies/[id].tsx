@@ -289,7 +289,7 @@ export default function CompanyDetail() {
                 {/* Location Section */}
                 <h3 className="text-md font-medium mb-4 flex items-center">
                   <MapPinned className="h-4 w-4 mr-2 text-muted-foreground" />
-                  Location
+                  Indirizzo
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   <div className="space-y-4">

@@ -184,7 +184,7 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
 
           {/* Full Address Field (Unified location) with Google Maps integration */}
           <div className="space-y-2 mb-4">
-            <Label htmlFor="fullAddress">Complete Address</Label>
+            <Label htmlFor="fullAddress">Indirizzo</Label>
             <PlacesAutocomplete 
               id="fullAddress"
               value={watch("fullAddress") || ""}

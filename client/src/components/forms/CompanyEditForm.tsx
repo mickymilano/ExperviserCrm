@@ -321,7 +321,7 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
             </div>
             
             <div>
-              <Label htmlFor="fullAddress">Location</Label>
+              <Label htmlFor="fullAddress">Indirizzo</Label>
               <PlacesAutocomplete 
                 id="fullAddress"
                 value={watch("fullAddress") || ""}
