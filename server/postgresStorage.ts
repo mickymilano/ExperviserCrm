@@ -277,9 +277,26 @@ export class PostgresStorage implements IStorage {
   async getLeads(): Promise<Lead[]> {
     // I lead hanno status diversi (New, Qualified, ecc.)
     // Rimuoviamo il filtro status e restituiamo tutti
-    return await db.select()
+    try {
+      // Seleziona esplicitamente solo le colonne che esistono nel database
+      return await db.select({
+        id: leads.id,
+        name: leads.name,
+        status: leads.status,
+        source: leads.source,
+        notes: leads.notes,
+        companyName: leads.companyName,
+        jobTitle: leads.jobTitle,
+        leadOwner: leads.leadOwner,
+        createdAt: leads.createdAt,
+        updatedAt: leads.updatedAt
+      })
       .from(leads)
-      .orderBy(leads.firstName, leads.lastName);
+      .orderBy(leads.name);
+    } catch (error) {
+      console.error("Error in getLeads:", error);
+      return [];
+    }
   }
   
   async getAllLeads(): Promise<Lead[]> {

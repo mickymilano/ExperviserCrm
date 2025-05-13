@@ -1,0 +1,48 @@
+Replit AI, per i prossimi 90 minuti lavora in completa autonomia su ciascun modulo del CRM secondo il “Modello Operativo per Moduli” che ti ho fornito. Non chiedermi nulla durante questo periodo: procedi passo-passo, modulo per modulo, e quando un modulo è completamente risolto e testato, passa al successivo. Le priorità sono:
+
+1. **Contatti**  
+   - Verifica e correggi CRUD: lista, dettaglio, creazione, modifica, cancellazione.  
+   - Assicurati che il pannello Multi-Email e Multi-Telefono funzioni (contact_emails, phoneNumbers[]).  
+   - Testa le ricerche, i filtri e l’“origine del contatto”.  
+
+2. **Aziende**  
+   - Verifica e correggi CRUD.  
+   - Assicurati che tutti i campi di shared/schema.ts (address, city, state, country, postalCode) corrispondano al database.  
+   - Implementa companyType, subCategory e multi-tag con autocomplete.  
+   - Testa le ricerche e i filtri.  
+
+3. **Opportunità (Deals)**  
+   - Risolvi il selettore Company → Primary Contact.  
+   - Verifica getDeals/getDealsWithFilters e assicurati che filtrino correttamente.  
+   - Testa il form DealModal.tsx con React-Hook-Form e AsyncSelect.  
+
+4. **Lead**  
+   - Verifica e correggi CRUD e conversione lead→contatto.  
+   - Assicurati che “source” (origine) funzioni come tag autocompletato.  
+
+5. **Task & Calendario**  
+   - Implementa CRUD per Tasks e Meetings.  
+   - Verifica che il calendario mostri correttamente le riunioni (filtri, date future).  
+
+6. **Email**  
+   - Correggi fetch e rendering (emailsList e accountsList sempre array).  
+   - Associa correttamente le email a contatti, aziende, opportunità.  
+   - Testa ricerca e filtro email.  
+
+7. **Dashboard**  
+   - Verifica che i contatori (contacts, companies, deals, leads, emails) riflettano i dati reali.  
+   - Controlla Widgets “Attività recenti”, “Contatti recenti”, “Opportunità recenti”.  
+
+Per ciascun modulo:
+
+- Esegui automaticamente test di sanity (lista vuota vs dati di prova).  
+- Aggiorna il codice (backend e frontend) solo dopo aver identificato e isolato ogni bug.  
+- Conferma con un breve log di quali file/metodi hai modificato e quali test hai superato.  
+- Non interromperti per domande: se incontri blocchi irrimediabili, applica workaround temporanei e annotali nel log.  
+
+Alla fine dei 90 minuti inviami un unico report strutturato per modulo, con:
+- Stato “Completato” o “Ancora da sistemare”  
+- File principali modificati  
+- Test superati o errori residui  
+
+Inizia subito con il modulo **Contatti**. Buon lavoro!  
