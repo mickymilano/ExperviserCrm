@@ -26,6 +26,10 @@ export default function Contacts() {
   const { companies, isLoading: isLoadingCompanies } = useCompanies();
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [_, navigate] = useLocation();
+  
+  // Debug: Aggiungiamo console.log per verificare i dati ricevuti
+  console.log("Contacts Page - contacts:", contacts);
+  console.log("Contacts Page - companies:", companies);
 
   // Get company name for a contact from their areas of activity
   const getCompanyName = (contact: Contact): string => {

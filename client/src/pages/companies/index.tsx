@@ -26,6 +26,9 @@ export default function Companies() {
   const { companies, isLoading, deleteCompany } = useCompanies();
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [_, navigate] = useLocation();
+  
+  // Debug: Aggiungiamo console.log per verificare i dati ricevuti
+  console.log("Companies Page - companies:", companies);
 
   // Filter companies based on search term
   const filteredCompanies = companies?.filter((company) => {
