@@ -1,0 +1,208 @@
+**Experviser CRM - Modello Operativo per Moduli**
+
+**Introduzione**
+Questo documento descrive l'architettura modulare del CRM Experviser, suddivisa in moduli indipendenti che interagiscono tra loro. Ogni modulo include funzionalità chiave, campi dati essenziali e comportamenti attesi. Fornisce la base per implementazione, debug e successive estensioni.
+
+---
+
+## 1. Module: Aziende (Companies)
+
+**Funzioni Principali**
+
+* CRUD (Create, Read, Update, Archive)
+* Ricerca e filtro (nome, settore, nazione, tag)
+* Gestione "Active Rep" (flag contrattuale)
+* Relazione con Contatti, Deal, Sinergie, Media, Email
+
+**Campi Dati**
+
+* `id` (PK)
+* `name` (Ragione Sociale)
+* `companyType` (enum/tag: Produzione, Servizi, Retail, Altro)
+* `subCategory` (tag autocompletato)
+* `address` (via, cap, città, provincia, country)
+* `country` (per filtro rapido)
+* `vatNumber` (Partita IVA)
+* `brands[]` (text\[], autocompletamento)
+* `notesTags[]` (text\[], autocompletamento)
+* `isActiveRep` (boolean)
+* `multiUnitFlags` (selettori: Franchisor Monobrand, Franchisee, etc.)
+* `productsOrServicesTags[]` (text\[])
+* `locationTypes[]` (text\[])
+* `storeCountIT` (number)
+* `storeCountINTL` (number)
+* **Sezioni Collassabili**: Media (file upload), Statistiche, Note Libere
+
+**Relazioni**
+
+* `areas_of_activity` ↔ Contatti (tabella di relazione)
+* Deal ↔ Opportunità associate
+* Sinergie ↔ Business Synergies
+* Email ↔ Comunicazioni inviate/ricevute
+
+---
+
+## 2. Module: Contatti (Contacts)
+
+**Funzioni Principali**
+
+* CRUD (Create, Read, Update, Archive)
+* Multi-email management (archiviazione, primario)
+* Associazione a più Aziende (areas\_of\_activity)
+* Tagging ruoli (`roles[]`) e origini
+* Timeline attività (email, meeting, note, follow-up)
+
+**Campi Dati**
+
+* `id` (PK)
+* `firstName`, `lastName`
+* `roles[]` (text\[]: ufficiale vs job description)
+* `jobDescription` (dettaglio mansioni)
+* **multi-email**: contact\_emails table con campi `emailAddress`, `type`, `isPrimary`, `isArchived`
+* `phoneNumbers[]` (text\[], formattati)
+* `notes` (text libero)
+* `sourceTags[]` (origine: Fiere, Meeting, Referral)
+* `lastContactedAt`, `nextFollowUpAt` (timestamp)
+
+**Relazioni**
+
+* `areas_of_activity` ↔ Aziende
+* Deals ↔ Opportunità primarie
+* Sinergie ↔ Ruolo di contatto sinergia
+
+---
+
+## 3. Module: Lead
+
+**Funzioni Principali**
+
+* CRUD (Create, Read, Delete hard)
+* Conversione a Contatto (POST /api/leads/\:id/convert)
+* Statistiche e report su lead
+
+**Campi Dati**
+
+* `id` (PK)
+* `name`, `companyName`
+* `email`, `phone`
+* `tags[]` (text\[])
+* `notes` (text)
+* `createdAt`, `updatedAt`
+
+**Comportamento Speciale**
+
+* **Hard delete**: i Lead non sono archivio, vengono fisicamente eliminati
+
+---
+
+## 4. Module: Deals (Opportunità)
+
+**Funzioni Principali**
+
+* CRUD (Create, Read, Update, Archive)
+* Pipeline stages (fasi di vendita)
+* Assegnazione a Contatto primario e Azienda
+* Tagging, Note, Follow-up, Probabilità
+* Gestione Sinergie (posticipata/modulare)
+
+**Campi Dati**
+
+* `id` (PK)
+* `name`, `value`, `probability`
+* `status` (enum: active/archived)
+* `companyId`, `contactId`, `stageId`
+* `lastContactedAt`, `nextFollowUpAt`, `expectedCloseDate`, `actualCloseDate`
+* `tags[]`, `notes`, `description`
+
+**Relazioni**
+
+* Azienda ↔ Deal
+* Contatto ↔ Deal
+* pipeline\_stages ↔ Deal
+* (in futuro) Sinergie ↔ Deal
+
+---
+
+## 5. Module: Sinergie (Synergies)
+
+**Funzioni Principali**
+
+* (Modulo opzionale/secondario) CRUD Sinergie
+* Collegamento Contatto ↔ Azienda ↔ Deal
+* Visualizzazione read‑only in pagine Contatti e Aziende
+
+**Campi Dati**
+
+* `id`, `contactId`, `companyId`, `dealId`
+* `type`, `description`, `status`, `startDate`, `endDate`
+* `createdAt`, `updatedAt`
+
+**Note**: inizialmente disattivato; implementazione isolata dopo stabilità core.
+
+---
+
+## 6. Module: Calendario (Calendar)
+
+**Funzioni Principali**
+
+* Visualizzazione eventi settimanali/mensili/giornalieri
+* CRUD Meeting/Eventi associati a Contatti/Aziende/Deal
+* Vista Appuntamenti prossime 2 settimane
+* Integrazione futura: Google/Apple Calendar
+* Ricerca eventi per parola chiave
+
+**Dati Evento**
+
+* `id`, `title`, `startTime`, `endTime`, `description`
+* `contactId`, `companyId`, `dealId`
+
+---
+
+## 7. Module: Task
+
+**Funzioni Principali**
+
+* CRUD Task
+* Assegnazione a Contatto/Azienda/Deal
+* Data scadenza, priorità, stato (Todo/In Progress/Done)
+* Vista Task prossime 2 settimane
+
+**Campi Dati**
+
+* `id`, `title`, `description`, `dueDate`, `status`, `priority`
+* `relatedId` (contatto/azienda/deal)
+
+---
+
+## 8. Module: Email
+
+**Funzioni Principali**
+
+* Gestione multi-account (configurazione IMAP/SMTP)
+* Inbox, Invio, Cronologia per Contatti/Aziende/Deal
+* Assegnazione automatica da indirizzo email a contatto
+* Archiviazione mail, marcatura come lette/non lette
+* Ricerca email per keyword/tag
+
+**Campi Dati**
+
+* `id`, `accountId`, `from`, `to[]`, `subject`, `body`, `receivedAt`
+* `relatedContactIds[]`, `relatedCompanyIds[]`, `relatedDealIds[]`
+
+---
+
+## 9. Module: News dal Mondo
+
+**Funzioni Principali**
+
+* Feed AI-driven: notizie su aziende, lead, tag di interesse
+* Widget in Dashboard e pagina dedicata
+
+**Dati**
+
+* `headline`, `source`, `url`, `publishedAt`, `tags[]`
+
+---
+
+**Conclusioni**
+Questo documento rappresenta la base operativa e dati per ciascun modulo del CRM Experviser. Ogni futura correzione o estensione deve rispettare questa struttura modulare, garantendo coerenza tra schema, API, storage e UI.\*\*
