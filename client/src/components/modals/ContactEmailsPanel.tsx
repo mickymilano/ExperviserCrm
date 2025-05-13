@@ -82,8 +82,8 @@ export function ContactEmailsPanel({ contactId }: ContactEmailsPanelProps) {
   // Update email status mutation
   const updateEmailMutation = useMutation({
     mutationFn: async ({ emailId, data }: { emailId: number, data: Partial<EmailFormData> }) => {
-      const response = await fetch(`/api/contacts/${contactId}/emails/${emailId}`, {
-        method: "PATCH",
+      const response = await fetch(`/api/contact-emails/${emailId}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
         credentials: "include"

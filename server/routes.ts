@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import { storage } from './storage';
 import { z } from 'zod';
-import { insertUserSchema, insertContactSchema, insertCompanySchema, insertDealSchema, insertPipelineStageSchema, insertLeadSchema, insertAreaOfActivitySchema } from '@shared/schema';
+import { insertUserSchema, insertContactSchema, insertCompanySchema, insertDealSchema, insertPipelineStageSchema, insertLeadSchema, insertAreaOfActivitySchema, insertContactEmailSchema } from '@shared/schema';
 
 // Chiave segreta per JWT
 const JWT_SECRET = process.env.JWT_SECRET || 'experviser-dev-secret';
@@ -535,6 +535,159 @@ export function registerRoutes(app: any) {
     } catch (error) {
       console.error('Error deleting contact:', error);
       res.status(500).json({ message: 'Errore durante l\'eliminazione del contatto' });
+    }
+  });
+  
+  // --- CONTACT EMAIL ROUTES ---
+  
+  // Ottieni tutte le email di un contatto
+  app.get('/api/contacts/:contactId/emails', authenticate, async (req, res) => {
+    try {
+      const contactId = parseInt(req.params.contactId);
+      
+      // Verifica se il contatto esiste
+      const contact = await storage.getContact(contactId);
+      if (!contact) {
+        return res.status(404).json({ message: 'Contatto non trovato' });
+      }
+      
+      const emails = await storage.getContactEmails(contactId);
+      res.json(emails);
+    } catch (error) {
+      console.error('Error fetching contact emails:', error);
+      res.status(500).json({ message: 'Errore durante il recupero delle email del contatto' });
+    }
+  });
+  
+  // Ottieni una singola email di contatto
+  app.get('/api/contact-emails/:id', authenticate, async (req, res) => {
+    try {
+      const emailId = parseInt(req.params.id);
+      const email = await storage.getContactEmail(emailId);
+      
+      if (!email) {
+        return res.status(404).json({ message: 'Email non trovata' });
+      }
+      
+      res.json(email);
+    } catch (error) {
+      console.error('Error fetching contact email:', error);
+      res.status(500).json({ message: 'Errore durante il recupero dell\'email' });
+    }
+  });
+  
+  // Ottieni l'email primaria di un contatto
+  app.get('/api/contacts/:contactId/primary-email', authenticate, async (req, res) => {
+    try {
+      const contactId = parseInt(req.params.contactId);
+      
+      // Verifica se il contatto esiste
+      const contact = await storage.getContact(contactId);
+      if (!contact) {
+        return res.status(404).json({ message: 'Contatto non trovato' });
+      }
+      
+      const primaryEmail = await storage.getPrimaryContactEmail(contactId);
+      
+      if (!primaryEmail) {
+        return res.status(404).json({ message: 'Nessuna email primaria trovata per questo contatto' });
+      }
+      
+      res.json(primaryEmail);
+    } catch (error) {
+      console.error('Error fetching primary contact email:', error);
+      res.status(500).json({ message: 'Errore durante il recupero dell\'email primaria' });
+    }
+  });
+  
+  // Crea una nuova email per un contatto
+  app.post('/api/contacts/:contactId/emails', authenticate, async (req, res) => {
+    try {
+      const contactId = parseInt(req.params.contactId);
+      
+      // Verifica se il contatto esiste
+      const contact = await storage.getContact(contactId);
+      if (!contact) {
+        return res.status(404).json({ message: 'Contatto non trovato' });
+      }
+      
+      // Validazione dello schema
+      const validatedData = insertContactEmailSchema.parse({
+        ...req.body,
+        contactId
+      });
+      
+      // Crea l'email
+      const newEmail = await storage.createContactEmail(validatedData);
+      
+      res.status(201).json(newEmail);
+    } catch (error: unknown) {
+      console.error('Error creating contact email:', error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: 'Dati email non validi', errors: error.errors });
+      }
+      res.status(500).json({ message: 'Errore durante la creazione dell\'email' });
+    }
+  });
+  
+  // Aggiorna un'email di contatto
+  app.put('/api/contact-emails/:id', authenticate, async (req, res) => {
+    try {
+      const emailId = parseInt(req.params.id);
+      
+      // Verifica se l'email esiste
+      const email = await storage.getContactEmail(emailId);
+      if (!email) {
+        return res.status(404).json({ message: 'Email non trovata' });
+      }
+      
+      // Aggiorna l'email
+      const updatedEmail = await storage.updateContactEmail(emailId, req.body);
+      
+      res.json(updatedEmail);
+    } catch (error) {
+      console.error('Error updating contact email:', error);
+      res.status(500).json({ message: 'Errore durante l\'aggiornamento dell\'email' });
+    }
+  });
+  
+  // Imposta un'email come primaria
+  app.put('/api/contact-emails/:id/set-primary', authenticate, async (req, res) => {
+    try {
+      const emailId = parseInt(req.params.id);
+      
+      // Verifica se l'email esiste
+      const email = await storage.getContactEmail(emailId);
+      if (!email) {
+        return res.status(404).json({ message: 'Email non trovata' });
+      }
+      
+      // Imposta come primaria
+      const updatedEmail = await storage.setContactEmailAsPrimary(emailId);
+      
+      res.json(updatedEmail);
+    } catch (error) {
+      console.error('Error setting primary email:', error);
+      res.status(500).json({ message: 'Errore durante l\'impostazione dell\'email primaria' });
+    }
+  });
+  
+  // Elimina un'email di contatto
+  app.delete('/api/contact-emails/:id', authenticate, async (req, res) => {
+    try {
+      const emailId = parseInt(req.params.id);
+      
+      // Elimina l'email
+      const success = await storage.deleteContactEmail(emailId);
+      
+      if (!success) {
+        return res.status(404).json({ message: 'Email non trovata' });
+      }
+      
+      res.json({ message: 'Email eliminata con successo' });
+    } catch (error) {
+      console.error('Error deleting contact email:', error);
+      res.status(500).json({ message: 'Errore durante l\'eliminazione dell\'email' });
     }
   });
   
