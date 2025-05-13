@@ -181,7 +181,7 @@ export const deals = pgTable('deals', {
   stageId: integer('stage_id').references(() => pipelineStages.id),
   lastContactedAt: timestamp('last_contacted_at'),
   expectedCloseDate: date('expected_close_date'),
-  actualCloseDate: date('actual_close_date'),
+  // actualCloseDate: date('actual_close_date'), // Rimosso perché non esiste nel database
   nextFollowUpAt: timestamp('next_follow_up_at'),
   description: text('description'),
   probability: integer('probability'),
