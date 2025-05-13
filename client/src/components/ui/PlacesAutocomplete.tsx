@@ -106,10 +106,13 @@ export function PlacesAutocomplete({
     if (!scriptLoaded || !inputRef.current) return;
 
     try {
-      // Inizializza Google Places Autocomplete con opzioni che permettono ricerca per nome aziendale e indirizzo
+      console.log('Initializing Google Places Autocomplete...');
+      
+      // Inizializza Google Places Autocomplete
+      // Non specificare i 'types' per consentire la massima flessibilità di ricerca
       autocompleteRef.current = new google.maps.places.Autocomplete(inputRef.current, {
-        fields: ['address_components', 'formatted_address', 'geometry', 'name', 'place_id'],
-        types: ['establishment', 'address', 'geocode'],  // Permette sia ricerche aziendali che indirizzi
+        fields: ['address_components', 'formatted_address', 'geometry', 'name', 'place_id', 'types'],
+        // Rimuoviamo la restrizione sui tipi per abilitare qualsiasi tipo di ricerca
       });
 
       // Gestisce l'evento di selezione del luogo
