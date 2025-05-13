@@ -346,7 +346,10 @@ export function SynergyModal({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Type</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select 
+                    disabled={isViewMode}
+                    onValueChange={field.onChange} 
+                    defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a synergy type" />
@@ -374,6 +377,7 @@ export function SynergyModal({
                 <FormItem>
                   <FormLabel>Status</FormLabel>
                   <Select
+                    disabled={isViewMode}
                     onValueChange={field.onChange}
                     defaultValue={field.value || "Active"}
                   >
@@ -471,6 +475,7 @@ export function SynergyModal({
                   <FormLabel>Description</FormLabel>
                   <FormControl>
                     <Textarea
+                      disabled={isViewMode}
                       placeholder="Enter details about this business relationship"
                       className="resize-none"
                       {...field}
