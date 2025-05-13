@@ -407,8 +407,8 @@ export function SynergyModal({
                   <FormLabel>Associated Deal (Optional)</FormLabel>
                   <Select
                     disabled={isViewMode}
-                    onValueChange={(value) => field.onChange(parseInt(value))}
-                    defaultValue={field.value?.toString() || ""}
+                    onValueChange={(value) => field.onChange(value === "null" ? null : parseInt(value))}
+                    defaultValue={field.value?.toString() || "null"}
                   >
                     <FormControl>
                       <SelectTrigger>
