@@ -48,18 +48,6 @@ import {
 import { eq, and, desc, sql, isNull, isNotNull, or, asc, inArray } from "drizzle-orm";
 
 export class PostgresStorage implements IStorage {
-  
-  // Metodo per dashboard stats
-  async getEmails(): Promise<Email[]> {
-    try {
-      // Implementazione temporanea che restituisce un array vuoto
-      // ma potrebbe essere aggiornata in futuro quando il modulo email sarà implementato
-      return [];
-    } catch (error) {
-      console.error("Error in getEmails:", error);
-      return [];
-    }
-  }
   // USERS
   async getUsers(): Promise<User[]> {
     return await db.select().from(users).orderBy(users.fullName);
@@ -1362,12 +1350,25 @@ export class PostgresStorage implements IStorage {
 
   // EMAILS
   async getEmails(): Promise<Email[]> {
-    return await db.select().from(emails).orderBy(desc(emails.date));
+    try {
+      // Implementazione temporanea che restituisce un array vuoto
+      // ma potrebbe essere aggiornata in futuro quando il modulo email sarà implementato
+      return [];
+    } catch (error) {
+      console.error("Error in getEmails:", error);
+      return [];
+    }
   }
 
   async getEmail(id: number): Promise<Email | undefined> {
-    const [email] = await db.select().from(emails).where(eq(emails.id, id));
-    return email;
+    try {
+      // Implementazione temporanea che restituisce null
+      // ma potrebbe essere aggiornata in futuro quando il modulo email sarà implementato
+      return undefined;
+    } catch (error) {
+      console.error("Error in getEmail:", error);
+      return undefined;
+    }
   }
 
   async createEmail(email: InsertEmail): Promise<Email> {
