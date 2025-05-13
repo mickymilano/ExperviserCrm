@@ -803,6 +803,29 @@ export function registerRoutes(app: any) {
     }
   });
   
+  // Ottieni i contatti associati ad un'azienda
+  app.get('/api/companies/:id/contacts', authenticate, async (req, res) => {
+    try {
+      const companyId = parseInt(req.params.id);
+      
+      // Verifica se l'azienda esiste
+      const company = await storage.getCompany(companyId);
+      if (!company) {
+        return res.status(404).json({ message: 'Azienda non trovata' });
+      }
+      
+      // Ottieni i contatti associati all'azienda
+      const contacts = await storage.getContactsByCompany(companyId);
+      
+      console.log(`Found ${contacts.length} contacts for company ${companyId}`);
+      
+      res.json(contacts);
+    } catch (error) {
+      console.error('Error fetching company contacts:', error);
+      res.status(500).json({ message: 'Errore durante il recupero dei contatti dell\'azienda' });
+    }
+  });
+  
   // --- LEAD ROUTES ---
   
   // Ottieni tutti i lead

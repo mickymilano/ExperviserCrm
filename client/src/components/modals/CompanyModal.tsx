@@ -26,6 +26,7 @@ const companySchema = z.object({
   website: z.string().optional(),
   industry: z.string().optional(),
   address: z.string().optional(),
+  // Rimuoviamo city, region, country e postalCode dallo schema poiché non esistono nel database
   tags: z.array(z.string()).optional().nullable(),
   notes: z.string().optional().nullable(),
 });
