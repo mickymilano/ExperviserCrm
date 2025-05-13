@@ -1,0 +1,52 @@
+**URGENT TASK: Fix Runtime Error - 'generateAvatarColor' Not Exported**
+
+**To: Replit AI Development Agent**
+**From: Product Owner**
+**Subject: Critical Bug - Application crashes when navigating to modules due to another missing export.**
+
+**Context:**
+After fixing the `formatPhoneNumber` export issue, navigating to module pages (e.g., `/contacts`) now results in a new runtime error:
+`"[plugin:runtime-error-plugin] The requested module '/src/lib/utils.ts' does not provide an export named 'generateAvatarColor'"`
+
+This indicates that one or more components are trying to import `generateAvatarColor` from `/src/lib/utils.ts`, but this export is missing or incorrect.
+
+**Mandatory Action:**
+
+1.  **Locate Usage of `generateAvatarColor`:**
+    * Search the frontend codebase (primarily in `client/src`) to find where `import { ..., generateAvatarColor, ... } from '@/lib/utils';` (or similar path) is being used. Identify which components rely on this function.
+
+2.  **Inspect `client/src/lib/utils.ts`:**
+    * Open and examine the file `/src/lib/utils.ts`.
+    * **Verify:** Does a function named `generateAvatarColor` exist in this file?
+    * **Verify Export:** If it exists, is it correctly exported? Check for typos in the export name.
+
+3.  **Implement Solution:**
+    * **Option A (Function Exists but Not Exported):** If `generateAvatarColor` exists in `utils.ts` but is not exported, add the `export` keyword.
+    * **Option B (Function Does Not Exist or Named Differently):**
+        * If a similar utility function exists under a different name, update the import statements in the components to use the correct function name.
+        * If no such function exists in `utils.ts` but is required (likely for generating a consistent background color for user avatars based on their name/ID), you must **create a basic, functional placeholder** for `generateAvatarColor` in `utils.ts` and export it. For example:
+          ```typescript
+          // In client/src/lib/utils.ts
+          export const generateAvatarColor = (nameOrId: string | number | undefined | null): string => {
+            if (!nameOrId) return '#CCCCCC'; // Default grey color
+
+            const stringValue = String(nameOrId);
+            let hash = 0;
+            for (let i = 0; i < stringValue.length; i++) {
+              hash = stringValue.charCodeAt(i) + ((hash << 5) - hash);
+              hash = hash & hash; // Convert to 32bit integer
+            }
+            const hue = Math.abs(hash % 360);
+            return `hsl(${hue}, 70%, 80%)`; // Return a light pastel color
+          };
+          ```
+        * **Do NOT** simply remove the import or usage from components if the function is intended for UI consistency. The goal is to prevent the crash and provide basic functionality.
+    * **Option C (Import Path Incorrect):** If the function exists and is exported, but from a *different* file, correct the import path in the components using it.
+
+4.  **Test ALL Navigation Links Again:**
+    * After applying the fix, click on EVERY navigation link on the Dashboard (Contacts, Companies, Deals, Leads, etc.).
+    * Verify that navigating to each page **no longer produces the `generateAvatarColor` export error** and that the pages at least attempt to render.
+    * **Provide the path to the file(s) you modified and the specific code changes made.**
+    * **Confirm that the runtime error related to `generateAvatarColor` is resolved for all main module pages accessible from the Dashboard.**
+
+**DO NOT work on any other feature or bug.** Focus EXCLUSIVELY on resolving this `generateAvatarColor` export error to make module pages accessible again. Report back only when this task is complete and verified.

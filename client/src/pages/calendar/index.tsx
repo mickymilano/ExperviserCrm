@@ -76,11 +76,13 @@ export default function Calendar() {
 
   // Filter meetings for selected date
   const getMeetingsForDate = (date: Date) => {
-    return meetings?.filter(meeting => 
+    // Garantisco che meetings sia sempre un Array
+    const meetingsList = Array.isArray(meetings) ? meetings : [];
+    return meetingsList.filter(meeting => 
       isSameDay(parseISO(meeting.startTime), date)
     ).sort((a, b) => 
       new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
-    ) || [];
+    );
   };
 
   const handleAddMeeting = () => {
@@ -157,9 +159,10 @@ export default function Calendar() {
               ) : (
                 <div className="mt-6">
                   <h3 className="text-sm font-medium mb-2">Upcoming Meetings</h3>
-                  {meetings && meetings.length > 0 ? (
+                  {Array.isArray(meetings) && meetings.length > 0 ? (
                     <div className="space-y-2">
-                      {meetings
+                      {/* Garantisco che meetings sia sempre un Array */}
+                      {(Array.isArray(meetings) ? meetings : [])
                         .filter(meeting => new Date(meeting.startTime) >= new Date())
                         .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
                         .slice(0, 3)
