@@ -927,22 +927,65 @@ export class PostgresStorage implements IStorage {
 
   // COMPANIES
   async getCompanies(): Promise<Company[]> {
-    // Simplified query without relational features
     // Rimosso filtro per status per ottenere tutte le aziende, come per contatti e leads
     console.log("PostgresStorage.getCompanies: retrieving all companies regardless of status");
     try {
-      // Seleziona solo le colonne che esistono sicuramente
-      return await db.select({
-        id: companies.id,
-        name: companies.name,
-        website: companies.website,
-        email: companies.email,
-        status: companies.status,
-        createdAt: companies.createdAt,
-        updatedAt: companies.updatedAt
-      })
-      .from(companies)
-      .orderBy(companies.name);
+      // Utilizziamo SQL nativo per avere più controllo
+      const result = await pool.query(`
+        SELECT 
+          id, 
+          name, 
+          industry, 
+          website, 
+          email, 
+          phone, 
+          address, 
+          tags, 
+          notes, 
+          custom_fields, 
+          created_at, 
+          updated_at, 
+          status,
+          is_active_rep,
+          company_type,
+          brands,
+          channels,
+          products_or_services_tags,
+          location_types,
+          last_contacted_at,
+          next_follow_up_at
+        FROM companies 
+        ORDER BY name
+      `);
+      
+      console.log(`getCompanies: Found ${result.rows.length} companies`);
+      
+      // Adattiamo il formato per essere compatibile con quello che si aspetta il frontend
+      return result.rows.map(company => {
+        return {
+          id: company.id,
+          name: company.name || "",
+          industry: company.industry || "",
+          website: company.website || "",
+          email: company.email || "",
+          phone: company.phone || "",
+          address: company.address || "",
+          tags: company.tags || [],
+          notes: company.notes || "",
+          customFields: company.custom_fields || {},
+          status: company.status || "active",
+          isActiveRep: company.is_active_rep || false,
+          companyType: company.company_type || "other",
+          brands: company.brands || [],
+          channels: company.channels || [],
+          productsOrServicesTags: company.products_or_services_tags || [],
+          locationTypes: company.location_types || [],
+          lastContactedAt: company.last_contacted_at,
+          nextFollowUpAt: company.next_follow_up_at,
+          createdAt: company.created_at,
+          updatedAt: company.updated_at
+        };
+      });
     } catch (error) {
       console.error("Error in getCompanies:", error);
       return [];
