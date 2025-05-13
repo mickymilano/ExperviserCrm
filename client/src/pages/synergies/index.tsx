@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Handshake, Plus, Filter, RefreshCw } from "lucide-react";
-import { useSynergies } from "@/hooks/useSynergies";
+import { useQuery } from "@tanstack/react-query";
 import { SynergyModal } from "@/components/modals/SynergyModal";
 import AppLayout from "@/components/layout/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +13,9 @@ import { format } from "date-fns";
 export default function SynergiesPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingSynergy, setEditingSynergy] = useState<any>(null);
-  const { data: synergies = [], isLoading, refetch } = useSynergies();
+  const { data: synergies = [], isLoading, refetch } = useQuery<any[]>({
+    queryKey: ['/api/synergies'],
+  });
 
   const handleEditSynergy = (synergy: any) => {
     setEditingSynergy(synergy);
