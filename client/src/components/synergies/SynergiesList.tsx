@@ -27,11 +27,16 @@ export function SynergiesList({
   // Costruisci l'endpoint in base al tipo di entità
   const endpoint = `/api/synergies/${entityType}/${entityId}`;
   
+  console.log(`SynergiesList: fetching from ${endpoint} with entityType=${entityType}, entityId=${entityId}`);
+  
   // Ottieni le sinergie
-  const { data: synergies = [], isLoading, refetch } = useQuery({
+  const { data: synergies = [], isLoading, refetch, error } = useQuery({
     queryKey: [endpoint],
     enabled: !!entityId,
+    retry: 1
   });
+  
+  console.log("SynergiesList data:", synergies, "error:", error);
 
   const handleOpenEdit = (synergy: any) => {
     setSelectedSynergy(synergy);
