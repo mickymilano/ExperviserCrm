@@ -225,7 +225,10 @@ export class PostgresStorage implements IStorage {
 
   // LEADS
   async getLeads(): Promise<Lead[]> {
-    return await db.select().from(leads).orderBy(leads.firstName, leads.lastName);
+    return await db.select()
+      .from(leads)
+      .where(eq(leads.status, 'active')) // Filtro per lead attivi
+      .orderBy(leads.firstName, leads.lastName);
   }
 
   async getLead(id: number): Promise<Lead | undefined> {
@@ -256,7 +259,11 @@ export class PostgresStorage implements IStorage {
   // CONTACTS
   async getContacts(): Promise<Contact[]> {
     // Simplified query without relational features to prevent 'map' errors
-    return await db.select().from(contacts).orderBy(contacts.firstName, contacts.lastName);
+    // Aggiungiamo filtro solo per contatti attivi
+    return await db.select()
+      .from(contacts)
+      .where(eq(contacts.status, 'active')) // Filtro per contatti attivi
+      .orderBy(contacts.firstName, contacts.lastName);
   }
 
   async getContactsByCompany(companyId: number): Promise<Contact[]> {
@@ -379,7 +386,10 @@ export class PostgresStorage implements IStorage {
   // COMPANIES
   async getCompanies(): Promise<Company[]> {
     // Simplified query without relational features
-    return await db.select().from(companies).orderBy(companies.name);
+    return await db.select()
+      .from(companies)
+      .where(eq(companies.status, 'active')) // Filtro per aziende attive
+      .orderBy(companies.name);
   }
 
   async getCompany(id: number): Promise<Company | undefined> {
@@ -442,8 +452,8 @@ export class PostgresStorage implements IStorage {
   // DEALS
   async getDeals(): Promise<Deal[]> {
     // This method is kept for backward compatibility
-    // It now calls getDealsWithFilters without any filters
-    return this.getDealsWithFilters({});
+    // It now calls getDealsWithFilters with just active status filter
+    return this.getDealsWithFilters({ status: 'active' });
   }
   
   async getDealsWithFilters(filters: {
