@@ -1,0 +1,98 @@
+Ecco come procederei per far sì che “Location” contenga l’indirizzo completo (via, cap, città, provincia, paese ecc.) e contemporaneamente mantenere il campo “Country” separato per il filtering geografico:
+
+⸻
+
+1. Database & Schema
+	1.	Aggiungi in tabella companies la colonna full_address (se non già fatto):
+
+ALTER TABLE companies ADD COLUMN full_address TEXT;
+
+
+	2.	Deprecate la colonna city (opzionale: potete commentarla o lasciarla per retrocompatibilità).
+	3.	Drizzle schema (shared/schema.ts):
+
+// DEPRECATED: varchar('city', { length: 100 }),
+text('full_address').as('fullAddress'),
+// keep country
+varchar('country', { length: 100 }),
+
+
+
+⸻
+
+2. Backend Storage Layer
+	•	getCompany / getCompanies
+• Sostituire ogni riferimento a company.city con company.fullAddress,
+• Lasciare company.country inalterato.
+	•	createCompany / updateCompany
+• Accettare e salvare fullAddress anziché city/address separati.
+• Continua a esporre country come campo a sé.
+
+⸻
+
+3. API Routes
+	•	POST / PUT / GET / LIST companies
+	•	Body & risposta JSON → usano fullAddress e country.
+	•	Eliminare o commentare i vecchi campi city, address.
+
+⸻
+
+4. Frontend – Company Edit Form
+	1.	Rimuovi i campi separati:
+
+{/* DEPRECATED:
+  <Input name="city" ... />
+  <TextArea name="address" ... />
+*/}
+
+
+	2.	Mantieni il select “Country” così com’è.
+	3.	Aggiungi un unico componente autocomplete + textarea per l’indirizzo:
+
+<FormField name="fullAddress" control={form.control}>
+  <FormItem>
+    <FormLabel>Indirizzo completo</FormLabel>
+    <PlacesAutocomplete
+      value={form.watch('fullAddress')}
+      onChange={val => form.setValue('fullAddress', val)}
+      /* configura Google Maps API */
+    />
+    <FormDescription>
+      Digita un indirizzo e seleziona dal menu suggerito. Verrà popolato con via, cap, città, provincia e paese.
+    </FormDescription>
+    <FormMessage />
+  </FormItem>
+</FormField>
+
+
+	4.	Alla selezione, usa i address_components di Google per estrarre Country e impostarlo automaticamente (ma lascia l’utente libero di modificarlo).
+
+⸻
+
+5. Frontend – Company Detail View
+	1.	Rimuovi i paragrafi separati di city/address.
+	2.	Mostra solo:
+
+<Card>
+  <CardHeader><CardTitle>Location</CardTitle></CardHeader>
+  <CardContent>
+    <p>{company.fullAddress}</p>
+    <Badge>{company.country}</Badge>
+  </CardContent>
+</Card>
+
+
+
+⸻
+
+6. Rollout in brevi sprint
+	1.	Scrivi e applica la migration SQL.
+	2.	Aggiorna lo schema Drizzle e genera la migration.
+	3.	Modifica il PostgresStorage per leggere/scrivere fullAddress + country.
+	4.	Adatta le API routes (commenta i vecchi campi).
+	5.	Aggiorna il form di editing (aggiungi autocomplete, rimuovi city/address).
+	6.	Aggiorna la vista dettaglio.
+
+Ogni step va commentato con // DEPRECATED: e // Added fullAddress on 2025-05-13.
+
+Fammi sapere se vuoi partire da uno di questi step o se preferisci un proof-of-concept rapido direttamente sul componente di form!
