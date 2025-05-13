@@ -133,7 +133,7 @@ export function SynergiesList({
           <Skeleton className="h-24 w-full" />
           <Skeleton className="h-24 w-full" />
         </div>
-      ) : synergies.length === 0 ? (
+      ) : !Array.isArray(synergies) || synergies.length === 0 ? (
         <Card>
           <CardContent className="py-6 text-center">
             <Handshake className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
@@ -153,7 +153,7 @@ export function SynergiesList({
         </Card>
       ) : (
         <div className="space-y-3">
-          {synergies.map((synergy: any) => (
+          {Array.isArray(synergies) && synergies.map((synergy: any) => (
             <Card 
               key={synergy.id} 
               className="overflow-hidden hover:shadow-sm transition-shadow cursor-pointer"

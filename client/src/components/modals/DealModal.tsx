@@ -163,8 +163,8 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       setSelectedCompanyId(null);
       
       // Set default stage if available
-      if (stages && stages.length > 0) {
-        setValue("stageId", stages[0]?.id);
+      if (Array.isArray(stages) && stages.length > 0 && stages[0]?.id) {
+        setValue("stageId", stages[0].id);
       }
       
       formInitializedRef.current = true;
@@ -643,7 +643,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                           role="combobox"
                           className="w-full justify-between"
                         >
-                          {field.value !== undefined && field.value !== null
+                          {field.value !== undefined && field.value !== null && Array.isArray(companies)
                             ? companies.find((company: any) => company.id === field.value)?.name || "Select company"
                             : "Select company"}
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -704,10 +704,13 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                           className="w-full justify-between"
                           disabled={!getSelectedCompanyId()}
                         >
-                          {field.value !== undefined && field.value !== null
-                            ? contacts.find((contact: any) => contact.id === field.value)
-                                ? `${contacts.find((contact: any) => contact.id === field.value).firstName} ${contacts.find((contact: any) => contact.id === field.value).lastName}`
-                                : "Select contact"
+                          {field.value !== undefined && field.value !== null && Array.isArray(contacts)
+                            ? (() => {
+                                const foundContact = contacts.find((contact: any) => contact.id === field.value);
+                                return foundContact 
+                                  ? `${foundContact.firstName || ''} ${foundContact.lastName || ''}`.trim() || "No name"
+                                  : "Select contact";
+                              })()
                             : getSelectedCompanyId() ? "Select contact" : "Select company first"}
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
