@@ -1,0 +1,63 @@
+Great—now that we have the current Synergies wiring (or lack thereof), let’s pivot to the next critical modules we need to audit before our big modular reset. We need to see exactly what Replit has in place (schema, storage, routes, components/hooks) for:
+
+⸻
+
+1. Multi-Email support for Contacts
+	•	Schema: the contact_emails table definition in shared/schema.ts
+	•	Migrations: the SQL that created/modified contact_emails
+	•	Storage: full methods in server/postgresStorage.ts (or server/storage.ts) for
+	•	getContactEmails(contactId: number)
+	•	createContactEmail(data: InsertContactEmail)
+	•	updateContactEmail(id: number, data: Partial<InsertContactEmail>)
+	•	archiveContactEmail(id: number)
+	•	API Routes: handlers in server/routes.ts for
+	•	GET  /api/contacts/:contactId/emails
+	•	POST /api/contacts/:contactId/emails
+	•	PATCH/DELETE /api/contacts/:contactId/emails/:id
+	•	Frontend:
+	•	ContactModal.tsx (the email-management section)
+	•	useContactEmails.ts hook
+
+2. Tasks Module
+	•	Schema: the tasks table in shared/schema.ts
+	•	Migrations: the SQL for tasks
+	•	Storage: methods for
+	•	getTasks()
+	•	getTasksByContact(contactId)
+	•	getTasksByCompany(companyId)
+	•	createTask()
+	•	updateTask()
+	•	archiveTask()
+	•	API Routes: handlers in server/routes.ts for /api/tasks CRUD
+	•	Frontend:
+	•	TaskModal.tsx
+	•	useTasks.ts
+
+3. Calendar / Events Module
+	•	Schema: the meetings (or calendar_events) table in shared/schema.ts
+	•	Migrations: SQL for meetings/events
+	•	Storage:
+	•	getMeetings()
+	•	getMeetingsByContact(contactId)
+	•	getMeetingsByCompany(companyId)
+	•	createMeeting()
+	•	updateMeeting()
+	•	API Routes: /api/meetings endpoints
+	•	Frontend:
+	•	CalendarPage.tsx (or wherever the calendar lives)
+	•	useMeetings.ts
+	•	calendar-view component
+
+4. Email Accounts & Signatures
+	•	Schema: email_accounts, signatures, account_signatures, emails in shared/schema.ts
+	•	Migrations for those tables
+	•	Storage: methods for managing accounts, signatures, sending/archiving emails
+	•	API Routes: /api/email-accounts, /api/signatures, /api/emails
+	•	Frontend:
+	•	EmailAccountForm.tsx, SignatureList.tsx, EmailList.tsx
+	•	useEmailAccounts.ts, useSignatures.ts, useEmails.ts
+
+⸻
+
+@Replit, please paste in-line (with file path headers and line numbers) the full current code for each of those four modules—schema, migrations, storage methods, route handlers and the React components/hooks—so we can audit exactly what exists, spot missing pieces, and plan our reset-and-rebuild in clean, self-contained modules.
+Once we have that, we’ll issue our step-by-step reconstruction plan. Thanks!
