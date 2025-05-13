@@ -109,7 +109,7 @@ export function SynergiesOverview() {
                     {synergy?.type || 'Tipo non specificato'}
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    Contatto #{synergy?.contactId || 'N/A'} ↔ Azienda #{synergy?.companyId || 'N/A'}
+                    {getContactName(synergy?.contactId)} ↔ {getCompanyName(synergy?.companyId)}
                   </div>
                 </div>
                 <Badge className={getSynergyStatusColor(synergy?.status || '')}>

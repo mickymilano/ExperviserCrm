@@ -8,6 +8,9 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SynergyModal } from '@/components/modals/SynergyModal';
 import { Link } from 'wouter';
+import { useContacts } from '@/hooks/useContacts';
+import { useCompanies } from '@/hooks/useCompanies';
+import { useDeals } from '@/hooks/useDeals';
 
 interface SynergiesListProps {
   entityId: number;
@@ -24,6 +27,11 @@ export function SynergiesList({
   const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
   const [selectedSynergy, setSelectedSynergy] = React.useState<any>(null);
 
+  // Recuperare dati di contatti e aziende per mostrare i nomi invece degli ID
+  const { data: contacts = [] } = useContacts();
+  const { data: companies = [] } = useCompanies();
+  const { data: deals = [] } = useDeals();
+  
   // Costruisci l'endpoint in base al tipo di entità
   const endpoint = `/api/synergies/${entityType}/${entityId}`;
   
@@ -70,6 +78,22 @@ export function SynergiesList({
         return 'bg-gray-500';
     }
   };
+  
+  // Funzioni di utilità per recuperare i nomi dalle liste
+  const getContactName = (contactId: number) => {
+    const contact = contacts.find((c: any) => c.id === contactId);
+    return contact ? `${contact.firstName} ${contact.lastName}` : `Contatto #${contactId}`;
+  };
+  
+  const getCompanyName = (companyId: number) => {
+    const company = companies.find((c: any) => c.id === companyId);
+    return company ? company.name : `Azienda #${companyId}`;
+  };
+  
+  const getDealName = (dealId: number) => {
+    const deal = deals.find((d: any) => d.id === dealId);
+    return deal ? deal.title || `Deal #${dealId}` : `Deal #${dealId}`;
+  };
 
   // Genera parametri iniziali per la creazione della sinergia in base al tipo di entità
   const getInitialParams = () => {
@@ -99,12 +123,12 @@ export function SynergiesList({
   // Ottieni il nome dell'entità collegata
   const getEntityName = (synergy: any) => {
     if (entityType === 'contact' && synergy.companyId) {
-      return `Azienda #${synergy.companyId}`;
+      return getCompanyName(synergy.companyId);
     } else if (entityType === 'company' && synergy.contactId) {
-      return `Contatto #${synergy.contactId}`;
+      return getContactName(synergy.contactId);
     } else if (entityType === 'deal') {
-      if (synergy.contactId) return `Contatto #${synergy.contactId}`;
-      if (synergy.companyId) return `Azienda #${synergy.companyId}`;
+      if (synergy.contactId) return getContactName(synergy.contactId);
+      if (synergy.companyId) return getCompanyName(synergy.companyId);
     }
     return 'Entità sconosciuta';
   };
