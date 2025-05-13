@@ -951,38 +951,54 @@ export class PostgresStorage implements IStorage {
     stageId?: number;
   }): Promise<Deal[]> {
     try {
-      // Build query with appropriate filters
-      let query = db.select({
-        id: deals.id,
-        name: deals.name,
-        value: deals.value,
-        status: deals.status,
-        contactId: deals.contactId,
-        companyId: deals.companyId,
-        stageId: deals.stageId,
-        createdAt: deals.createdAt,
-        updatedAt: deals.updatedAt
-      }).from(deals);
-    
+      console.log("PostgresStorage.getDealsWithFilters: retrieving deals with filters:", filters);
+      
+      // Build query with appropriate filters - usando pool.query per maggiore stabilità
+      let queryStr = `
+        SELECT 
+          id, 
+          name, 
+          value, 
+          status, 
+          contact_id as "contactId", 
+          company_id as "companyId", 
+          stage_id as "stageId", 
+          created_at as "createdAt", 
+          updated_at as "updatedAt" 
+        FROM deals
+        WHERE 1=1
+      `;
+      
+      const params: any[] = [];
+      
       // Apply filters
       if (filters.status) {
-        query = query.where(eq(deals.status, filters.status));
+        params.push(filters.status);
+        queryStr += ` AND status = $${params.length}`;
       }
       
       if (filters.companyId) {
-        query = query.where(eq(deals.companyId, filters.companyId));
+        params.push(filters.companyId);
+        queryStr += ` AND company_id = $${params.length}`;
       }
       
       if (filters.contactId) {
-        query = query.where(eq(deals.contactId, filters.contactId));
+        params.push(filters.contactId);
+        queryStr += ` AND contact_id = $${params.length}`;
       }
       
       if (filters.stageId) {
-        query = query.where(eq(deals.stageId, filters.stageId));
+        params.push(filters.stageId);
+        queryStr += ` AND stage_id = $${params.length}`;
       }
       
-      // Order the results
-      const dealsResult = await query.orderBy(asc(deals.stageId), desc(deals.value));
+      // Order by stage_id and value
+      queryStr += ` ORDER BY stage_id ASC, value DESC`;
+      
+      const queryResult = await pool.query(queryStr, params);
+      const dealsResult = queryResult.rows || [];
+      
+      console.log(`Retrieved ${dealsResult.length} deals from database`);
       
       // Manually populate relations
       const result = [];
@@ -990,34 +1006,70 @@ export class PostgresStorage implements IStorage {
         // Get contact
         let contactData = null;
         if (deal.contactId) {
-          const [contact] = await db.select({
-            id: contacts.id,
-            firstName: contacts.firstName,
-            lastName: contacts.lastName,
-            email: contacts.email
-          }).from(contacts).where(eq(contacts.id, deal.contactId));
-          contactData = contact;
+          try {
+            const contactResult = await pool.query(
+              `SELECT 
+                id, 
+                first_name as "firstName", 
+                last_name as "lastName", 
+                company_email as "email"
+              FROM contacts 
+              WHERE id = $1`, 
+              [deal.contactId]
+            );
+            
+            if (contactResult.rows && contactResult.rows.length > 0) {
+              contactData = contactResult.rows[0];
+            }
+          } catch (contactError) {
+            console.error('Error getting contact data:', contactError);
+          }
         }
         
         // Get company
         let companyData = null;
         if (deal.companyId) {
-          const [company] = await db.select({
-            id: companies.id,
-            name: companies.name
-          }).from(companies).where(eq(companies.id, deal.companyId));
-          companyData = company;
+          try {
+            const companyResult = await pool.query(
+              `SELECT 
+                id, 
+                name, 
+                email,
+                logo
+              FROM companies 
+              WHERE id = $1`, 
+              [deal.companyId]
+            );
+            
+            if (companyResult.rows && companyResult.rows.length > 0) {
+              companyData = companyResult.rows[0];
+            }
+          } catch (companyError) {
+            console.error('Error getting company data:', companyError);
+          }
         }
         
-        // Get stage
+        // Get pipeline stage
         let stageData = null;
         if (deal.stageId) {
-          const [stage] = await db.select({
-            id: pipelineStages.id,
-            name: pipelineStages.name,
-            order: pipelineStages.order
-          }).from(pipelineStages).where(eq(pipelineStages.id, deal.stageId));
-          stageData = stage;
+          try {
+            const stageResult = await pool.query(
+              `SELECT 
+                id, 
+                name, 
+                "order" as position,
+                color
+              FROM pipeline_stages 
+              WHERE id = $1`, 
+              [deal.stageId]
+            );
+            
+            if (stageResult.rows && stageResult.rows.length > 0) {
+              stageData = stageResult.rows[0];
+            }
+          } catch (stageError) {
+            console.error('Error getting stage data:', stageError);
+          }
         }
         
         result.push({
