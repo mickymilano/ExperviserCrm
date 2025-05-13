@@ -183,8 +183,8 @@ export const deals = pgTable('deals', {
   expectedCloseDate: date('expected_close_date'),
   // actualCloseDate: date('actual_close_date'), // Rimosso perché non esiste nel database
   nextFollowUpAt: timestamp('next_follow_up_at'),
-  description: text('description'),
-  probability: integer('probability'),
+  // description: text('description'), // Rimosso perché non esiste nel database
+  // probability: integer('probability'), // Rimosso perché non esiste nel database
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
