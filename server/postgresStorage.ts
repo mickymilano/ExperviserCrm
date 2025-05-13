@@ -369,6 +369,8 @@ export class PostgresStorage implements IStorage {
           type,
           description,
           status,
+          start_date,
+          end_date,
           created_at,
           updated_at
         FROM synergies

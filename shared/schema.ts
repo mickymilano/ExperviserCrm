@@ -131,6 +131,16 @@ export const companies = pgTable('companies', {
   parentCompanyId: integer('parent_company_id').references(() => companies.id),
   linkedinUrl: varchar('linkedin_url', { length: 255 }),
   locationTypes: text('location_types').array(),
+  
+  // Campi aggiuntivi presenti nel database ma mancanti nello schema
+  lastContactedAt: timestamp('last_contacted_at'),
+  nextFollowUpAt: timestamp('next_follow_up_at'),
+  isActiveRep: boolean('is_active_rep').default(false),
+  companyType: varchar('company_type', { length: 50 }),
+  brands: text('brands').array(),
+  channels: text('channels').array(),
+  productsOrServicesTags: text('products_or_services_tags').array(),
+  
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
