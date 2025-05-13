@@ -1344,8 +1344,26 @@ export class PostgresStorage implements IStorage {
   }
 
   async getCompany(id: number): Promise<Company | undefined> {
-    // Simplified query - first get the company
-    const [company] = await db.select().from(companies).where(eq(companies.id, id));
+    // Selezioniamo solo campi specifici per evitare errori con colonne mancanti
+    const [company] = await db.select({
+      id: companies.id,
+      name: companies.name,
+      status: companies.status,
+      email: companies.email,
+      phone: companies.phone,
+      address: companies.address,
+      website: companies.website,
+      industry: companies.industry,
+      description: companies.description,
+      logo: companies.logo,
+      tags: companies.tags,
+      notes: companies.notes,
+      customFields: companies.customFields,
+      createdAt: companies.createdAt,
+      updatedAt: companies.updatedAt
+    })
+    .from(companies)
+    .where(eq(companies.id, id));
     
     if (!company) {
       return undefined;
@@ -1357,6 +1375,11 @@ export class PostgresStorage implements IStorage {
     // Return the company with areas attached
     return {
       ...company,
+      // Add empty values for fields that might be expected by the frontend
+      city: null,
+      region: null,
+      country: null,
+      postalCode: null,
       areasOfActivity: areas
     };
   }

@@ -43,15 +43,15 @@ export default function CompanyDetail() {
     forCompanyDetail: true // Use the new specific endpoint for company deals
   });
   
-  // Group deals by status
-  const dealsByStatus = deals?.reduce((groups, deal) => {
+  // Group deals by status - ensure deals is an array
+  const dealsByStatus = Array.isArray(deals) ? deals.reduce((groups, deal) => {
     const status = deal.status || "Other";
     if (!groups[status]) {
       groups[status] = [];
     }
     groups[status].push(deal);
     return groups;
-  }, {}) || {};
+  }, {}) : {};
   
   if (isLoading) {
     return (
