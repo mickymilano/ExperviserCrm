@@ -327,31 +327,44 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
                 id="fullAddress"
                 value={watch("fullAddress") || ""}
                 onChange={(value, placeDetails) => {
+                  console.log("PlacesAutocomplete onChange triggered with:", { value, placeDetails });
+                  
+                  // Aggiorna il campo fullAddress
                   setValue("fullAddress", value, { shouldValidate: true });
                   
                   // Imposta anche il campo nascosto address per retrocompatibilità
                   setValue("address", value, { shouldValidate: true });
                   
-                  // Se il componente ha restituito dettagli del luogo e troviamo il paese
-                  if (placeDetails?.address_components) {
+                  // Verifica se abbiamo ricevuto i dettagli del luogo
+                  if (placeDetails && placeDetails.address_components) {
+                    console.log("Place details received:", placeDetails);
+                    
+                    // Estrae il paese
                     const countryComponent = placeDetails.address_components.find(component => 
                       component.types.includes('country')
                     );
                     
                     if (countryComponent) {
+                      console.log("Country found:", countryComponent.long_name);
                       setValue("country", countryComponent.long_name, { shouldValidate: true });
                     }
                     
-                    // Estrae anche la città se disponibile
+                    // Estrae la città
                     const cityComponent = placeDetails.address_components.find(component => 
                       component.types.includes('locality') || 
                       component.types.includes('administrative_area_level_3')
                     );
                     
                     if (cityComponent) {
+                      console.log("City found:", cityComponent.long_name);
                       setValue("city", cityComponent.long_name, { shouldValidate: true });
                     }
+                  } else {
+                    console.warn("No place details available in PlacesAutocomplete onChange");
                   }
+                  
+                  // Forza la validazione del form
+                  trigger();
                 }}
                 className="mt-1"
                 placeholder="Cerca o inserisci l'indirizzo completo"

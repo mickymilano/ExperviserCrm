@@ -102,12 +102,53 @@ export function PlacesAutocomplete({
       const listener = autocompleteRef.current.addListener('place_changed', () => {
         const place = autocompleteRef.current?.getPlace();
         
-        if (!place || !place.formatted_address) {
+        if (!place) {
+          console.warn('Place is undefined or null');
           return;
         }
 
-        // Aggiorna il valore con l'indirizzo formattato
-        onChange(place.formatted_address, place);
+        // Log per debug
+        console.log('Place selected:', place);
+        
+        // Se formatted_address non è disponibile, prova a utilizzare direttamente
+        // i componenti dell'indirizzo per ricostruire l'indirizzo completo
+        let addressToUse = place.formatted_address;
+        
+        if (!addressToUse && place.address_components) {
+          // Ricostruisci un indirizzo da address_components
+          const components = [];
+          
+          // Prova a ottenere in ordine strada, numero civico, città, regione, paese
+          const streetNumber = place.address_components.find(c => c.types.includes('street_number'));
+          const route = place.address_components.find(c => c.types.includes('route'));
+          const locality = place.address_components.find(c => c.types.includes('locality'));
+          const adminArea = place.address_components.find(c => c.types.includes('administrative_area_level_1'));
+          const country = place.address_components.find(c => c.types.includes('country'));
+          
+          if (route) components.push(route.long_name);
+          if (streetNumber) components.push(streetNumber.long_name);
+          if (locality) components.push(locality.long_name);
+          if (adminArea) components.push(adminArea.long_name);
+          if (country) components.push(country.long_name);
+          
+          addressToUse = components.join(', ');
+          console.log('Reconstructed address:', addressToUse);
+        }
+        
+        if (addressToUse) {
+          // Aggiorna il valore dell'input con l'indirizzo formattato/ricostruito
+          console.log('Updating with address:', addressToUse);
+          onChange(addressToUse, place);
+          
+          // Mantieni il focus sull'input dopo aver selezionato un indirizzo
+          setTimeout(() => {
+            if (inputRef.current) {
+              inputRef.current.focus();
+            }
+          }, 10);
+        } else {
+          console.warn('Could not determine a valid address from the place result');
+        }
 
         // Estrae il paese selezionato
         if (onCountrySelect && place.address_components) {
@@ -116,6 +157,7 @@ export function PlacesAutocomplete({
           );
           
           if (countryComponent) {
+            console.log('Country selected:', countryComponent.long_name);
             onCountrySelect(countryComponent.long_name);
           }
         }
