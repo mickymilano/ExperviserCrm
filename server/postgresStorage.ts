@@ -57,8 +57,8 @@ export class PostgresStorage implements IStorage {
     try {
       console.log(`PostgresStorage.getUser: cercando utente con id ${id}`);
       
-      // Utilizziamo SQL nativo invece di Drizzle ORM per evitare problemi di schema
-      const result = await db.execute(
+      // Utilizziamo SQL nativo con un prepared statement corretto
+      const result = await pool.query(
         `SELECT 
           id, 
           username, 
@@ -102,8 +102,8 @@ export class PostgresStorage implements IStorage {
     try {
       console.log(`PostgresStorage.getUserByUsername: cercando utente con username ${username}`);
       
-      // Utilizziamo SQL nativo invece di Drizzle ORM per evitare problemi di schema
-      const result = await db.execute(
+      // Utilizziamo SQL nativo con un prepared statement corretto
+      const result = await pool.query(
         `SELECT 
           id, 
           username, 
@@ -147,8 +147,8 @@ export class PostgresStorage implements IStorage {
     try {
       console.log(`PostgresStorage.getUserByEmail: cercando utente con email ${email}`);
       
-      // Utilizziamo SQL nativo invece di Drizzle ORM per evitare problemi di schema
-      const result = await db.execute(
+      // Utilizziamo SQL nativo con un prepared statement corretto
+      const result = await pool.query(
         `SELECT 
           id, 
           username, 
@@ -192,8 +192,8 @@ export class PostgresStorage implements IStorage {
     try {
       console.log(`PostgresStorage.getUserByResetToken: cercando utente con token ${token}`);
       
-      // Utilizziamo SQL nativo invece di Drizzle ORM per evitare problemi di schema
-      const result = await db.execute(
+      // Utilizziamo SQL nativo con un prepared statement corretto
+      const result = await pool.query(
         `SELECT 
           id, 
           username, 
