@@ -3,8 +3,12 @@ export interface DashboardSummary {
   totalDealValue: number;
   activeContacts: number;
   totalCompanies: number;
-  upcomingTasksCount: number;
-  overdueTasksCount: number;
+  tasks?: {
+    upcomingCount: number;
+    overdueCount: number;
+  };
+  upcomingTasksCount?: number; // maintain backward compatibility
+  overdueTasksCount?: number;  // maintain backward compatibility
 }
 
 export interface PipelineStage {
