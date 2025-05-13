@@ -9,8 +9,11 @@ import {
   date,
   boolean, 
   json,
-  primaryKey 
+  primaryKey,
+  index,
+  uniqueIndex
 } from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
 import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
 
@@ -23,6 +26,7 @@ export type Json = string | number | boolean | null | { [key: string]: Json } | 
 export const userRoleEnum = ['user', 'admin', 'super_admin'] as const;
 export const userStatusEnum = ['active', 'inactive', 'suspended', 'pending'] as const;
 export const entityStatusEnum = ['active', 'archived'] as const;
+export const emailTypeEnum = ['work', 'personal', 'previous_work', 'other'] as const;
 
 /**
  * USERS
@@ -63,7 +67,6 @@ export const contacts = pgTable('contacts', {
     .$type<typeof entityStatusEnum[number]>()
     .default('active')
     .notNull(),
-  email: varchar('email', { length: 100 }),
   phone: varchar('phone', { length: 20 }),
   mobile: varchar('mobile', { length: 20 }),
   address: text('address'),
@@ -77,9 +80,16 @@ export const contacts = pgTable('contacts', {
   source: varchar('source', { length: 100 }),
   tags: text('tags').array(),
   avatar: text('avatar'),
+  lastContactedAt: timestamp('last_contacted_at'),
+  nextFollowUpAt: timestamp('next_follow_up_at'),
+  roles: json('roles'),
   customFields: json('custom_fields'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
+}, (table) => {
+  return {
+    nameIdx: index('contact_name_idx').on(table.firstName, table.lastName),
+  };
 });
 
 /**
@@ -236,7 +246,36 @@ export const synergies = pgTable('synergies', {
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
+/**
+ * CONTACT EMAILS
+ * Tabella delle email di contatto
+ * Un contatto può avere più email di tipo diverso
+ */
+export const contactEmails = pgTable('contact_emails', {
+  id: serial('id').primaryKey(),
+  contactId: integer('contact_id').notNull().references(() => contacts.id, { onDelete: 'cascade' }),
+  emailAddress: text('email_address').notNull(),
+  type: varchar('type', { length: 20 })
+    .$type<typeof emailTypeEnum[number]>()
+    .default('work')
+    .notNull(),
+  isPrimary: boolean('is_primary').default(false),
+  isArchived: boolean('is_archived').default(false),
+  status: varchar('status', { length: 20 })
+    .$type<typeof entityStatusEnum[number]>()
+    .default('active')
+    .notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at'),
+}, (table) => {
+  return {
+    contactIdIdx: index('contact_emails_contact_id_idx').on(table.contactId),
+    uniqueEmailPerContact: uniqueIndex('contact_emails_contact_id_email_address_idx').on(table.contactId, table.emailAddress),
+  };
+});
+
 export const insertSynergySchema = createInsertSchema(synergies).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertContactEmailSchema = createInsertSchema(contactEmails).omit({ id: true, createdAt: true, updatedAt: true });
 
 /**
  * Types
@@ -264,3 +303,22 @@ export type InsertAreaOfActivity = z.infer<typeof insertAreaOfActivitySchema>;
 
 export type Synergy = typeof synergies.$inferSelect;
 export type InsertSynergy = z.infer<typeof insertSynergySchema>;
+
+export type ContactEmail = typeof contactEmails.$inferSelect;
+export type InsertContactEmail = z.infer<typeof insertContactEmailSchema>;
+
+/**
+ * Relations
+ */
+// Contact to ContactEmails (one-to-many)
+export const contactsRelations = relations(contacts, ({ many }) => ({
+  emails: many(contactEmails),
+}));
+
+// ContactEmails to Contact (many-to-one)
+export const contactEmailsRelations = relations(contactEmails, ({ one }) => ({
+  contact: one(contacts, {
+    fields: [contactEmails.contactId],
+    references: [contacts.id],
+  }),
+}));

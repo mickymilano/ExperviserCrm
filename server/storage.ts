@@ -7,6 +7,7 @@ import {
   pipelineStages, PipelineStage, InsertPipelineStage,
   areasOfActivity, AreaOfActivity, InsertAreaOfActivity,
   synergies, Synergy, InsertSynergy,
+  contactEmails, ContactEmail, InsertContactEmail,
 } from '@shared/schema';
 import { db } from './db';
 import { eq } from 'drizzle-orm';
@@ -84,6 +85,15 @@ export interface IStorage {
   createSynergy(synergyData: InsertSynergy): Promise<Synergy>;
   updateSynergy(id: number, synergyData: Partial<Synergy>): Promise<Synergy>;
   deleteSynergy(id: number): Promise<void>;
+
+  // Contact Email operations
+  getContactEmail(id: number): Promise<ContactEmail | null>;
+  getContactEmails(contactId: number): Promise<ContactEmail[]>;
+  getPrimaryContactEmail(contactId: number): Promise<ContactEmail | null>;
+  createContactEmail(contactEmailData: InsertContactEmail): Promise<ContactEmail>;
+  updateContactEmail(id: number, contactEmailData: Partial<ContactEmail>): Promise<ContactEmail>;
+  deleteContactEmail(id: number): Promise<boolean>;
+  setContactEmailAsPrimary(id: number): Promise<ContactEmail>;
 }
 
 /**
@@ -100,6 +110,7 @@ export class MemStorage implements IStorage {
   private pipelineStages: PipelineStage[] = [];
   private areasOfActivity: AreaOfActivity[] = [];
   private synergies: Synergy[] = [];
+  private contactEmails: ContactEmail[] = [];
 
   private nextIds = {
     users: 1,
@@ -110,6 +121,7 @@ export class MemStorage implements IStorage {
     pipelineStages: 1,
     areasOfActivity: 1,
     synergies: 1,
+    contactEmails: 1,
   };
   
   // Funzioni di conteggio
