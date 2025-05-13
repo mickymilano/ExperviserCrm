@@ -167,8 +167,19 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
             </div>
           </div>
           
+          {/* Full Address Field (Unified location) */}
           <div className="space-y-2 mb-4">
-            <Label htmlFor="address">Address</Label>
+            <Label htmlFor="fullAddress">Location</Label>
+            <Input 
+              id="fullAddress" 
+              {...register("fullAddress")} 
+              placeholder="Enter the complete address" 
+            />
+          </div>
+          
+          {/* DEPRECATED: Old address field hidden with comment about deprecation */}
+          <div className="hidden">
+            <Label htmlFor="address">Old Address (DEPRECATED)</Label>
             <Input id="address" {...register("address")} />
           </div>
           

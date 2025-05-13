@@ -27,7 +27,10 @@ const companySchema = z.object({
   email: z.string().email("Please enter a valid email").nullable().optional(),
   phone: z.string().nullable().optional(),
   website: z.string().nullable().optional(),
+  // DEPRECATED: old address field - Added 2025-05-13 by Lead Architect: unified location
   address: z.string().nullable().optional(),
+  // Added 2025-05-13 by Lead Architect: unified location field
+  fullAddress: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
   // Added new fields
   vatNumber: z.string().nullable().optional(),
@@ -69,7 +72,10 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
       email: company.email || "",
       phone: company.phone || "",
       website: company.website || "",
+      // DEPRECATED: old address field - Added 2025-05-13 by Lead Architect: unified location
       address: company.address || "",
+      // Added 2025-05-13 by Lead Architect: unified location field
+      fullAddress: company.fullAddress || company.address || "",
       notes: company.notes || "",
       // Custom fields or null values for new fields
       vatNumber: customFields.vatNumber || "",
@@ -309,16 +315,25 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
             </div>
             
             <div>
-              <Label htmlFor="address">Full Address</Label>
+              <Label htmlFor="fullAddress">Location</Label>
               <Textarea 
-                id="address"
-                {...register("address")}
+                id="fullAddress"
+                {...register("fullAddress")}
                 className="mt-1"
                 rows={3}
+                placeholder="Enter complete address information"
               />
-              {errors.address && (
-                <p className="text-sm text-destructive mt-1">{errors.address.message}</p>
+              {errors.fullAddress && (
+                <p className="text-sm text-destructive mt-1">{errors.fullAddress.message}</p>
               )}
+            </div>
+              
+            {/* DEPRECATED: Hidden field for backward compatibility */}
+            <div className="hidden">
+              <Input 
+                id="address"
+                {...register("address")}
+              />
             </div>
             
             <div>
