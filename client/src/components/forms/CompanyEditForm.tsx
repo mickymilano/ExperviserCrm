@@ -282,12 +282,12 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
             </div>
             
             <div>
-              <Label htmlFor="website">Website</Label>
+              <Label htmlFor="website">Sito Web</Label>
               <Input 
                 id="website"
                 {...register("website")}
                 className="mt-1"
-                placeholder="https://example.com"
+                placeholder="https://esempio.com"
               />
               {errors.website && (
                 <p className="text-sm text-destructive mt-1">{errors.website.message}</p>
@@ -298,11 +298,11 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
         
         {/* Location Section */}
         <div className="mb-6">
-          <h3 className="text-lg font-medium mb-4">Location</h3>
+          <h3 className="text-lg font-medium mb-4">Sede</h3>
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="country">Country</Label>
+                <Label htmlFor="country">Paese</Label>
                 <Input 
                   id="country"
                   {...register("country")}
@@ -407,11 +407,11 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
         
         {/* Administrative Details Section */}
         <div className="mb-6">
-          <h3 className="text-lg font-medium mb-4">Administrative Details</h3>
+          <h3 className="text-lg font-medium mb-4">Dettagli Amministrativi</h3>
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="vatNumber">VAT/Tax Number</Label>
+                <Label htmlFor="vatNumber">Partita IVA / Codice Fiscale</Label>
                 <Input 
                   id="vatNumber"
                   {...register("vatNumber")}
@@ -420,7 +420,7 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
               </div>
               
               <div>
-                <Label htmlFor="registrationNumber">Registration Number</Label>
+                <Label htmlFor="registrationNumber">Numero Registro Imprese</Label>
                 <Input 
                   id="registrationNumber"
                   {...register("registrationNumber")}
@@ -430,7 +430,7 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
             </div>
             
             <div>
-              <Label htmlFor="tags">Tags (comma separated)</Label>
+              <Label htmlFor="tags">Tag (separati da virgola)</Label>
               <Input 
                 id="tags"
                 value={tagsInput}
@@ -444,7 +444,7 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
         
         {/* Notes Section */}
         <div>
-          <Label htmlFor="notes">Notes</Label>
+          <Label htmlFor="notes">Note</Label>
           <Textarea 
             id="notes"
             {...register("notes")}
@@ -459,10 +459,10 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
       
       <div className="flex justify-end space-x-2">
         <Button type="button" variant="outline" onClick={onComplete}>
-          Cancel
+          Annulla
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Saving..." : "Save Changes"}
+          {isSubmitting ? "Salvataggio..." : "Salva Modifiche"}
         </Button>
       </div>
     </form>
