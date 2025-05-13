@@ -422,7 +422,7 @@ export default function CompanyDetail() {
               <CardContent className="p-6 flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground mb-1">Open Deals</p>
-                  <p className="text-2xl font-bold">{deals?.filter(d => d.status !== 'Closed Won' && d.status !== 'Closed Lost').length || 0}</p>
+                  <p className="text-2xl font-bold">{Array.isArray(deals) ? deals.filter(d => d.status !== 'Closed Won' && d.status !== 'Closed Lost').length : 0}</p>
                 </div>
                 <Briefcase className="h-8 w-8 text-muted-foreground opacity-80" />
               </CardContent>
@@ -432,7 +432,7 @@ export default function CompanyDetail() {
               <CardContent className="p-6 flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground mb-1">Total Deal Value</p>
-                  <p className="text-2xl font-bold">${deals?.reduce((sum, deal) => sum + (deal.value || 0), 0).toLocaleString()}</p>
+                  <p className="text-2xl font-bold">${Array.isArray(deals) ? deals.reduce((sum, deal) => sum + (deal.value || 0), 0).toLocaleString() : "0"}</p>
                 </div>
                 <Briefcase className="h-8 w-8 text-muted-foreground opacity-80" />
               </CardContent>
@@ -605,14 +605,14 @@ export default function CompanyDetail() {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Briefcase className="h-5 w-5 mr-2" />
-                Deals ({deals?.length || 0})
+                Deals ({Array.isArray(deals) ? deals.length : 0})
               </CardTitle>
               <CardDescription>
                 Deals and opportunities associated with {company.name}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {deals && deals.length > 0 ? (
+              {Array.isArray(deals) && deals.length > 0 ? (
                 <div className="space-y-8">
                   {Object.keys(dealsByStatus).map((status) => (
                     <div key={status} className="space-y-4">
