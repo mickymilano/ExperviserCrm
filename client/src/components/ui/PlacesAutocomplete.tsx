@@ -93,9 +93,10 @@ export function PlacesAutocomplete({
     if (!scriptLoaded || !inputRef.current) return;
 
     try {
-      // Inizializza Google Places Autocomplete
+      // Inizializza Google Places Autocomplete con opzioni avanzate
       autocompleteRef.current = new google.maps.places.Autocomplete(inputRef.current, {
-        fields: ['address_components', 'formatted_address', 'geometry'],
+        fields: ['address_components', 'formatted_address', 'geometry', 'name', 'place_id'],
+        types: ['address'],  // Limitato a indirizzi specifici
       });
 
       // Gestisce l'evento di selezione del luogo
@@ -109,6 +110,7 @@ export function PlacesAutocomplete({
 
         // Log per debug
         console.log('Place selected:', place);
+        console.log('Original input value before update:', inputRef.current?.value);
         
         // Se formatted_address non è disponibile, prova a utilizzare direttamente
         // i componenti dell'indirizzo per ricostruire l'indirizzo completo
@@ -125,6 +127,7 @@ export function PlacesAutocomplete({
           const adminArea = place.address_components.find(c => c.types.includes('administrative_area_level_1'));
           const country = place.address_components.find(c => c.types.includes('country'));
           
+          // Costruisci l'indirizzo in formato "Via Roma, 123, Milano, Lombardia, Italia"
           if (route) components.push(route.long_name);
           if (streetNumber) components.push(streetNumber.long_name);
           if (locality) components.push(locality.long_name);
@@ -135,17 +138,47 @@ export function PlacesAutocomplete({
           console.log('Reconstructed address:', addressToUse);
         }
         
+        // Usa anche il valore attuale dell'input come fallback
+        if (!addressToUse && inputRef.current) {
+          addressToUse = inputRef.current.value;
+          console.log('Using input value as address:', addressToUse);
+        }
+        
         if (addressToUse) {
+          // Aggiorna direttamente l'elemento input
+          if (inputRef.current) {
+            inputRef.current.value = addressToUse;
+          }
+          
           // Aggiorna il valore dell'input con l'indirizzo formattato/ricostruito
           console.log('Updating with address:', addressToUse);
+          
+          // IMPORTANTE: Primo aggiorniamo il DOM direttamente
+          if (inputRef.current) {
+            const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+              window.HTMLInputElement.prototype, "value"
+            )?.set;
+            
+            if (nativeInputValueSetter) {
+              nativeInputValueSetter.call(inputRef.current, addressToUse);
+              // Dispatcha un evento di input per assicurarsi che React e altri listener si aggiornino
+              const inputEvent = new Event('input', { bubbles: true });
+              inputRef.current.dispatchEvent(inputEvent);
+            }
+          }
+          
+          // Poi invochiamo il callback di onChange
           onChange(addressToUse, place);
           
-          // Mantieni il focus sull'input dopo aver selezionato un indirizzo
+          // Mantieni il focus sull'input dopo aver selezionato un indirizzo e posiziona il cursore alla fine
           setTimeout(() => {
             if (inputRef.current) {
               inputRef.current.focus();
+              // Posiziona il cursore alla fine del testo
+              const length = inputRef.current.value.length;
+              inputRef.current.setSelectionRange(length, length);
             }
-          }, 10);
+          }, 50);
         } else {
           console.warn('Could not determine a valid address from the place result');
         }
@@ -181,7 +214,17 @@ export function PlacesAutocomplete({
         ref={inputRef}
         id={id}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onFocus={() => {
+          // Quando l'input riceve il focus, se l'autocomplete è inizializzato
+          // imposta il tipo di campo a text per evitare problemi con l'autocomplete
+          if (inputRef.current) {
+            inputRef.current.setAttribute('autocomplete', 'new-address');
+          }
+        }}
+        onChange={(e) => {
+          // Propagare il cambiamento manuale al componente parent
+          onChange(e.target.value);
+        }}
         placeholder={placeholder}
         className={className}
         aria-label="Indirizzo"
