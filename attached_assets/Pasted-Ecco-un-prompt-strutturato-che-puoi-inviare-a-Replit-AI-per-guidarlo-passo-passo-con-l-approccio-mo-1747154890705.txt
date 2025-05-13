@@ -1,0 +1,80 @@
+Ecco un prompt strutturato che puoi inviare a Replit AI per guidarlo passo-passo con l’approccio “modulo-per-modulo” e “campo-per-campo”:
+
+⸻
+
+TASK: Allineamento Sistematico Moduli CRM
+
+Obiettivo: Per ogni modulo del CRM (Aziende, Contatti, Deal, Lead, Sinergie, Email, Task, Calendario), confrontare sistematicamente i campi previsti in UI con le colonne effettive in PostgreSQL, correggere tutte le discrepanze e verificare i collegamenti tra tabelle.
+
+⸻
+
+Istruzioni per Replit AI
+
+Step 1: Esportazione Schema Database
+	1.	Per ciascuna tabella principale:
+	•	contacts
+	•	companies
+	•	deals
+	•	leads
+	•	synergies
+	•	emails
+	•	(eventualmente tasks e tabella calendario se presenti)
+Esegui da console PostgreSQL:
+
+\d <table_name>
+
+e salva l’output (nome colonna, tipo, nullable).
+
+Step 2: UI Fields Definition
+Per ciascun modulo, prendi il documento di specifica e genera la lista dei campi UI (es.: Company Name, Industry, Email, Phone, Tags, etc.).
+
+Step 3: Confronto e Report
+Per ogni campo UI:
+	•	Trova la colonna corrispondente nel database.
+	•	Segnala:
+	•	Nome colonna mismatched (es. UI “phone” → DB office_phone o mobile_phone).
+	•	Tipo dati diverso o nullable differente.
+
+Genera un report strutturato:
+
+Modulo Aziende:
+  - Campo UI “Phone” → colonna DB: phone ✔
+  - Campo UI “City” → colonna DB mancante ⚠
+  …
+
+Step 4: Correzioni Storage/API
+Per ogni mismatch segnalato:
+	1.	Aggiorna shared/schema.ts (Drizzle ORM) per riflettere il nome/il tipo corretto.
+	2.	Modifica in server/postgresStorage.ts (e server/storage.ts se presente) i metodi getX(), getXWithFilters(), getXById():
+	•	Mappa esplicitamente le colonne esistenti.
+	•	Rimuovi ogni .select('*') o raw SQL che fa riferimento a colonne inesistenti.
+	3.	Assicurati di avere definito tutte le relations() di Drizzle fra tabelle.
+
+Step 5: Verifica Collegamenti
+	1.	Per ciascun FK (es. contacts.company_id → companies.id, deals.contact_id → contacts.id, ecc.):
+	•	Verifica che Drizzle ORM abbia relations(...).
+	•	Controlla che il data loader (es. getContact(id)) effettui il .join() o .select() corretto.
+	2.	In frontend, verifica ogni URL di dettaglio:
+	•	/contacts/:id
+	•	/companies/:id
+	•	/deals/:id
+	•	/leads/:id
+	•	/synergies/:id
+	•	/emails/:id
+che restituisca 200 e non 404.
+
+Step 6: Test End-to-End
+Per ciascun modulo completato:
+	1.	Crea un record di test via UI o API.
+	2.	Visualizza in lista e in vista dettaglio.
+	3.	Modifica e salva, poi verifica che i dati persistano.
+
+Automatizza questi test (opzionale) con uno script cURL o tool di browser automation.
+
+⸻
+
+Nota: Procedi in ordine modulare: completa tutti i passaggi per “Aziende” prima di passare a “Contatti”, poi a “Deal” e così via. Riporta ogni report e conferma la risoluzione prima di avanzare.
+
+⸻
+
+Inviando questo prompt, Replit avrà una lista chiara di task sequenziali, report di discrepanze e azioni di correzione per risolvere sistematicamente tutti i bug di mappatura e navigazione.
