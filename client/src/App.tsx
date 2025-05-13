@@ -91,6 +91,13 @@ export default function App() {
             </ProtectedRoute>
           </Route>
           
+          {/* Route for Tasks */}
+          <Route path="/tasks">
+            <ProtectedRoute>
+              <LayoutPage component={TasksPage} />
+            </ProtectedRoute>
+          </Route>
+          
           {/* Route for Calendar */}
           <Route path="/calendar">
             <ProtectedRoute>

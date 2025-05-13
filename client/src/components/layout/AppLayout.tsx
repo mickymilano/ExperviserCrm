@@ -19,7 +19,8 @@ import {
   User,
   ChevronDown,
   BellRing,
-  Handshake
+  Handshake,
+  CheckSquare
 } from 'lucide-react';
 import { useTheme } from '@/hooks/useTheme';
 import { cn } from '@/lib/utils';
@@ -69,6 +70,12 @@ const getMainMenuItems = (stats?: any): MenuItemProps[] => [
     path: '/synergies',
     icon: <Handshake className="h-5 w-5" />,
     badge: stats?.synergies
+  },
+  {
+    label: 'Attività',
+    path: '/tasks',
+    icon: <CheckSquare className="h-5 w-5" />,
+    badge: stats?.upcomingTasks
   },
   {
     label: 'Calendario',
