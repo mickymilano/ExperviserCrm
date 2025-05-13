@@ -16,16 +16,29 @@ interface PlacesAutocompleteProps {
 const loadGoogleMapsScript = (apiKey: string) => {
   return new Promise<void>((resolve, reject) => {
     if (window.google && window.google.maps && window.google.maps.places) {
+      console.log('Google Maps già caricato in memoria');
       resolve();
       return;
     }
 
+    // Rimuovi eventuali script di Google Maps già presenti
+    const existingScripts = document.querySelectorAll('script[src*="maps.googleapis.com"]');
+    existingScripts.forEach((script) => script.remove());
+    
+    console.log('Caricamento di Google Maps con chiave API (ultimi caratteri):', '...' + apiKey.substring(apiKey.length - 4));
+    
     const script = document.createElement('script');
     script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
     script.async = true;
     script.defer = true;
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error('Google Maps API caricamento fallito'));
+    script.onload = () => {
+      console.log('Google Maps caricato con successo');
+      resolve();
+    };
+    script.onerror = (err) => {
+      console.error('Errore durante il caricamento di Google Maps:', err);
+      reject(new Error('Google Maps API caricamento fallito'));
+    };
     document.head.appendChild(script);
   });
 };

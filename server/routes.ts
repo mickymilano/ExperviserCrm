@@ -1679,8 +1679,17 @@ export function registerRoutes(app: any) {
   app.get('/api/config', (req, res) => {
     try {
       // Espone solo le chiavi API che possono essere utilizzate in modo sicuro sul client
+      const googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY || null;
+      
+      // Log la chiave API per debug (solo i primi caratteri per sicurezza)
+      if (googleMapsApiKey) {
+        console.log('Sending Google Maps API key (starts with):', googleMapsApiKey.substring(0, 6) + '...');
+      } else {
+        console.log('No Google Maps API key available');
+      }
+      
       res.json({
-        googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || null,
+        googleMapsApiKey,
       });
     } catch (error) {
       console.error('Error fetching API configuration:', error);
