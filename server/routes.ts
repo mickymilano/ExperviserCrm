@@ -142,7 +142,7 @@ export function registerRoutes(app: any) {
   });
   
   // Ottieni opportunità recenti
-  app.get('/api/deals/recent', authenticate, async (req: Request, res: Response) => {
+  app.get('/api/deals/recent', authenticateJWT, async (req: Request, res: Response) => {
     try {
       const recentDeals = await storage.getRecentDeals(5);
       res.json(recentDeals);
@@ -153,7 +153,7 @@ export function registerRoutes(app: any) {
   });
   
   // Ottieni contatti recenti
-  app.get('/api/contacts/recent', authenticate, async (req: Request, res: Response) => {
+  app.get('/api/contacts/recent', authenticateJWT, async (req: Request, res: Response) => {
     try {
       const recentContacts = await storage.getRecentContacts(5);
       res.json(recentContacts);
