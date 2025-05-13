@@ -1,0 +1,51 @@
+Per verificare che i contatori della dashboard rispecchino davvero i dati “live” nelle rispettive pagine, procedi così:
+	1.	Controlla il payload JSON del nuovo endpoint /api/dashboard
+	•	Apri gli strumenti di sviluppo del browser (Console → Network).
+	•	Vai sulla Dashboard e intercetta la chiamata a /api/dashboard.
+	•	Copia il JSON restituito, in particolare i campi
+
+{
+  "contactsCount": …,
+  "companiesCount": …,
+  "dealsCount": …,
+  "leadsCount": …,
+  "emailsCount": …
+}
+
+
+	•	Assicurati che questi numeri corrispondano a quelli mostrati nei widget.
+
+	2.	Confronta con i dati grezzi
+	•	Fai una richiesta GET a ciascun endpoint principale in Console → Network o direttamente con fetch nella Console:
+
+fetch('/api/contacts').then(res => res.json()).then(data => console.log('Contacts:', data.length))
+fetch('/api/companies').then(res => res.json()).then(data => console.log('Companies:', data.length))
+fetch('/api/deals').then(res => res.json()).then(data => console.log('Deals:', data.length))
+fetch('/api/leads').then(res => res.json()).then(data => console.log('Leads:', data.length))
+fetch('/api/emails').then(res => res.json()).then(data => console.log('Emails:', data.length))
+
+
+	•	Confronta i data.length con i rispettivi widget.
+
+	3.	Se trovi discrepanze, chiedi a Replit di:
+	•	Stampare in console server-side i totali letti da DB nelle funzioni di getDashboardData().
+	•	Stampare in console client-side i valori ricevuti da /api/dashboard.
+	4.	Prompt secco da dare a Replit
+Copia e incolla questo messaggio nella chat di Replit:
+
+**Verifica contatori dashboard vs dati API**
+
+1. Mostra il JSON completo restituito da `/api/dashboard`.
+2. In Console (browser) logga la lunghezza degli array restituiti da:
+   - `/api/contacts`
+   - `/api/companies`
+   - `/api/deals`
+   - `/api/leads`
+   - `/api/emails`
+3. Confronta i numeri ottenuti con quelli dei widget della Dashboard.
+4. Se ci sono discrepanze, stampa in console server-side i conteggi letti da DB in `getDashboardData()`, e client-side i dati ricevuti dal front-end.
+Non tornare con domande, ma conferma solo “Dashboard verificata” o “Discrepanza X trovata” con i numeri precisi.
+
+
+
+Così sapremo subito se i contatori sono allineati e, in caso contrario, esattamente dove intervenire sul codice.
