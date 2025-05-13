@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useParams, useLocation } from "wouter";
-import { useCompany } from "@/hooks/useCompanies";
-import { useContacts } from "@/hooks/useContacts";
+import { useCompany, useCompanyContacts } from "@/hooks/useCompanies";
 import { useDeals } from "@/hooks/useDeals";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -35,8 +34,8 @@ export default function CompanyDetail() {
   // Fetch company data
   const { data: company, isLoading, isError, error } = useCompany(companyId);
   
-  // Fetch related contacts
-  const { contacts } = useContacts({ companyId });
+  // Fetch related contacts using the specialized hook
+  const { data: contacts, isLoading: isLoadingContacts } = useCompanyContacts(companyId);
   
   // Fetch related deals
   const { deals, isLoading: isLoadingDeals } = useDeals({ 
@@ -499,7 +498,23 @@ export default function CompanyDetail() {
               </div>
             </CardHeader>
             <CardContent>
-              {contacts && contacts.length > 0 ? (
+              {isLoadingContacts ? (
+                <div className="space-y-4">
+                  {Array.from({ length: 3 }).map((_, index) => (
+                    <div key={index} className="flex items-start space-x-4">
+                      <Skeleton className="h-10 w-10 rounded-full" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-5 w-40" />
+                        <Skeleton className="h-4 w-24" />
+                        <div className="grid grid-cols-2 gap-2 mt-2">
+                          <Skeleton className="h-4 w-32" />
+                          <Skeleton className="h-4 w-24" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : contacts && contacts.length > 0 ? (
                 <div className="space-y-6">
                   {contacts.map((contact) => (
                     <div key={contact.id} className="flex items-start space-x-4">
@@ -513,7 +528,8 @@ export default function CompanyDetail() {
                           <div>
                             <h3 className="font-medium">{contact.firstName} {contact.lastName}</h3>
                             <p className="text-sm text-muted-foreground">
-                              {contact.areasOfActivity?.find(a => a.companyId === company.id)?.role || "No role specified"}
+                              {/* Using simple role - new API doesn't return areasOfActivity */}
+                              {contact.role || "No role specified"}
                             </p>
                           </div>
                           <Button variant="ghost" size="sm" onClick={() => navigate(`/contacts/${contact.id}`)}>
@@ -521,29 +537,36 @@ export default function CompanyDetail() {
                           </Button>
                         </div>
                         
-                        {contact.areasOfActivity?.find(a => a.companyId === company.id)?.jobDescription && (
-                          <div className="mt-2">
-                            <p className="text-sm text-muted-foreground">
-                              <span className="font-medium">Job Description: </span>
-                              {contact.areasOfActivity.find(a => a.companyId === company.id).jobDescription}
-                            </p>
-                          </div>
-                        )}
-                        
                         <div className="grid grid-cols-2 gap-2 mt-2">
-                          {contact.email && (
+                          {contact.companyEmail && (
                             <div className="flex items-center">
                               <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
-                              <a href={`mailto:${contact.email}`} className="text-sm hover:underline">
-                                {contact.email}
+                              <a href={`mailto:${contact.companyEmail}`} className="text-sm hover:underline">
+                                {contact.companyEmail}
                               </a>
                             </div>
                           )}
                           
-                          {contact.phone && (
+                          {contact.privateEmail && (
+                            <div className="flex items-center">
+                              <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
+                              <a href={`mailto:${contact.privateEmail}`} className="text-sm hover:underline">
+                                {contact.privateEmail}
+                              </a>
+                            </div>
+                          )}
+                          
+                          {contact.mobilePhone && (
                             <div className="flex items-center">
                               <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                              <span className="text-sm">{formatPhoneNumber(contact.phone)}</span>
+                              <span className="text-sm">{formatPhoneNumber(contact.mobilePhone)}</span>
+                            </div>
+                          )}
+                          
+                          {contact.officePhone && (
+                            <div className="flex items-center">
+                              <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                              <span className="text-sm">{formatPhoneNumber(contact.officePhone)}</span>
                             </div>
                           )}
                         </div>
