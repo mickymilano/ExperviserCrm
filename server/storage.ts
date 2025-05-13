@@ -584,6 +584,63 @@ export class MemStorage implements IStorage {
       return area;
     });
   }
+
+  // Implementazione delle operazioni sulle sinergie
+  async getSynergyById(id: number): Promise<Synergy | null> {
+    const synergy = this.synergies.find(s => s.id === id);
+    return synergy || null;
+  }
+
+  async getAllSynergies(): Promise<Synergy[]> {
+    return [...this.synergies];
+  }
+
+  async getSynergiesByContactId(contactId: number): Promise<Synergy[]> {
+    return this.synergies.filter(s => s.contactId === contactId);
+  }
+
+  async getSynergiesByCompanyId(companyId: number): Promise<Synergy[]> {
+    return this.synergies.filter(s => s.companyId === companyId);
+  }
+
+  async getSynergiesByDealId(dealId: number): Promise<Synergy[]> {
+    return this.synergies.filter(s => s.dealId === dealId);
+  }
+
+  async createSynergy(synergyData: InsertSynergy): Promise<Synergy> {
+    const newSynergy: Synergy = {
+      id: this.nextIds.synergies++,
+      ...synergyData,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    this.synergies.push(newSynergy);
+    return newSynergy;
+  }
+
+  async updateSynergy(id: number, synergyData: Partial<Synergy>): Promise<Synergy> {
+    const index = this.synergies.findIndex(s => s.id === id);
+    if (index === -1) {
+      throw new Error(`Synergy with id ${id} not found`);
+    }
+
+    const updatedSynergy = {
+      ...this.synergies[index],
+      ...synergyData,
+      updatedAt: new Date()
+    };
+
+    this.synergies[index] = updatedSynergy;
+    return updatedSynergy;
+  }
+
+  async deleteSynergy(id: number): Promise<void> {
+    const index = this.synergies.findIndex(s => s.id === id);
+    if (index !== -1) {
+      this.synergies.splice(index, 1);
+    }
+  }
 }
 
 // Esporta un'istanza singleton dell'implementazione di storage
