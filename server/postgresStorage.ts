@@ -1225,51 +1225,57 @@ export class PostgresStorage implements IStorage {
   }
 
   async getContact(id: number): Promise<Contact | undefined> {
-    // Simplified query without relational features
-    const [contact] = await db.select().from(contacts).where(eq(contacts.id, id));
-    
-    if (!contact) {
+    try {
+      // Usa SQL esplicito per evitare errori di mapping colonne
+      const result = await db.execute(
+        `SELECT 
+          id, 
+          first_name as "firstName", 
+          last_name as "lastName",
+          middle_name as "middleName",
+          status, 
+          company_email as "companyEmail", 
+          private_email as "privateEmail", 
+          mobile_phone as "mobilePhone", 
+          office_phone as "officePhone",
+          private_phone as "privatePhone",
+          linkedin,
+          facebook,
+          instagram,
+          tiktok,
+          tags,
+          notes,
+          custom_fields as "customFields",
+          created_at as "createdAt", 
+          updated_at as "updatedAt" 
+        FROM contacts 
+        WHERE id = $1`,
+        [id]
+      );
+      
+      if (!result.rows || result.rows.length === 0) {
+        return undefined;
+      }
+      
+      const contact = result.rows[0];
+      
+      // Separately get areas of activity
+      const areas = await db.select().from(areasOfActivity).where(eq(areasOfActivity.contactId, id));
+      
+      // Create compatibility fields for backward compatibility
+      const compatibleContact: Contact = {
+        ...contact,
+        // Backward compatibility fields
+        email: contact.companyEmail || contact.privateEmail || null,
+        phone: contact.mobilePhone || contact.officePhone || contact.privatePhone || null,
+        areasOfActivity: areas || []
+      };
+      
+      return compatibleContact;
+    } catch (error) {
+      console.error("Error fetching contact:", error);
       return undefined;
     }
-    
-    // Separately get areas of activity
-    const areas = await db.select().from(areasOfActivity).where(eq(areasOfActivity.contactId, id));
-    
-    // Create a compatible contact object that maps DB fields to interface fields
-    // and handles backward compatibility
-    const compatibleContact: Contact = {
-      id: contact.id,
-      firstName: contact.first_name,
-      lastName: contact.last_name,
-      middleName: contact.middle_name || null,
-      
-      // Contact methods - new fields
-      mobilePhone: contact.mobile_phone || null,
-      companyEmail: contact.company_email || null,
-      privateEmail: contact.private_email || null,
-      officePhone: contact.office_phone || null,
-      privatePhone: contact.private_phone || null,
-      
-      // Backward compatibility fields
-      email: contact.company_email || contact.private_email || null,
-      phone: contact.mobile_phone || contact.office_phone || contact.private_phone || null,
-      
-      // Social profiles
-      linkedin: contact.linkedin || null,
-      facebook: contact.facebook || null,
-      instagram: contact.instagram || null,
-      tiktok: contact.tiktok || null,
-      
-      // Rest of the fields
-      tags: Array.isArray(contact.tags) ? contact.tags : [],
-      notes: contact.notes || null,
-      customFields: contact.custom_fields || null,
-      createdAt: contact.created_at ? new Date(contact.created_at).toISOString() : new Date().toISOString(),
-      updatedAt: contact.updated_at ? new Date(contact.updated_at).toISOString() : new Date().toISOString(),
-      areasOfActivity: areas || []
-    };
-    
-    return compatibleContact;
   }
 
   async createContact(contact: InsertContact): Promise<Contact> {
