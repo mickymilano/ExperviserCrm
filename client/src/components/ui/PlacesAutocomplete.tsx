@@ -370,86 +370,42 @@ export function PlacesAutocomplete({
     }
   }, [scriptLoaded, onChange, onCountrySelect]);
 
-  // Gestione degli eventi di tastiera per permettere selezione con frecce, tab, spazio
+  // Gestione degli eventi di tastiera ottimizzata secondo le indicazioni
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     // Ottieni il container dei dropdown
     const pacContainer = document.querySelector('.pac-container');
     const isDropdownVisible = pacContainer instanceof HTMLElement && 
                               pacContainer.style.display !== 'none';
     
-    // Forzare l'evidenziazione sul primo elemento quando si usa la tastiera
-    if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && inputRef.current) {
-      if (!isDropdownVisible) {
-        // Se il dropdown non è visibile, forziamo l'apertura
+    // Per frecce su/giù, lasciamo che Google Maps gestisca il movimento
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      // Se il dropdown non è visibile, apriamolo
+      if (!isDropdownVisible && inputRef.current) {
+        // Forziamo l'apertura
         const openDropdownEvent = new Event('focus');
         inputRef.current.dispatchEvent(openDropdownEvent);
-        
-        // Aggiungi un po' di ritardo per dare tempo al dropdown di aprirsi
-        setTimeout(() => {
-          // Simula un tasto freccia giù per selezionare il primo elemento
-          const arrowDownEvent = new KeyboardEvent('keydown', {
-            bubbles: true,
-            cancelable: true,
-            key: 'ArrowDown',
-            code: 'ArrowDown',
-            keyCode: 40
-          });
-          inputRef.current?.dispatchEvent(arrowDownEvent);
-        }, 50);
-      } else {
-        // Se il dropdown è già aperto, evidenzia il primo elemento se non c'è già una selezione
-        const selectedItem = document.querySelector('.pac-item-selected');
-        if (!selectedItem && e.key === 'ArrowDown') {
-          const firstItem = document.querySelector('.pac-item:first-child');
-          if (firstItem instanceof HTMLElement) {
-            firstItem.classList.add('pac-item-selected');
-          }
-        }
       }
+      // Lasciamo che gli eventi vengano gestiti normalmente
+      return;
     }
     
-    // Gestione specifica per Tab (conferma selezione corrente)
-    if (e.key === 'Tab' && isDropdownVisible) {
-      console.log('Tab pressed with dropdown open, selecting item');
-      // Seleziona l'elemento attivo o il primo elemento
-      const selectedItem = document.querySelector('.pac-item-selected') || 
-                         document.querySelector('.pac-item:first-child');
+    // Per Enter o Tab, considerali come conferma della selezione
+    if ((e.key === 'Enter' || e.key === 'Tab') && isDropdownVisible && autocompleteRef.current) {
+      e.preventDefault(); // Preveniamo il comportamento predefinito
+      console.log(`${e.key} pressed with dropdown open, confirming selection`);
       
-      if (selectedItem instanceof HTMLElement) {
-        selectedItem.click();
-        e.preventDefault(); // Preveniamo il tabbing standard
-      }
+      // Trigger diretto dell'evento place_changed usando l'API ufficiale di Google Maps
+      google.maps.event.trigger(autocompleteRef.current, 'place_changed');
     }
     
-    // Gestione del tasto Spazio (premuto in un menu dropdown)
-    // Se lo spazio viene premuto durante una selezione attiva del dropdown
-    // Preveniamo il comportamento di default (aggiungi spazio)
-    if (e.key === ' ' && document.activeElement === inputRef.current && isDropdownVisible) {
+    // Per Spazio durante la selezione, trattiamolo come un Enter
+    if (e.key === ' ' && isDropdownVisible && document.activeElement === inputRef.current) {
       const pacItem = document.querySelector('.pac-item-selected');
       
-      if (pacItem) {
-        // Se c'è un menu autocomplete aperto con selezione attiva,
-        // simuliamo un Enter per confermare
-        console.log('Space pressed with active selection, simulating Enter');
-        const enterEvent = new KeyboardEvent('keydown', { 
-          bubbles: true, 
-          cancelable: true, 
-          key: 'Enter',
-          code: 'Enter',
-          keyCode: 13 
-        });
-        inputRef.current?.dispatchEvent(enterEvent);
-        e.preventDefault(); // Previene l'inserimento dello spazio
-      }
-    }
-    
-    // Gestione di Enter con dropdown visibile
-    if (e.key === 'Enter' && isDropdownVisible) {
-      const selectedItem = document.querySelector('.pac-item-selected');
-      if (selectedItem instanceof HTMLElement) {
-        console.log('Enter pressed with active selection, forcing click');
-        selectedItem.click();
-        e.preventDefault();
+      if (pacItem && autocompleteRef.current) {
+        e.preventDefault(); // Preveniamo l'inserimento dello spazio
+        console.log('Space pressed with active selection, confirming selection');
+        google.maps.event.trigger(autocompleteRef.current, 'place_changed');
       }
     }
   };
