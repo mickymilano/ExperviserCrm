@@ -14,8 +14,9 @@ export function useAuth() {
     retry: false,
     staleTime: 1000 * 60 * 5, // 5 minutes
     enabled: !!token, // Only fetch user data if token exists
-    // We'll use the default queryFn from queryClient.ts
-    // but remove our custom queryFn to fix the HTTP method error
+    queryFn: async () => {
+      return await apiRequest("GET", "/api/auth/me");
+    }
   });
 
   // Set auth header for all requests and update query client
@@ -54,7 +55,14 @@ export function useAuth() {
     onSuccess: (data) => {
       console.log("Login successful, data:", data);
       queryClient.setQueryData(['/api/auth/me'], data.user);
-      refetch();
+      
+      // Dopo un breve ritardo per permettere al token di essere salvato
+      setTimeout(() => {
+        refetch();
+        
+        // Invalidiamo tutte le query per forzare un refresh con il nuovo token
+        queryClient.invalidateQueries();
+      }, 300);
     }
   });
 

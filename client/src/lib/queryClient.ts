@@ -2,24 +2,33 @@ import { QueryClient } from '@tanstack/react-query';
 
 // Funzione per fare le chiamate API
 export async function apiRequest(
+  method: string, 
   url: string, 
-  options: RequestInit = {}
+  data?: any,
+  customOptions: RequestInit = {}
 ): Promise<any> {
+  // Recupera il token da localStorage
+  const token = localStorage.getItem("auth_token");
+
   // Opzioni predefinite per le richieste
   const defaultOptions: RequestInit = {
+    method,
     headers: {
       'Content-Type': 'application/json',
+      // Include il token di autenticazione se presente
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
     },
     credentials: 'include', // Per inviare/ricevere cookies
+    ...(data ? { body: JSON.stringify(data) } : {})
   };
   
   // Merge delle opzioni
   const fetchOptions = {
     ...defaultOptions,
-    ...options,
+    ...customOptions,
     headers: {
       ...defaultOptions.headers,
-      ...(options.headers || {}),
+      ...(customOptions.headers || {}),
     },
   };
   
@@ -64,7 +73,7 @@ export const defaultMutationOptions = {
 const defaultQueryFn = async ({ queryKey }: { queryKey: unknown[] }) => {
   // Usiamo il primo elemento della queryKey come URL
   const url = queryKey[0] as string;
-  return apiRequest(url);
+  return apiRequest("GET", url);
 };
 
 // Crea l'istanza di QueryClient
