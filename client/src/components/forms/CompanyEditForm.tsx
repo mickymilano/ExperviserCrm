@@ -311,11 +311,12 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
               </div>
               
               <div>
-                <Label htmlFor="city">City</Label>
+                <Label htmlFor="city">Città</Label>
                 <Input 
                   id="city"
                   {...register("city")}
                   className="mt-1"
+                  placeholder="Inserisci la città"
                 />
               </div>
             </div>
@@ -369,7 +370,7 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
             </div>
             
             <div>
-              <Label htmlFor="timezone">Timezone</Label>
+              <Label htmlFor="timezone">Fuso Orario</Label>
               <Select 
                 onValueChange={(value) => handleSelectChange("timezone", value)}
                 defaultValue={customFields.timezone || ""}

@@ -297,7 +297,7 @@ export default function CompanyDetail() {
                       <div className="flex items-start">
                         <Flag className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
                         <div>
-                          <p className="text-sm font-medium mb-1">Country</p>
+                          <p className="text-sm font-medium mb-1">Paese</p>
                           <Badge variant="outline" className="font-normal mt-1">
                             {company.country || company.customFields?.country}
                           </Badge>
@@ -309,7 +309,7 @@ export default function CompanyDetail() {
                       <div className="flex items-start">
                         <MapPin className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
                         <div>
-                          <p className="text-sm font-medium mb-1">City</p>
+                          <p className="text-sm font-medium mb-1">Città</p>
                           <p>{company.customFields.city}</p>
                         </div>
                       </div>
@@ -319,7 +319,7 @@ export default function CompanyDetail() {
                       <div className="flex items-start">
                         <Clock className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
                         <div>
-                          <p className="text-sm font-medium mb-1">Timezone</p>
+                          <p className="text-sm font-medium mb-1">Fuso Orario</p>
                           <p>{company.customFields.timezone}</p>
                         </div>
                       </div>
@@ -331,7 +331,7 @@ export default function CompanyDetail() {
                       <div className="flex items-start">
                         <MapPin className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
                         <div>
-                          <p className="text-sm font-medium mb-1">Location</p>
+                          <p className="text-sm font-medium mb-1">Indirizzo</p>
                           <p className="whitespace-pre-line">{company.fullAddress || company.address}</p>
                         </div>
                       </div>

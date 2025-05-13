@@ -174,11 +174,11 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
           
           {/* Country field */}
           <div className="space-y-2 mb-4">
-            <Label htmlFor="country">Country</Label>
+            <Label htmlFor="country">Paese</Label>
             <Input 
               id="country" 
               {...register("country")} 
-              placeholder="Enter country" 
+              placeholder="Inserisci il paese" 
             />
           </div>
 
@@ -205,7 +205,7 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
                   }
                 }
               }}
-              placeholder="Search for an address..." 
+              placeholder="Cerca o inserisci l'indirizzo completo" 
               className="w-full"
             />
           </div>
