@@ -112,3 +112,20 @@ export function formatPhoneNumber(phone: string): string {
   const digits = phone.replace(/\D+/g, "");
   return digits.replace(/(\d{3})(?=\d)/g, "$1 ");
 }
+
+/**
+ * Genera un colore esadecimale a partire da un nome.
+ * Utilizza un semplice hashing per ottenere sempre lo stesso colore per lo stesso input.
+ */
+export function generateAvatarColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    // calcolo hash
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  // genera 3 componenti RGB da hash
+  const c = (hash & 0x00FFFFFF)
+    .toString(16)
+    .toUpperCase();
+  return "#" + "00000".substring(0, 6 - c.length) + c;
+}
