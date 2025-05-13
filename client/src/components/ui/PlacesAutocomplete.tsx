@@ -130,7 +130,7 @@ export function PlacesAutocomplete({
       console.log('Initializing Google Places Autocomplete...');
       
       // Inizializza Google Places Autocomplete
-      // Non specificare i 'types' per consentire la massima flessibilità di ricerca
+      // Per il campo del nome azienda, prioritizza 'establishment'
       autocompleteRef.current = new google.maps.places.Autocomplete(inputRef.current, {
         fields: [
           'address_components',
@@ -138,9 +138,13 @@ export function PlacesAutocomplete({
           'geometry',
           'name',
           'place_id',
-          'types'
+          'types',
+          'business_status'
         ],
-        types: ['establishment', 'geocode']
+        // Priorità agli 'establishment' (attività commerciali)
+        types: ['establishment'],
+        // Limita i risultati a Italia come default
+        componentRestrictions: { country: "it" }
       });
 
       // Gestisce l'evento di selezione del luogo

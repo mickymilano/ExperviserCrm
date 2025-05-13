@@ -171,7 +171,7 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
                   }
                 }
               }}
-              placeholder="Cerca o inserisci nome dell'azienda" 
+              placeholder="Cerca aziende e attività commerciali" 
               className="w-full"
             />
             {errors.name && (
