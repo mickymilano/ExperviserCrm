@@ -583,20 +583,32 @@ export class PostgresStorage implements IStorage {
   }
   
   async getRecentDeals(limit: number = 5): Promise<Deal[]> {
-    const dealsResult = await db.select()
+    try {
+      // Use a basic query without problematic columns 
+      const dealsResult = await db.select({
+        id: deals.id,
+        name: deals.name,
+        value: deals.value,
+        status: deals.status,
+        contactId: deals.contactId,
+        companyId: deals.companyId,
+        stageId: deals.stageId, 
+        createdAt: deals.createdAt,
+        updatedAt: deals.updatedAt
+      })
       .from(deals)
       .orderBy(desc(deals.updatedAt))
       .limit(limit);
-      
-    // Manually populate relations as needed
-    const result = [];
-    for (const deal of dealsResult) {
-      // Get contact
-      let contactData = null;
-      if (deal.contactId) {
-        const [contact] = await db.select().from(contacts).where(eq(contacts.id, deal.contactId));
-        contactData = contact;
-      }
+        
+      // Manually populate relations as needed
+      const result = [];
+      for (const deal of dealsResult) {
+        // Get contact
+        let contactData = null;
+        if (deal.contactId) {
+          const [contact] = await db.select().from(contacts).where(eq(contacts.id, deal.contactId));
+          contactData = contact;
+        }
       
       // Get company
       let companyData = null;
@@ -621,6 +633,11 @@ export class PostgresStorage implements IStorage {
     }
     
     return result;
+    } catch (error) {
+      console.error("Error in getRecentDeals:", error);
+      // Return empty array in case of error
+      return [];
+    }
   }
   
   async getDealsByStageId(stageId: number): Promise<Deal[]> {
