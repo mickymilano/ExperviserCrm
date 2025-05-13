@@ -65,14 +65,6 @@ export default function SynergiesPage() {
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
-          <Button 
-            size="sm" 
-            onClick={() => setIsCreateModalOpen(true)}
-            className="h-9"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            New Synergy
-          </Button>
         </div>
       </div>
 
@@ -180,12 +172,15 @@ export default function SynergiesPage() {
             <Handshake className="h-16 w-16 mb-4 text-muted-foreground opacity-50" />
             <h3 className="text-xl font-medium mb-2">No Business Synergies Found</h3>
             <p className="text-muted-foreground mb-6 max-w-md">
-              There are currently no business synergies in the system. Start by creating
-              your first synergy between a contact and a company.
+              There are currently no business synergies in the system. Business synergies can only 
+              be created from a Deal. Go to a specific Deal page and create synergies there.
             </p>
-            <Button onClick={() => setIsCreateModalOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Your First Synergy
+            <Button 
+              variant="outline"
+              onClick={() => navigate('/deals')}
+            >
+              <DollarSign className="h-4 w-4 mr-2" />
+              Go to Deals
             </Button>
           </CardContent>
         </Card>

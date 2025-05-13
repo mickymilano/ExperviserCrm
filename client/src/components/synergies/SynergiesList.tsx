@@ -117,14 +117,17 @@ export function SynergiesList({
             <Handshake className="h-5 w-5 mr-2 text-muted-foreground" />
             <h3 className="text-lg font-semibold">Sinergie</h3>
           </div>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setIsCreateModalOpen(true)}
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Aggiungi
-          </Button>
+          {/* Mostra il pulsante "Aggiungi" solo nel contesto di un Deal */}
+          {entityType === 'deal' && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setIsCreateModalOpen(true)}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Aggiungi
+            </Button>
+          )}
         </div>
       )}
 
