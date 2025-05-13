@@ -436,26 +436,55 @@ export class PostgresStorage implements IStorage {
   // LEADS
   async getLeads(): Promise<Lead[]> {
     // I lead hanno status diversi (New, Qualified, ecc.)
-    // Rimuoviamo il filtro status e restituiamo tutti
     try {
-      // Sostituiamo con una query SQL nativa per evitare problemi con Drizzle ORM
+      // Otteniamo i lead direttamente con SQL nativo mappando i campi della tabella effettiva
+      // Non c'è una colonna 'name', dobbiamo usare first_name e last_name
       const result = await pool.query(`
         SELECT 
           id, 
-          name, 
-          status, 
-          source, 
-          notes, 
+          first_name as "firstName",
+          middle_name as "middleName",
+          last_name as "lastName",
           company_name as "companyName", 
-          job_title as "jobTitle", 
-          lead_owner as "leadOwner", 
+          role,
+          mobile_phone as "mobilePhone",
+          company_email as "companyEmail",
+          private_email as "privateEmail",
+          office_phone as "officePhone",
+          private_phone as "privatePhone",
+          linkedin,
+          facebook,
+          instagram,
+          tiktok,
+          website,
+          source, 
+          status, 
+          tags,
+          notes, 
+          assigned_to_id as "assignedToId",
+          custom_fields as "customFields",
           created_at as "createdAt", 
           updated_at as "updatedAt"
         FROM leads 
-        ORDER BY name
+        ORDER BY first_name, last_name
       `);
       
-      return result.rows || [];
+      console.log(`getLeads: Found ${result.rows.length} leads`);
+      
+      // Adattiamo il formato per essere compatibile con lo schema
+      return result.rows.map(lead => {
+        return {
+          id: lead.id,
+          firstName: lead.firstName || "",
+          lastName: lead.lastName || "",
+          name: `${lead.firstName || ""} ${lead.lastName || ""}`.trim(),
+          status: lead.status || "New",
+          source: lead.source || "",
+          companyName: lead.companyName || "",
+          notes: lead.notes || "",
+          ...lead
+        };
+      });
     } catch (error) {
       console.error("Error in getLeads:", error);
       return [];
