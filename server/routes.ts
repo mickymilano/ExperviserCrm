@@ -1403,6 +1403,17 @@ export function registerRoutes(app: any) {
         return res.status(400).json({ message: 'Dati sinergia incompleti' });
       }
       
+      // NUOVA REGOLA DI BUSINESS: Le sinergie possono essere create solo nel contesto di un Deal
+      if (!synergyData.dealId) {
+        return res.status(403).json({ 
+          message: 'Creazione sinergia non autorizzata. Le sinergie possono essere create solo nel contesto di un Deal.',
+          errorCode: 'SYNERGY_CREATION_REQUIRES_DEAL'
+        });
+      }
+      
+      // Aggiunta di isActive di default a true
+      synergyData.isActive = true;
+      
       const newSynergy = await storage.createSynergy(synergyData);
       res.status(201).json(newSynergy);
     } catch (error) {

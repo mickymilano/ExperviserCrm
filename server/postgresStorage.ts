@@ -393,6 +393,7 @@ export class PostgresStorage implements IStorage {
           status: synergy.status || "Active",
           startDate: synergy.start_date,
           endDate: synergy.end_date,
+          isActive: synergy.is_active,
           createdAt: synergy.created_at,
           updatedAt: synergy.updated_at
         };
@@ -405,12 +406,12 @@ export class PostgresStorage implements IStorage {
   
   async getSynergiesCount(): Promise<number> {
     try {
-      console.log("PostgresStorage.getSynergiesCount: retrieving synergies count");
+      console.log("PostgresStorage.getSynergiesCount: retrieving active synergies count");
       
-      const queryStr = `SELECT COUNT(*) as count FROM synergies`;
+      const queryStr = `SELECT COUNT(*) as count FROM synergies WHERE is_active = true`;
       const result = await pool.query(queryStr);
       
-      console.log(`Retrieved ${result.rows[0].count} synergies count`);
+      console.log(`Retrieved ${result.rows[0].count} active synergies count`);
       
       return parseInt(result.rows[0].count) || 0;
     } catch (error) {
@@ -437,7 +438,7 @@ export class PostgresStorage implements IStorage {
           created_at,
           updated_at
         FROM synergies
-        WHERE contact_id = $1
+        WHERE contact_id = $1 AND is_active = true
         ORDER BY created_at DESC
       `, [contactId]);
       
@@ -481,7 +482,7 @@ export class PostgresStorage implements IStorage {
           created_at,
           updated_at
         FROM synergies
-        WHERE company_id = $1
+        WHERE company_id = $1 AND is_active = true
         ORDER BY created_at DESC
       `, [companyId]);
       
