@@ -214,8 +214,7 @@ export function SynergiesList({
           {Array.isArray(synergies) && synergies.map((synergy: any) => (
             <Card 
               key={synergy?.id || 'no-id'} 
-              className="overflow-hidden hover:shadow-sm transition-shadow cursor-pointer"
-              onClick={() => handleOpenEdit(synergy)}
+              className="overflow-hidden hover:shadow-sm transition-shadow"
             >
               <CardContent className="p-4">
                 <div className="flex justify-between items-start mb-2">
