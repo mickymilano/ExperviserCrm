@@ -35,8 +35,11 @@ export default function Email() {
   const { mutate: markAsRead } = useMarkEmailAsRead();
   const { mutate: syncAllAccounts, isPending: isSyncing } = useSyncAllEmailAccounts();
 
+  // Garantisco che emails sia sempre un Array
+  const emailsList = Array.isArray(emails) ? emails : [];
+
   // Filter emails based on search term
-  const filteredEmails = emails?.filter((email) => {
+  const filteredEmails = emailsList.filter((email) => {
     if (!searchTerm) return true;
     const searchTermLower = searchTerm.toLowerCase();
     return (
@@ -47,7 +50,7 @@ export default function Email() {
   });
 
   const handleEmailClick = (id: number) => {
-    if (emails?.find(e => e.id === id)?.read === false) {
+    if (emailsList.find(e => e.id === id)?.read === false) {
       markAsRead(id);
     }
   };
@@ -88,7 +91,7 @@ export default function Email() {
                 <Button variant="ghost" className="w-full justify-start">
                   <Inbox className="mr-2 h-4 w-4" /> Inbox
                   <span className="ml-auto bg-primary text-white text-xs rounded-full px-2">
-                    {emails?.filter(e => !e.read).length || 0}
+                    {emailsList.filter(e => !e.read).length || 0}
                   </span>
                 </Button>
                 <Button variant="ghost" className="w-full justify-start">
@@ -193,7 +196,7 @@ export default function Email() {
                     <Skeleton key={i} className="h-16 w-full" />
                   ))}
                 </div>
-              ) : filteredEmails && filteredEmails.length > 0 ? (
+              ) : filteredEmails.length > 0 ? (
                 <div className="divide-y">
                   {filteredEmails.map((email) => (
                     <div 
