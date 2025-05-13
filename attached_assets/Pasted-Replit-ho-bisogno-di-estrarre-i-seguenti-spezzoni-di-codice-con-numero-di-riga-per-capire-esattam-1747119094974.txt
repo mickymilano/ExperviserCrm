@@ -1,0 +1,35 @@
+Replit, ho bisogno di estrarre i seguenti spezzoni di codice, con numero di riga, per capire esattamente cosa è stato effettivamente committato in ciascun modulo:
+	1.	Aziende (Companies)
+	•	Da server/routes.ts le righe 341–416 (tutte le route CRUD per /api/companies).
+	•	Da server/storage.ts le righe 190–246 (tutte le funzioni getAllCompanies, getCompany, createCompany, updateCompany, deleteCompany).
+	2.	Contatti (Contacts)
+	•	Da server/routes.ts le righe 159–339 (route CRUD /api/contacts).
+	•	Da server/storage.ts le righe 248–308 (tutte le funzioni getAllContacts, getContact, createContact, updateContact, deleteContact).
+	3.	Deal (Opportunità)
+	•	Da server/routes.ts le righe 418–490 (route CRUD /api/deals).
+	•	Da server/storage.ts le righe 310–378 (funzioni getAllDeals, getDeal, createDeal, updateDeal, deleteDeal).
+	4.	Leads
+	•	Da server/routes.ts le righe 492–564 (route CRUD /api/leads e /api/leads/:id/convert).
+	•	Da server/storage.ts le righe 380–438 (funzioni getAllLeads, getLead, createLead, updateLead, deleteLead, convertLeadToContact).
+	5.	Synergies
+(Solo per conferma luogo, poi sospendiamo lo sviluppo di questo modulo)
+	•	Da server/routes.ts le righe 593–637.
+	•	Da server/storage.ts le righe 628–683.
+	6.	Pipeline Stages
+	•	Da server/routes.ts le righe 702–764.
+	•	Da server/storage.ts le righe 440–530.
+	7.	Shared Schema
+	•	Da shared/schema.ts le righe 1–200 (definizioni tabelle principali: companies, contacts, deals, leads, areas_of_activity, pipeline_stages, ecc.)
+	•	Da shared/schema.ts le righe 201–400 (resto delle entità e relazioni).
+	8.	Front-end Hooks
+	•	client/src/hooks/useCompanies.ts (intero file).
+	•	client/src/hooks/useContacts.ts (intero file).
+	•	client/src/hooks/useDeals.ts (intero file).
+	•	client/src/hooks/useLeads.ts (intero file).
+	9.	Front-end Modals/Forms
+	•	client/src/components/modals/CompanyModal.tsx (intero file).
+	•	client/src/components/modals/ContactModal.tsx (intero file).
+	•	client/src/components/modals/DealModal.tsx (intero file).
+	•	client/src/components/modals/LeadModal.tsx (intero file).
+	10.	Eventuali errori TypeScript bloccanti
+Dammi l’elenco completo delle segnalazioni “error” (non warning) riportate dal Problems panel con file e numeri di riga.
