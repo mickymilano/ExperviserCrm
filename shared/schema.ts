@@ -226,6 +226,39 @@ export const insertUserSchema = createInsertSchema(users, {
 
 export const insertContactSchema = createInsertSchema(contacts).omit({ id: true, createdAt: true, updatedAt: true });
 
+// Per retrocompatibilità, estendiamo il tipo Contact per includere campi legacy
+export interface ContactExtended {
+  id: number;
+  firstName: string;
+  middleName: string | null;
+  lastName: string;
+  status: typeof entityStatusEnum[number];
+  mobilePhone: string | null;
+  companyEmail: string | null;
+  privateEmail: string | null;
+  officePhone: string | null;
+  privatePhone: string | null;
+  linkedin: string | null;
+  facebook: string | null;
+  instagram: string | null;
+  tiktok: string | null;
+  notes: string | null;
+  tags: string[] | null;
+  roles: any | null; // Json
+  customFields: any | null; // Json
+  lastContactedAt: Date | null;
+  nextFollowUpAt: Date | null;
+  createdAt: Date | null;
+  updatedAt: Date | null;
+  
+  // Campi virtuali per retrocompatibilità
+  email: string | null; // Mapping di companyEmail o privateEmail
+  phone: string | null; // Mapping di mobilePhone, officePhone o privatePhone
+  
+  // Relazioni
+  areasOfActivity: AreaOfActivity[];
+}
+
 export const insertCompanySchema = createInsertSchema(companies).omit({ id: true, createdAt: true, updatedAt: true });
 
 export const insertDealSchema = createInsertSchema(deals).omit({ id: true, createdAt: true, updatedAt: true });
@@ -291,7 +324,10 @@ export const insertContactEmailSchema = createInsertSchema(contactEmails).omit({
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 
-export type Contact = typeof contacts.$inferSelect;
+// Usiamo ContactBase per il tipo di base generato da Drizzle
+export type ContactBase = typeof contacts.$inferSelect;
+// Usiamo Contact per il tipo esteso con campi di compatibilità
+export type Contact = ContactExtended;
 export type InsertContact = z.infer<typeof insertContactSchema>;
 
 export type Company = typeof companies.$inferSelect;

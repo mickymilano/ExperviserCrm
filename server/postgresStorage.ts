@@ -48,6 +48,8 @@ import {
 import { eq, and, desc, sql, isNull, isNotNull, or, asc, inArray } from "drizzle-orm";
 
 export class PostgresStorage implements IStorage {
+  // Espone l'oggetto db per query dirette
+  public db = db;
   // USERS
   async getUsers(): Promise<User[]> {
     return await db.select().from(users).orderBy(users.fullName);
@@ -1225,89 +1227,89 @@ export class PostgresStorage implements IStorage {
   }
 
   async getContact(id: number): Promise<Contact | undefined> {
-    console.log(`===== DEBUG getContact: Received id: ${id}, type: ${typeof id} =====`);
+    console.log(`getContact: Processing request for contact id ${id}`);
     
-    // Verifica diretta nel database con SQL raw query
+    // Utilizziamo una query SQL diretta per aggirare problemi con Drizzle ORM
     try {
-      console.log("DEBUG getContact: Executing raw SQL query to verify the contact exists...");
-      const result = await db.execute(
-        `SELECT id, first_name, last_name FROM contacts WHERE id = $1`,
+      // Query SQL per ottenere i dati del contatto
+      const contactResult = await db.execute(
+        `SELECT 
+          id, first_name, middle_name, last_name, status, 
+          mobile_phone, company_email, private_email, 
+          office_phone, private_phone, linkedin, facebook,
+          instagram, tiktok, tags, roles, notes, custom_fields,
+          last_contacted_at, next_follow_up_at, created_at, updated_at
+        FROM contacts 
+        WHERE id = $1`,
         [id]
       );
-      console.log(`DEBUG getContact: Raw SQL result:`, result.rows);
-    } catch (sqlError) {
-      console.error("DEBUG getContact: Error in raw SQL check:", sqlError);
-    }
-    
-    try {
-      console.log("DEBUG getContact: Attempting to select with Drizzle ORM...");
-      // Uso una versione più semplice per verificare il problema
-      const rows = await db
-        .select({
-          id: contacts.id,
-          firstName: contacts.first_name,
-          lastName: contacts.last_name,
-        })
-        .from(contacts)
-        .where(eq(contacts.id, id));
       
-      console.log(`DEBUG getContact: Initial Drizzle result:`, rows);
-      
-      // Se abbiamo il risultato, possiamo procedere con la query completa
-      if (rows && rows.length > 0) {
-        console.log("DEBUG getContact: Contact found with simplified query, proceeding with full query...");
-        
-        const [row] = await db
-          .select({
-            id: contacts.id,
-            firstName: contacts.first_name,
-            middleName: contacts.middle_name,
-            lastName: contacts.last_name,
-            mobilePhone: contacts.mobile_phone,
-            officePhone: contacts.office_phone,
-            privatePhone: contacts.private_phone,
-            companyEmail: contacts.company_email,
-            privateEmail: contacts.private_email,
-            linkedin: contacts.linkedin,
-            facebook: contacts.facebook,
-            instagram: contacts.instagram,
-            tiktok: contacts.tiktok,
-            tags: contacts.tags,
-            roles: contacts.roles,
-            notes: contacts.notes,
-            customFields: contacts.custom_fields,
-            status: contacts.status,
-            lastContactedAt: contacts.last_contacted_at,
-            nextFollowUpAt: contacts.next_follow_up_at,
-            createdAt: contacts.created_at,
-            updatedAt: contacts.updated_at,
-          })
-          .from(contacts)
-          .where(eq(contacts.id, id));
-        
-        console.log("DEBUG getContact: Full contact data:", row);
-        
-        // Separately get areas of activity
-        const areas = await db.select().from(areasOfActivity).where(eq(areasOfActivity.contactId, id));
-        console.log(`DEBUG getContact: Areas of activity:`, areas);
-        
-        // Create compatibility fields for backward compatibility
-        const compatibleContact: Contact = {
-          ...row,
-          // Backward compatibility fields
-          email: row.companyEmail || row.privateEmail || null,
-          phone: row.mobilePhone || row.officePhone || row.privatePhone || null,
-          areasOfActivity: areas || []
-        };
-        
-        console.log("DEBUG getContact: Returning compatibleContact:", compatibleContact);
-        return compatibleContact;
-      } else {
-        console.log(`DEBUG getContact: No contact found with id ${id}`);
+      // Verifico se abbiamo trovato il contatto
+      if (contactResult.rows.length === 0) {
+        console.log(`getContact: No contact found with id ${id}`);
         return undefined;
       }
+      
+      const contactData = contactResult.rows[0];
+      console.log(`getContact: Found contact:`, contactData);
+      
+      // Query per ottenere le aree di attività del contatto
+      const areasResult = await db.execute(
+        `SELECT id, contact_id, company_id, company_name, role, job_description, is_primary, created_at, updated_at
+         FROM areas_of_activity 
+         WHERE contact_id = $1`,
+        [id]
+      );
+      
+      // Mappatura degli oggetti dalle righe di risultato
+      const areas = areasResult.rows.map(row => ({
+        id: row.id,
+        contactId: row.contact_id,
+        companyId: row.company_id,
+        companyName: row.company_name,
+        role: row.role,
+        jobDescription: row.job_description,
+        isPrimary: row.is_primary,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+      }));
+      
+      // Creo il contatto con i campi mappati correttamente
+      const contact: Contact = {
+        id: contactData.id,
+        firstName: contactData.first_name,
+        middleName: contactData.middle_name,
+        lastName: contactData.last_name,
+        status: contactData.status,
+        mobilePhone: contactData.mobile_phone,
+        companyEmail: contactData.company_email,
+        privateEmail: contactData.private_email,
+        officePhone: contactData.office_phone,
+        privatePhone: contactData.private_phone,
+        linkedin: contactData.linkedin,
+        facebook: contactData.facebook,
+        instagram: contactData.instagram,
+        tiktok: contactData.tiktok,
+        tags: contactData.tags,
+        roles: contactData.roles,
+        notes: contactData.notes,
+        customFields: contactData.custom_fields,
+        lastContactedAt: contactData.last_contacted_at,
+        nextFollowUpAt: contactData.next_follow_up_at,
+        createdAt: contactData.created_at,
+        updatedAt: contactData.updated_at,
+        
+        // Campi di compatibilità
+        email: contactData.company_email || contactData.private_email || null,
+        phone: contactData.mobile_phone || contactData.office_phone || contactData.private_phone || null,
+        
+        // Relazioni
+        areasOfActivity: areas
+      };
+      
+      return contact;
     } catch (error) {
-      console.error("DEBUG getContact: Error fetching contact:", error);
+      console.error("Error fetching contact:", error);
       return undefined;
     }
   }
