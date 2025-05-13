@@ -694,62 +694,89 @@ export class PostgresStorage implements IStorage {
     contactId?: number;
     stageId?: number;
   }): Promise<Deal[]> {
-    // Build query with appropriate filters
-    let query = db.select().from(deals);
+    try {
+      // Build query with appropriate filters
+      let query = db.select({
+        id: deals.id,
+        name: deals.name,
+        value: deals.value,
+        status: deals.status,
+        contactId: deals.contactId,
+        companyId: deals.companyId,
+        stageId: deals.stageId,
+        createdAt: deals.createdAt,
+        updatedAt: deals.updatedAt
+      }).from(deals);
     
-    // Apply filters
-    if (filters.status) {
-      query = query.where(eq(deals.status, filters.status));
-    }
-    
-    if (filters.companyId) {
-      query = query.where(eq(deals.companyId, filters.companyId));
-    }
-    
-    if (filters.contactId) {
-      query = query.where(eq(deals.contactId, filters.contactId));
-    }
-    
-    if (filters.stageId) {
-      query = query.where(eq(deals.stageId, filters.stageId));
-    }
-    
-    // Order the results
-    const dealsResult = await query.orderBy(asc(deals.stageId), desc(deals.value));
-    
-    // Manually populate relations
-    const result = [];
-    for (const deal of dealsResult) {
-      // Get contact
-      let contactData = null;
-      if (deal.contactId) {
-        const [contact] = await db.select().from(contacts).where(eq(contacts.id, deal.contactId));
-        contactData = contact;
+      // Apply filters
+      if (filters.status) {
+        query = query.where(eq(deals.status, filters.status));
       }
       
-      // Get company
-      let companyData = null;
-      if (deal.companyId) {
-        const [company] = await db.select().from(companies).where(eq(companies.id, deal.companyId));
-        companyData = company;
+      if (filters.companyId) {
+        query = query.where(eq(deals.companyId, filters.companyId));
       }
       
-      // Get stage
-      let stageData = null;
-      if (deal.stageId) {
-        const [stage] = await db.select().from(pipelineStages).where(eq(pipelineStages.id, deal.stageId));
-        stageData = stage;
+      if (filters.contactId) {
+        query = query.where(eq(deals.contactId, filters.contactId));
       }
       
-      result.push({
-        ...deal,
-        contact: contactData,
-        company: companyData,
-        stage: stageData
-      });
+      if (filters.stageId) {
+        query = query.where(eq(deals.stageId, filters.stageId));
+      }
+      
+      // Order the results
+      const dealsResult = await query.orderBy(asc(deals.stageId), desc(deals.value));
+      
+      // Manually populate relations
+      const result = [];
+      for (const deal of dealsResult) {
+        // Get contact
+        let contactData = null;
+        if (deal.contactId) {
+          const [contact] = await db.select({
+            id: contacts.id,
+            firstName: contacts.firstName,
+            lastName: contacts.lastName,
+            email: contacts.email
+          }).from(contacts).where(eq(contacts.id, deal.contactId));
+          contactData = contact;
+        }
+        
+        // Get company
+        let companyData = null;
+        if (deal.companyId) {
+          const [company] = await db.select({
+            id: companies.id,
+            name: companies.name
+          }).from(companies).where(eq(companies.id, deal.companyId));
+          companyData = company;
+        }
+        
+        // Get stage
+        let stageData = null;
+        if (deal.stageId) {
+          const [stage] = await db.select({
+            id: pipelineStages.id,
+            name: pipelineStages.name,
+            order: pipelineStages.order
+          }).from(pipelineStages).where(eq(pipelineStages.id, deal.stageId));
+          stageData = stage;
+        }
+        
+        result.push({
+          ...deal,
+          contact: contactData,
+          company: companyData,
+          stage: stageData
+        });
+      }
+      
+      return result;
+    } catch (error) {
+      console.error("Error in getDealsWithFilters:", error);
+      return [];
     }
-    
-    return result;
   }
 
   async getDealsByContact(contactId: number): Promise<Deal[]> {
