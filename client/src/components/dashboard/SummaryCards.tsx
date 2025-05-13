@@ -112,7 +112,7 @@ export default function SummaryCards({ summary }: SummaryCardsProps) {
           </div>
           <div className="flex justify-between items-end">
             <div>
-              <p className="text-2xl font-semibold">{summary.upcomingTasksCount}</p>
+              <p className="text-2xl font-semibold">{summary.tasks?.upcomingCount || 0}</p>
               <p className="text-sm text-destructive flex items-center">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -128,7 +128,7 @@ export default function SummaryCards({ summary }: SummaryCardsProps) {
                     d="M19 14l-7 7m0 0l-7-7m7 7V3"
                   />
                 </svg>
-                {summary.overdueTasksCount} overdue
+                {summary.tasks?.overdueCount || 0} overdue
               </p>
             </div>
             <span className="text-neutral-medium text-sm">Today: 5</span>

@@ -113,6 +113,11 @@ export function registerRoutes(app: any) {
       const companiesCount = await storage.getCompaniesCount();
       const dealsCount = await storage.getDealsCount({ status: 'active' });
       const leadsCount = await storage.getLeadsCount();
+      const synergiesCount = await storage.getSynergiesCount();
+      
+      // Per ora simuliamo il conteggio delle attività
+      const upcomingTasksCount = 8;
+      const overdueTasksCount = 3;
       
       // Percentuali di cambiamento (simulati per ora)
       const stats = {
@@ -131,6 +136,14 @@ export function registerRoutes(app: any) {
         leads: {
           count: leadsCount,
           percentChange: 8.4
+        },
+        synergies: {
+          count: synergiesCount,
+          percentChange: 10.0
+        },
+        tasks: {
+          upcomingCount: upcomingTasksCount,
+          overdueCount: overdueTasksCount
         }
       };
       

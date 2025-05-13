@@ -75,7 +75,7 @@ const getMainMenuItems = (stats?: any): MenuItemProps[] => [
     label: 'Attività',
     path: '/tasks',
     icon: <CheckSquare className="h-5 w-5" />,
-    badge: stats?.upcomingTasks
+    badge: stats?.tasks?.upcomingCount
   },
   {
     label: 'Calendario',
