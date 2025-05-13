@@ -416,7 +416,7 @@ export function SynergyModal({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">No associated deal</SelectItem>
+                      <SelectItem value="null">No associated deal</SelectItem>
                       {dealsList.map((deal: any) => (
                         <SelectItem key={deal.id} value={deal.id.toString()}>
                           {deal.name || `Deal #${deal.id}`}
