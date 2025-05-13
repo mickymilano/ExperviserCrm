@@ -830,14 +830,25 @@ export class PostgresStorage implements IStorage {
   }
   
   async getDealsCount(options?: { status?: string }): Promise<number> {
-    let query = db.select({ count: sql<number>`count(*)` }).from(deals);
-    
-    if (options?.status) {
-      query = query.where(eq(deals.status, options.status));
+    try {
+      console.log(`PostgresStorage.getDealsCount: retrieving deals count with options:`, options);
+      
+      let queryStr = `SELECT COUNT(*) as count FROM deals`;
+      const params: any[] = [];
+      
+      if (options?.status) {
+        params.push(options.status);
+        queryStr += ` WHERE status = $1`;
+      }
+      
+      const result = await pool.query(queryStr, params);
+      console.log(`Retrieved ${result.rows[0].count} deals count`);
+      
+      return parseInt(result.rows[0].count) || 0;
+    } catch (error) {
+      console.error("Error in getDealsCount:", error);
+      return 0;
     }
-    
-    const result = await query;
-    return result[0].count;
   }
   
   async getRecentDeals(limit: number = 5): Promise<Deal[]> {

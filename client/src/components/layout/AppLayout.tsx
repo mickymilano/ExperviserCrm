@@ -32,8 +32,9 @@ interface MenuItemProps {
   badge?: number;
 }
 
-// Array delle voci del menu principale
-const mainMenuItems: MenuItemProps[] = [
+// Struttura di base per le voci del menu principale
+// I badge verranno aggiunti dinamicamente dai dati della dashboard
+const getMainMenuItems = (stats?: any): MenuItemProps[] => [
   {
     label: 'Dashboard',
     path: '/',
@@ -43,22 +44,25 @@ const mainMenuItems: MenuItemProps[] = [
     label: 'Contatti',
     path: '/contacts',
     icon: <Users className="h-5 w-5" />,
+    badge: stats?.contacts
   },
   {
     label: 'Aziende',
     path: '/companies',
     icon: <Building2 className="h-5 w-5" />,
+    badge: stats?.companies
   },
   {
     label: 'Opportunità',
     path: '/deals',
     icon: <Briefcase className="h-5 w-5" />,
-    badge: 3,
+    badge: stats?.deals
   },
   {
     label: 'Lead',
     path: '/leads',
     icon: <Target className="h-5 w-5" />,
+    badge: stats?.leads
   },
   {
     label: 'Sinergie',
@@ -74,7 +78,7 @@ const mainMenuItems: MenuItemProps[] = [
     label: 'Email',
     path: '/emails',
     icon: <Mail className="h-5 w-5" />,
-    badge: 5,
+    badge: stats?.unreadEmails
   },
 ];
 
@@ -138,6 +142,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     status: string;
   }>({
     queryKey: ['/api/auth/me'],
+  });
+  
+  // Recupera statistiche per i badge del menu
+  const { data: stats } = useQuery({
+    queryKey: ['/api/dashboard/stats'],
   });
   
   // Gestione responsive della sidebar
@@ -259,7 +268,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           
           {/* Menu principale */}
           <nav className="space-y-1 mb-6">
-            {mainMenuItems.map((item) => (
+            {getMainMenuItems(stats).map((item) => (
               <MenuItem key={item.path} item={item} isOpen={isSidebarOpen} />
             ))}
           </nav>
