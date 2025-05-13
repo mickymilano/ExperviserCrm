@@ -14,6 +14,35 @@ export function SynergiesOverview() {
   const { data: synergies = [], isLoading } = useQuery({
     queryKey: ['/api/synergies'],
   });
+  
+  // Recuperare dati di contatti e aziende per mostrare i nomi invece degli ID
+  const { data: contacts = [] } = useQuery<any[]>({
+    queryKey: ['/api/contacts'],
+  });
+  
+  const { data: companies = [] } = useQuery<any[]>({
+    queryKey: ['/api/companies'],
+  });
+  
+  const { data: deals = [] } = useQuery<any[]>({
+    queryKey: ['/api/deals'],
+  });
+  
+  // Funzioni di utilità per recuperare i nomi dalle liste
+  const getContactName = (contactId: number) => {
+    const contact = contacts.find((c: any) => c.id === contactId);
+    return contact ? `${contact.firstName} ${contact.lastName}` : `Contatto #${contactId}`;
+  };
+  
+  const getCompanyName = (companyId: number) => {
+    const company = companies.find((c: any) => c.id === companyId);
+    return company ? company.name : `Azienda #${companyId}`;
+  };
+  
+  const getDealName = (dealId: number) => {
+    const deal = deals.find((d: any) => d.id === dealId);
+    return deal ? deal.title || `Deal #${dealId}` : `Deal #${dealId}`;
+  };
 
   const getSynergyStatusColor = (status: string) => {
     switch (status) {
