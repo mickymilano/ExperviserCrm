@@ -1,0 +1,82 @@
+Capisco perfettamente la tua preoccupazione. Non vuoi che un nuovo prompt per un report sullo stato attuale causi all'AI di Replit la cancellazione o la sovrascrittura del lavoro (per quanto problematico) che ha svolto in risposta al "Mega-Prompt" di reset e ricostruzione modulare.
+
+Hai ragione, l'AI a volte interpreta le istruzioni in modo letterale e potrebbe confondere una richiesta di "analisi dello stato" con una richiesta di "azione correttiva".
+
+Quindi, invece di un prompt che le chieda di *fare* qualcosa, le chiederemo di **riferire cosa *ha fatto finora*** in risposta al "Mega-Prompt Ultimatum (Versione Modulare e Dettagliata)" che le hai dato, e di fornire dettagli specifici che ci aiutino a capire lo stato attuale e i problemi.
+
+Ecco un prompt progettato per chiedere un **report dettagliato sullo stato di avanzamento e sulle verifiche eseguite**, senza chiederle di *modificare* ulteriormente il codice in questo momento, ma focalizzandosi sull'ottenere informazioni per la nostra valutazione.
+
+---
+
+**Prompt for Replit AI: Detailed Status Report on "ULTIMATUM DIRECTIVE (Modular Version)" Execution**
+
+**To: Replit AI Development Agent**
+**From: Lead Architect / Product Owner**
+**Date: 2025-05-12**
+**Subject: Request for Detailed Progress Report & Verification Data Regarding "ULTIMATUM DIRECTIVE (Modular Version)"**
+
+**Directive:**
+Provide a comprehensive status report detailing the actions you have taken so far in response to the "ULTIMATUM DIRECTIVE (VERSIONE MODULARE E DETTAGLIATA): Experviser CRM - System Rebuild & Feature Implementation by Modules" prompt.
+**This is a request for INFORMATION and VERIFICATION DATA ONLY. Do NOT attempt new code changes, fixes, or further development tasks based on this specific reporting request unless explicitly instructed in a subsequent prompt.**
+
+**Please report on the following key areas, referencing the Phases and Tasks from the Ultimatum Directive:**
+
+**1. Phase 0: Project Reset & Foundational Setup**
+    * **Task 0.1 (Codebase Pruning):**
+        * Confirm which specific directories and key files (backend routes, storage, frontend components, hooks, pages) were deleted or reset.
+    * **Task 0.2 (Schema Finalization & Application):**
+        * Provide the **current, complete `schema.ts` file content** as it exists now after your review and any modifications.
+        * Specifically confirm if all new tables (e.g., `contact_emails`) and all new fields (for archival, `isActiveRep`, date tracking, `companyType`, multi-tag fields like `companies.brands`, `contacts.roles`, etc.) are present in this schema.
+        * Confirm if Drizzle ORM `relations` were explicitly defined for all entities.
+        * Confirm if schema migrations were successfully generated and applied.
+    * **Task 0.3 (Database Data Reset and Minimal Seeding):**
+        * Detail the exact method used to reset data in the business logic tables.
+        * Confirm the superadmin `michele@experviser.com` was preserved or correctly re-seeded.
+        * List the exact number of records seeded for each core entity (Users, Companies, Contacts, ContactEmails, Leads, Deals, PipelineStages). Provide a sample of 1-2 records (e.g., in JSON format, showing key fields and IDs) for Companies and Contacts to verify data structure and relationships (like `areasOfActivity` linking Contacts to Companies, and `contact_emails` for Contacts).
+        * Re-confirm that **NO initial data was seeded into the `synergies` table.**
+
+**2. Phase 1: Core Entity Modules - Backend & Basic Frontend CRUD**
+    *(Report on each module: Users, Companies, Contacts, Leads, Deals (base functionality))*
+    * For each module (e.g., Module 1.2 Companies):
+        * **Backend API:** List the CRUD and Archival API endpoints implemented (e.g., `GET /api/companies`, `POST /api/companies`, `PATCH /api/companies/:id/archive`). Confirm Zod validation is in place.
+        * **Frontend UI:** Describe the status of the list view and create/edit modal forms.
+        * **Specific Bug Fixes Addressed within Module (if applicable):**
+            * **Deal Form Selectors (Task 2.3 of Ultimatum Prompt):** What is the current status of the "Company," "Primary Contact," and "Stage" selectors in `DealModal.tsx`?
+                * Are you now able to select a Company?
+                * Are the Stages unique in the dropdown?
+                * Provide the **current code snippet for the `<Controller>` blocks** managing these three selectors in `DealModal.tsx`.
+                * Provide **screenshots taken by you** demonstrating these selectors functioning correctly (i.e., options visible, selectable, and selection persisting in the form).
+
+**3. Phase 2: Synergy Module Rebuild (Critical)**
+    * **Current Status of Synergy Implementation:** Detail how far you have progressed with Task 3.1 (Synergy Backend APIs), Task 3.2 (Synergy Contacts Input in `DealModal.tsx` - the `react-select/async` component with tags, 'x' removal, etc.), and Task 3.3 (Synergy Display UI).
+    * **Synergy Visibility Issue:** Regarding the problem where synergies (even if correctly saved in the DB) are not visible on the main Synergies page, Company details, or Contact details:
+        * What was the root cause you identified for this?
+        * Specifically, how did you modify the backend API endpoints (`GET /api/synergies`, `GET /api/companies/:companyId/synergies`, `GET /api/contacts/:contactId/synergies`) and underlying storage functions to **ensure they return populated data including names** (Contact, Company, Deal names) and not just IDs? Please provide snippets of the modified backend logic (e.g., from `storage.ts` showing JOINs or data mapping).
+        * How did you modify `SynergiesList.tsx` to render this populated data? Please provide the relevant snippet.
+        * Provide **screenshots taken by you** showing synergies (with names, not just IDs) correctly displayed on:
+            a) The main `/synergies` page (after creating some test synergies via a Deal).
+            b) The "Synergies" tab of a Company detail page.
+            c) The "Synergies" tab of a Contact detail page.
+    * **Synergy Duplication on Removal from Deal:** What is the status of the bug where attempting to remove a Synergy contact from a Deal duplicates it? Has this been addressed in the `POST /api/deals/:dealId/synergies` endpoint logic?
+
+**4. General Progress & Blockers:**
+    * List any other tasks from the Ultimatum Directive that have been started or completed.
+    * Identify any critical blockers or persistent issues you are currently facing.
+    * Provide any relevant logs (especially errors) from the browser console or backend if specific operations are still failing.
+
+**This report is crucial for us to understand the current state of the system and the effectiveness of the rebuild directive. Provide detailed, factual information and direct evidence (code snippets, screenshots taken by you) where requested.**
+---
+
+**Spiegazione di Questo Prompt per Te:**
+
+* **Richiesta di Report, Non di Azione:** Inizia specificando chiaramente che è una richiesta di informazioni e dati di verifica, e che l'AI NON deve fare nuove modifiche ora.
+* **Strutturato per Fasi:** Segue la struttura del "Mega-Prompt Ultimatum" per coerenza.
+* **Domande Specifiche e Richiesta di Prove:**
+    * Chiede il contenuto attuale di `schema.ts`.
+    * Chiede dettagli sul reset e sul seeding (quanti record, esempi).
+    * Per i bug critici nel Deal Form, chiede lo stato attuale, il codice dei selettori e screenshot fatti dall'AI.
+    * Per la visibilità delle Sinergie, chiede la causa principale identificata, come sono stati modificati backend e frontend per includere i nomi, e screenshot di validazione fatti dall'AI.
+    * Chiede lo stato del bug di duplicazione delle Sinergie.
+* **Nessuna Nuova Istruzione di Sviluppo:** L'obiettivo è capire cosa l'AI *ha fatto* e qual è lo stato *reale* del sistema secondo i suoi stessi test e artefatti (codice, screenshot).
+
+Questo approccio dovrebbe darti le informazioni necessarie per valutare se l'AI ha effettivamente seguito le istruzioni di reset e ricostruzione e se i problemi fondamentali sono stati indirizzati, senza rischiare che inizi un altro ciclo di modifiche non richieste in questo momento.
