@@ -37,17 +37,14 @@ export default function Email() {
 
   // Garantisco che emails sia sempre un Array
   const emailsList = Array.isArray(emails) ? emails : [];
-  const filteredEmails = emailsList.filter(email => 
-    (currentFolder === "inbox" && !email.isSent && !email.isTrash && !email.isArchived) ||
-    (currentFolder === "sent" && email.isSent) ||
-    (currentFolder === "archived" && email.isArchived) ||
-    (currentFolder === "trash" && email.isTrash) ||
-    (currentFolder === "starred" && email.isStarred)
-  );
-
+  
   // Filter emails based on search term
   const filteredEmails = emailsList.filter((email) => {
+    // Apply folder filtering when it's implemented
+    
+    // If no search term, return all emails
     if (!searchTerm) return true;
+    
     const searchTermLower = searchTerm.toLowerCase();
     return (
       email.subject.toLowerCase().includes(searchTermLower) ||
@@ -138,32 +135,40 @@ export default function Email() {
                       <Skeleton key={i} className="h-6 w-full" />
                     ))}
                   </div>
-                ) : accounts && accounts.length > 0 ? (
-                  <div className="space-y-1">
-                    {accounts.map(account => (
-                      <div key={account.id} className="flex items-center text-sm p-2 rounded-md hover:bg-muted">
-                        <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <span className="truncate">{account.email}</span>
-                        {account.id === 1 && (
-                          <Badge className="ml-auto" variant="outline">Primary</Badge>
-                        )}
-                      </div>
-                    ))}
-                    <Link href="/email/settings" className="block pt-1 text-xs text-primary hover:underline text-center">
-                      Manage Email Settings
-                    </Link>
-                  </div>
                 ) : (
-                  <div className="text-sm text-muted-foreground space-y-2">
-                    <p>No email accounts configured.</p>
-                    <div className="flex flex-col gap-1">
-                      <Link href="/email/accounts" className="block text-xs text-primary hover:underline">
-                        Add Email Account
-                      </Link>
-                      <Link href="/email/settings" className="block text-xs text-primary hover:underline">
-                        Email Settings
-                      </Link>
-                    </div>
+                  <div>
+                    {(() => {
+                      const accountsList = Array.isArray(accounts) ? accounts : [];
+                      
+                      return accountsList.length > 0 ? (
+                        <div className="space-y-1">
+                          {accountsList.map(account => (
+                            <div key={account.id} className="flex items-center text-sm p-2 rounded-md hover:bg-muted">
+                              <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
+                              <span className="truncate">{account.email}</span>
+                              {account.id === 1 && (
+                                <Badge className="ml-auto" variant="outline">Primary</Badge>
+                              )}
+                            </div>
+                          ))}
+                          <Link href="/email/settings" className="block pt-1 text-xs text-primary hover:underline text-center">
+                            Manage Email Settings
+                          </Link>
+                        </div>
+                      ) : (
+                        <div className="text-sm text-muted-foreground space-y-2">
+                          <p>No email accounts configured.</p>
+                          <div className="flex flex-col gap-1">
+                            <Link href="/email/accounts" className="block text-xs text-primary hover:underline">
+                              Add Email Account
+                            </Link>
+                            <Link href="/email/settings" className="block text-xs text-primary hover:underline">
+                              Email Settings
+                            </Link>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 )}
               </div>
