@@ -45,7 +45,7 @@ export default function SynergiesPage() {
   
   const getDealName = (dealId: number) => {
     const deal = deals.find((d: any) => d.id === dealId);
-    return deal ? deal.title || `Deal #${dealId}` : `Deal #${dealId}`;
+    return deal ? deal.name || `Deal #${dealId}` : `Deal #${dealId}`;
   };
 
   const handleEditSynergy = (synergy: any) => {

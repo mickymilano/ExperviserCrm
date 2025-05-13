@@ -92,7 +92,7 @@ export function SynergiesList({
   
   const getDealName = (dealId: number) => {
     const deal = deals.find((d: any) => d.id === dealId);
-    return deal ? deal.title || `Deal #${dealId}` : `Deal #${dealId}`;
+    return deal ? deal.name || `Deal #${dealId}` : `Deal #${dealId}`;
   };
 
   // Genera parametri iniziali per la creazione della sinergia in base al tipo di entità
