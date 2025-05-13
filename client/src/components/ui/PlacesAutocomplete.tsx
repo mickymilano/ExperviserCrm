@@ -77,6 +77,7 @@ export function PlacesAutocomplete({
   const [apiKey, setApiKey] = useState<string | null>(null);
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [inputValue, setInputValue] = useState<string>(value || '');
 
   // Carica la chiave API dal server
   useEffect(() => {
@@ -122,6 +123,11 @@ export function PlacesAutocomplete({
       });
   }, [apiKey]);
 
+  // Aggiorna inputValue quando il valore cambia dall'esterno
+  useEffect(() => {
+    setInputValue(value || '');
+  }, [value]);
+
   // Inizializza l'autocomplete quando lo script è caricato
   useEffect(() => {
     if (!scriptLoaded || !inputRef.current) return;
@@ -129,6 +135,11 @@ export function PlacesAutocomplete({
     try {
       console.log('Initializing Google Places Autocomplete...');
       
+      // Assicuriamoci che l'input conservi il valore corrente
+      if (inputRef.current && inputValue) {
+        inputRef.current.value = inputValue;
+      }
+
       // Inizializza Google Places Autocomplete
       // Per il campo del nome azienda, prioritizza 'establishment'
       autocompleteRef.current = new google.maps.places.Autocomplete(inputRef.current, {
@@ -275,7 +286,7 @@ export function PlacesAutocomplete({
       <Input
         ref={inputRef}
         id={id}
-        value={value}
+        value={inputValue}
         onFocus={() => {
           // Quando l'input riceve il focus, se l'autocomplete è inizializzato
           // imposta il tipo di campo a text per evitare problemi con l'autocomplete
@@ -284,6 +295,8 @@ export function PlacesAutocomplete({
           }
         }}
         onChange={(e) => {
+          // Aggiorna il valore interno
+          setInputValue(e.target.value);
           // Propagare il cambiamento manuale al componente parent
           onChange(e.target.value);
         }}
