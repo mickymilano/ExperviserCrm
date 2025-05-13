@@ -1408,7 +1408,13 @@ export function registerRoutes(app: any) {
   // Endpoint principale dashboard
   app.get('/api/dashboard', authenticate, async (req: Request, res: Response) => {
     try {
-      // Ottieni conteggi e percentuali
+      // Ottieni conteggi utilizzando i metodi di conteggio specifici
+      const contactsCount = await storage.getContactsCount();
+      const companiesCount = await storage.getCompaniesCount();
+      const dealsCount = await storage.getDealsCount({ status: 'active' });
+      const leadsCount = await storage.getLeadsCount();
+      
+      // Per altre funzionalità, continua a ottenere tutti i dati
       const contacts = await storage.getAllContacts();
       const companies = await storage.getAllCompanies();
       const activeDeals = await storage.getDealsWithFilters({ status: 'active' });
@@ -1453,19 +1459,19 @@ export function registerRoutes(app: any) {
       const dashboardData = {
         summary: {
           contacts: {
-            count: contacts.length,
+            count: contactsCount,
             percentChange: 5.2 // Simulato, implementare logica reale in futuro
           },
           companies: {
-            count: companies.length,
+            count: companiesCount,
             percentChange: 2.8 // Simulato, implementare logica reale in futuro
           },
           deals: {
-            count: activeDeals.length,
+            count: dealsCount,
             percentChange: -1.5 // Simulato, implementare logica reale in futuro
           },
           leads: {
-            count: leads.length,
+            count: leadsCount,
             percentChange: 8.4 // Simulato, implementare logica reale in futuro
           },
           emails: {
@@ -1489,17 +1495,20 @@ export function registerRoutes(app: any) {
   // Statistiche dashboard
   app.get('/api/dashboard/stats', authenticate, async (req, res) => {
     try {
-      const contacts = await storage.getAllContacts();
-      const companies = await storage.getAllCompanies();
-      const activeDeals = await storage.getDealsWithFilters({ status: 'active' });
-      const leads = await storage.getAllLeads();
+      // Utilizza i metodi di conteggio diretto
+      const contactsCount = await storage.getContactsCount();
+      const companiesCount = await storage.getCompaniesCount();
+      const dealsCount = await storage.getDealsCount({ status: 'active' });
+      const leadsCount = await storage.getLeadsCount();
+      
+      // Per le email manteniamo l'approccio originale per ora
       const emails = await storage.getEmails();
       
       res.json({
-        contacts: contacts.length,
-        companies: companies.length,
-        deals: activeDeals.length,
-        leads: leads.length,
+        contacts: contactsCount,
+        companies: companiesCount,
+        deals: dealsCount,
+        leads: leadsCount,
         emails: emails.length,
         unreadEmails: emails.filter(email => !email.read).length
       });
