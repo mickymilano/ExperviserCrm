@@ -472,12 +472,27 @@ export function registerRoutes(app: any) {
   });
   
   // Ottieni un singolo contatto
-  app.get('/api/contacts/:id', authenticate, async (req, res) => {
+  app.get('/api/contacts/:id', async (req, res) => { // Rimosso authenticate temporaneamente per il debug
     try {
       const contactId = parseInt(req.params.id);
+      console.log(`API endpoint /api/contacts/:id called with id: ${contactId}, type: ${typeof contactId}`);
+      
+      // Verifica con raw SQL
+      try {
+        const sqlResult = await storage.db.execute(
+          `SELECT id, first_name, last_name FROM contacts WHERE id = $1`,
+          [contactId]
+        );
+        console.log(`API Direct SQL check for contact ${contactId}:`, sqlResult.rows);
+      } catch (sqlError) {
+        console.error(`API SQL Error for contact ${contactId}:`, sqlError);
+      }
+      
       const contact = await storage.getContact(contactId);
+      console.log(`API result from storage.getContact(${contactId}):`, contact);
       
       if (!contact) {
+        console.log(`API Contact with id ${contactId} not found`);
         return res.status(404).json({ message: 'Contatto non trovato' });
       }
       

@@ -1225,56 +1225,89 @@ export class PostgresStorage implements IStorage {
   }
 
   async getContact(id: number): Promise<Contact | undefined> {
+    console.log(`===== DEBUG getContact: Received id: ${id}, type: ${typeof id} =====`);
+    
+    // Verifica diretta nel database con SQL raw query
     try {
-      const [row] = await db
+      console.log("DEBUG getContact: Executing raw SQL query to verify the contact exists...");
+      const result = await db.execute(
+        `SELECT id, first_name, last_name FROM contacts WHERE id = $1`,
+        [id]
+      );
+      console.log(`DEBUG getContact: Raw SQL result:`, result.rows);
+    } catch (sqlError) {
+      console.error("DEBUG getContact: Error in raw SQL check:", sqlError);
+    }
+    
+    try {
+      console.log("DEBUG getContact: Attempting to select with Drizzle ORM...");
+      // Uso una versione più semplice per verificare il problema
+      const rows = await db
         .select({
           id: contacts.id,
           firstName: contacts.first_name,
-          middleName: contacts.middle_name,
           lastName: contacts.last_name,
-          mobilePhone: contacts.mobile_phone,
-          officePhone: contacts.office_phone,
-          privatePhone: contacts.private_phone,
-          companyEmail: contacts.company_email,
-          privateEmail: contacts.private_email,
-          linkedin: contacts.linkedin,
-          facebook: contacts.facebook,
-          instagram: contacts.instagram,
-          tiktok: contacts.tiktok,
-          tags: contacts.tags,
-          roles: contacts.roles,
-          notes: contacts.notes,
-          customFields: contacts.custom_fields,
-          status: contacts.status,
-          lastContactedAt: contacts.last_contacted_at,
-          nextFollowUpAt: contacts.next_follow_up_at,
-          createdAt: contacts.created_at,
-          updatedAt: contacts.updated_at,
         })
         .from(contacts)
         .where(eq(contacts.id, id));
       
-      if (!row) {
+      console.log(`DEBUG getContact: Initial Drizzle result:`, rows);
+      
+      // Se abbiamo il risultato, possiamo procedere con la query completa
+      if (rows && rows.length > 0) {
+        console.log("DEBUG getContact: Contact found with simplified query, proceeding with full query...");
+        
+        const [row] = await db
+          .select({
+            id: contacts.id,
+            firstName: contacts.first_name,
+            middleName: contacts.middle_name,
+            lastName: contacts.last_name,
+            mobilePhone: contacts.mobile_phone,
+            officePhone: contacts.office_phone,
+            privatePhone: contacts.private_phone,
+            companyEmail: contacts.company_email,
+            privateEmail: contacts.private_email,
+            linkedin: contacts.linkedin,
+            facebook: contacts.facebook,
+            instagram: contacts.instagram,
+            tiktok: contacts.tiktok,
+            tags: contacts.tags,
+            roles: contacts.roles,
+            notes: contacts.notes,
+            customFields: contacts.custom_fields,
+            status: contacts.status,
+            lastContactedAt: contacts.last_contacted_at,
+            nextFollowUpAt: contacts.next_follow_up_at,
+            createdAt: contacts.created_at,
+            updatedAt: contacts.updated_at,
+          })
+          .from(contacts)
+          .where(eq(contacts.id, id));
+        
+        console.log("DEBUG getContact: Full contact data:", row);
+        
+        // Separately get areas of activity
+        const areas = await db.select().from(areasOfActivity).where(eq(areasOfActivity.contactId, id));
+        console.log(`DEBUG getContact: Areas of activity:`, areas);
+        
+        // Create compatibility fields for backward compatibility
+        const compatibleContact: Contact = {
+          ...row,
+          // Backward compatibility fields
+          email: row.companyEmail || row.privateEmail || null,
+          phone: row.mobilePhone || row.officePhone || row.privatePhone || null,
+          areasOfActivity: areas || []
+        };
+        
+        console.log("DEBUG getContact: Returning compatibleContact:", compatibleContact);
+        return compatibleContact;
+      } else {
+        console.log(`DEBUG getContact: No contact found with id ${id}`);
         return undefined;
       }
-      
-      console.log("Retrieved contact:", row);
-      
-      // Separately get areas of activity
-      const areas = await db.select().from(areasOfActivity).where(eq(areasOfActivity.contactId, id));
-      
-      // Create compatibility fields for backward compatibility
-      const compatibleContact: Contact = {
-        ...row,
-        // Backward compatibility fields
-        email: row.companyEmail || row.privateEmail || null,
-        phone: row.mobilePhone || row.officePhone || row.privatePhone || null,
-        areasOfActivity: areas || []
-      };
-      
-      return compatibleContact;
     } catch (error) {
-      console.error("Error fetching contact:", error);
+      console.error("DEBUG getContact: Error fetching contact:", error);
       return undefined;
     }
   }

@@ -1,0 +1,48 @@
+**URGENT DEBUGGING: Contact Detail Page - "Contact Not Found" Error**
+
+**To: Replit AI Development Agent**
+**From: Lead Architect**
+**Subject: Critical Bug - Cannot view contact details; system reports "Contact Not Found" despite contact existing.**
+
+**Context:**
+After your latest modifications to `server/postgresStorage.ts` (specifically the `getContact(id)` method), attempting to view a contact's detail page (e.g., by clicking a contact with ID 15 from a list, navigating to `/contacts/15`) results in a "Contact Not Found" message in the UI. We need to diagnose this step-by-step.
+
+**Mandatory Diagnostic and Correction Actions (Execute in Order and Report on Each):**
+
+**1. Database Level Verification (AGAIN, for a specific existing Contact ID):**
+    * **Action:** Identify a valid, existing `id` from your `contacts` table (e.g., from your seed data, let's assume ID `1` exists for "Michele Ardoni" or one of your test contacts).
+    * Directly query the PostgreSQL database for this specific contact ID (e.g., `SELECT * FROM contacts WHERE id = 1;`).
+    * **Output Required:** Paste the raw row data returned from this direct SQL query for the chosen contact ID. This confirms the record exists in the DB.
+
+**2. Storage Layer Function `getContact(id)` Verification (`server/storage.ts`):**
+    * **Action:** You stated you modified `getContact(id)` to use Drizzle's `.select()` with explicit column mapping.
+    * **Output Required (A):** Provide the **complete, current code snippet** for the `async getContact(id: number): Promise<Contact | null | undefined>` function in `server/storage.ts`.
+    * **Action (Internal Test by AI):** Modify `server/storage.ts` (temporarily, if necessary) to add a `console.log` *inside* the `getContact` function to log:
+        a. The `id` it receives as a parameter.
+        b. The `row` (or result) it gets from `await db.select(...).where(eq(contacts.id, id));` *before* any return statement.
+    * Trigger this function with the known existing contact ID (e.g., ID `1`).
+    * **Output Required (B):** Provide the backend console log output showing the received `id` and the raw database `row` result *within* the `getContact` function.
+
+**3. API Endpoint `GET /api/contacts/:id` Verification (`server/routes.ts`):**
+    * **Action (Internal Test by AI):** Call this API endpoint directly (e.g., using `curl localhost:PORT/api/contacts/1` or an equivalent testing method from within Replit) using the known existing contact ID.
+    * **Output Required:** Provide the **full, raw JSON response** (and HTTP status code) from this direct API call. This response should match the data logged in step 2.B if `getContact` works and the API route correctly returns it.
+
+**4. Frontend Data Fetching Hook Verification (e.g., `useContact(id)` or `useQuery` in `client/src/pages/contacts/[id].tsx`):**
+    * **Action:** Examine the React Query hook used in the contact detail page (`client/src/pages/contacts/[id].tsx`) to fetch data from `GET /api/contacts/:id`.
+    * Add `console.log` statements within this hook to log:
+        a. The `id` being used for the query.
+        b. The `data` received from React Query after a successful fetch.
+        c. Any `error` object if the query fails.
+    * **Output Required:** Navigate to the contact detail page in the browser (e.g., `/contacts/1`). Provide the browser console log output from this hook showing the `id`, fetched `data`, and any `error`.
+
+**5. Frontend Component Rendering (`client/src/pages/contacts/[id].tsx`):**
+    * **Action:** Based on the data logged in step 4, explain why the component might be concluding "Contact Not Found". Is the fetched `data` actually `null`, `undefined`, or an empty object? Is there a conditional rendering logic error?
+    * **Output Required:** If you identify a specific conditional logic error or data handling issue in this component, provide the problematic code snippet and your proposed correction.
+
+**Instructions for AI:**
+- Execute these 5 steps sequentially.
+- Provide the "Output Required" for each step before moving to the next.
+- Focus *only* on this "Contact Not Found" issue for a single contact detail page. Do not attempt other fixes.
+- Your goal is to make the contact detail page correctly display data for an existing contact.
+
+This step-by-step diagnostic approach, with verification at each layer (DB, Storage, API, Frontend Hook, Frontend Component), is designed to help us pinpoint exactly where the data is being lost or misinterpreted.
