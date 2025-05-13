@@ -1444,7 +1444,10 @@ export class PostgresStorage implements IStorage {
           website, 
           email, 
           phone, 
+          -- DEPRECATED: old address field - Added 2025-05-13 by Lead Architect: unified location
           address, 
+          -- Added 2025-05-13 by Lead Architect: unified location field
+          full_address,
           tags, 
           notes, 
           custom_fields, 
@@ -1474,7 +1477,10 @@ export class PostgresStorage implements IStorage {
           website: company.website || "",
           email: company.email || "",
           phone: company.phone || "",
+          // DEPRECATED: old address field - Added 2025-05-13 by Lead Architect: unified location
           address: company.address || "",
+          // Added 2025-05-13 by Lead Architect: unified location field
+          fullAddress: company.full_address || "",
           tags: company.tags || [],
           notes: company.notes || "",
           customFields: company.custom_fields || {},
@@ -1515,7 +1521,10 @@ export class PostgresStorage implements IStorage {
       status: companies.status,
       email: companies.email,
       phone: companies.phone,
+      // DEPRECATED: old address field - Added 2025-05-13 by Lead Architect: unified location
       address: companies.address,
+      // Added 2025-05-13 by Lead Architect: unified location field
+      fullAddress: companies.fullAddress,
       website: companies.website,
       industry: companies.industry,
       // Rimuoviamo le colonne problematiche (description, logo)
