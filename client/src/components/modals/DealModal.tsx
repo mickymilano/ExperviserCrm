@@ -668,7 +668,6 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                                   field.onChange(company.id);
                                   // Reset contact selection
                                   setValue("contactId", null);
-                                  setValue("synergyContactIds", []);
                                 }}
                               >
                                 <Check
