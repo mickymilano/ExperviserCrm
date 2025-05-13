@@ -1,4 +1,4 @@
-import { db } from "./db";
+import { db, pool } from "./db";
 import { IStorage } from "./storage";
 import { 
   users, 
