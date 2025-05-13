@@ -223,6 +223,16 @@ export class PostgresStorage implements IStorage {
       .from(leads)
       .orderBy(leads.firstName, leads.lastName);
   }
+  
+  async getAllLeads(): Promise<Lead[]> {
+    // Metodo alias per compatibilità con l'interfaccia
+    return this.getLeads();
+  }
+  
+  async getLeadsCount(): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)` }).from(leads);
+    return result[0].count;
+  }
 
   async getLead(id: number): Promise<Lead | undefined> {
     const [lead] = await db.select().from(leads).where(eq(leads.id, id));
@@ -402,6 +412,16 @@ export class PostgresStorage implements IStorage {
       .from(companies)
       .orderBy(companies.name);
   }
+  
+  async getAllCompanies(): Promise<Company[]> {
+    // Metodo alias per compatibilità con l'interfaccia
+    return this.getCompanies();
+  }
+  
+  async getCompaniesCount(): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)` }).from(companies);
+    return result[0].count;
+  }
 
   async getCompany(id: number): Promise<Company | undefined> {
     // Simplified query - first get the company
@@ -468,10 +488,72 @@ export class PostgresStorage implements IStorage {
     return this.getDealsWithFilters({}); // Nessun filtro per ottenere tutti i deal
   }
   
+  async getAllDeals(): Promise<Deal[]> {
+    // Metodo alias per compatibilità con l'interfaccia
+    return this.getDeals();
+  }
+  
+  async getDealsCount(options?: { status?: string }): Promise<number> {
+    let query = db.select({ count: sql<number>`count(*)` }).from(deals);
+    
+    if (options?.status) {
+      query = query.where(eq(deals.status, options.status));
+    }
+    
+    const result = await query;
+    return result[0].count;
+  }
+  
+  async getRecentDeals(limit: number = 5): Promise<Deal[]> {
+    const dealsResult = await db.select()
+      .from(deals)
+      .orderBy(desc(deals.updatedAt))
+      .limit(limit);
+      
+    // Manually populate relations as needed
+    const result = [];
+    for (const deal of dealsResult) {
+      // Get contact
+      let contactData = null;
+      if (deal.contactId) {
+        const [contact] = await db.select().from(contacts).where(eq(contacts.id, deal.contactId));
+        contactData = contact;
+      }
+      
+      // Get company
+      let companyData = null;
+      if (deal.companyId) {
+        const [company] = await db.select().from(companies).where(eq(companies.id, deal.companyId));
+        companyData = company;
+      }
+      
+      // Get stage
+      let stageData = null;
+      if (deal.stageId) {
+        const [stage] = await db.select().from(pipelineStages).where(eq(pipelineStages.id, deal.stageId));
+        stageData = stage;
+      }
+      
+      result.push({
+        ...deal,
+        contact: contactData,
+        company: companyData,
+        stage: stageData
+      });
+    }
+    
+    return result;
+  }
+  
+  async getDealsByStageId(stageId: number): Promise<Deal[]> {
+    return this.getDealsWithFilters({ stageId });
+  }
+  
   async getDealsWithFilters(filters: {
     status?: string;
     companyId?: number;
     contactId?: number;
+    stageId?: number;
   }): Promise<Deal[]> {
     // Build query with appropriate filters
     let query = db.select().from(deals);
@@ -487,6 +569,10 @@ export class PostgresStorage implements IStorage {
     
     if (filters.contactId) {
       query = query.where(eq(deals.contactId, filters.contactId));
+    }
+    
+    if (filters.stageId) {
+      query = query.where(eq(deals.stageId, filters.stageId));
     }
     
     // Order the results
