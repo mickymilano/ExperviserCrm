@@ -357,9 +357,9 @@ export class PostgresStorage implements IStorage {
   // SYNERGIES
   async getAllSynergies(): Promise<Synergy[]> {
     try {
-      console.log("PostgresStorage.getAllSynergies: recuperando tutte le sinergie");
+      console.log("PostgresStorage.getAllSynergies: recuperando tutte le sinergie attive");
       
-      // Utilizziamo SQL nativo per avere più controllo
+      // Utilizziamo SQL nativo per avere più controllo e filtriamo solo le sinergie attive
       const result = await pool.query(`
         SELECT 
           id,
@@ -371,9 +371,11 @@ export class PostgresStorage implements IStorage {
           status,
           start_date,
           end_date,
+          is_active,
           created_at,
           updated_at
         FROM synergies
+        WHERE is_active = true
         ORDER BY created_at DESC
       `);
       
@@ -743,10 +745,13 @@ export class PostgresStorage implements IStorage {
   
   async deleteSynergy(id: number): Promise<boolean> {
     try {
-      console.log(`PostgresStorage.deleteSynergy: deleting synergy ${id}`);
+      console.log(`PostgresStorage.deleteSynergy: soft-deleting synergy ${id} (setting isActive=false)`);
       
+      // Implementa soft delete invece di una cancellazione fisica
       const result = await pool.query(`
-        DELETE FROM synergies
+        UPDATE synergies
+        SET is_active = false, 
+            updated_at = NOW()
         WHERE id = $1
       `, [id]);
       

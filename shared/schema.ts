@@ -293,6 +293,7 @@ export const synergies = pgTable('synergies', {
   status: varchar('status', { length: 50 }).default('Active'),
   startDate: date('start_date').notNull(),
   endDate: date('end_date'),
+  isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });

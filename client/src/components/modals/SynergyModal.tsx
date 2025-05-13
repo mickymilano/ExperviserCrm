@@ -69,6 +69,7 @@ interface SynergyModalProps {
   onSuccess?: () => void;
 }
 
+// DISABLED: Synergy creation only allowed in Deal context.
 export function SynergyModal({
   open,
   onOpenChange,
@@ -78,6 +79,15 @@ export function SynergyModal({
   mode = "create",
   onSuccess,
 }: SynergyModalProps) {
+  // Mostriamo un messaggio di deprecazione
+  useEffect(() => {
+    if (open) {
+      console.warn("DEPRECATED: SynergyModal è stato disabilitato. Le sinergie possono essere create solo nel contesto Deal.");
+      onOpenChange(false); // Chiudiamo automaticamente il modale
+    }
+  }, [open, onOpenChange]);
+  
+  // Mock di funzionalità disabilitata
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
