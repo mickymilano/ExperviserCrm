@@ -395,27 +395,46 @@ export class PostgresStorage implements IStorage {
   }
 
   async getContactsByCompany(companyId: number): Promise<Contact[]> {
-    // Simplified query without relational features - find contacts by areas of activity
-    const contactIds = await db
-      .select({
-        contactId: areasOfActivity.contactId
-      })
-      .from(areasOfActivity)
-      .where(eq(areasOfActivity.companyId, companyId));
-    
-    // If no contacts found, return empty array
-    if (contactIds.length === 0) {
+    try {
+      console.log(`PostgresStorage.getContactsByCompany: retrieving contacts for company ${companyId}`);
+      // Simplified query without relational features - find contacts by areas of activity
+      const contactIds = await db
+        .select({
+          contactId: areasOfActivity.contactId
+        })
+        .from(areasOfActivity)
+        .where(eq(areasOfActivity.companyId, companyId));
+      
+      console.log(`Found ${contactIds.length} contact IDs for company ${companyId}`);
+      
+      // If no contacts found, return empty array
+      if (contactIds.length === 0) {
+        return [];
+      }
+      
+      // Get all contacts with these IDs - use explicit selection to avoid column not found errors
+      const result = await db
+        .select({
+          id: contacts.id,
+          firstName: contacts.firstName,
+          lastName: contacts.lastName,
+          status: contacts.status,
+          phone: contacts.phone,
+          mobile: contacts.mobile,
+          avatar: contacts.avatar,
+          createdAt: contacts.createdAt,
+          updatedAt: contacts.updatedAt
+        })
+        .from(contacts)
+        .where(inArray(contacts.id, contactIds.map(c => c.contactId)))
+        .orderBy(contacts.firstName, contacts.lastName);
+      
+      console.log(`Retrieved ${result.length} contacts for company ${companyId}`);
+      return result;
+    } catch (error) {
+      console.error(`Error in getContactsByCompany(${companyId}):`, error);
       return [];
     }
-    
-    // Get all contacts with these IDs
-    const result = await db
-      .select()
-      .from(contacts)
-      .where(inArray(contacts.id, contactIds.map(c => c.contactId)))
-      .orderBy(contacts.firstName, contacts.lastName);
-    
-    return result;
   }
   
   // Alias per compatibilità con lo script di correzione delle relazioni
