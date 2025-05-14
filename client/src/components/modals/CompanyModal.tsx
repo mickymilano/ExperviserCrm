@@ -83,6 +83,13 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
       // Assicuriamo che name e address siano corretti
       companyData.name = data.name;           // la ragione sociale pura
       companyData.address = data.address;     // l'indirizzo completo
+      
+      // IMPORTANTE: Verifica che i campi obbligatori non siano vuoti
+      if (!companyData.name) {
+        console.error("Nome azienda mancante", data);
+        throw new Error("Il nome dell'azienda è obbligatorio");
+      }
+      
       delete companyData.fullAddress; // rimuovi fullAddress dal payload
       
       // Convert tags string to array if provided
@@ -143,11 +150,21 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
     // Log per verificare i dati inviati
     console.log("Submitting company data:", {
       name: data.name,
-      address: data.fullAddress,
+      address: data.address || data.fullAddress,
       country: data.country,
       tags: data.tags,
       notes: data.notes
     });
+    
+    // IMPORTANTE: Verifica se ci sono dati nel form prima di inviare
+    if (!data.name) {
+      toast({
+        title: "Errore di validazione",
+        description: "Il nome dell'azienda è obbligatorio",
+        variant: "destructive",
+      });
+      return;
+    }
     
     saveCompany.mutate(data);
   };
