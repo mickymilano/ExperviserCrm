@@ -177,7 +177,7 @@ export function PlacesAutocomplete({
       {error && (
         <p className="text-sm text-red-500 mt-1">{error}</p>
       )}
-      <style jsx global>{`
+      <style dangerouslySetInnerHTML={{__html: `
         /* Stili per il dropdown di Google Places Autocomplete */
         .pac-container {
           border-radius: 0.375rem;
@@ -195,7 +195,7 @@ export function PlacesAutocomplete({
         .pac-item-selected {
           background-color: #edf2f7;
         }
-      `}</style>
+      `}} />
     </div>
   );
 }

@@ -145,17 +145,27 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
               onChange={(value, placeDetails) => {
                 console.log("PlacesAutocomplete onChange triggered for company name:", { value, placeDetails });
                 
-                // Verifica se abbiamo ricevuto i dettagli del luogo
-                if (placeDetails) {
+                // Imposta sempre il valore del campo nome con il valore attuale
+                setValue("name", value, { shouldValidate: true });
+                
+                // Verifica se abbiamo ricevuto i dettagli del luogo da Google Maps
+                if (placeDetails && placeDetails.place_id) {
                   console.log("Place details received for company name:", placeDetails);
                   
-                  // Imposta il nome azienda
-                  setValue("name", placeDetails.name || value, { shouldValidate: true });
+                  // Imposta il nome azienda con il nome ufficiale dalla API
+                  if (placeDetails.name) {
+                    setValue("name", placeDetails.name, { shouldValidate: true });
+                  }
                   
                   // Se abbiamo l'indirizzo formattato, aggiornalo nei campi corrispondenti
                   if (placeDetails.formatted_address) {
                     setValue("fullAddress", placeDetails.formatted_address, { shouldValidate: true });
                     setValue("address", placeDetails.formatted_address, { shouldValidate: true });
+                    
+                    // Verifica se l'input ha già il focus, in tal caso lo togliamo per migliorare UX
+                    if (document.activeElement === document.getElementById("name")) {
+                      (document.activeElement as HTMLElement).blur();
+                    }
                   }
                   
                   // Estrae il paese se disponibile
@@ -169,10 +179,14 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
                       setValue("country", countryComponent.long_name, { shouldValidate: true });
                     }
                   }
+                  
+                  // Forza la validazione dei campi aggiornati
+                  trigger(["name", "fullAddress", "country"]);
                 }
               }}
               placeholder="Cerca aziende e attività commerciali" 
               className="w-full"
+              types={['establishment']} // Specifica che vogliamo solo aziende
             />
             {errors.name && (
               <p className="text-xs text-destructive">{errors.name.message}</p>
