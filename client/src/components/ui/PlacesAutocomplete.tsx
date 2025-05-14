@@ -62,6 +62,8 @@ export function PlacesAutocomplete({
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState<string | null>(null);
+  
+  console.log('[PlacesAutocomplete] Component RENDERED. Props received (value):', value, 'apiKey available:', !!apiKey, 'scriptLoaded:', scriptLoaded);
   const onChangeRef = useRef(onChange); // Usiamo un ref per evitare che "onChange" causi render multipli
   const onCountrySelectRef = useRef(onCountrySelect); // Lo stesso per "onCountrySelect"
 
@@ -111,15 +113,11 @@ export function PlacesAutocomplete({
   // Effetto per inizializzare l'autocomplete quando lo script è caricato
   // IMPORTANTE: Riduciamo il numero di dipendenze per evitare re-inizializzazioni frequenti
   useEffect(() => {
-    console.log('[PlacesAutocomplete] EFFECT RUNNING: Initializing/Re-initializing Autocomplete. ScriptLoaded:', 
-      scriptLoaded, 'APIKey:', !!apiKey, 'InputRef:', !!inputRef.current);
-      
-    if (!scriptLoaded || !inputRef.current || !window.google?.maps?.places) {
-      console.log("[PlacesAutocomplete] Missing dependencies for autocomplete initialization", {
-        scriptLoaded,
-        inputElement: !!inputRef.current,
-        googlePlaces: !!window.google?.maps?.places
-      });
+    console.log('[PlacesAutocomplete] Autocomplete Initialization EFFECT RUNNING. Dependencies: scriptLoaded:', 
+      scriptLoaded, 'apiKey:', !!apiKey, 'types:', types, 'inputRef.current:', !!inputRef.current);
+
+    if (!scriptLoaded || !inputRef.current || !window.google?.maps?.places || !apiKey) {
+      console.warn('[PlacesAutocomplete] ABORTING Autocomplete init: Missing dependencies.');
       return;
     }
     
@@ -128,9 +126,8 @@ export function PlacesAutocomplete({
       
       // Pulisci eventuali istanze precedenti
       if (autocompleteRef.current) {
-        console.log("[PlacesAutocomplete] Cleaning up previous instance");
-        // Rimuoviamo eventuali listener ma senza usare clearInstanceListeners
-        // che potrebbe non essere disponibile
+        console.log('[PlacesAutocomplete] Previous autocomplete instance exists, will be replaced');
+        // Non proviamo a usare clearInstanceListeners che potrebbe causare errori
       }
 
       // Configura le opzioni dell'autocomplete
@@ -152,24 +149,24 @@ export function PlacesAutocomplete({
 
       // FONDAMENTALE: Aggiungiamo il listener per l'evento place_changed
       const listener = autocomplete.addListener('place_changed', () => {
-        console.log('[PlacesAutocomplete] place_changed EVENT FIRED!'); // Log cruciale
+        console.log('[PlacesAutocomplete] place_changed EVENT DETECTED!'); // Log cruciale
         
         if (!autocompleteRef.current) {
-          console.error('[PlacesAutocomplete] autocompleteRef.current is NULL inside place_changed listener!');
+          console.error('[PlacesAutocomplete] ERROR: autocompleteRef.current is NULL/undefined inside place_changed listener!');
           return;
         }
         
         const place = autocompleteRef.current.getPlace();
-        console.log('[PlacesAutocomplete] place_changed - getPlace() result:', place);
+        console.log('[PlacesAutocomplete] place_changed - getPlace() raw result:', JSON.stringify(place, null, 2));
         
         if (!place || !place.place_id) {
-          console.warn("[PlacesAutocomplete] Invalid place selected or no place_id available");
+          console.warn('[PlacesAutocomplete] place_changed - Invalid place or no place_id. Current input value:', inputRef.current?.value);
           return;
         }
         
         // Determina il valore da utilizzare per il campo
         const valueToUse = place.name || place.formatted_address || value;
-        console.log("[PlacesAutocomplete] Using value for field:", valueToUse);
+        console.log('[PlacesAutocomplete] place_changed - Value to use for form:', valueToUse, 'Calling parent onChange...');
         
         // Invoca il callback onChange con il valore e i dettagli del luogo
         // Utilizziamo onChangeRef.current per accedere alla versione più aggiornata
@@ -191,7 +188,7 @@ export function PlacesAutocomplete({
         }
       });
       
-      console.log('[PlacesAutocomplete] place_changed listener ADDED.');
+      console.log('[PlacesAutocomplete] place_changed listener ADDED successfully.');
       
       // Cleanup al dismount
       return () => {
@@ -210,7 +207,7 @@ export function PlacesAutocomplete({
       console.error('[PlacesAutocomplete] Error initializing Google Maps Autocomplete:', err);
       setError('Impossibile inizializzare Google Maps Autocomplete');
     }
-  }, [scriptLoaded, types, apiKey]); // Rimosse dipendenze onChange, onCountrySelect, value
+  }, [scriptLoaded, apiKey, types, onChange, onCountrySelect]); // Per diagnostica, includiamo temporaneamente onChange e onCountrySelect
 
   // Gestisce l'aggiornamento manuale dell'input
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

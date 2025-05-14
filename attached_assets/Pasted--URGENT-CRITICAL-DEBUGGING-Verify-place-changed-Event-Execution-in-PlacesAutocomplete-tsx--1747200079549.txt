@@ -1,0 +1,102 @@
+**URGENT & CRITICAL DEBUGGING: Verify `place_changed` Event Execution in `PlacesAutocomplete.tsx`**
+
+**To: Replit AI Development Agent**
+**From: Product Owner**
+**Subject: Google Maps Autocomplete Selection STILL NOT WORKING - Need Event Flow Verification.**
+
+**Context:**
+The code for `client/src/components/ui/PlacesAutocomplete.tsx` (which you previously provided) appears to include the `autocomplete.addListener('place_changed', ...)` logic. However, user selection of a Google Maps suggestion (via mouse click or keyboard) in the "Company Name" field of `CompanyModal.tsx` still does NOT populate the form fields.
+
+**We need to meticulously trace the execution flow within `PlacesAutocomplete.tsx` to understand why the selection is not being processed.**
+
+**Mandatory Diagnostic Actions (Modify `PlacesAutocomplete.tsx` to add detailed logging):**
+
+1.  **Add/Verify Detailed Logging in `PlacesAutocomplete.tsx`:**
+    * Ensure the following `console.log` statements (or equivalent) are present at these specific locations within `PlacesAutocomplete.tsx`. If they exist, ensure they are not commented out. If they don't exist, **add them exactly as shown**:
+
+    ```typescript
+    // Inside the main PlacesAutocomplete component function, at the very top:
+    console.log('[PlacesAutocomplete] Component RENDERED. Props received (value):', value, 'apiKey available:', !!apiKey, 'scriptLoaded:', scriptLoaded);
+
+    // Inside the useEffect hook that initializes the Google Maps Autocomplete:
+    useEffect(() => {
+      console.log('[PlacesAutocomplete] Autocomplete Initialization EFFECT RUNNING. Dependencies: scriptLoaded:', scriptLoaded, 'apiKey:', !!apiKey, 'types:', types, 'inputRef.current:', !!inputRef.current);
+
+      if (!scriptLoaded || !inputRef.current || !window.google?.maps?.places || !apiKey) {
+        console.warn('[PlacesAutocomplete] ABORTING Autocomplete init: Missing dependencies.');
+        return;
+      }
+      
+      try {
+        // ... (options setup)
+        const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, options);
+        autocompleteRef.current = autocomplete;
+        console.log('[PlacesAutocomplete] Autocomplete instance CREATED:', autocompleteRef.current);
+
+        // Remove any pre-existing listeners to avoid duplicates if effect re-runs (important!)
+        if (window.google?.maps?.event && autocompleteRef.current) {
+           window.google.maps.event.clearInstanceListeners(autocompleteRef.current); // Clear all listeners for this instance
+           console.log('[PlacesAutocomplete] Cleared previous instance listeners for autocomplete.');
+        }
+
+        const listener = autocomplete.addListener('place_changed', () => {
+          console.log('[PlacesAutocomplete] place_changed EVENT DETECTED!'); // VERY IMPORTANT LOG
+
+          if (!autocompleteRef.current) {
+            console.error('[PlacesAutocomplete] ERROR: autocompleteRef.current is NULL/undefined inside place_changed listener!');
+            return;
+          }
+          
+          const place = autocompleteRef.current.getPlace();
+          console.log('[PlacesAutocomplete] place_changed - getPlace() raw result:', JSON.stringify(place, null, 2)); // Log the full place object
+
+          if (!place || !place.place_id) {
+            console.warn('[PlacesAutocomplete] place_changed - Invalid place or no place_id. Current input value:', inputRef.current?.value);
+            // Potentially call onChange with only the input value if allowing non-Google entries:
+            // onChange(inputRef.current?.value || '', undefined); 
+            return;
+          }
+          
+          const valueToUse = place.name || place.formatted_address || value;
+          console.log('[PlacesAutocomplete] place_changed - Value to use for form:', valueToUse, 'Calling parent onChange...');
+          onChange(valueToUse, place); // This calls the onChange in CompanyModal
+        });
+        console.log('[PlacesAutocomplete] place_changed listener ADDED successfully.');
+
+        return () => {
+          if (window.google?.maps?.event && listener) { // 'listener' here refers to the one created in this effect scope
+            console.log('[PlacesAutocomplete] CLEANUP: Removing place_changed listener.');
+            window.google.maps.event.removeListener(listener);
+          }
+          // It's also good practice to clear all listeners on the autocomplete instance itself
+          // if (autocompleteRef.current && window.google?.maps?.event) {
+          //   window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
+          // }
+        };
+      } catch (err) {
+        console.error('[PlacesAutocomplete] Error during Autocomplete initialization or listener setup:', err);
+      }
+    // CRITICAL: Review and stabilize this dependency array. 
+    // onChange, onCountrySelect should be memoized in parent (CompanyModal) with useCallback.
+    // 'value' prop should ideally not trigger re-initialization if possible.
+    // For now, use a minimal stable set. If types/apiKey can change and require re-init, keep them.
+    }, [scriptLoaded, apiKey, types, onChange, onCountrySelect]); // Temporarily keep onChange/onCountrySelect to see if they cause re-runs
+                                                              // but AI should be aware they need to be stable refs.
+    ```
+
+2.  **Perform Test and Provide Logs (AI Self-Test MANDATORY):**
+    * After ensuring these logs are in place:
+        a. Open the browser's developer console.
+        b. Open the "Add New Company" modal.
+        c. Type a partial company name (e.g., "gruppo") into the "Company Name" field.
+        d. **Attempt to select one of the suggestions from the Google Maps dropdown using a MOUSE CLICK.**
+        e. **Attempt to select one of the suggestions using KEYBOARD (arrow keys + Enter).**
+    * **Output Required:**
+        1.  The **complete, updated code for `client/src/components/ui/PlacesAutocomplete.tsx`** with all the specified `console.log` statements added.
+        2.  **ALL browser console logs** that start with `[PlacesAutocomplete]` generated from the moment you open the modal until after you attempt selection (both mouse and keyboard). We MUST see if "place_changed EVENT DETECTED!" appears.
+        3.  Based on these logs, explicitly state:
+            * Does the "place_changed EVENT DETECTED!" log appear when you click a suggestion?
+            * Does it appear when you select a suggestion with the keyboard?
+            * If it appears, what is the content of the `getPlace() raw result` log?
+
+**Focus EXCLUSIVELY on this diagnostic task for `PlacesAutocomplete.tsx`. Do NOT make other changes. The goal is to understand the event flow for selection.**
