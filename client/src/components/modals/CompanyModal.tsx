@@ -191,13 +191,6 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
                   
                   // Forza la validazione di tutti i campi aggiornati
                   trigger(["name", "fullAddress", "address", "country"]);
-                  
-                  // Toglie il focus dall'input per migliorare UX
-                  setTimeout(() => {
-                    if (document.activeElement instanceof HTMLElement) {
-                      document.activeElement.blur();
-                    }
-                  }, 100);
                 }
               }}
               placeholder="Cerca aziende e attività commerciali" 
