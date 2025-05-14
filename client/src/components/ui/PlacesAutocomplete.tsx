@@ -172,48 +172,70 @@ export function PlacesAutocomplete({
       console.log("[PlacesAutocomplete] Autocomplete instance CREATED:", autocompleteRef.current);
       
       // Gestione click/touch sul container del dropdown
-      // Aggiungi un gestore di eventi globale per catturare tutti i click sui suggerimenti
-      const clickHandler = (e: Event) => {
+      // Aggiungi un gestore di eventi globale per catturare tutti i click/touch sui suggerimenti
+      const handlePacEvent = (e: Event) => {
         const target = e.target as HTMLElement;
         const isPacItem = target.closest('.pac-item');
         const isPacContainer = target.closest('.pac-container');
         
         if (isPacItem || isPacContainer) {
+          // È importante prevenire il comportamento predefinito per i dispositivi touchscreen
           e.preventDefault();
           e.stopPropagation();
           
-          // Evita che l'evento di click possa chiudere il modal
+          // Evita che l'evento di click/touch possa chiudere il modal
           e.stopImmediatePropagation();
           
-          console.log('[PlacesAutocomplete] Intercettato click su suggerimento:', target);
+          console.log(`[PlacesAutocomplete] Intercettato ${e.type} su suggerimento:`, target);
           
           if (isPacItem && autocompleteRef.current) {
             try {
-              // @ts-ignore
-              window.google.maps.event.trigger(autocompleteRef.current, 'place_changed');
+              console.log(`[PlacesAutocomplete] Attivando place_changed per evento ${e.type}`);
+              
+              // Ritardiamo leggermente l'attivazione per i dispositivi touch
+              setTimeout(() => {
+                if (autocompleteRef.current) {
+                  // @ts-ignore
+                  window.google.maps.event.trigger(autocompleteRef.current, 'place_changed');
+                }
+              }, 50);
             } catch (err) {
-              console.error('[PlacesAutocomplete] Error triggering place_changed on click:', err);
+              console.error(`[PlacesAutocomplete] Error triggering place_changed on ${e.type}:`, err);
             }
+          }
+          
+          // Per i dispositivi touch, chiudi manualmente il dropdown dopo la selezione
+          if (e.type === 'touchstart' || e.type === 'touchend') {
+            setTimeout(() => {
+              if (inputRef.current) {
+                inputRef.current.blur();
+              }
+            }, 300);
           }
         }
       };
       
-      // Aggiungi il listener globale
-      document.addEventListener('click', clickHandler, true);
-      document.addEventListener('touchend', clickHandler as EventListener, true);
+      // Aggiungi i listener globali per coprire tutti i tipi di interazioni
+      document.addEventListener('click', handlePacEvent, true);
+      document.addEventListener('touchstart', handlePacEvent, true);
+      document.addEventListener('touchend', handlePacEvent, true);
+      document.addEventListener('mousedown', handlePacEvent, true);
       
       // Pulisci i listener quando il componente viene smontato
       cleanupRef.current.push(() => {
-        document.removeEventListener('click', clickHandler, true);
-        document.removeEventListener('touchend', clickHandler, true);
+        document.removeEventListener('click', handlePacEvent, true);
+        document.removeEventListener('touchstart', handlePacEvent, true);
+        document.removeEventListener('touchend', handlePacEvent, true);
+        document.removeEventListener('mousedown', handlePacEvent, true);
       });
       
-      setTimeout(() => {
+      // Aggiungi gestori eventi direttamente al container .pac-container quando viene creato
+      const setupPacContainerListeners = () => {
         const container = document.querySelector('.pac-container');
         if (container) {
-          console.log('[PlacesAutocomplete] Container trovato, aggiungo gestori eventi');
+          console.log('[PlacesAutocomplete] Container trovato, aggiungo gestori eventi specifici');
           
-          // Aggiungi il gestore al container stesso (aggiuntivo rispetto al gestore globale)
+          // Listener per il click
           container.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -221,32 +243,54 @@ export function PlacesAutocomplete({
             
             const item = (e.target as HTMLElement).closest('.pac-item');
             if (item && autocompleteRef.current) {
-              try {
-                // @ts-ignore
-                window.google.maps.event.trigger(autocompleteRef.current, 'place_changed');
-              } catch (err) {
-                console.error('[PlacesAutocomplete] Error triggering place_changed on click:', err);
-              }
+              console.log('[PlacesAutocomplete] Click su .pac-item, trigger place_changed');
+              setTimeout(() => {
+                if (autocompleteRef.current) {
+                  // @ts-ignore
+                  window.google.maps.event.trigger(autocompleteRef.current, 'place_changed');
+                  // Chiudi il dropdown manualmente 
+                  if (inputRef.current) inputRef.current.blur();
+                }
+              }, 50);
             }
           }, true);
           
-          container.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            e.stopImmediatePropagation();
-            
-            const item = (e.target as HTMLElement).closest('.pac-item');
-            if (item && autocompleteRef.current) {
-              try {
-                // @ts-ignore
-                window.google.maps.event.trigger(autocompleteRef.current, 'place_changed');
-              } catch (err) {
-                console.error('[PlacesAutocomplete] Error triggering place_changed on touchend:', err);
+          // Listener specifici per i dispositivi touch
+          ['touchstart', 'touchend'].forEach(eventType => {
+            container.addEventListener(eventType, (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              e.stopImmediatePropagation();
+              
+              const item = (e.target as HTMLElement).closest('.pac-item');
+              if (item && autocompleteRef.current) {
+                console.log(`[PlacesAutocomplete] ${eventType} su .pac-item, trigger place_changed`);
+                setTimeout(() => {
+                  if (autocompleteRef.current) {
+                    // @ts-ignore
+                    window.google.maps.event.trigger(autocompleteRef.current, 'place_changed');
+                    // Esplicita chiusura e blur per tablet/mobile
+                    if (inputRef.current) inputRef.current.blur();
+                  }
+                }, 50);
               }
-            }
-          }, true);
+            }, true);
+          });
+          
+          // Previeni che il container si chiuda immediatamente sui dispositivi touch
+          container.addEventListener('mousedown', (e) => e.stopPropagation(), true);
         }
-      }, 1000); // Attendi che il container venga creato
+      };
+      
+      // Controlliamo periodicamente il container per assicurarci di aggiungere i listener
+      const containerCheckInterval = setInterval(setupPacContainerListeners, 500);
+      setTimeout(() => {
+        clearInterval(containerCheckInterval);
+        setupPacContainerListeners(); // Un'ultima chiamata dopo 2 secondi
+      }, 2000);
+      
+      // Pulisci l'interval quando il componente viene smontato
+      cleanupRef.current.push(() => clearInterval(containerCheckInterval));
 
       // FONDAMENTALE: Aggiungiamo il listener per l'evento place_changed
       const listener = autocomplete.addListener('place_changed', () => {
@@ -259,18 +303,34 @@ export function PlacesAutocomplete({
         }
         
         const place = autocompleteRef.current.getPlace();
-        console.log('[PlacesAutocomplete] place_changed - getPlace() raw result:', JSON.stringify(place, null, 2));
+        console.log('[PlacesAutocomplete] place_changed - getPlace() raw result:', place ? 'Place object ricevuto' : 'Nessun place');
         
         if (!place || !place.place_id) {
           console.warn('[PlacesAutocomplete] place_changed - Invalid place or no place_id. Current input value:', inputRef.current?.value);
           return;
         }
         
+        // Importante: prevenire qualsiasi evento di navigazione o click in corso
+        // che potrebbe chiudere il modale, specialmente su tablet/mobile
+        try {
+          // Per i dispositivi mobile/tablet, proteggiamo dalle interazioni indesiderate
+          setTimeout(() => {
+            // Manteniamo il focus sul nostro input per evitare problemi UI
+            if (inputRef.current) {
+              console.log('[PlacesAutocomplete] Assicuro focus corretto per prevenire chiusure indesiderate');
+              // Diamo il focus temporaneamente al nostro input
+              inputRef.current.focus();
+            }
+          }, 50);
+        } catch (err) {
+          console.error('[PlacesAutocomplete] Errore gestione eventi focus:', err);
+        }
+        
         // Per la barra di ricerca, mostra sia il nome che l'indirizzo separati da una virgola
         const valueToUse = place.name 
           ? `${place.name}${place.formatted_address ? `, ${place.formatted_address}` : ''}`
           : (place.formatted_address || value);
-        console.log('[PlacesAutocomplete] place_changed - Value to use for form:', valueToUse, 'Calling parent onChange...');
+        console.log('[PlacesAutocomplete] place_changed - Value to use for form:', valueToUse);
         
         // Aggiorna prima il valore interno per mostrarlo nell'input
         setInternalValue(valueToUse);
@@ -282,12 +342,23 @@ export function PlacesAutocomplete({
           
           // Applica il valore direttamente senza blur o altri eventi che potrebbero chiudere il modal
           try {
-            console.log('[PlacesAutocomplete] place_changed - Chiamando onChangeRef con:', valueToUse);
-            // PREVENZIONE CHIUSURA: utilizziamo setTimeout per ritardare l'aggiornamento
+            // Utilizziamo un timeout più lungo per i dispositivi touch/mobile
+            // per assicurarci che l'elaborazione avvenga dopo che tutti gli eventi touch sono completati
+            // Per dispositivi mobile usiamo un timeout ancora più lungo (500ms)
+            const isMobile = window.matchMedia('(max-width: 768px)').matches || ('ontouchstart' in window);
+            const timeout = isMobile ? 500 : 100;
+            
+            console.log(`[PlacesAutocomplete] Chiamando onChange con ${timeout}ms delay (isMobile: ${isMobile})`);
             setTimeout(() => {
+              // Prima di chiamare il callback, assicuriamoci che il valore sia visibile nell'input
+              if (inputRef.current) {
+                inputRef.current.value = valueToUse;
+              }
+              
+              // Ora chiamiamo il callback che aggiorna il valore nel form
               onChangeRef.current(valueToUse, place);
               console.log('[PlacesAutocomplete] onChange callback eseguito con successo');
-            }, 0);
+            }, timeout);
           } catch(err) {
             console.error('[PlacesAutocomplete] Errore in onChange:', err);
           }
@@ -369,17 +440,36 @@ export function PlacesAutocomplete({
           box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
           z-index: 9999 !important;
           pointer-events: auto !important;
+          touch-action: manipulation !important;
         }
         .pac-item {
-          padding: 0.5rem;
+          padding: 0.75rem 0.5rem !important;
           cursor: pointer !important;
           pointer-events: auto !important;
+          touch-action: manipulation !important;
+          line-height: 1.5 !important;
+          min-height: 44px !important; /* Per target touch più grandi su mobile/tablet */
+          display: flex !important;
+          align-items: center !important;
         }
-        .pac-item:hover {
-          background-color: #f7fafc;
+        .pac-item:hover, .pac-item:active, .pac-item:focus {
+          background-color: #f7fafc !important;
         }
         .pac-item-selected {
-          background-color: #edf2f7;
+          background-color: #edf2f7 !important;
+        }
+        /* Miglioramenti per mobile/tablet */
+        @media (max-width: 768px) {
+          .pac-item {
+            padding: 1rem 0.5rem !important;
+            min-height: 54px !important;
+          }
+          .pac-container {
+            width: auto !important;
+            max-width: 90vw !important;
+            top: auto !important;
+            left: 5vw !important;
+          }
         }
       `}} />
     </div>
