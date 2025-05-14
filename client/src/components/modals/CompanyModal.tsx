@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -44,6 +44,17 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
   const queryClient = useQueryClient();
   const [tagsInput, setTagsInput] = useState(initialData?.tags ? initialData.tags.join(", ") : "");
   const isEditMode = !!initialData;
+  
+  // Gestione speciale per evitare che il dialogo si chiuda quando si seleziona un elemento di Google Places
+  useEffect(() => {
+    const handler = (e: PointerEvent) => {
+      if ((e.target as HTMLElement).closest('.pac-container')) {
+        e.stopPropagation();
+      }
+    };
+    document.addEventListener('pointerdown', handler, true);
+    return () => document.removeEventListener('pointerdown', handler, true);
+  }, []);
 
   const { register, handleSubmit, reset, setValue, watch, trigger, formState: { errors } } = useForm<CompanyFormData>({
     resolver: zodResolver(companySchema),
