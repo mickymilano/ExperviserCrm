@@ -128,7 +128,13 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      // Evita la chiusura accidentale quando si seleziona un elemento dall'autocomplete
+      if (document.querySelector('.pac-container')) {
+        return;
+      }
+      onOpenChange(isOpen);
+    }}>
       <DialogContent className="overflow-visible">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">

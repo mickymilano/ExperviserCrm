@@ -200,6 +200,7 @@ export function PlacesAutocomplete({
 
       // FONDAMENTALE: Aggiungiamo il listener per l'evento place_changed
       const listener = autocomplete.addListener('place_changed', () => {
+        // Non possiamo usare stopPropagation qui perchè l'evento place_changed non fornisce un evento DOM
         console.log('[PlacesAutocomplete] place_changed EVENT DETECTED!'); // Log cruciale
         
         if (!autocompleteRef.current) {
@@ -223,7 +224,11 @@ export function PlacesAutocomplete({
         // Utilizziamo onChangeRef.current per accedere alla versione più aggiornata
         if (onChangeRef.current) {
           console.log("[PlacesAutocomplete] Calling onChange callback with place data");
-          onChangeRef.current(valueToUse, place);
+          
+          // Usa setTimeout per evitare che l'evento si propaghi immediatamente
+          setTimeout(() => {
+            onChangeRef.current(valueToUse, place);
+          }, 100);
         }
         
         // Gestisce il callback per il paese se specificato
@@ -269,7 +274,11 @@ export function PlacesAutocomplete({
   };
 
   return (
-    <div className="places-autocomplete relative">
+    <div 
+      className="places-autocomplete relative"
+      onMouseDown={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
+    >
       <Input
         ref={inputRef}
         id={id}
@@ -278,6 +287,8 @@ export function PlacesAutocomplete({
         className={`${className}`}
         aria-label={placeholder}
         onChange={handleInputChange}
+        onMouseDown={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
         autoComplete="off"
       />
       {error && (
