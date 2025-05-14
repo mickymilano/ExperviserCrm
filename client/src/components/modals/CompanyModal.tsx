@@ -80,17 +80,19 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
       // Prepare company data
       const companyData: any = { ...data };
       
-      // Assicuriamo che name e address siano corretti
+      // Mantieni i valori originali
       companyData.name = data.name;           // la ragione sociale pura
       companyData.address = data.address;     // l'indirizzo completo
       
-      // IMPORTANTE: Verifica che i campi obbligatori non siano vuoti
-      if (!companyData.name) {
-        console.error("Nome azienda mancante", data);
-        throw new Error("Il nome dell'azienda è obbligatorio");
+      // Se manca l'indirizzo ma abbiamo fullAddress, utilizzalo
+      if (!companyData.address && data.fullAddress) {
+        companyData.address = data.fullAddress;
       }
       
-      delete companyData.fullAddress; // rimuovi fullAddress dal payload
+      console.log("Dati finali azienda:", companyData);
+      
+      // Rimuovi il campo fullAddress che non esiste nel database
+      delete companyData.fullAddress;
       
       // Convert tags string to array if provided
       if (tagsInput.trim()) {
