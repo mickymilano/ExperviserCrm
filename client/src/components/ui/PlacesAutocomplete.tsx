@@ -149,6 +149,7 @@ export function PlacesAutocomplete({
       inputRef.current!.addEventListener('keydown', (e: KeyboardEvent) => {
         if (e.key === 'Enter' || e.key === 'Tab') {
           e.preventDefault();
+          e.stopPropagation();
           if (autocompleteRef.current) {
             try {
               // @ts-ignore
@@ -168,6 +169,8 @@ export function PlacesAutocomplete({
         const container = document.querySelector('.pac-container');
         if (container) {
           container.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             const item = (e.target as HTMLElement).closest('.pac-item');
             if (item && autocompleteRef.current) {
               // Forza il place_changed quando clicchi/tocchi un item
@@ -180,6 +183,8 @@ export function PlacesAutocomplete({
             }
           });
           container.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             const item = (e.target as HTMLElement).closest('.pac-item');
             if (item && autocompleteRef.current) {
               try {
@@ -264,17 +269,7 @@ export function PlacesAutocomplete({
   };
 
   return (
-    <div 
-      className="places-autocomplete relative"
-      onMouseDown={(e) => {
-        e.stopPropagation();
-        e.preventDefault();
-      }}
-      onPointerDown={(e) => {
-        e.stopPropagation();
-        e.preventDefault();
-      }}
-    >
+    <div className="places-autocomplete relative">
       <Input
         ref={inputRef}
         id={id}
@@ -283,10 +278,6 @@ export function PlacesAutocomplete({
         className={`${className}`}
         aria-label={placeholder}
         onChange={handleInputChange}
-        onMouseDown={(e) => e.stopPropagation()} // Previene chiusura modale su click o selezione
-        onPointerDown={(e) => e.stopPropagation()} // Supporto aggiuntivo per eventi touch
-        onClick={(e) => e.stopPropagation()} // Previene propagazione su click
-        onSelect={(e) => e.stopPropagation()} // Previene propagazione su selezione
         autoComplete="off"
       />
       {error && (

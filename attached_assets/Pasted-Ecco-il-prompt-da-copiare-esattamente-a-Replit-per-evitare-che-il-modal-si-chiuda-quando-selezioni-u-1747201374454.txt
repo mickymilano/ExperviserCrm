@@ -1,0 +1,62 @@
+Ecco il prompt da copiare esattamente a Replit per evitare che il modal si chiuda quando selezioni una voce:
+
+Ciao Replit,
+
+per favore applica **solo** queste modifiche a `client/src/components/ui/PlacesAutocomplete.tsx` e al suo utilizzo in `CompanyModal.tsx`:
+
+---
+
+1. **Rimuovi il blur automatico**  
+   Nel listener di `place_changed` elimina del tutto questo blocco:
+   ```ts
+   // togli il blur dall'activeElement
+   setTimeout(() => document.activeElement instanceof HTMLElement && document.activeElement.blur(), 100);
+
+Senza il blur, il click rimane all’interno del modal e non lo chiude.
+	2.	Blocca la propagazione del click sul dropdown
+Nella sezione in cui hai aggiunto:
+
+container.addEventListener('click', (e) => {
+  /* ... */
+  google.maps.event.trigger(autocompleteRef.current, 'place_changed');
+});
+
+Modificalo così, per impedire che il click “esca” dal dropdown e chiuda il dialog:
+
+container.addEventListener('click', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  const item = (e.target as HTMLElement).closest('.pac-item');
+  if (item && autocompleteRef.current) {
+    google.maps.event.trigger(autocompleteRef.current, 'place_changed');
+  }
+});
+container.addEventListener('touchend', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  const item = (e.target as HTMLElement).closest('.pac-item');
+  if (item && autocompleteRef.current) {
+    google.maps.event.trigger(autocompleteRef.current, 'place_changed');
+  }
+});
+
+
+	3.	Assicurati che il keydown non chiuda il modal
+Nel listener su inputRef.current per Enter/Tab, aggiungi e.stopPropagation():
+
+inputRef.current!.addEventListener('keydown', (e: KeyboardEvent) => {
+  if (e.key === 'Enter' || e.key === 'Tab') {
+    e.preventDefault();
+    e.stopPropagation();
+    if (autocompleteRef.current) {
+      google.maps.event.trigger(autocompleteRef.current, 'place_changed');
+    }
+  }
+});
+
+
+	4.	Non modificare altro
+Restituisci qui solo il diff o il file PlacesAutocomplete.tsx aggiornato con le parti sopra integrate.
+
+Grazie!
+
