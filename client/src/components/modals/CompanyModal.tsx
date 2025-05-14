@@ -200,21 +200,25 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
               onChange={(value, placeDetails) => {
                 console.log("PlacesAutocomplete onChange triggered for company name:", { value, placeDetails });
                 
+                // Se non ci sono dettagli del luogo, aggiorna solo il nome
+                if (!placeDetails) {
+                  setValue("name", value, { shouldValidate: false });
+                  return;
+                }
+                
+                // Se ci sono dettagli del luogo, estrai le informazioni
                 if (placeDetails?.name) {
                   // SOLO la ragione sociale va su name
-                  setValue("name", placeDetails.name, { shouldValidate: true });
+                  setValue("name", placeDetails.name, { shouldValidate: false });
                   console.log("Company name set to:", placeDetails.name);
                 }
                 
                 if (placeDetails?.formatted_address) {
                   // L'indirizzo completo va su address (e su fullAddress, se usate entrambi)
-                  setValue("address", placeDetails.formatted_address, { shouldValidate: true });
-                  setValue("fullAddress", placeDetails.formatted_address, { shouldValidate: true });
+                  setValue("address", placeDetails.formatted_address, { shouldValidate: false });
+                  setValue("fullAddress", placeDetails.formatted_address, { shouldValidate: false });
                   console.log("Address set to:", placeDetails.formatted_address);
                 }
-                
-                // Ricarica la validazione su entrambi i campi
-                trigger(["name", "address", "fullAddress"]);
                 
                 // Estrae il paese se disponibile
                 if (placeDetails?.address_components) {
@@ -224,20 +228,27 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
                   
                   if (countryComponent) {
                     console.log("Country found:", countryComponent.long_name);
-                    setValue("country", countryComponent.long_name, { shouldValidate: true });
+                    setValue("country", countryComponent.long_name, { shouldValidate: false });
                   }
-                  
-                  // Commento: la città non è presente nello schema
-                  const cityComponent = placeDetails.address_components.find(component => 
-                    component.types.includes("locality") || 
-                    component.types.includes("administrative_area_level_3")
-                  );
-                  
-                  if (cityComponent) {
-                    console.log("City found:", cityComponent.long_name);
-                    // NON impostiamo la città perché non è nello schema e causa errori
-                    // setValue("city", cityComponent.long_name, { shouldValidate: true });
-                  }
+                }
+                
+                // Ricarica la validazione su tutti i campi solo alla fine
+                // per evitare validazioni parziali che potrebbero creare problemi
+                setTimeout(() => {
+                  trigger(["name", "address", "fullAddress", "country"]);
+                }, 100);
+                
+                // Commento: la città non è presente nello schema
+                const cityComponent = placeDetails.address_components.find(component => 
+                  component.types.includes("locality") || 
+                  component.types.includes("administrative_area_level_3")
+                );
+                
+                if (cityComponent) {
+                  console.log("City found:", cityComponent.long_name);
+                  // NON impostiamo la città perché non è nello schema e causa errori
+                  // setValue("city", cityComponent.long_name, { shouldValidate: false });
+                }
                 }
                 
                 // Forza la validazione di tutti i campi aggiornati
