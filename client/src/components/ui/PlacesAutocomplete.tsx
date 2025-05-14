@@ -123,6 +123,21 @@ export function PlacesAutocomplete({
     console.log('[PlacesAutocomplete] Autocomplete Initialization EFFECT RUNNING. Dependencies: scriptLoaded:', 
       scriptLoaded, 'apiKey:', !!apiKey, 'types:', types, 'inputRef.current:', !!inputRef.current);
 
+    // Pulizia di eventuali container esistenti per evitare errori di runtime
+    try {
+      const existingContainers = document.querySelectorAll('.pac-container');
+      if (existingContainers && existingContainers.length > 0) {
+        existingContainers.forEach(container => {
+          if (container && container.parentNode) {
+            container.parentNode.removeChild(container);
+          }
+        });
+        console.log('[PlacesAutocomplete] Removed existing PAC containers during initialization');
+      }
+    } catch (err) {
+      console.error('[PlacesAutocomplete] Error cleaning up existing PAC containers:', err);
+    }
+
     if (!scriptLoaded || !inputRef.current || !window.google?.maps?.places || !apiKey) {
       console.warn('[PlacesAutocomplete] ABORTING Autocomplete init: Missing dependencies.');
       return;
@@ -131,10 +146,20 @@ export function PlacesAutocomplete({
     try {
       console.log("[PlacesAutocomplete] Initializing Google Maps Autocomplete with types:", types);
       
-      // Pulisci eventuali istanze precedenti
+      // Pulisci eventuali istanze precedenti in modo più sicuro
       if (autocompleteRef.current) {
-        console.log('[PlacesAutocomplete] Previous autocomplete instance exists, will be replaced');
-        // Non proviamo a usare clearInstanceListeners che potrebbe causare errori
+        console.log('[PlacesAutocomplete] Previous autocomplete instance exists, will be replaced safely');
+        try {
+          // Tentiamo una pulizia più approfondita se disponibile
+          if (window.google?.maps?.event && autocompleteRef.current) {
+            // @ts-ignore
+            window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
+          }
+          // Impostiamo esplicitamente a null
+          autocompleteRef.current = null;
+        } catch (cleanupErr) {
+          console.warn('[PlacesAutocomplete] Error during previous instance cleanup:', cleanupErr);
+        }
       }
 
       // Configura le opzioni dell'autocomplete
@@ -402,35 +427,54 @@ export function PlacesAutocomplete({
   useEffect(() => {
     // Restituisce una funzione di cleanup che sarà eseguita quando il componente viene smontato
     return () => {
-      console.log('[PlacesAutocomplete] EXECUTING MASTER CLEANUP for mobile/tablet compatibility');
+      console.log('[PlacesAutocomplete] EXECUTING FINAL CLEANUP for mobile/tablet compatibility');
       
-      // Rimuove tutte le funzioni di cleanup registrate
-      cleanupRef.current.forEach(cleanupFn => {
-        try {
-          cleanupFn();
-        } catch (err) {
-          console.error('[PlacesAutocomplete] Error during cleanup:', err);
-        }
-      });
+      // Verifiche di sicurezza e controllo di cleanupRef.current
+      if (cleanupRef.current && Array.isArray(cleanupRef.current)) {
+        // Salviamo una copia delle funzioni di cleanup e poi svuotiamo l'array
+        // per evitare pulizie multiple o problemi di sincronizzazione
+        const functionsToClean = [...cleanupRef.current];
+        cleanupRef.current = [];
+        
+        // Esecuzione sicura delle funzioni di cleanup
+        functionsToClean.forEach(cleanupFn => {
+          if (typeof cleanupFn === 'function') {
+            try {
+              cleanupFn();
+            } catch (err) {
+              console.error('[PlacesAutocomplete] Error during cleanup function:', err);
+            }
+          }
+        });
+      }
       
-      // Pulisce i riferimenti
-      autocompleteRef.current = null;
-      
-      // Pulisce tutti i gestori di eventi Google Maps rimasti
-      if (window.google?.maps?.event) {
-        try {
-          // Pulisce eventuali gestori di eventi globali rimasti
-          document.querySelectorAll('.pac-container').forEach(container => {
-            container.remove();
+      // Rimozione dei container PAC con controllo per evitare errori
+      try {
+        const containers = document.querySelectorAll('.pac-container');
+        if (containers && containers.length > 0) {
+          containers.forEach(container => {
+            try {
+              if (container && container.parentNode) {
+                container.parentNode.removeChild(container);
+              }
+            } catch (removeErr) {
+              // Ignoriamo errori specifici di rimozione
+            }
           });
-          
-          console.log('[PlacesAutocomplete] Removed pac-container elements and cleaned up event handlers');
-        } catch (err) {
-          console.error('[PlacesAutocomplete] Error cleaning up Google Maps elements:', err);
+          console.log('[PlacesAutocomplete] Removed PAC containers');
         }
+      } catch (err) {
+        console.error('[PlacesAutocomplete] Error during PAC container cleanup:', err);
+      }
+      
+      // Pulizia sicura del riferimento all'autocomplete
+      try {
+        autocompleteRef.current = null;
+      } catch (err) {
+        // Ignoriamo eventuali errori
       }
     };
-  }, []); // Dipendenze vuote eseguito solo al mount/unmount
+  }, []); // Dipendenze vuote = viene eseguito solo al mount/unmount
   
   // Gestisce l'aggiornamento manuale dell'input
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
