@@ -238,21 +238,19 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
                   trigger(["name", "address", "fullAddress", "country"]);
                 }, 100);
                 
-                // Commento: la città non è presente nello schema
-                const cityComponent = placeDetails.address_components.find(component => 
-                  component.types.includes("locality") || 
-                  component.types.includes("administrative_area_level_3")
-                );
-                
-                if (cityComponent) {
-                  console.log("City found:", cityComponent.long_name);
-                  // NON impostiamo la città perché non è nello schema e causa errori
-                  // setValue("city", cityComponent.long_name, { shouldValidate: false });
+                // Commento: verifica se abbiamo informazioni sulla città
+                if (placeDetails.address_components) {
+                  const cityComponent = placeDetails.address_components.find(component => 
+                    component.types.includes("locality") || 
+                    component.types.includes("administrative_area_level_3")
+                  );
+                  
+                  if (cityComponent) {
+                    console.log("City found:", cityComponent.long_name);
+                    // NON impostiamo la città perché non è nello schema e causa errori
+                    // setValue("city", cityComponent.long_name, { shouldValidate: false });
+                  }
                 }
-                }
-                
-                // Forza la validazione di tutti i campi aggiornati
-                trigger(["name", "fullAddress", "address", "country"]);
               }}
               placeholder="Cerca aziende e attività commerciali" 
               className="w-full"
