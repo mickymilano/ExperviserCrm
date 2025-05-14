@@ -257,6 +257,8 @@ export function PlacesAutocomplete({
 
   // Gestisce l'aggiornamento manuale dell'input
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Evita che la selezione del testo chiuda il modale
+    e.stopPropagation();
     const newValue = e.target.value;
     onChange(newValue);
   };
@@ -271,6 +273,8 @@ export function PlacesAutocomplete({
         className={`${className}`}
         aria-label={placeholder}
         onChange={handleInputChange}
+        onMouseDown={(e) => e.stopPropagation()} // Previene chiusura modale su click o selezione
+        onPointerDown={(e) => e.stopPropagation()} // Supporto aggiuntivo per eventi touch
         autoComplete="off"
       />
       {error && (
