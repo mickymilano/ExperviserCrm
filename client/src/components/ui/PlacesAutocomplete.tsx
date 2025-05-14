@@ -66,6 +66,7 @@ export function PlacesAutocomplete({
   console.log('[PlacesAutocomplete] Component RENDERED. Props received (value):', value, 'apiKey available:', !!apiKey, 'scriptLoaded:', scriptLoaded);
   const onChangeRef = useRef(onChange); // Usiamo un ref per evitare che "onChange" causi render multipli
   const onCountrySelectRef = useRef(onCountrySelect); // Lo stesso per "onCountrySelect"
+  const cleanupRef = useRef<Array<() => void>>([]) // Array di funzioni di cleanup
 
   // Aggiorniamo i ref quando le props cambiano
   useEffect(() => {
@@ -166,7 +167,7 @@ export function PlacesAutocomplete({
       
       // Gestione click/touch sul container del dropdown
       // Aggiungi un gestore di eventi globale per catturare tutti i click sui suggerimenti
-      const clickHandler = (e: MouseEvent) => {
+      const clickHandler = (e: Event) => {
         const target = e.target as HTMLElement;
         const isPacItem = target.closest('.pac-item');
         const isPacContainer = target.closest('.pac-container');
@@ -193,7 +194,7 @@ export function PlacesAutocomplete({
       
       // Aggiungi il listener globale
       document.addEventListener('click', clickHandler, true);
-      document.addEventListener('touchend', clickHandler, true);
+      document.addEventListener('touchend', clickHandler as EventListener, true);
       
       // Pulisci i listener quando il componente viene smontato
       cleanupRef.current.push(() => {
