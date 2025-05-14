@@ -1567,7 +1567,7 @@ export class PostgresStorage implements IStorage {
     
     // HOTFIX: Rimuovi i campi city, region e qualsiasi altro campo non supportato
     // che potrebbero essere passati da componenti non aggiornati
-    const cleanCompanyData: any = {};
+    const { city, region, ...tempCompanyData } = company as any;
     
     // Estrai solo i campi validi della tabella companies
     // Questo è estremamente importante per evitare errori "column does not exist"
@@ -1577,9 +1577,10 @@ export class PostgresStorage implements IStorage {
     ];
     
     // Costruisci un oggetto pulito solo con i campi validi
+    const cleanCompanyData: any = {};
     for (const field of validFields) {
-      if (field in company) {
-        cleanCompanyData[field] = (company as any)[field];
+      if (field in tempCompanyData) {
+        cleanCompanyData[field] = tempCompanyData[field];
       }
     }
     

@@ -191,28 +191,27 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
                   const countryComponent = placeDetails.address_components.find(component => 
                     component.types.includes("country")
                   );
-                    
-                    if (countryComponent) {
-                      console.log("Country found:", countryComponent.long_name);
-                      setValue("country", countryComponent.long_name, { shouldValidate: true });
-                    }
-                    
-                    // Commento: la città non è presente nello schema
-                    const cityComponent = placeDetails.address_components.find(component => 
-                      component.types.includes("locality") || 
-                      component.types.includes("administrative_area_level_3")
-                    );
-                    
-                    if (cityComponent) {
-                      console.log("City found:", cityComponent.long_name);
-                      // NON impostiamo la città perché non è nello schema e causa errori
-                      // setValue("city", cityComponent.long_name, { shouldValidate: true });
-                    }
+                  
+                  if (countryComponent) {
+                    console.log("Country found:", countryComponent.long_name);
+                    setValue("country", countryComponent.long_name, { shouldValidate: true });
                   }
                   
-                  // Forza la validazione di tutti i campi aggiornati
-                  trigger(["name", "fullAddress", "address", "country"]);
+                  // Commento: la città non è presente nello schema
+                  const cityComponent = placeDetails.address_components.find(component => 
+                    component.types.includes("locality") || 
+                    component.types.includes("administrative_area_level_3")
+                  );
+                  
+                  if (cityComponent) {
+                    console.log("City found:", cityComponent.long_name);
+                    // NON impostiamo la città perché non è nello schema e causa errori
+                    // setValue("city", cityComponent.long_name, { shouldValidate: true });
+                  }
                 }
+                
+                // Forza la validazione di tutti i campi aggiornati
+                trigger(["name", "fullAddress", "address", "country"]);
               }}
               placeholder="Cerca aziende e attività commerciali" 
               className="w-full"
