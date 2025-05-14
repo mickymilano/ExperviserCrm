@@ -1584,11 +1584,20 @@ export class PostgresStorage implements IStorage {
       }
     }
     
+    // IMPORTANTE: Rimuovi esplicitamente questi campi che potrebbero causare errori SQL
+    delete cleanCompanyData.city;  // Assicurati che non ci sia il campo city
+    delete cleanCompanyData.region;  // Assicurati che non ci sia il campo region
+    
     // Log di debug
     console.log('Creating company with data (cleaned):', cleanCompanyData);
     
-    const [newCompany] = await db.insert(companies).values(cleanCompanyData).returning();
-    return newCompany;
+    try {
+      const [newCompany] = await db.insert(companies).values(cleanCompanyData).returning();
+      return newCompany;
+    } catch (error) {
+      console.error('Error inserting company:', error);
+      throw error;
+    }
   }
 
   async updateCompany(id: number, companyData: Partial<InsertCompany>): Promise<Company | undefined> {
