@@ -128,7 +128,13 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      // Previene la chiusura involontaria durante la selezione del testo
+      if (document.activeElement?.id === "name" && document.getSelection()?.toString()) {
+        return;
+      }
+      onOpenChange(isOpen);
+    }}>
       <DialogContent className="overflow-visible">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">

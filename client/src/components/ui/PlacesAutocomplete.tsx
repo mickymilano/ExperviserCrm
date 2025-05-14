@@ -264,7 +264,17 @@ export function PlacesAutocomplete({
   };
 
   return (
-    <div className="places-autocomplete relative">
+    <div 
+      className="places-autocomplete relative"
+      onMouseDown={(e) => {
+        e.stopPropagation();
+        e.preventDefault();
+      }}
+      onPointerDown={(e) => {
+        e.stopPropagation();
+        e.preventDefault();
+      }}
+    >
       <Input
         ref={inputRef}
         id={id}
@@ -275,6 +285,8 @@ export function PlacesAutocomplete({
         onChange={handleInputChange}
         onMouseDown={(e) => e.stopPropagation()} // Previene chiusura modale su click o selezione
         onPointerDown={(e) => e.stopPropagation()} // Supporto aggiuntivo per eventi touch
+        onClick={(e) => e.stopPropagation()} // Previene propagazione su click
+        onSelect={(e) => e.stopPropagation()} // Previene propagazione su selezione
         autoComplete="off"
       />
       {error && (
