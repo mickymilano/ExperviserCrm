@@ -78,7 +78,11 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
   const saveCompany = useMutation({
     mutationFn: async (data: CompanyFormData) => {
       // Prepare company data
-      const companyData = { ...data };
+      const companyData: any = { ...data };
+      
+      // ASSICURIAMO CHE fullAddress VENGA PARI A address NEL DATABASE:
+      companyData.address = data.fullAddress ?? data.address;
+      delete companyData.fullAddress; // puliamo il campo in uscita
       
       // Convert tags string to array if provided
       if (tagsInput.trim()) {
@@ -135,6 +139,15 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
   });
 
   const onSubmit = (data: CompanyFormData) => {
+    // Log per verificare i dati inviati
+    console.log("Submitting company data:", {
+      name: data.name,
+      address: data.fullAddress,
+      country: data.country,
+      tags: data.tags,
+      notes: data.notes
+    });
+    
     saveCompany.mutate(data);
   };
 

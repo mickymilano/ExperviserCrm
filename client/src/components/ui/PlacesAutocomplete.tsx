@@ -269,33 +269,14 @@ export function PlacesAutocomplete({
         if (onChangeRef.current) {
           console.log("[PlacesAutocomplete] Calling onChange callback with place data");
           
-          // Aggiunto fix per impedire la chiusura del modal
-          const origValue = value;
-          setTimeout(() => {
-            try {
-              // Evita di fare blur perché può causare la chiusura prematura
-              onChangeRef.current(valueToUse, place);
-              
-              console.log('[PlacesAutocomplete] onChange callback eseguito con successo');
-              
-              // Attendi un po' prima di chiudere il dropdown
-              setTimeout(() => {
-                try {
-                  // Rimuovi manualmente la classe pac-container solo se necessario
-                  const containers = document.querySelectorAll('.pac-container');
-                  console.log('[PlacesAutocomplete] Rimozione pac-containers:', containers.length);
-                } catch(err) {
-                  console.error('[PlacesAutocomplete] Errore pulizia finale:', err);
-                }
-              }, 500);
-            } catch(err) {
-              console.error('[PlacesAutocomplete] Errore in onChange:', err);
-              // In caso di errore, ripristina almeno il valore visibile
-              if (inputRef.current) {
-                inputRef.current.value = origValue;
-              }
-            }
-          }, 0);
+          // Applica il valore direttamente senza blur o altri eventi che potrebbero chiudere il modal
+          try {
+            console.log('[PlacesAutocomplete] place_changed - Chiamando onChangeRef con:', valueToUse);
+            onChangeRef.current(valueToUse, place);
+            console.log('[PlacesAutocomplete] onChange callback eseguito con successo');
+          } catch(err) {
+            console.error('[PlacesAutocomplete] Errore in onChange:', err);
+          }
         }
         
         // Gestisce il callback per il paese se specificato

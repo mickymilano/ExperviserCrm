@@ -1,0 +1,74 @@
+Ecco il messaggio da copiare a Replit, che riassume il comportamento anomalo, ne spiega la causa tecnica e propone la correzione precisa da applicare:
+
+⸻
+
+Titolo:
+Fix persist “Nome Azienda”/“Indirizzo” + submit no-op in CompanyModal
+
+Descrizione del bug:
+	1.	Selezione Google Places → campi non persistono
+	•	Dopo aver scelto dalla lista l’azienda, i campi name e fullAddress vengono popolati correttamente solo a volte, e in ogni caso non vengono poi inviati al salvataggio: il form torna a mostrare le prime lettere digitate e non emette alcuna chiamata POST.
+	•	Dopo alcuni tentativi pletorici l’autocomplete riesce a separare name da fullAddress, ma al click su Aggiungi Azienda il form non chiama saveCompany.mutate(data) e non invia nulla.
+	2.	Causa tecnica probabile:
+	•	Nel mapping data → companyData viene utilizzato solo address (legacy), mentre fullAddress rimane implicito e non viene passato al payload JSON.
+	•	Zod/schema definisce fullAddress, ma la funzione di salvataggio pulisce "" e poi trasmette companyData = { …data } senza garantire che companyData.address = data.fullAddress.
+	•	In CompanyModal manca il console.log("Submitting…", data) in onSubmit, quindi non si vede mai se il mutate viene davvero invocato.
+
+Correzione richiesta (patch da applicare):
+	1.	Mappare sempre fullAddress su address prima del POST
+In client/src/components/modals/CompanyModal.tsx, dentro saveCompany.mutate (o subito prima del fetch), sostituire:
+
+const companyData = { ...data };
+// …
+
+con
+
+const companyData: any = { ...data };
+// ASSICURIAMO CHE fullAddress VENGA PARI A address NEL DATABASE:
+companyData.address = data.fullAddress ?? data.address;
+delete companyData.fullAddress; // se volete pulire il campo in uscita
+
+In questo modo il back-end riceverà sempre:
+
+{
+  "name": "Liolà",
+  "address": "Via Leuciana, 39, …",
+  "country": "Italia",
+  // …altri campi
+}
+
+
+	2.	Verificare e loggare il submit
+Sempre in onSubmit, aggiungere prima di saveCompany.mutate(data):
+
+console.log("Submitting company data:", {
+  name: data.name,
+  address: data.fullAddress,
+  country: data.country,
+  tags: data.tags,
+  notes: data.notes
+});
+
+Questo permette di vedere nei DevTools se il mutate parte davvero con i valori corretti.
+
+	3.	Chiudere il modal solo in onSuccess
+Rimuovere ogni blur() o chiamata a onOpenChange(false) dentro il listener di place_changed.
+Assicurarsi che onOpenChange(false) sia invocato esclusivamente nell’onSuccess del mutate, così:
+
+onSuccess: () => {
+  toast({ … });
+  onOpenChange(false);  // qui
+  reset();
+  // …
+}
+
+
+
+⸻
+
+🙏 Per favore, implementa questi tre interventi e rilancia un deploy. Così potremo:
+	•	🎯 Separare in modo affidabile nome vs. indirizzo
+	•	🚀 Vedere nei log che il mutate viene chiamato con i dati corretti
+	•	✅ Effettuare davvero il POST e chiudere il modal solo al successo
+
+Grazie mille!
