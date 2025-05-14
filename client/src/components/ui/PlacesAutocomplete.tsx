@@ -260,8 +260,10 @@ export function PlacesAutocomplete({
           return;
         }
         
-        // Determina il valore da utilizzare per il campo
-        const valueToUse = place.name || place.formatted_address || value;
+        // Per la barra di ricerca, mostra sia il nome che l'indirizzo separati da una virgola
+        const valueToUse = place.name 
+          ? `${place.name}${place.formatted_address ? `, ${place.formatted_address}` : ''}`
+          : (place.formatted_address || value);
         console.log('[PlacesAutocomplete] place_changed - Value to use for form:', valueToUse, 'Calling parent onChange...');
         
         // Invoca il callback onChange con il valore e i dettagli del luogo
