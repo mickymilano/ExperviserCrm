@@ -165,15 +165,55 @@ export function PlacesAutocomplete({
       console.log("[PlacesAutocomplete] Autocomplete instance CREATED:", autocompleteRef.current);
       
       // Gestione click/touch sul container del dropdown
+      // Aggiungi un gestore di eventi globale per catturare tutti i click sui suggerimenti
+      const clickHandler = (e: MouseEvent) => {
+        const target = e.target as HTMLElement;
+        const isPacItem = target.closest('.pac-item');
+        const isPacContainer = target.closest('.pac-container');
+        
+        if (isPacItem || isPacContainer) {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          // Evita che l'evento di click possa chiudere il modal
+          e.stopImmediatePropagation();
+          
+          console.log('[PlacesAutocomplete] Intercettato click su suggerimento:', target);
+          
+          if (isPacItem && autocompleteRef.current) {
+            try {
+              // @ts-ignore
+              window.google.maps.event.trigger(autocompleteRef.current, 'place_changed');
+            } catch (err) {
+              console.error('[PlacesAutocomplete] Error triggering place_changed on click:', err);
+            }
+          }
+        }
+      };
+      
+      // Aggiungi il listener globale
+      document.addEventListener('click', clickHandler, true);
+      document.addEventListener('touchend', clickHandler, true);
+      
+      // Pulisci i listener quando il componente viene smontato
+      cleanupRef.current.push(() => {
+        document.removeEventListener('click', clickHandler, true);
+        document.removeEventListener('touchend', clickHandler, true);
+      });
+      
       setTimeout(() => {
         const container = document.querySelector('.pac-container');
         if (container) {
+          console.log('[PlacesAutocomplete] Container trovato, aggiungo gestori eventi');
+          
+          // Aggiungi il gestore al container stesso (aggiuntivo rispetto al gestore globale)
           container.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
+            e.stopImmediatePropagation();
+            
             const item = (e.target as HTMLElement).closest('.pac-item');
             if (item && autocompleteRef.current) {
-              // Forza il place_changed quando clicchi/tocchi un item
               try {
                 // @ts-ignore
                 window.google.maps.event.trigger(autocompleteRef.current, 'place_changed');
@@ -181,10 +221,13 @@ export function PlacesAutocomplete({
                 console.error('[PlacesAutocomplete] Error triggering place_changed on click:', err);
               }
             }
-          });
+          }, true);
+          
           container.addEventListener('touchend', (e) => {
             e.preventDefault();
             e.stopPropagation();
+            e.stopImmediatePropagation();
+            
             const item = (e.target as HTMLElement).closest('.pac-item');
             if (item && autocompleteRef.current) {
               try {
@@ -194,7 +237,7 @@ export function PlacesAutocomplete({
                 console.error('[PlacesAutocomplete] Error triggering place_changed on touchend:', err);
               }
             }
-          });
+          }, true);
         }
       }, 1000); // Attendi che il container venga creato
 
@@ -225,13 +268,33 @@ export function PlacesAutocomplete({
         if (onChangeRef.current) {
           console.log("[PlacesAutocomplete] Calling onChange callback with place data");
           
-          // Chiamiamo direttamente il callback ma prima stoppiamo ogni propagazione
-          // degli eventi in corso
-          if (document.activeElement && 'blur' in document.activeElement) {
-            (document.activeElement as HTMLElement).blur();
-          }
-          
-          onChangeRef.current(valueToUse, place);
+          // Aggiunto fix per impedire la chiusura del modal
+          const origValue = value;
+          setTimeout(() => {
+            try {
+              // Evita di fare blur perché può causare la chiusura prematura
+              onChangeRef.current(valueToUse, place);
+              
+              console.log('[PlacesAutocomplete] onChange callback eseguito con successo');
+              
+              // Attendi un po' prima di chiudere il dropdown
+              setTimeout(() => {
+                try {
+                  // Rimuovi manualmente la classe pac-container solo se necessario
+                  const containers = document.querySelectorAll('.pac-container');
+                  console.log('[PlacesAutocomplete] Rimozione pac-containers:', containers.length);
+                } catch(err) {
+                  console.error('[PlacesAutocomplete] Errore pulizia finale:', err);
+                }
+              }, 500);
+            } catch(err) {
+              console.error('[PlacesAutocomplete] Errore in onChange:', err);
+              // In caso di errore, ripristina almeno il valore visibile
+              if (inputRef.current) {
+                inputRef.current.value = origValue;
+              }
+            }
+          }, 0);
         }
         
         // Gestisce il callback per il paese se specificato
@@ -279,8 +342,9 @@ export function PlacesAutocomplete({
   return (
     <div 
       className="places-autocomplete relative"
-      onMouseDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
     >
       <Input
         ref={inputRef}
@@ -290,8 +354,11 @@ export function PlacesAutocomplete({
         className={`${className}`}
         aria-label={placeholder}
         onChange={handleInputChange}
-        onMouseDown={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
+        onFocus={(e) => e.stopPropagation()}
+        onSelect={(e) => e.stopPropagation()}
         autoComplete="off"
       />
       {error && (
