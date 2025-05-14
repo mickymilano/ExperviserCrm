@@ -176,7 +176,7 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
                       setValue("country", countryComponent.long_name, { shouldValidate: true });
                     }
                     
-                    // Estrae la città se disponibile
+                    // Commento: la città non è presente nello schema
                     const cityComponent = placeDetails.address_components.find(component => 
                       component.types.includes('locality') || 
                       component.types.includes('administrative_area_level_3')
@@ -184,12 +184,13 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
                     
                     if (cityComponent) {
                       console.log("City found:", cityComponent.long_name);
-                      setValue("city", cityComponent.long_name, { shouldValidate: true });
+                      // NON impostiamo la città perché non è nello schema e causa errori
+                      // setValue("city", cityComponent.long_name, { shouldValidate: true });
                     }
                   }
                   
                   // Forza la validazione di tutti i campi aggiornati
-                  trigger(["name", "fullAddress", "address", "country", "city"]);
+                  trigger(["name", "fullAddress", "address", "country"]);
                   
                   // Toglie il focus dall'input per migliorare UX
                   setTimeout(() => {

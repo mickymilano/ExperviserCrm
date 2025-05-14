@@ -1,0 +1,25 @@
+**URGENT REQUEST: Provide Current Code for Google Maps Company Name Autocomplete - NO MODIFICATIONS**
+
+**To: Replit AI Development Agent**
+**From: Product Owner**
+**Subject: Request for Existing Code Snippets - Google Maps Places Autocomplete in Company Forms**
+
+**Context:**
+We are still experiencing a critical issue where users CANNOT select a company from the Google Maps Places Autocomplete suggestions in the "Company Name" input field (e.g., within `CompanyModal.tsx` or the relevant form for creating/editing companies). Suggestions are displayed, but clicking or selecting them via keyboard does nothing to populate the form fields.
+
+**This is a request for INFORMATION ONLY to facilitate external review. You are explicitly instructed NOT to make any changes, fixes, or new implementations in response to this prompt. Simply provide the existing code as requested.**
+
+**Please provide the complete, current code for the following:**
+
+1.  **The React Component File containing the "Company Name" input field that uses Google Maps Places Autocomplete.**
+    * This is likely `client/src/components/modals/CompanyModal.tsx`, or a similar component used for company creation/editing. Provide the **full content** of this file.
+
+2.  **Any custom hooks or utility functions specifically written to support the Google Maps Places Autocomplete integration.**
+    * If such helper functions exist (e.g., in `client/src/hooks/` or `client/src/lib/`), provide their full content as well.
+
+3.  **The section of your `react-hook-form` setup (`useForm` call and schema) within the component identified in point 1, specifically showing how the "Company Name", "Address", and any related address component fields (city, postal code, country, etc.) are defined and validated.**
+
+**Output Format:**
+Clearly delineate each file's content with its full path.
+
+**Reiteration: Your task is ONLY to retrieve and provide the existing code. Do NOT attempt to debug or modify any files in response to this request.** We need to understand the current implementation before proceeding with further instructions.
