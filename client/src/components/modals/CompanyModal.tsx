@@ -189,7 +189,7 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
                 // Estrae il paese se disponibile
                 if (placeDetails?.address_components) {
                   const countryComponent = placeDetails.address_components.find(component => 
-                    component.types.includes('country')
+                    component.types.includes("country")
                   );
                     
                     if (countryComponent) {
