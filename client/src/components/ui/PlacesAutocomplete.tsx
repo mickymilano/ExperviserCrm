@@ -225,10 +225,13 @@ export function PlacesAutocomplete({
         if (onChangeRef.current) {
           console.log("[PlacesAutocomplete] Calling onChange callback with place data");
           
-          // Usa setTimeout per evitare che l'evento si propaghi immediatamente
-          setTimeout(() => {
-            onChangeRef.current(valueToUse, place);
-          }, 100);
+          // Chiamiamo direttamente il callback ma prima stoppiamo ogni propagazione
+          // degli eventi in corso
+          if (document.activeElement && 'blur' in document.activeElement) {
+            (document.activeElement as HTMLElement).blur();
+          }
+          
+          onChangeRef.current(valueToUse, place);
         }
         
         // Gestisce il callback per il paese se specificato

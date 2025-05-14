@@ -128,13 +128,17 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
   };
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => {
-      // Evita la chiusura accidentale quando si seleziona un elemento dall'autocomplete
-      if (document.querySelector('.pac-container')) {
-        return;
-      }
-      onOpenChange(isOpen);
-    }}>
+    <Dialog 
+      open={open} 
+      onOpenChange={(isOpen) => {
+        // Ignora l'evento quando sta per essere chiuso da un evento legato all'autocomplete
+        const pacContainer = document.querySelector('.pac-container');
+        if (!isOpen && pacContainer && pacContainer.contains(document.activeElement as Node)) {
+          return;
+        }
+        onOpenChange(isOpen);
+      }}
+    >
       <DialogContent className="overflow-visible">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">
