@@ -317,45 +317,119 @@ export function PlacesAutocomplete({
       // Pulisci l'interval quando il componente viene smontato
       cleanupRef.current.push(() => clearInterval(containerCheckInterval));
 
-      // FONDAMENTALE: Aggiungiamo il listener per l'evento place_changed
-      const listener = autocomplete.addListener('place_changed', () => {
-        // Non possiamo usare stopPropagation qui perchè l'evento place_changed non fornisce un evento DOM
-        console.log('[PlacesAutocomplete] place_changed EVENT DETECTED!'); // Log cruciale
-        
-        if (!autocompleteRef.current) {
-          console.error('[PlacesAutocomplete] ERROR: autocompleteRef.current is NULL/undefined inside place_changed listener!');
-          return;
-        }
-        
-        const place = autocompleteRef.current.getPlace();
-        console.log('[PlacesAutocomplete] place_changed - getPlace() raw result:', place ? 'Place object ricevuto' : 'Nessun place');
-        
-        if (!place || !place.place_id) {
-          console.warn('[PlacesAutocomplete] place_changed - Invalid place or no place_id. Current input value:', inputRef.current?.value);
-          return;
-        }
-        
-        // Importante: prevenire qualsiasi evento di navigazione o click in corso
-        // che potrebbe chiudere il modale, specialmente su tablet/mobile
+      // FONDAMENTALE: Aggiungiamo il listener per l'evento place_changed con protezioni aggiuntive
+      const placeChangedHandler = () => {
         try {
-          // Per i dispositivi mobile/tablet, proteggiamo dalle interazioni indesiderate
-          setTimeout(() => {
-            // Manteniamo il focus sul nostro input per evitare problemi UI
+          // Non possiamo usare stopPropagation qui perchè l'evento place_changed non fornisce un evento DOM
+          console.log('[PlacesAutocomplete] place_changed EVENT DETECTED!'); // Log cruciale
+          
+          // Controllo di sicurezza per evitare errori di runtime
+          if (!autocompleteRef.current) {
+            console.error('[PlacesAutocomplete] ERROR: autocompleteRef.current is NULL/undefined inside place_changed listener!');
+            return;
+          }
+          
+          // Previene comportamenti indesiderati su tablet/mobile in modo preemptivo
+          // impedendo la propagazione di eventuali eventi touch/click in corso
+          try {
+            const activeElement = document.activeElement;
+            console.log('[PlacesAutocomplete] Active element before place processing:', 
+              activeElement ? activeElement.tagName : 'none');
+            
+            // Protegge preventivamente l'input dal perdere il focus
             if (inputRef.current) {
-              console.log('[PlacesAutocomplete] Assicuro focus corretto per prevenire chiusure indesiderate');
-              // Diamo il focus temporaneamente al nostro input
-              inputRef.current.focus();
+              inputRef.current.setAttribute('data-processing-place', 'true');
             }
-          }, 50);
-        } catch (err) {
-          console.error('[PlacesAutocomplete] Errore gestione eventi focus:', err);
-        }
+          } catch (focusErr) {
+            console.warn('[PlacesAutocomplete] Error managing focus state:', focusErr);
+          }
+          
+          // Ottieni i dettagli del luogo con gestione degli errori
+          let place;
+          try {
+            place = autocompleteRef.current.getPlace();
+            console.log('[PlacesAutocomplete] place_changed - getPlace() raw result:', 
+              place ? 'Place object ricevuto' : 'Nessun place');
+          } catch (getPlaceErr) {
+            console.error('[PlacesAutocomplete] Error getting place details:', getPlaceErr);
+            return;
+          }
+          
+          // Verifica l'oggetto place
+          if (!place || !place.place_id) {
+            console.warn('[PlacesAutocomplete] place_changed - Invalid place or no place_id. Current input value:', 
+              inputRef.current?.value);
+            return;
+          }
+          
+          // Importante: prevenire qualsiasi evento di navigazione o click in corso
+          // che potrebbe chiudere il modale, specialmente su tablet/mobile
+          try {
+            // Per i dispositivi mobile/tablet, proteggiamo dalle interazioni indesiderate
+            setTimeout(() => {
+              // Manteniamo il focus sul nostro input per evitare problemi UI
+              if (inputRef.current) {
+                console.log('[PlacesAutocomplete] Assicuro focus corretto per prevenire chiusure indesiderate');
+                // Rimuove l'attributo di elaborazione
+                inputRef.current.removeAttribute('data-processing-place');
+                // Diamo il focus temporaneamente al nostro input in modo sicuro
+                setTimeout(() => {
+                  try {
+                    if (inputRef.current) inputRef.current.focus();
+                  } catch (e) {/* Ignora errori di focus */}
+                }, 10);
+              }
+            }, 50);
+          } catch (err) {
+            console.error('[PlacesAutocomplete] Errore gestione eventi focus:', err);
+          }
+          
+          // Per la barra di ricerca, mostra sia il nome che l'indirizzo separati da una virgola
+          const valueToUse = place.name 
+            ? `${place.name}${place.formatted_address ? `, ${place.formatted_address}` : ''}`
+            : (place.formatted_address || value);
+          console.log('[PlacesAutocomplete] place_changed - Value to use for form:', valueToUse);
+          
+          // Aggiorna prima il valore interno per mostrarlo nell'input
+          setInternalValue(valueToUse);
         
-        // Per la barra di ricerca, mostra sia il nome che l'indirizzo separati da una virgola
-        const valueToUse = place.name 
-          ? `${place.name}${place.formatted_address ? `, ${place.formatted_address}` : ''}`
-          : (place.formatted_address || value);
-        console.log('[PlacesAutocomplete] place_changed - Value to use for form:', valueToUse);
+          // Invoca il callback onChange con il valore e i dettagli del luogo
+          // Utilizziamo onChangeRef.current per accedere alla versione più aggiornata
+          if (onChangeRef.current) {
+            console.log("[PlacesAutocomplete] Calling onChange callback with place data");
+            
+            // Applica il valore direttamente senza blur o altri eventi che potrebbero chiudere il modal
+            try {
+              // Utilizziamo un timeout più lungo per i dispositivi touch/mobile
+              // per assicurarci che l'elaborazione avvenga dopo che tutti gli eventi touch sono completati
+              // Per dispositivi mobile usiamo un timeout ancora più lungo (500ms)
+              const isMobile = window.matchMedia('(max-width: 768px)').matches || ('ontouchstart' in window);
+              const timeout = isMobile ? 500 : 100;
+              
+              console.log(`[PlacesAutocomplete] Chiamando onChange con ${timeout}ms delay (isMobile: ${isMobile})`);
+              setTimeout(() => {
+                // Prima di chiamare il callback, assicuriamoci che il valore sia visibile nell'input
+                if (inputRef.current) {
+                  inputRef.current.value = valueToUse;
+                }
+                onChangeRef.current!(valueToUse, place);
+              }, timeout);
+            } catch (callbackErr) {
+              console.error('[PlacesAutocomplete] Error in onChange callback execution:', callbackErr);
+            }
+          }
+        } catch (handlerError) {
+          console.error('[PlacesAutocomplete] Critical error in place_changed handler:', handlerError);
+        }
+      };
+      
+      // Aggiungi il listener con gestione degli errori
+      let listener;
+      try {
+        listener = autocomplete.addListener('place_changed', placeChangedHandler);
+      } catch (addListenerErr) {
+        console.error('[PlacesAutocomplete] Error adding place_changed listener:', addListenerErr);
+      }
         
         // Aggiorna prima il valore interno per mostrarlo nell'input
         setInternalValue(valueToUse);
