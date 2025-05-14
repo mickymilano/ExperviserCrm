@@ -62,8 +62,9 @@ export function PlacesAutocomplete({
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState<string | null>(null);
+  // Tracciamo internamente il valore per evitare problemi nella selezione
+  const [internalValue, setInternalValue] = useState(value);
   
-  console.log('[PlacesAutocomplete] Component RENDERED. Props received (value):', value, 'apiKey available:', !!apiKey, 'scriptLoaded:', scriptLoaded);
   const onChangeRef = useRef(onChange); // Usiamo un ref per evitare che "onChange" causi render multipli
   const onCountrySelectRef = useRef(onCountrySelect); // Lo stesso per "onCountrySelect"
   const cleanupRef = useRef<Array<() => void>>([]) // Array di funzioni di cleanup
@@ -73,6 +74,11 @@ export function PlacesAutocomplete({
     onChangeRef.current = onChange;
     onCountrySelectRef.current = onCountrySelect;
   }, [onChange, onCountrySelect]);
+  
+  // Aggiorna il valore interno quando il valore della prop cambia
+  useEffect(() => {
+    setInternalValue(value);
+  }, [value]);
 
   // Effetto per recuperare la chiave API
   useEffect(() => {
@@ -320,6 +326,7 @@ export function PlacesAutocomplete({
     // Evita che la selezione del testo chiuda il modale
     e.stopPropagation();
     const newValue = e.target.value;
+    setInternalValue(newValue);
     onChange(newValue);
   };
 
@@ -333,7 +340,7 @@ export function PlacesAutocomplete({
       <Input
         ref={inputRef}
         id={id}
-        value={value}
+        value={internalValue}
         placeholder={placeholder}
         className={`${className}`}
         aria-label={placeholder}
