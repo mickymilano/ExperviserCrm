@@ -72,7 +72,8 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
       country: initialData?.country || "",
       tags: initialData?.tags || [],
       notes: initialData?.notes || "",
-    }
+    },
+    mode: "onSubmit" // Importante: valida solo al submit, non su onChange
   });
 
   const saveCompany = useMutation({
@@ -159,7 +160,7 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
     });
     
     // IMPORTANTE: Verifica se ci sono dati nel form prima di inviare
-    if (!data.name) {
+    if (!data.name || data.name.trim() === '') {
       toast({
         title: "Errore di validazione",
         description: "Il nome dell'azienda è obbligatorio",
@@ -168,7 +169,17 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
       return;
     }
     
-    saveCompany.mutate(data);
+    try {
+      // Avvia la mutazione e gestisce eventuali errori
+      saveCompany.mutate(data);
+    } catch (error) {
+      console.error("Errore durante il salvataggio dell'azienda:", error);
+      toast({
+        title: "Errore di salvataggio",
+        description: "Si è verificato un errore durante il salvataggio dei dati. Riprova.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

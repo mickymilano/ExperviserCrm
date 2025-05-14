@@ -272,6 +272,9 @@ export function PlacesAutocomplete({
           : (place.formatted_address || value);
         console.log('[PlacesAutocomplete] place_changed - Value to use for form:', valueToUse, 'Calling parent onChange...');
         
+        // Aggiorna prima il valore interno per mostrarlo nell'input
+        setInternalValue(valueToUse);
+        
         // Invoca il callback onChange con il valore e i dettagli del luogo
         // Utilizziamo onChangeRef.current per accedere alla versione più aggiornata
         if (onChangeRef.current) {
@@ -280,8 +283,11 @@ export function PlacesAutocomplete({
           // Applica il valore direttamente senza blur o altri eventi che potrebbero chiudere il modal
           try {
             console.log('[PlacesAutocomplete] place_changed - Chiamando onChangeRef con:', valueToUse);
-            onChangeRef.current(valueToUse, place);
-            console.log('[PlacesAutocomplete] onChange callback eseguito con successo');
+            // PREVENZIONE CHIUSURA: utilizziamo setTimeout per ritardare l'aggiornamento
+            setTimeout(() => {
+              onChangeRef.current(valueToUse, place);
+              console.log('[PlacesAutocomplete] onChange callback eseguito con successo');
+            }, 0);
           } catch(err) {
             console.error('[PlacesAutocomplete] Errore in onChange:', err);
           }
