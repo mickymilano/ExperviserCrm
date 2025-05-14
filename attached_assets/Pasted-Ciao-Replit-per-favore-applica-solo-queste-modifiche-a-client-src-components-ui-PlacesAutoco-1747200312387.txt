@@ -1,0 +1,72 @@
+Ciao Replit,  
+per favore applica **solo** queste modifiche a `client/src/components/ui/PlacesAutocomplete.tsx` (usato ora per il campo “Nome Azienda”) in modo che:
+
+1. **Dropdown cliccabile/toccabile**  
+   - Assicurati che la `.pac-container` e le `.pac-item` non abbiano `pointer-events: none`. Se necessario, aggiungi in fondo al file:
+     ```css
+     .pac-container {
+       pointer-events: auto !important;
+     }
+     .pac-item {
+       pointer-events: auto !important;
+     }
+     ```
+2. **Gestione clic/touch**  
+   - Subito dopo l’inizializzazione dell’autocomplete (`new google.maps.places.Autocomplete(...)`), aggiungi questo listener _delegato_ sul container:
+     ```ts
+     // dopo autocompleteRef.current = new Autocomplete(...)
+     const container = document.querySelector('.pac-container');
+     if (container) {
+       container.addEventListener('click', (e) => {
+         const item = (e.target as HTMLElement).closest('.pac-item');
+         if (item && autocompleteRef.current) {
+           // Forza il place_changed quando clicchi/tocchi un item
+           google.maps.event.trigger(autocompleteRef.current, 'place_changed');
+         }
+       });
+       container.addEventListener('touchend', (e) => {
+         const item = (e.target as HTMLElement).closest('.pac-item');
+         if (item && autocompleteRef.current) {
+           google.maps.event.trigger(autocompleteRef.current, 'place_changed');
+         }
+       });
+     }
+     ```
+3. **Navigazione e conferma da tastiera**  
+   - Subito dopo `const autocomplete = ...`, aggiungi sul `inputRef.current`:
+     ```ts
+     inputRef.current!.addEventListener('keydown', (e: KeyboardEvent) => {
+       if (e.key === 'Enter' || e.key === 'Tab') {
+         e.preventDefault();
+         if (autocompleteRef.current) {
+           google.maps.event.trigger(autocompleteRef.current, 'place_changed');
+         }
+       }
+       // ArrowUp/Down lasciali passare (non fare e.preventDefault())
+     });
+     ```
+4. **Callback place_changed immutato**  
+   - All’interno di:
+     ```ts
+     autocomplete.addListener('place_changed', () => {
+       const place = autocompleteRef.current!.getPlace();
+       if (!place || !place.place_id) return;
+       // imposta il nome azienda
+       setValue("name", place.name!, { shouldValidate: true });
+       // imposta indirizzo completo
+       setValue("fullAddress", place.formatted_address!, { shouldValidate: true });
+       setValue("address", place.formatted_address!, { shouldValidate: true });
+       // imposta country
+       const countryComp = place.address_components?.find(c => c.types.includes('country'));
+       if (countryComp) {
+         setValue("country", countryComp.long_name, { shouldValidate: true });
+       }
+       trigger(["name","fullAddress","address","country"]);
+       // togli focus SOLO DOPO aver scritto i campi
+       setTimeout(() => document.activeElement instanceof HTMLElement && document.activeElement.blur(), 100);
+     });
+     ```
+5. **Non toccare altro**  
+   - Non modificare altri file o logiche. Restituisci qui solo il **diff** o il file `PlacesAutocomplete.tsx` aggiornato con le parti sopra integrate.  
+
+Grazie!

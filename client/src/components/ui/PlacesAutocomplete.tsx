@@ -145,7 +145,53 @@ export function PlacesAutocomplete({
       const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, options);
       autocompleteRef.current = autocomplete;
       
+      // Gestione eventi tastiera
+      inputRef.current!.addEventListener('keydown', (e: KeyboardEvent) => {
+        if (e.key === 'Enter' || e.key === 'Tab') {
+          e.preventDefault();
+          if (autocompleteRef.current) {
+            try {
+              // @ts-ignore
+              window.google.maps.event.trigger(autocompleteRef.current, 'place_changed');
+            } catch (err) {
+              console.error('[PlacesAutocomplete] Error triggering place_changed event:', err);
+            }
+          }
+        }
+        // ArrowUp/Down lasciali passare (non fare e.preventDefault())
+      });
+      
       console.log("[PlacesAutocomplete] Autocomplete instance CREATED:", autocompleteRef.current);
+      
+      // Gestione click/touch sul container del dropdown
+      setTimeout(() => {
+        const container = document.querySelector('.pac-container');
+        if (container) {
+          container.addEventListener('click', (e) => {
+            const item = (e.target as HTMLElement).closest('.pac-item');
+            if (item && autocompleteRef.current) {
+              // Forza il place_changed quando clicchi/tocchi un item
+              try {
+                // @ts-ignore
+                window.google.maps.event.trigger(autocompleteRef.current, 'place_changed');
+              } catch (err) {
+                console.error('[PlacesAutocomplete] Error triggering place_changed on click:', err);
+              }
+            }
+          });
+          container.addEventListener('touchend', (e) => {
+            const item = (e.target as HTMLElement).closest('.pac-item');
+            if (item && autocompleteRef.current) {
+              try {
+                // @ts-ignore
+                window.google.maps.event.trigger(autocompleteRef.current, 'place_changed');
+              } catch (err) {
+                console.error('[PlacesAutocomplete] Error triggering place_changed on touchend:', err);
+              }
+            }
+          });
+        }
+      }, 1000); // Attendi che il container venga creato
 
       // FONDAMENTALE: Aggiungiamo il listener per l'evento place_changed
       const listener = autocomplete.addListener('place_changed', () => {
@@ -237,10 +283,12 @@ export function PlacesAutocomplete({
           border: 1px solid #e2e8f0;
           box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
           z-index: 9999 !important;
+          pointer-events: auto !important;
         }
         .pac-item {
           padding: 0.5rem;
           cursor: pointer !important;
+          pointer-events: auto !important;
         }
         .pac-item:hover {
           background-color: #f7fafc;
