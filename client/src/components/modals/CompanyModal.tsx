@@ -145,27 +145,24 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
               onChange={(value, placeDetails) => {
                 console.log("PlacesAutocomplete onChange triggered for company name:", { value, placeDetails });
                 
-                // Imposta sempre il valore del campo nome con il valore attuale
+                // Imposta sempre il valore del campo nome con il valore attuale (manuale)
                 setValue("name", value, { shouldValidate: true });
                 
                 // Verifica se abbiamo ricevuto i dettagli del luogo da Google Maps
                 if (placeDetails && placeDetails.place_id) {
-                  console.log("Place details received for company name:", placeDetails);
+                  console.log("Google Place Selected by user:", placeDetails); // Esatto formato richiesto per verifica
                   
                   // Imposta il nome azienda con il nome ufficiale dalla API
                   if (placeDetails.name) {
                     setValue("name", placeDetails.name, { shouldValidate: true });
+                    console.log("Company name set to:", placeDetails.name);
                   }
                   
                   // Se abbiamo l'indirizzo formattato, aggiornalo nei campi corrispondenti
                   if (placeDetails.formatted_address) {
                     setValue("fullAddress", placeDetails.formatted_address, { shouldValidate: true });
                     setValue("address", placeDetails.formatted_address, { shouldValidate: true });
-                    
-                    // Verifica se l'input ha già il focus, in tal caso lo togliamo per migliorare UX
-                    if (document.activeElement === document.getElementById("name")) {
-                      (document.activeElement as HTMLElement).blur();
-                    }
+                    console.log("Address set to:", placeDetails.formatted_address);
                   }
                   
                   // Estrae il paese se disponibile
@@ -178,10 +175,28 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
                       console.log("Country found:", countryComponent.long_name);
                       setValue("country", countryComponent.long_name, { shouldValidate: true });
                     }
+                    
+                    // Estrae la città se disponibile
+                    const cityComponent = placeDetails.address_components.find(component => 
+                      component.types.includes('locality') || 
+                      component.types.includes('administrative_area_level_3')
+                    );
+                    
+                    if (cityComponent) {
+                      console.log("City found:", cityComponent.long_name);
+                      setValue("city", cityComponent.long_name, { shouldValidate: true });
+                    }
                   }
                   
-                  // Forza la validazione dei campi aggiornati
-                  trigger(["name", "fullAddress", "country"]);
+                  // Forza la validazione di tutti i campi aggiornati
+                  trigger(["name", "fullAddress", "address", "country", "city"]);
+                  
+                  // Toglie il focus dall'input per migliorare UX
+                  setTimeout(() => {
+                    if (document.activeElement instanceof HTMLElement) {
+                      document.activeElement.blur();
+                    }
+                  }, 100);
                 }
               }}
               placeholder="Cerca aziende e attività commerciali" 

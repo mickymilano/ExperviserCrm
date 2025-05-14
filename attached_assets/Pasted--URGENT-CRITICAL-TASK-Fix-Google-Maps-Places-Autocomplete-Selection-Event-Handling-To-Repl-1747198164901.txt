@@ -1,0 +1,70 @@
+**URGENT & CRITICAL TASK: Fix Google Maps Places Autocomplete Selection Event Handling**
+
+**To: Replit AI Development Agent**
+**From: Product Owner**
+**Subject: Unresolved Critical Bug - User CANNOT select suggestions from Google Maps Places Autocomplete in the "Company Name" field.**
+
+**Context:**
+The "Company Name" input field in the Company creation/editing modal (e.g., `CompanyModal.tsx` or similar form) correctly displays Google Maps Places Autocomplete suggestions when the user types.
+However, **clicking on a suggestion, or selecting it via keyboard, does NOTHING.** The form fields ("Company Name", "Address") are not populated with the selected place details.
+This was demonstrated in `Screenshot 2025-05-14 at 06.48.04.jpg`.
+
+**This indicates a fundamental failure in handling the selection event from the Google Maps Autocomplete service.**
+
+**Mandatory Action & Specific Implementation Required:**
+
+1.  **Locate "Company Name" Input Component:** Identify the React component and file (e.g., `CompanyModal.tsx`) where the "Company Name" input field integrated with Google Maps Autocomplete is implemented.
+
+2.  **Verify Google Maps Autocomplete Initialization:** Ensure the Google Maps `Autocomplete` service is correctly initialized and attached to the relevant HTML input element. Let's assume you have a reference to this input element (e.g., `inputRef`) and the `autocomplete` instance (e.g., `autocompleteRef.current`).
+
+3.  **Implement/Verify `place_changed` Event Listener:**
+    * **Crucial Step:** You MUST add an event listener for the `'place_changed'` event directly to the Google Maps `autocomplete` instance. This is the standard way Google Maps signals a user selection.
+    * **Inside the `'place_changed'` event handler callback:**
+        a.  Call `autocompleteRef.current.getPlace()` to get the `PlaceResult` object. Store it in a variable (e.g., `const place = autocompleteRef.current.getPlace();`).
+        b.  **Log the `place` object** to the console immediately after retrieving it (`console.log('Google Place Selected:', place);`). This is for verification.
+        c.  Check if `place` and `place.name` exist.
+        d.  Use `react-hook-form`'s `setValue` function (assuming your form uses it, e.g., `form.setValue` if `form` is the result of `useForm()`) to:
+            i.  Set your form's "Company Name" field (e.g., `setValue('companyName', place.name, { shouldValidate: true });`).
+            ii. Set your form's "Address" field (e.g., `setValue('address', place.formatted_address, { shouldValidate: true });`).
+            iii.If you have separate fields for city, postal code, country, etc., extract them from `place.address_components` and use `setValue` for each.
+        e.  Optionally, after setting the values, you might want to trigger other actions like closing the autocomplete dropdown or blurring the input.
+
+4.  **Example Structure (ensure this is adapted to your exact code and `react-hook-form` instance):**
+    ```typescript
+    // Likely within a useEffect hook that runs once the Google Maps Autocomplete is initialized
+    // Assuming 'autocompleteRef.current' holds the Google Maps Autocomplete instance
+    // Assuming 'form' is the result of useForm() from react-hook-form
+
+    if (autocompleteRef.current) {
+      autocompleteRef.current.addListener('place_changed', () => {
+        const place = autocompleteRef.current.getPlace();
+        console.log('Google Place Selected by user:', place); // For AI to verify
+
+        if (place && place.name) {
+          form.setValue('companyName', place.name, { shouldValidate: true });
+        }
+        if (place && place.formatted_address) {
+          form.setValue('address', place.formatted_address, { shouldValidate: true });
+        }
+        // Add setValue for other address components if your form has them:
+        // const city = place.address_components.find(c => c.types.includes('locality'))?.long_name;
+        // if (city) form.setValue('city', city);
+        // ... and so on for postal_code, country, etc.
+      });
+    }
+    ```
+
+5.  **Test and Verify (AI Self-Test MANDATORY):**
+    * After implementing the `place_changed` listener and the `setValue` calls:
+        a.  Open the "Add New Company" modal.
+        b.  Type a partial company name (e.g., "gruppo").
+        c.  **Select one of the suggestions from the Google Maps dropdown using a MOUSE CLICK.**
+        d.  Verify that the "Company Name" input field in *your form* is populated with the selected company's name.
+        e.  Verify that the "Address" input field in *your form* is populated with the selected company's address.
+    * **Repeat step 5.c-e using KEYBOARD selection** (arrow keys to navigate suggestions, Enter or Tab to select).
+    * **Output Required:**
+        1.  The **complete, updated code snippet** from the React component showing the Google Maps Autocomplete initialization AND the `place_changed` event listener implementation with the `form.setValue` calls.
+        2.  **Browser console logs** showing the "Google Place Selected by user:" message with the `place` object data when you (the AI) perform a successful selection.
+        3.  **A screenshot or short GIF** demonstrating YOU (the AI) successfully selecting a place from the Google Maps suggestions using a mouse click, and showing the "Company Name" and "Address" fields in the form being correctly populated.
+
+**Focus EXCLUSIVELY on making the Google Maps Autocomplete selection functional as described.** Do not introduce other changes. Report back only when this specific selection mechanism is working and verified by you.
