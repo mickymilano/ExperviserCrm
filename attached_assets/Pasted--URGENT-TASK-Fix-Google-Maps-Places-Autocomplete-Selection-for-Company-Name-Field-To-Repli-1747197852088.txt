@@ -1,0 +1,71 @@
+**URGENT TASK: Fix Google Maps Places Autocomplete Selection for "Company Name" Field**
+
+**To: Replit AI Development Agent**
+**From: Product Owner**
+**Subject: Critical Bug - User cannot select a company from Google Maps Places Autocomplete suggestions in the "Company Name" input field.**
+
+**Context:**
+The CRM features a "Company Name" input field designed to use Google Maps Places API for autocomplete. As the user types a company name, Google Maps provides suggestions. The API call itself appears to be working (suggestions are displayed). However, the user is **unable to select a suggestion** from the dropdown using mouse click, Tab key, arrow keys, or touch. Once a suggestion is selected, the system should populate the "Company Name" field with the company's official name and a separate "Address" field with its formatted address.
+
+**Mandatory Actions & Implementation Details:**
+
+1.  **Review Existing Implementation:**
+    * Examine the React component (likely part of a Company creation/editing modal, e.g., `CompanyModal.tsx` or a Deal form if companies are created there) that contains the "Company Name" input field.
+    * Identify how the Google Maps Places Autocomplete service is initialized and attached to the input field. (Is it using a direct Maps API script load, a library like `@react-google-maps/api`, or `react-google-places-autocomplete`?)
+
+2.  **Ensure Proper Event Handling for Selection:**
+    * The Google Maps Autocomplete service fires a `place_changed` event when a user selects a place from the predictions.
+    * **Action:** Implement or verify an event listener for the `place_changed` event on the Autocomplete instance.
+    * Inside this event listener:
+        a.  Call `autocomplete.getPlace()` to retrieve the `PlaceResult` object.
+        b.  From the `PlaceResult`:
+            i.  Extract the company's official name (e.g., `place.name`).
+            ii. Extract the formatted address (e.g., `place.formatted_address`).
+            iii.Optionally, extract other address components if needed for separate fields (street, city, postal code, country from `place.address_components`).
+        c.  **Update Form State:**
+            i.  Use `react-hook-form`'s `setValue` function to update the "Company Name" field in your form with `place.name`.
+            ii. Use `setValue` to update the "Address" field in your form with `place.formatted_address`.
+            iii.Update any other relevant address component fields.
+
+3.  **Example Snippet (Conceptual - adapt based on actual integration method):**
+    ```typescript
+    // Assuming 'autocomplete' is the Google Maps Autocomplete instance
+    // and 'formMethods' are from react-hook-form (e.g., const formMethods = useForm(); const { setValue } = formMethods;)
+
+    // Inside your component, likely in a useEffect or callback
+    if (autocomplete) { // Ensure autocomplete object is available
+      autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
+
+        if (place && place.name) {
+          formMethods.setValue('companyName', place.name, { shouldValidate: true }); // Or your RHF field name
+        }
+        if (place && place.formatted_address) {
+          formMethods.setValue('address', place.formatted_address, { shouldValidate: true }); // Or your RHF field name for address
+        }
+        // Potentially set other address component fields here
+        // e.g., formMethods.setValue('city', extractCity(place.address_components));
+        
+        // Optionally, blur the input or perform other UI actions
+        // companyNameInputRef.current?.blur(); 
+      });
+    }
+    ```
+
+4.  **Keyboard Navigation & Accessibility:**
+    * Standard Google Maps Autocomplete widgets have built-in keyboard navigation (arrow keys, Enter, Tab). Ensure your implementation does not break this. The selection via keyboard should also trigger the `place_changed` event.
+    * If using a custom dropdown to display Google's suggestions (less common, more complex), ensure you implement proper ARIA attributes and keyboard event handlers for navigation and selection.
+
+5.  **Test All Interaction Methods:**
+    * After applying the fix, thoroughly test selecting a company suggestion using:
+        * Mouse click.
+        * Keyboard (Arrow keys to navigate, Enter or Tab to select).
+        * Touch (if testing on a touch-enabled device or simulator).
+    * **Verify:**
+        * The "Company Name" field in the form is correctly populated with the selected company's name.
+        * The "Address" field in the form is correctly populated with the selected company's address.
+        * Any other linked address fields are populated.
+    * **Provide the modified code snippet(s)** for the component handling the Google Maps Autocomplete, showing the event listener and `setValue` calls.
+    * **Provide a screenshot or short GIF** demonstrating successful selection and field population using one of the methods.
+
+**Focus EXCLUSIVELY on making the Google Maps Places Autocomplete selection functional for the "Company Name" and related "Address" fields.** Report back only when this task is complete and verified.
