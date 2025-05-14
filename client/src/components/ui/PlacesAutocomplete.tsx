@@ -398,6 +398,40 @@ export function PlacesAutocomplete({
     }
   }, [scriptLoaded, apiKey, types, onChange, onCountrySelect]); // Per diagnostica, includiamo temporaneamente onChange e onCountrySelect
 
+  // IMPORTANTE: Effetto finale per la pulizia completa quando il componente viene smontato
+  useEffect(() => {
+    // Restituisce una funzione di cleanup che sarà eseguita quando il componente viene smontato
+    return () => {
+      console.log('[PlacesAutocomplete] EXECUTING MASTER CLEANUP for mobile/tablet compatibility');
+      
+      // Rimuove tutte le funzioni di cleanup registrate
+      cleanupRef.current.forEach(cleanupFn => {
+        try {
+          cleanupFn();
+        } catch (err) {
+          console.error('[PlacesAutocomplete] Error during cleanup:', err);
+        }
+      });
+      
+      // Pulisce i riferimenti
+      autocompleteRef.current = null;
+      
+      // Pulisce tutti i gestori di eventi Google Maps rimasti
+      if (window.google?.maps?.event) {
+        try {
+          // Pulisce eventuali gestori di eventi globali rimasti
+          document.querySelectorAll('.pac-container').forEach(container => {
+            container.remove();
+          });
+          
+          console.log('[PlacesAutocomplete] Removed pac-container elements and cleaned up event handlers');
+        } catch (err) {
+          console.error('[PlacesAutocomplete] Error cleaning up Google Maps elements:', err);
+        }
+      }
+    };
+  }, []); // Dipendenze vuote eseguito solo al mount/unmount
+  
   // Gestisce l'aggiornamento manuale dell'input
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // Evita che la selezione del testo chiuda il modale
