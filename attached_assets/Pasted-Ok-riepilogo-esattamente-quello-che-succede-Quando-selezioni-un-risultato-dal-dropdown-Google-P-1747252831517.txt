@@ -1,0 +1,51 @@
+Ok, riepilogo esattamente quello che succede:
+	•	Quando selezioni un risultato dal dropdown Google Places nella casella Nome Azienda, l’intero valore (ragione sociale + indirizzo) finisce solo in name e mai in address.
+	•	Di conseguenza, il campo Indirizzo resta vuoto, e il form non può salvare correttamente né la ragione sociale né l’indirizzo.
+
+Per correggere questo comportamento, devi dire a Replit di fare solo queste due modifiche:
+
+⸻
+
+1. In CompanyModal.tsx, dentro il onChange del componente <PlacesAutocomplete> (quello usato per il campo “Nome Azienda”) sostituire completamente il blocco esistente con questo:
+
+- onChange={(value, placeDetails) => {
+-   // impostava name con tutto il valore concatenato...
+-   setValue("name", value, { shouldValidate: true });
+-   /* …altre righe… */
+- }}
++ onChange={(value, placeDetails) => {
++   if (placeDetails?.name) {
++     // SOLO la ragione sociale va su name
++     setValue("name", placeDetails.name, { shouldValidate: true });
++   }
++
++   if (placeDetails?.formatted_address) {
++     // L’indirizzo completo va su address (e su fullAddress, se usate entrambi)
++     setValue("address", placeDetails.formatted_address, { shouldValidate: true });
++     setValue("fullAddress", placeDetails.formatted_address, { shouldValidate: true });
++   }
++
++   // Ricarica la validazione su entrambi i campi
++   trigger(["name", "address", "fullAddress"]);
++}}
+
+Nota: rimuovi tutte le altre chiamate a setValue("name", value, …) dentro questo handler, altrimenti sovrascrivono la divisione.
+
+⸻
+
+2. In saveCompany.mutate (sempre in CompanyModal.tsx), assicurati che il payload che invii al backend includa
+
+companyData.name = data.name;           // la ragione sociale pura  
+companyData.address = data.address;     // l’indirizzo completo  
+
+e non invii più fullAddress separato.
+
+⸻
+
+Con queste due modifiche:
+	•	Alla selezione di un elemento da Google Places:
+	•	name prende solo place.name
+	•	address prende solo place.formatted_address
+	•	Al submit del form, il backend riceve correttamente name + address e crea la nuova azienda.
+
+Trasmetti esattamente questo snippet a Replit e fagli applicare solo queste due patch. In questo modo il comportamento tornerà corretto e potrai salvare l’azienda con nome e indirizzo divisi. Fammi sapere se servono chiarimenti!

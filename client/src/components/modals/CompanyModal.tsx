@@ -80,9 +80,10 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
       // Prepare company data
       const companyData: any = { ...data };
       
-      // ASSICURIAMO CHE fullAddress VENGA PARI A address NEL DATABASE:
-      companyData.address = data.fullAddress ?? data.address;
-      delete companyData.fullAddress; // puliamo il campo in uscita
+      // Assicuriamo che name e address siano corretti
+      companyData.name = data.name;           // la ragione sociale pura
+      companyData.address = data.address;     // l'indirizzo completo
+      delete companyData.fullAddress; // rimuovi fullAddress dal payload
       
       // Convert tags string to array if provided
       if (tagsInput.trim()) {
@@ -169,31 +170,27 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
               onChange={(value, placeDetails) => {
                 console.log("PlacesAutocomplete onChange triggered for company name:", { value, placeDetails });
                 
-                // Imposta sempre il valore del campo nome con il valore attuale (manuale)
-                setValue("name", value, { shouldValidate: true });
+                if (placeDetails?.name) {
+                  // SOLO la ragione sociale va su name
+                  setValue("name", placeDetails.name, { shouldValidate: true });
+                  console.log("Company name set to:", placeDetails.name);
+                }
                 
-                // Verifica se abbiamo ricevuto i dettagli del luogo da Google Maps
-                if (placeDetails && placeDetails.place_id) {
-                  console.log("Google Place Selected by user:", placeDetails); // Esatto formato richiesto per verifica
-                  
-                  // Imposta il nome azienda con il nome ufficiale dalla API
-                  if (placeDetails.name) {
-                    setValue("name", placeDetails.name, { shouldValidate: true });
-                    console.log("Company name set to:", placeDetails.name);
-                  }
-                  
-                  // Se abbiamo l'indirizzo formattato, aggiornalo nei campi corrispondenti
-                  if (placeDetails.formatted_address) {
-                    setValue("fullAddress", placeDetails.formatted_address, { shouldValidate: true });
-                    setValue("address", placeDetails.formatted_address, { shouldValidate: true });
-                    console.log("Address set to:", placeDetails.formatted_address);
-                  }
-                  
-                  // Estrae il paese se disponibile
-                  if (placeDetails.address_components) {
-                    const countryComponent = placeDetails.address_components.find(component => 
-                      component.types.includes('country')
-                    );
+                if (placeDetails?.formatted_address) {
+                  // L'indirizzo completo va su address (e su fullAddress, se usate entrambi)
+                  setValue("address", placeDetails.formatted_address, { shouldValidate: true });
+                  setValue("fullAddress", placeDetails.formatted_address, { shouldValidate: true });
+                  console.log("Address set to:", placeDetails.formatted_address);
+                }
+                
+                // Ricarica la validazione su entrambi i campi
+                trigger(["name", "address", "fullAddress"]);
+                
+                // Estrae il paese se disponibile
+                if (placeDetails?.address_components) {
+                  const countryComponent = placeDetails.address_components.find(component => 
+                    component.types.includes('country')
+                  );
                     
                     if (countryComponent) {
                       console.log("Country found:", countryComponent.long_name);
@@ -202,8 +199,8 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
                     
                     // Commento: la città non è presente nello schema
                     const cityComponent = placeDetails.address_components.find(component => 
-                      component.types.includes('locality') || 
-                      component.types.includes('administrative_area_level_3')
+                      component.types.includes("locality") || 
+                      component.types.includes("administrative_area_level_3")
                     );
                     
                     if (cityComponent) {
@@ -219,7 +216,7 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
               }}
               placeholder="Cerca aziende e attività commerciali" 
               className="w-full"
-              types={['establishment']} // Specifica che vogliamo solo aziende
+              types={["establishment"]} // Specifica che vogliamo solo aziende
             />
             {errors.name && (
               <p className="text-xs text-destructive">{errors.name.message}</p>
