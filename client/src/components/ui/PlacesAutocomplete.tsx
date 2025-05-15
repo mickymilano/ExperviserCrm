@@ -430,44 +430,11 @@ export function PlacesAutocomplete({
       } catch (addListenerErr) {
         console.error('[PlacesAutocomplete] Error adding place_changed listener:', addListenerErr);
       }
-        
-        // Aggiorna prima il valore interno per mostrarlo nell'input
-        setInternalValue(valueToUse);
-        
-        // Invoca il callback onChange con il valore e i dettagli del luogo
-        // Utilizziamo onChangeRef.current per accedere alla versione più aggiornata
-        if (onChangeRef.current) {
-          console.log("[PlacesAutocomplete] Calling onChange callback with place data");
-          
-          // Applica il valore direttamente senza blur o altri eventi che potrebbero chiudere il modal
-          try {
-            // Utilizziamo un timeout più lungo per i dispositivi touch/mobile
-            // per assicurarci che l'elaborazione avvenga dopo che tutti gli eventi touch sono completati
-            // Per dispositivi mobile usiamo un timeout ancora più lungo (500ms)
-            const isMobile = window.matchMedia('(max-width: 768px)').matches || ('ontouchstart' in window);
-            const timeout = isMobile ? 500 : 100;
-            
-            console.log(`[PlacesAutocomplete] Chiamando onChange con ${timeout}ms delay (isMobile: ${isMobile})`);
-            setTimeout(() => {
-              // Prima di chiamare il callback, assicuriamoci che il valore sia visibile nell'input
-              if (inputRef.current) {
-                inputRef.current.value = valueToUse;
-              }
-              
-              // Ora chiamiamo il callback che aggiorna il valore nel form
-              onChangeRef.current(valueToUse, place);
-              console.log('[PlacesAutocomplete] onChange callback eseguito con successo');
-            }, timeout);
-          } catch(err) {
-            console.error('[PlacesAutocomplete] Errore in onChange:', err);
-          }
-        }
-        
-        // Gestisce il callback per il paese se specificato
-        if (onCountrySelectRef.current && place.address_components) {
-          const countryComponent = place.address_components.find(
-            component => component.types.includes('country')
-          );
+      
+      // Fine del blocco try iniziale
+    } catch (error) {
+      console.error('[PlacesAutocomplete] Errore critico durante l\'inizializzazione dell\'autocomplete:', error);
+    }
           
           if (countryComponent) {
             console.log("[PlacesAutocomplete] Country component found:", countryComponent.long_name);
