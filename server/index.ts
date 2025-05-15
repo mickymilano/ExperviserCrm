@@ -4,7 +4,7 @@ import cookieParser from 'cookie-parser';
 import path from 'path';
 import { initializePostgresDb, closeDbConnections } from './initPostgresDb';
 import { registerRoutes } from './routes';
-import { setupVite } from './vite';
+import { setupVite, serveStatic } from './vite';
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -33,9 +33,18 @@ async function initialize() {
     // Registra le rotte API
     const server = registerRoutes(app);
     
-    // In development, configura Vite per il client
+    // Configurazione client in base all'ambiente
     if (process.env.NODE_ENV === 'development') {
+      // In development, configura Vite per il client
       await setupVite(app, server);
+    } else {
+      // In production, servi i file statici
+      console.log('Running in production mode, serving static files');
+      try {
+        serveStatic(app);
+      } catch (staticError) {
+        console.error('Error serving static files:', staticError);
+      }
     }
     
     // Avvia il server
