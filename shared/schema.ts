@@ -114,12 +114,18 @@ export const companies = pgTable('companies', {
   email: varchar('email', { length: 100 }),
   phone: varchar('phone', { length: 20 }),
   
-  // DEPRECATED: address, city, and region fields - Added 2025-05-13 by Lead Architect: unified location
-  address: text('address'),
-  city: varchar('city', { length: 50 }),
-  region: varchar('region', { length: 50 }),
+  // IMPORTANTE: I campi address, city e region sono stati rimossi dal database
+  // e sostituiti con fullAddress. Vengono mantenuti nel modello TypeScript
+  // solo per retrocompatibilità con il frontend, ma non esistono più nel database.
+  // NON utilizzare questi campi nelle query o negli insert!
   
-  // Added 2025-05-13 by Lead Architect: unified location field
+  // DEPRECATED (2025-05-13): Questi campi non esistono più nel database!
+  // address: text('address'),
+  // city: varchar('city', { length: 50 }),
+  // region: varchar('region', { length: 50 }),
+  
+  // Campo unificato per la gestione degli indirizzi (2025-05-13)
+  address: text('address'), // Mantenuto solo per retrocompatibilità col frontend
   fullAddress: text('full_address'),
   
   country: varchar('country', { length: 50 }),
