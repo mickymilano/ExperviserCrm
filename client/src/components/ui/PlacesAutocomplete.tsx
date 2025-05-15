@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { getGoogleMapsApiKey } from '@/lib/environment';
+import { logError, logMessage } from '@/lib/errorTracking';
 
 // Definisce le proprietà del componente
 interface PlacesAutocompleteProps {
@@ -67,15 +68,34 @@ export function PlacesAutocomplete({
       try {
         const key = await getGoogleMapsApiKey();
         setApiKey(key);
-        if (!key) setError('API key non disponibile');
+        
+        // Registriamo in Sentry se la chiave è disponibile o meno (senza esporre la chiave)
+        if (!key) {
+          setError('API key non disponibile');
+          logError(new Error('Google Maps API key non disponibile'), {
+            component: 'PlacesAutocomplete',
+            field: id || 'unknown',
+            types: types?.join(',')
+          });
+        } else {
+          logMessage('Google Maps API key recuperata con successo', {
+            component: 'PlacesAutocomplete',
+            field: id || 'unknown'
+          });
+        }
       } catch (err) {
         console.error('Errore recupero Google Maps API key:', err);
         setError('Impossibile recuperare API key');
+        logError(err, {
+          component: 'PlacesAutocomplete',
+          field: id || 'unknown',
+          action: 'fetchApiKey'
+        });
       }
     };
     
     fetchApiKey();
-  }, []);
+  }, [id, types]);
 
   // Effetto per caricare lo script Google Maps quando abbiamo la chiave API
   useEffect(() => {
@@ -103,6 +123,12 @@ export function PlacesAutocomplete({
     
     try {
       console.log("[PlacesAutocomplete] Initializing Google Maps Autocomplete");
+      // Monitoraggio per l'inizializzazione dell'autocomplete
+      logMessage("Initializing Google Maps Autocomplete", {
+        component: "PlacesAutocomplete",
+        field: id || 'unknown',
+        types: JSON.stringify(types)
+      });
       
       // Pulizia di container pre-esistenti per evitare problemi
       try {
@@ -134,18 +160,43 @@ export function PlacesAutocomplete({
         try {
           console.log('[PlacesAutocomplete] place_changed event triggered!');
           
+          // Registriamo l'evento in Sentry per tracciare il funzionamento
+          logMessage('Place selection changed', {
+            component: 'PlacesAutocomplete',
+            action: 'place_changed',
+            field: id || 'unknown'
+          });
+          
           if (!autocompleteRef.current) {
             console.error('[PlacesAutocomplete] No autocomplete reference');
+            logError(new Error('No autocomplete reference when place_changed triggered'), {
+              component: 'PlacesAutocomplete',
+              field: id || 'unknown'
+            });
             return;
           }
           
           const place = autocompleteRef.current.getPlace();
           if (!place || !place.place_id) {
             console.warn('[PlacesAutocomplete] Invalid place selected');
+            logError(new Error('Invalid place selected (no place_id)'), {
+              component: 'PlacesAutocomplete',
+              field: id || 'unknown',
+              details: { hasPlace: !!place }
+            });
             return;
           }
           
           console.log('[PlacesAutocomplete] Place selected:', place.name || place.formatted_address);
+          
+          // Registriamo il successo della selezione in Sentry (senza dati sensibili)
+          logMessage('Place successfully selected', {
+            component: 'PlacesAutocomplete',
+            field: id || 'unknown',
+            hasName: !!place.name,
+            hasFormattedAddress: !!place.formatted_address,
+            hasGeometry: !!place.geometry
+          });
           
           // Per la barra di ricerca, mostra sia il nome che l'indirizzo separati da una virgola
           const valueToUse = place.name 
@@ -306,6 +357,18 @@ export function PlacesAutocomplete({
       };
     } catch (error) {
       console.error('[PlacesAutocomplete] Error initializing autocomplete:', error);
+      
+      // Registriamo l'errore in Sentry con contesto
+      logError(error, {
+        component: 'PlacesAutocomplete',
+        action: 'initialize_autocomplete',
+        field: id || 'unknown',
+        details: {
+          value,
+          scriptLoaded,
+          hasGoogleApi: !!window.google?.maps?.places
+        }
+      });
     }
   }, [scriptLoaded, apiKey, types, value]);
   
