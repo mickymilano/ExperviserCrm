@@ -102,6 +102,19 @@ export function PlacesAutocomplete({
     }
     
     try {
+      console.log("[PlacesAutocomplete] Initializing Google Maps Autocomplete");
+      
+      // Pulizia di container pre-esistenti per evitare problemi
+      try {
+        document.querySelectorAll('.pac-container').forEach(container => {
+          if (container && container.parentNode) {
+            container.parentNode.removeChild(container);
+          }
+        });
+      } catch (err) {
+        console.error('[PlacesAutocomplete] Error cleaning up existing containers:', err);
+      }
+      
       // Configura le opzioni dell'autocomplete
       const options: google.maps.places.AutocompleteOptions = {
         fields: ['address_components', 'formatted_address', 'name', 'place_id', 'geometry'],
@@ -119,10 +132,20 @@ export function PlacesAutocomplete({
       // FONDAMENTALE: Aggiungiamo il listener per l'evento place_changed
       const placeChangedHandler = () => {
         try {
-          if (!autocompleteRef.current) return;
+          console.log('[PlacesAutocomplete] place_changed event triggered!');
+          
+          if (!autocompleteRef.current) {
+            console.error('[PlacesAutocomplete] No autocomplete reference');
+            return;
+          }
           
           const place = autocompleteRef.current.getPlace();
-          if (!place || !place.place_id) return;
+          if (!place || !place.place_id) {
+            console.warn('[PlacesAutocomplete] Invalid place selected');
+            return;
+          }
+          
+          console.log('[PlacesAutocomplete] Place selected:', place.name || place.formatted_address);
           
           // Per la barra di ricerca, mostra sia il nome che l'indirizzo separati da una virgola
           const valueToUse = place.name 
@@ -134,7 +157,10 @@ export function PlacesAutocomplete({
         
           // Invoca il callback onChange con il valore e i dettagli
           if (onChangeRef.current) {
-            onChangeRef.current(valueToUse, place);
+            console.log('[PlacesAutocomplete] Calling onChange callback');
+            setTimeout(() => {
+              onChangeRef.current!(valueToUse, place);
+            }, 100);
           }
           
           // Gestisce il callback per il paese se specificato
@@ -154,17 +180,128 @@ export function PlacesAutocomplete({
       
       // Aggiungi il listener
       const listener = autocomplete.addListener('place_changed', placeChangedHandler);
+      console.log('[PlacesAutocomplete] place_changed listener added');
+      
+      // Aggiungiamo gestori eventi per catturare i click sui suggerimenti
+      setTimeout(() => {
+        try {
+          const pacContainer = document.querySelector('.pac-container');
+          if (pacContainer) {
+            console.log('[PlacesAutocomplete] Found .pac-container, adding event handlers');
+            
+            // Impedisci che i click nel container si propaghino e chiudano il modale
+            pacContainer.addEventListener('click', (e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              
+              // Trova l'elemento .pac-item più vicino (il suggerimento su cui si è fatto clic)
+              const pacItem = (e.target as HTMLElement).closest('.pac-item');
+              if (pacItem && autocompleteRef.current) {
+                console.log('[PlacesAutocomplete] Click su .pac-item, triggering place_changed');
+                setTimeout(() => {
+                  if (autocompleteRef.current) {
+                    // @ts-ignore
+                    window.google.maps.event.trigger(autocompleteRef.current, 'place_changed');
+                  }
+                }, 100);
+              }
+            }, true);
+            
+            // Impedisci che il container si chiuda quando si interagisce con esso
+            pacContainer.addEventListener('mousedown', (e) => {
+              e.stopPropagation();
+            }, true);
+            
+            // Gestori eventi specifici per dispositivi touch
+            ['touchstart', 'touchend'].forEach(eventType => {
+              pacContainer.addEventListener(eventType, (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                
+                const pacItem = (e.target as HTMLElement).closest('.pac-item');
+                if (pacItem && autocompleteRef.current) {
+                  console.log(`[PlacesAutocomplete] ${eventType} su .pac-item, triggering place_changed`);
+                  setTimeout(() => {
+                    if (autocompleteRef.current) {
+                      // @ts-ignore
+                      window.google.maps.event.trigger(autocompleteRef.current, 'place_changed');
+                    }
+                  }, 100);
+                }
+              }, true);
+            });
+          } else {
+            console.warn('[PlacesAutocomplete] No .pac-container found');
+          }
+        } catch (err) {
+          console.error('[PlacesAutocomplete] Error setting up container event handlers:', err);
+        }
+      }, 1000);
+      
+      // Aggiungi anche un listeners globale per catturare tutti i click sui suggerimenti
+      const handlePacEvent = (e: Event) => {
+        const target = e.target as HTMLElement;
+        const isPacItem = target.closest('.pac-item');
+        const isPacContainer = target.closest('.pac-container');
+        
+        if (isPacItem || isPacContainer) {
+          console.log('[PlacesAutocomplete] Global handler caught event on pac element');
+          e.stopPropagation();
+          e.preventDefault();
+          
+          if (e instanceof MouseEvent) e.stopImmediatePropagation();
+          
+          if (isPacItem && autocompleteRef.current) {
+            console.log('[PlacesAutocomplete] Global handler triggering place_changed');
+            setTimeout(() => {
+              if (autocompleteRef.current) {
+                // @ts-ignore
+                window.google.maps.event.trigger(autocompleteRef.current, 'place_changed');
+              }
+            }, 100);
+          }
+        }
+      };
+      
+      // Aggiungi listeners globali
+      document.addEventListener('click', handlePacEvent, true);
+      document.addEventListener('touchstart', handlePacEvent, true);
+      document.addEventListener('touchend', handlePacEvent, true);
       
       // Cleanup al dismount
       return () => {
-        if (window.google?.maps?.event && listener) {
-          window.google.maps.event.removeListener(listener);
+        try {
+          console.log('[PlacesAutocomplete] Cleaning up');
           
-          if (autocompleteRef.current) {
+          // Rimuovi i listener globali
+          document.removeEventListener('click', handlePacEvent, true);
+          document.removeEventListener('touchstart', handlePacEvent, true);
+          document.removeEventListener('touchend', handlePacEvent, true);
+          
+          // Rimuovi il listener di place_changed
+          if (window.google?.maps?.event && listener) {
+            window.google.maps.event.removeListener(listener);
+          }
+          
+          // Pulisci l'istanza di autocomplete
+          if (autocompleteRef.current && window.google?.maps?.event) {
             // @ts-ignore
             window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
             autocompleteRef.current = null;
           }
+          
+          // Rimuovi eventuali container PAC rimasti
+          try {
+            document.querySelectorAll('.pac-container').forEach(container => {
+              if (container && container.parentNode) {
+                container.parentNode.removeChild(container);
+              }
+            });
+          } catch (err) {
+            // Ignora errori di pulizia
+          }
+        } catch (cleanupErr) {
+          console.error('[PlacesAutocomplete] Error during cleanup:', cleanupErr);
         }
       };
     } catch (error) {
