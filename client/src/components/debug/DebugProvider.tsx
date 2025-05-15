@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useDebugLogs } from '@/hooks/useDebugLogs';
 import { useDebugConsoleStore } from '@/stores/debugConsoleStore';
 import { initializeApiMonitoring } from '@/lib/monitoredFetch';
+import { debugContext } from '@/lib/debugContext';
 
 interface DebugProviderProps {
   children: React.ReactNode;
@@ -20,13 +21,13 @@ export default function DebugProvider({ children }: DebugProviderProps) {
   // Inizializza il sistema di debug al mount del componente
   useEffect(() => {
     // Installa il monitoraggio globale delle API
-    initializeApiMonitoring(debugLogs);
+    initializeApiMonitoring();
     
     // Installa gli override della console
     const resetConsole = debugLogs.installGlobalConsoleOverrides();
     
     // Log iniziale per verificare il funzionamento
-    debugLogs.logInfo('Debug Console inizializzata', {
+    debugContext.logInfo('Debug Console inizializzata', {
       time: new Date().toISOString(),
       environment: import.meta.env.MODE,
       userAgent: navigator.userAgent
@@ -36,20 +37,20 @@ export default function DebugProvider({ children }: DebugProviderProps) {
     if (import.meta.env.DEV) {
       // Simula alcuni eventi di logging
       setTimeout(() => {
-        debugLogs.logInfo('Applicazione avviata correttamente', {
+        debugContext.logInfo('Applicazione avviata correttamente', {
           version: '1.0.0',
           buildDate: '2025-05-15',
           environment: import.meta.env.MODE
         }, { component: 'AppStartup' });
         
-        debugLogs.logDebug('Stato sessione utente', {
+        debugContext.logDebug('Stato sessione utente', {
           authenticated: true,
           sessionStarted: new Date().toISOString()
         }, { component: 'Authentication' });
         
         // Simula un avviso
         setTimeout(() => {
-          debugLogs.logWarning('Prestazioni API lente', {
+          debugContext.logWarning('Prestazioni API lente', {
             endpoint: '/api/customers',
             responseTime: '2.5s',
             threshold: '1.0s'
@@ -65,7 +66,7 @@ export default function DebugProvider({ children }: DebugProviderProps) {
     return () => {
       resetConsole();
     };
-  }, []);
+  }, [toggleVisibility]);
   
   // Il provider non renderizza nulla di aggiuntivo, solo i children
   return <>{children}</>;

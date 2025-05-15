@@ -56,9 +56,8 @@ function LayoutPage({ component: Component }: { component: React.ComponentType }
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <DebugProvider>
-        <Suspense fallback={<LoadingScreen />}>
-          <Switch>
+      <Suspense fallback={<LoadingScreen />}>
+        <Switch>
           {/* Pagina di login (senza layout AppLayout) */}
           <Route path="/login" component={LoginPage} />
           

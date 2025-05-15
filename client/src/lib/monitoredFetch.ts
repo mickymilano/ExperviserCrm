@@ -1,4 +1,4 @@
-import { useDebugLogs } from '@/hooks/useDebugLogs';
+import { debugContext } from '@/lib/debugContext';
 
 /**
  * Wrapper per fetch che aggiunge il monitoraggio degli errori delle chiamate API.
@@ -13,20 +13,12 @@ export async function monitoredFetch(
 ): Promise<Response> {
   const startTime = performance.now();
   
-  // Estraiamo useDebugLogs al di fuori dei componenti React
-  // In un'applicazione reale, questo sarebbe gestito tramite un pattern singleton
-  // o un sistema di eventi per aggiornare i log
-  const debug = { 
-    logInfo: (msg: string, details?: any) => console.info(msg, details),
-    logError: (msg: string, details?: any) => console.error(msg, details)
-  };
-  
   try {
     // Log della richiesta
-    debug.logInfo(`API Request: ${options.method || 'GET'} ${url}`, {
+    debugContext.logInfo(`API Request: ${options.method || 'GET'} ${url}`, {
       headers: options.headers,
       body: options.body
-    });
+    }, { component: 'APIClient' });
     
     // Esegui la richiesta
     const response = await fetch(url, options);
@@ -52,17 +44,17 @@ export async function monitoredFetch(
         }
       }
       
-      debug.logError(`API Error: ${options.method || 'GET'} ${url} (${response.status})`, {
+      debugContext.logError(`API Error: ${options.method || 'GET'} ${url} (${response.status})`, {
         status: response.status,
         statusText: response.statusText,
         error: errorData,
         duration
-      });
+      }, { component: 'APIClient' });
     } else {
-      debug.logInfo(`API Success: ${options.method || 'GET'} ${url} (${response.status})`, {
+      debugContext.logInfo(`API Success: ${options.method || 'GET'} ${url} (${response.status})`, {
         status: response.status,
         duration
-      });
+      }, { component: 'APIClient' });
     }
     
     return response;
@@ -72,10 +64,10 @@ export async function monitoredFetch(
     const duration = endTime - startTime;
     
     // Log dell'errore
-    debug.logError(`API Exception: ${options.method || 'GET'} ${url}`, {
+    debugContext.logError(`API Exception: ${options.method || 'GET'} ${url}`, {
       error,
       duration
-    });
+    }, { component: 'APIClient' });
     
     throw error; // Rilancia l'errore per permettere la gestione esterna
   }
@@ -116,16 +108,16 @@ export let queryErrorHandler = (error: unknown) => {
 
 /**
  * Inizializza il sistema di monitoraggio globale per le chiamate API
- * Da chiamare all'avvio dell'app
  */
-export const initializeApiMonitoring = (debug: ReturnType<typeof useDebugLogs>) => {
+export const initializeApiMonitoring = () => {
   // Sostituisce l'implementazione di default con quella connessa al sistema di log
   queryErrorHandler = (error: unknown) => {
-    debug.logError('Query error', error, {
+    debugContext.logError('Query error', error, {
       component: 'React Query'
     });
   };
   
-  // In questa funzione si possono aggiungere altre configurazioni globali
-  // come l'intercezione di axios, fetch, ecc.
+  debugContext.logInfo('API Monitoring initialized', {
+    timestamp: new Date().toISOString()
+  }, { component: 'APIMonitor' });
 };
