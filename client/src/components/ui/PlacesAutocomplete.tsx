@@ -37,7 +37,7 @@ export function PlacesAutocomplete({
   className = '',
   id,
   onCountrySelect,
-  types = ['establishment']
+  types = ['geocode', 'establishment']
 }: PlacesAutocompleteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);

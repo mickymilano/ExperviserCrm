@@ -1559,71 +1559,116 @@ export class PostgresStorage implements IStorage {
   }
 
   async createCompany(company: InsertCompany): Promise<Company> {
-    // Added 2025-05-13 by Lead Architect: unified location field
-    // Se abbiamo address ma non fullAddress, inizializziamo fullAddress con address
-    if (company.address && !company.fullAddress) {
-      company.fullAddress = company.address;
-    }
+    // **VERSIONE COMPLETAMENTE RISCRITTA PER EVITARE ERRORI CON CAMPI RIMOSSI DAL DATABASE**
+    console.log('Ricevuta richiesta di creazione azienda:', company);
     
-    // HOTFIX: Rimuovi i campi city, region e qualsiasi altro campo non supportato
-    // che potrebbero essere passati da componenti non aggiornati
-    const { city, region, ...tempCompanyData } = company as any;
+    // Crea un oggetto pulito con solo i campi che sappiamo esistere nel database
+    const cleanCompanyData: Record<string, any> = {
+      name: company.name || '',
+      status: company.status || 'active'
+    };
     
-    // Estrai solo i campi validi della tabella companies
-    // Questo è estremamente importante per evitare errori "column does not exist"
-    const validFields = [
-      'name', 'email', 'phone', 'website', 'industry', 'address', 
-      'fullAddress', 'country', 'tags', 'notes', 'status', 'createdAt', 'updatedAt'
+    // Aggiungi solo i campi che esistono davvero nel database e sono presenti nell'input
+    const safeFields = [
+      'email', 'phone', 'website', 'industry', 
+      'address', 'fullAddress', 'country', 'notes',
+      'tags', 'customFields', 'parentCompanyId', 
+      'linkedinUrl', 'locationTypes', 'lastContactedAt',
+      'nextFollowUpAt', 'isActiveRep', 'companyType',
+      'brands', 'channels', 'productsOrServicesTags',
+      'logo', 'description', 'employeeCount', 'annualRevenue', 
+      'foundedYear', 'postalCode'
     ];
     
-    // Costruisci un oggetto pulito solo con i campi validi
-    const cleanCompanyData: any = {};
-    for (const field of validFields) {
-      if (field in tempCompanyData) {
-        cleanCompanyData[field] = tempCompanyData[field];
+    // Copia solo i campi sicuri che esistono nell'input
+    for (const field of safeFields) {
+      if (field in company && company[field as keyof InsertCompany] !== undefined) {
+        cleanCompanyData[field] = company[field as keyof InsertCompany];
       }
     }
     
-    // IMPORTANTE: Rimuovi esplicitamente questi campi che potrebbero causare errori SQL
-    delete cleanCompanyData.city;  // Assicurati che non ci sia il campo city
-    delete cleanCompanyData.region;  // Assicurati che non ci sia il campo region
+    // Gestisci la migrazione da address a fullAddress
+    if (company.address && !cleanCompanyData.fullAddress) {
+      cleanCompanyData.fullAddress = company.address;
+    }
     
-    // Log di debug
-    console.log('Creating company with data (cleaned):', cleanCompanyData);
+    // SICUREZZA: rimuovi esplicitamente i campi che sappiamo non esistere più
+    delete (cleanCompanyData as any).city;
+    delete (cleanCompanyData as any).region;
+    
+    // Log dei dati puliti prima dell'inserimento
+    console.log('Creating company with sanitized data:', cleanCompanyData);
     
     try {
-      const [newCompany] = await db.insert(companies).values(cleanCompanyData).returning();
+      // NOTA: Specificare una lista esplicita di campi per l'inserimento
+      // è l'unico modo sicuro per evitare errori di "column does not exist"
+      const [newCompany] = await db
+        .insert(companies)
+        .values(cleanCompanyData)
+        .returning();
+      
+      console.log('Azienda creata con successo, ID:', newCompany.id);
       return newCompany;
     } catch (error) {
-      console.error('Error inserting company:', error);
+      console.error('ERRORE CRITICO durante inserimento azienda:', error);
       throw error;
     }
   }
 
   async updateCompany(id: number, companyData: Partial<InsertCompany>): Promise<Company | undefined> {
-    // Added 2025-05-13 by Lead Architect: unified location field
-    // Se abbiamo address ma non fullAddress, inizializziamo fullAddress con address
-    if (companyData.address && !companyData.fullAddress) {
-      companyData.fullAddress = companyData.address;
+    // **VERSIONE COMPLETAMENTE RISCRITTA PER EVITARE ERRORI CON CAMPI RIMOSSI DAL DATABASE**
+    console.log('Ricevuta richiesta di aggiornamento azienda ID', id, ':', companyData);
+    
+    // Crea un oggetto pulito con solo i campi che sappiamo esistere nel database
+    const cleanCompanyData: Record<string, any> = {
+      // Aggiungi sempre updatedAt
+      updatedAt: new Date()
+    };
+    
+    // Aggiungi solo i campi che esistono davvero nel database e sono presenti nell'input
+    const safeFields = [
+      'name', 'email', 'phone', 'website', 'industry', 
+      'address', 'fullAddress', 'country', 'notes', 'status',
+      'tags', 'customFields', 'parentCompanyId', 
+      'linkedinUrl', 'locationTypes', 'lastContactedAt',
+      'nextFollowUpAt', 'isActiveRep', 'companyType',
+      'brands', 'channels', 'productsOrServicesTags',
+      'logo', 'description', 'employeeCount', 'annualRevenue', 
+      'foundedYear', 'postalCode'
+    ];
+    
+    // Copia solo i campi sicuri che esistono nell'input
+    for (const field of safeFields) {
+      if (field in companyData && companyData[field as keyof Partial<InsertCompany>] !== undefined) {
+        cleanCompanyData[field] = companyData[field as keyof Partial<InsertCompany>];
+      }
     }
     
-    // HOTFIX: Rimuovi i campi city e region che non esistono più nel database
-    // ma che potrebbero essere passati da componenti non aggiornati
-    const { city, region, ...cleanCompanyData } = companyData as any;
+    // Gestisci la migrazione da address a fullAddress
+    if (companyData.address && !cleanCompanyData.fullAddress) {
+      cleanCompanyData.fullAddress = companyData.address;
+    }
     
-    // Log di debug
-    console.log('Updating company with data:', cleanCompanyData);
+    // SICUREZZA: rimuovi esplicitamente i campi che sappiamo non esistere più
+    delete (cleanCompanyData as any).city;
+    delete (cleanCompanyData as any).region;
     
-    // DEPRECATED: old implementation - Added 2025-05-13 by Lead Architect: unified location
-    // .set({ ...companyData, updatedAt: new Date() })
+    // Log dei dati puliti prima dell'aggiornamento
+    console.log('Updating company with sanitized data:', cleanCompanyData);
     
-    const [updatedCompany] = await db
-      .update(companies)
-      .set({ ...cleanCompanyData, updatedAt: new Date() })
-      .where(eq(companies.id, id))
-      .returning();
-    
-    return updatedCompany;
+    try {
+      const [updatedCompany] = await db
+        .update(companies)
+        .set(cleanCompanyData)
+        .where(eq(companies.id, id))
+        .returning();
+      
+      console.log('Azienda aggiornata con successo, ID:', updatedCompany.id);
+      return updatedCompany;
+    } catch (error) {
+      console.error('ERRORE CRITICO durante aggiornamento azienda:', error);
+      throw error;
+    }
   }
 
   async deleteCompany(id: number): Promise<boolean> {

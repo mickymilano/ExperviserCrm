@@ -281,7 +281,23 @@ export interface ContactExtended {
   areasOfActivity: AreaOfActivity[];
 }
 
-export const insertCompanySchema = createInsertSchema(companies).omit({ id: true, createdAt: true, updatedAt: true });
+// Creiamo lo schema di inserimento base
+const baseInsertCompanySchema = createInsertSchema(companies).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+
+// Estendiamo lo schema per omettere i campi deprecati
+export const insertCompanySchema = baseInsertCompanySchema.extend({
+  // Ridichiariamo fullAddress e address come opzionali esplicitamente
+  fullAddress: z.string().optional(),
+  address: z.string().optional()
+}).omit({
+  // I campi city e region verranno omessi dal validatore
+  city: true,
+  region: true 
+});
 
 export const insertDealSchema = createInsertSchema(deals).omit({ id: true, createdAt: true, updatedAt: true });
 
