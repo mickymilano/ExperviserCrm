@@ -5,9 +5,19 @@ import path from 'path';
 import { initializePostgresDb, closeDbConnections } from './initPostgresDb';
 import { registerRoutes } from './routes';
 import { setupVite, serveStatic } from './vite';
+import { 
+  initializeErrorTracking,
+  sentryRequestHandler,
+  sentryErrorHandler,
+  errorHandler as sentryCustomErrorHandler
+} from './errorHandling';
 
 const app = express();
 const port = process.env.PORT || 5000;
+
+// Inizializza Sentry per il tracciamento degli errori
+// Nota: non bloccante, continuerà anche se Sentry non è configurato
+initializeErrorTracking();
 
 // Middleware
 app.use(express.json());
@@ -18,10 +28,23 @@ app.use(cors({
   credentials: true
 }));
 
+// Sentry request handler (prima di qualsiasi middleware)
+app.use(sentryRequestHandler());
+
 // Gestione degli errori globale
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error('Server error:', err);
-  res.status(500).json({ message: 'Errore interno del server', error: err.message });
+  // Traccia l'errore con Sentry prima di rispondere
+  try {
+    sentryErrorHandler()(err, req, res, () => {
+      // Poi utilizza il nostro custom error handler
+      sentryCustomErrorHandler(err, req, res, next);
+    });
+  } catch (sentryError) {
+    console.error('Error in Sentry error handling:', sentryError);
+    // Fallback sul comportamento originale
+    console.error('Server error:', err);
+    res.status(500).json({ message: 'Errore interno del server', error: err.message });
+  }
 });
 
 // Inizializzazione del database
