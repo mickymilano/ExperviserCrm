@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { PlacesAutocomplete } from "@/components/ui/PlacesAutocomplete";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { logError, withErrorHandling } from "@/lib/errorTracking";
 
 interface CompanyModalProps {
   open: boolean;
@@ -150,37 +151,47 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
   });
 
   const onSubmit = (data: CompanyFormData) => {
-    // Log per verificare i dati inviati
-    console.log("Submitting company data:", {
-      name: data.name,
-      address: data.address || data.fullAddress,
-      country: data.country,
-      tags: data.tags,
-      notes: data.notes
-    });
-    
-    // IMPORTANTE: Verifica se ci sono dati nel form prima di inviare
-    if (!data.name || data.name.trim() === '') {
-      toast({
-        title: "Errore di validazione",
-        description: "Il nome dell'azienda è obbligatorio",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    try {
-      // Avvia la mutazione e gestisce eventuali errori
-      saveCompany.mutate(data);
-    } catch (error) {
-      console.error("Errore durante il salvataggio dell'azienda:", error);
-      toast({
-        title: "Errore di salvataggio",
-        description: "Si è verificato un errore durante il salvataggio dei dati. Riprova.",
-        variant: "destructive",
-      });
-    }
-  };
+    // Utilizziamo la nostra utility di tracciamento errori con withErrorHandling
+    withErrorHandling(
+      () => {
+        // Log per verificare i dati inviati
+        console.log("Submitting company data:", {
+          name: data.name,
+          address: data.address || data.fullAddress,
+          country: data.country,
+          tags: data.tags,
+          notes: data.notes
+        });
+        
+        // IMPORTANTE: Verifica se ci sono dati nel form prima di inviare
+        if (!data.name || data.name.trim() === '') {
+          toast({
+            title: "Errore di validazione",
+            description: "Il nome dell'azienda è obbligatorio",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        // Aggiungiamo breadcrumb per tracciamento Sentry
+        const context = {
+          formData: {
+            ...data,
+            // Escludiamo eventuali dati sensibili se necessario
+          },
+          isEditMode,
+          companyId: initialData?.id
+        };
+        
+        // Avvia la mutazione e gestisce eventuali errori
+        saveCompany.mutate(data);
+      },
+      // Valore di fallback: non restituisce nulla perché è void
+      undefined,
+      // Contesto per il tracciamento errori
+      { action: 'submit_company_form', formId: initialData?.id || 'new' }
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
