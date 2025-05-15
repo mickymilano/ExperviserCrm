@@ -58,6 +58,8 @@
     "@tiptap/react": "^2.12.0",
     "@tiptap/starter-kit": "^2.12.0",
     "@types/bcrypt": "^5.0.2",
+    "@types/cookie-parser": "^1.4.8",
+    "@types/cors": "^2.8.18",
     "@types/imap": "^0.8.42",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/memoizee": "^0.4.12",
