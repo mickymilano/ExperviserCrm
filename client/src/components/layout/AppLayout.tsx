@@ -24,6 +24,8 @@ import {
 } from 'lucide-react';
 import { useTheme } from '@/hooks/useTheme';
 import { cn } from '@/lib/utils';
+import DebugConsole from '@/components/debug/DebugConsole';
+import DebugButton from '@/components/debug/DebugButton';
 
 // Struttura per le voci di menu
 interface MenuItemProps {
@@ -335,6 +337,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           
           {/* Azioni header */}
           <div className="flex items-center gap-2">
+            {/* Debug Button */}
+            <div className="h-9 w-9 inline-flex items-center justify-center">
+              <DebugButton />
+            </div>
+            
             {/* Notifiche */}
             <button className="h-9 w-9 inline-flex items-center justify-center rounded-md hover:bg-accent relative">
               <BellRing className="h-5 w-5" />
@@ -360,6 +367,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         {/* Contenuto della pagina */}
         <main className="flex-1 overflow-auto">{children}</main>
       </div>
+      
+      {/* Debug Console */}
+      <DebugConsole />
     </div>
   );
 }
