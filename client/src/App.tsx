@@ -4,6 +4,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
 import AppLayout from '@/components/layout/AppLayout';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import DebugProvider from '@/components/debug/DebugProvider';
 
 // Lazy loading delle pagine
 const LoginPage = lazy(() => import('@/pages/LoginPage'));
@@ -55,8 +56,9 @@ function LayoutPage({ component: Component }: { component: React.ComponentType }
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Suspense fallback={<LoadingScreen />}>
-        <Switch>
+      <DebugProvider>
+        <Suspense fallback={<LoadingScreen />}>
+          <Switch>
           {/* Pagina di login (senza layout AppLayout) */}
           <Route path="/login" component={LoginPage} />
           

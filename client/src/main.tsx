@@ -31,7 +31,7 @@ Sentry.init({
     }
     return event;
   },
-});
+});;
 
 // Renderizza l'applicazione nel DOM
 ReactDOM.createRoot(document.getElementById('root')!).render(
