@@ -49,7 +49,7 @@ export default function Companies() {
 
   // Handle delete company
   const handleDelete = async (id: number) => {
-    if (window.confirm("Are you sure you want to delete this company?")) {
+    if (window.confirm("Sei sicuro di voler eliminare questa azienda?")) {
       deleteCompany.mutate(id);
     }
   };
@@ -57,12 +57,12 @@ export default function Companies() {
   return (
     <div className="max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-        <h1 className="text-2xl font-bold mb-4 sm:mb-0">Companies</h1>
+        <h1 className="text-2xl font-bold mb-4 sm:mb-0">Aziende</h1>
         <Button onClick={() => {
           setSelectedCompany(null);
           setShowModal(true);
         }}>
-          <Plus className="mr-2 h-4 w-4" /> Add Company
+          <Plus className="mr-2 h-4 w-4" /> Aggiungi Azienda
         </Button>
       </div>
 
@@ -72,14 +72,14 @@ export default function Companies() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search companies..."
+                placeholder="Cerca aziende..."
                 className="pl-9"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             <Button variant="outline" className="md:w-auto">
-              <Filter className="mr-2 h-4 w-4" /> Filter
+              <Filter className="mr-2 h-4 w-4" /> Filtra
             </Button>
           </div>
         </CardContent>
@@ -120,13 +120,13 @@ export default function Companies() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => handleEdit(company)}>
-                        Edit Company
+                        Modifica Azienda
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         className="text-destructive"
                         onClick={() => handleDelete(company.id)}
                       >
-                        Delete Company
+                        Elimina Azienda
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -218,14 +218,14 @@ export default function Companies() {
                     size="sm" 
                     onClick={() => navigate(`/companies/${company.id}`)}
                   >
-                    <Eye className="h-4 w-4 mr-1" /> View Details
+                    <Eye className="h-4 w-4 mr-1" /> Vedi Dettagli
                   </Button>
                   <Button 
                     size="sm"
                     onClick={() => company.email ? window.location.href = `mailto:${company.email}` : null}
                     disabled={!company.email}
                   >
-                    <Mail className="h-4 w-4 mr-1" /> Contact
+                    <Mail className="h-4 w-4 mr-1" /> Contatta
                   </Button>
                 </div>
               </CardContent>
@@ -238,15 +238,15 @@ export default function Companies() {
             <div className="rounded-full bg-muted w-12 h-12 flex items-center justify-center mb-4">
               <Search className="h-6 w-6 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-medium mb-2">No companies found</h3>
+            <h3 className="text-lg font-medium mb-2">Nessuna azienda trovata</h3>
             <p className="text-muted-foreground text-center mb-4">
               {searchTerm
-                ? "Try adjusting your search terms."
-                : "Get started by adding your first company."}
+                ? "Prova a modificare i termini di ricerca."
+                : "Inizia aggiungendo la tua prima azienda."}
             </p>
             {!searchTerm && (
               <Button onClick={() => setShowModal(true)}>
-                <Plus className="mr-2 h-4 w-4" /> Add Company
+                <Plus className="mr-2 h-4 w-4" /> Aggiungi Azienda
               </Button>
             )}
           </CardContent>

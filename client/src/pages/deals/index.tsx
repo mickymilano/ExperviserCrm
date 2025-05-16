@@ -68,12 +68,12 @@ export default function Deals() {
   return (
     <div className="max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-        <h1 className="text-2xl font-bold mb-4 sm:mb-0">Deals</h1>
+        <h1 className="text-2xl font-bold mb-4 sm:mb-0">Opportunità</h1>
         <Button onClick={() => {
           setSelectedDeal(null);
           setShowModal(true);
         }}>
-          <Plus className="mr-2 h-4 w-4" /> Add Deal
+          <Plus className="mr-2 h-4 w-4" /> Aggiungi Opportunità
         </Button>
       </div>
 
