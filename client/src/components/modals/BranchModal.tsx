@@ -87,6 +87,7 @@ export default function BranchModal({
 }: BranchModalProps) {
   const { toast } = useToast();
   const { companies, isLoading: isLoadingCompanies } = useCompanies();
+  const { contacts, isLoading: isLoadingContacts } = useContacts();
   const createBranch = useCreateBranch();
   const updateBranch = useUpdateBranch();
 
@@ -508,7 +509,7 @@ export default function BranchModal({
                       if (field.value && field.value.length < 3) {
                         field.onChange([
                           ...field.value,
-                          { id: crypto.randomUUID(), name: "", role: "" }
+                          { id: crypto.randomUUID(), name: "", role: "", contactId: "" }
                         ]);
                       }
                     };
@@ -533,18 +534,51 @@ export default function BranchModal({
                           {field.value && field.value.length > 0 ? (
                             <div className="space-y-3">
                               {field.value.map((manager, index) => (
-                                <div key={manager.id || index} className="flex items-end gap-2 p-3 border rounded-md bg-muted/20">
-                                  <div className="flex-1">
-                                    <FormLabel htmlFor={`manager-name-${index}`}>Nome</FormLabel>
-                                    <Input
-                                      id={`manager-name-${index}`}
-                                      value={manager.name || ""}
-                                      onChange={(e) => updateManager(index, "name", e.target.value)}
-                                      placeholder="Nome del responsabile"
-                                    />
+                                <div key={manager.id || index} className="flex flex-col gap-2 p-3 border rounded-md bg-muted/20">
+                                  <div className="flex items-center justify-between mb-1">
+                                    <h4 className="text-sm font-medium">Responsabile #{index + 1}</h4>
+                                    <Button 
+                                      type="button" 
+                                      variant="ghost" 
+                                      size="sm"
+                                      className="h-8 px-2" 
+                                      onClick={() => removeManager(index)}
+                                    >
+                                      Rimuovi
+                                    </Button>
                                   </div>
                                   
-                                  <div className="flex-1">
+                                  <div className="w-full">
+                                    <FormLabel htmlFor={`manager-contact-${index}`}>Contatto</FormLabel>
+                                    <ContactCombobox
+                                      contacts={contacts || []}
+                                      value={manager.contactId || ""}
+                                      onChange={(value, contact) => {
+                                        const fullName = contact ? `${contact.firstName} ${contact.lastName}` : "";
+                                        updateManager(index, "contactId", value);
+                                        updateManager(index, "name", fullName);
+                                      }}
+                                      placeholder="Seleziona un contatto..."
+                                      disabled={isLoadingContacts}
+                                    />
+                                    <div className="text-xs text-muted-foreground mt-1">
+                                      {manager.contactId ? "Contatto collegato" : "Nessun contatto collegato"}
+                                    </div>
+                                  </div>
+                                  
+                                  {!manager.contactId && (
+                                    <div className="w-full mt-2">
+                                      <FormLabel htmlFor={`manager-name-${index}`}>Nome</FormLabel>
+                                      <Input
+                                        id={`manager-name-${index}`}
+                                        value={manager.name || ""}
+                                        onChange={(e) => updateManager(index, "name", e.target.value)}
+                                        placeholder="Nome del responsabile"
+                                      />
+                                    </div>
+                                  )}
+                                  
+                                  <div className="w-full mt-2">
                                     <FormLabel htmlFor={`manager-role-${index}`}>Ruolo</FormLabel>
                                     <Input
                                       id={`manager-role-${index}`}
@@ -553,15 +587,6 @@ export default function BranchModal({
                                       placeholder="Ruolo"
                                     />
                                   </div>
-                                  
-                                  <Button 
-                                    type="button" 
-                                    variant="ghost" 
-                                    className="px-3" 
-                                    onClick={() => removeManager(index)}
-                                  >
-                                    Rimuovi
-                                  </Button>
                                 </div>
                               ))}
                             </div>

@@ -184,6 +184,8 @@ export interface BranchManager {
   id: string;
   name: string;
   role: string;
+  contactId?: string; // ID del contatto collegato
+  contact?: Contact; // Riferimento opzionale al contatto collegato
 }
 
 export interface Branch {

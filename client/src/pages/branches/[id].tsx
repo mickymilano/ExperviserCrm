@@ -172,14 +172,21 @@ export default function BranchDetail() {
                 <div className="space-y-2">
                   {branch.managers && branch.managers.length > 0 ? (
                     branch.managers.map((manager, index) => (
-                      <div key={manager.id || index} className="flex items-center p-2 bg-muted/30 rounded-md">
-                        <User className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <div>
-                          <span className="font-medium">{manager.name}</span>
-                          {manager.role && (
-                            <span className="ml-2 text-sm text-muted-foreground">
-                              ({manager.role})
-                            </span>
+                      <div key={manager.id || index} className="flex items-center p-3 bg-muted/30 rounded-md">
+                        <User className="h-5 w-5 mr-3 text-muted-foreground" />
+                        <div className="flex-grow">
+                          <div className="flex flex-col">
+                            <span className="font-medium">{manager.name}</span>
+                            {manager.role && (
+                              <span className="text-sm text-muted-foreground">
+                                {manager.role}
+                              </span>
+                            )}
+                          </div>
+                          {manager.contactId && (
+                            <div className="mt-1 text-xs bg-primary/10 text-primary px-2 py-1 rounded inline-block">
+                              Collegato a contatto database
+                            </div>
                           )}
                         </div>
                       </div>
