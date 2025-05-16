@@ -554,9 +554,20 @@ export default function BranchModal({
                                       contacts={contacts || []}
                                       value={manager.contactId || ""}
                                       onChange={(value, contact) => {
-                                        const fullName = contact ? `${contact.firstName} ${contact.lastName}` : "";
-                                        updateManager(index, "contactId", value);
-                                        updateManager(index, "name", fullName);
+                                        console.log("onChange del ContactCombobox:", value, contact);
+                                        if (contact) {
+                                          const fullName = `${contact.firstName} ${contact.lastName}`;
+                                          // Aggiorniamo entrambi i campi in una volta sola
+                                          const newManagers = [...field.value];
+                                          newManagers[index] = { 
+                                            ...newManagers[index], 
+                                            contactId: value, 
+                                            name: fullName 
+                                          };
+                                          field.onChange(newManagers);
+                                        } else {
+                                          updateManager(index, "contactId", value);
+                                        }
                                       }}
                                       placeholder="Seleziona un contatto..."
                                       disabled={isLoadingContacts}
