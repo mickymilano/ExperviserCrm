@@ -259,7 +259,7 @@ export default function EmailModal({ open, onOpenChange, initialData, replyTo }:
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[800px]">
         <DialogHeader>
-          <DialogTitle>Compose Email</DialogTitle>
+          <DialogTitle>Componi Email</DialogTitle>
         </DialogHeader>
         
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">
@@ -350,7 +350,7 @@ export default function EmailModal({ open, onOpenChange, initialData, replyTo }:
                     name="subject"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Subject</FormLabel>
+                        <FormLabel>Oggetto</FormLabel>
                         <FormControl>
                           <Input placeholder="Email subject" {...field} />
                         </FormControl>
@@ -429,7 +429,7 @@ export default function EmailModal({ open, onOpenChange, initialData, replyTo }:
                     name="contactId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Related Contact</FormLabel>
+                        <FormLabel>Contatto Collegato</FormLabel>
                         <Select 
                           onValueChange={(value) => field.onChange(value ? parseInt(value) : null)} 
                           defaultValue={field.value?.toString()} 
@@ -535,7 +535,7 @@ export default function EmailModal({ open, onOpenChange, initialData, replyTo }:
                     setActiveTab("compose");
                   }}
                 >
-                  {sendEmail.isPending ? "Sending..." : "Send Email"}
+                  {sendEmail.isPending ? "Invio in corso..." : "Invia Email"}
                 </Button>
               </DialogFooter>
             </form>
