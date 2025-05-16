@@ -1,19 +1,13 @@
 import * as React from "react";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Input } from "@/components/ui/input";
 import { Contact } from "@/types";
 
 interface ContactComboboxProps {
@@ -34,6 +28,7 @@ export function ContactCombobox({
   disabled = false,
 }: ContactComboboxProps) {
   const [open, setOpen] = React.useState(false);
+  const [searchQuery, setSearchQuery] = React.useState("");
 
   const getContactName = (contact: Contact) => {
     return `${contact.firstName} ${contact.lastName}`;
@@ -55,6 +50,13 @@ export function ContactCombobox({
     setOpen(false);
   };
 
+  // Filtra i contatti in base alla ricerca
+  const filteredContacts = contacts.filter((contact) => {
+    if (!searchQuery) return true;
+    const name = getContactName(contact).toLowerCase();
+    return name.includes(searchQuery.toLowerCase());
+  });
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -70,17 +72,27 @@ export function ContactCombobox({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0">
-        <Command shouldFilter={true}>
-          <CommandInput placeholder="Cerca contatto..." />
-          <CommandEmpty>{emptyMessage}</CommandEmpty>
-          <CommandGroup className="max-h-64 overflow-y-auto">
-            {contacts.map((contact) => (
-              <CommandItem
-                key={contact.id}
-                value={getContactName(contact).toLowerCase()}
-                onSelect={() => handleSelectContact(contact.id.toString(), contact)}
-                className="cursor-pointer"
+      <PopoverContent className="w-full p-2">
+        <div className="flex items-center border rounded-md px-3 mb-2">
+          <Search className="h-4 w-4 mr-2 opacity-50" />
+          <Input 
+            className="flex h-9 w-full rounded-md border-0 bg-transparent py-1 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+            placeholder="Cerca contatto..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <div className="max-h-64 overflow-y-auto">
+          {filteredContacts.length === 0 ? (
+            <div className="py-6 text-center">
+              <p className="text-sm text-muted-foreground">{emptyMessage}</p>
+            </div>
+          ) : (
+            filteredContacts.map((contact) => (
+              <div 
+                key={contact.id} 
+                className="px-2 py-2 cursor-pointer hover:bg-accent hover:text-accent-foreground flex items-center rounded-md"
+                onClick={() => handleSelectContact(contact.id.toString(), contact)}
               >
                 <Check
                   className={cn(
@@ -88,23 +100,21 @@ export function ContactCombobox({
                     value === contact.id.toString() ? "opacity-100" : "opacity-0"
                   )}
                 />
-                <div onClick={() => handleSelectContact(contact.id.toString(), contact)} className="flex-1">
-                  <span>{getContactName(contact)}</span>
-                  {contact.jobTitle && (
-                    <span className="ml-2 text-xs text-muted-foreground">
-                      ({contact.jobTitle})
-                    </span>
-                  )}
-                  {contact.company?.name && (
-                    <span className="ml-1 text-xs text-muted-foreground">
-                      {contact.jobTitle ? "" : "("}{contact.company.name}{contact.jobTitle ? "" : ")"}
-                    </span>
-                  )}
+                <div className="flex-1">
+                  <div className="font-medium">{getContactName(contact)}</div>
+                  <div className="flex text-xs text-muted-foreground mt-1">
+                    {contact.jobTitle && <span>{contact.jobTitle}</span>}
+                    {contact.company?.name && (
+                      <span className={contact.jobTitle ? "ml-1" : ""}>
+                        {contact.jobTitle ? " • " : ""}{contact.company.name}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        </Command>
+              </div>
+            ))
+          )}
+        </div>
       </PopoverContent>
     </Popover>
   );
