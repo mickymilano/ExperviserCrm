@@ -180,10 +180,14 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
 
   // Filter companies based on search query
   useEffect(() => {
-    if (!companies || !Array.isArray(companies)) return;
+    if (!companies || !Array.isArray(companies)) {
+      console.log("Companies data is not available or not an array");
+      return;
+    }
     
     if (companySearchQuery.trim() === '') {
       setFilteredCompanies(companies);
+      console.log("Setting all companies in filtered list:", companies.length);
     } else {
       const query = companySearchQuery.toLowerCase().trim();
       const filtered = companies.filter(company => 
@@ -191,21 +195,11 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
         company.name.toLowerCase().includes(query)
       );
       setFilteredCompanies(filtered);
+      console.log(`Filtered companies by query "${query}":`, filtered.length);
     }
   }, [companySearchQuery, companies]);
 
-  // Aggiorniamo i contatti filtrati quando cambia l'azienda selezionata
-  useEffect(() => {
-    // Rilevare quando cambia l'azienda selezionata nel form
-    const companyIdFromForm = getValues("companyId");
-    console.log("Form company ID (from form):", companyIdFromForm);
-    
-    // Solo se l'ID dell'azienda è diverso dall'ID corrente, aggiorniamo lo stato
-    if (companyIdFromForm && companyIdFromForm !== selectedCompany) {
-      console.log("Setting company ID from form:", companyIdFromForm);
-      setSelectedCompanyId(Number(companyIdFromForm));
-    }
-  }, [getValues, selectedCompany]);
+  // Rimuoviamo il primo useEffect per evitare duplicazioni e potenziali loop
 
 
 
@@ -218,8 +212,9 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       return;
     }
     
-    const currentCompanyId = selectedCompany;
-    console.log("Filtering contacts for company ID:", currentCompanyId);
+    // Usiamo il valore dal form direttamente invece di dipendere da selectedCompany
+    const currentCompanyId = getValues("companyId");
+    console.log("Filtering contacts for company ID from form:", currentCompanyId);
     
     if (!currentCompanyId) {
       // Se non c'è un'azienda selezionata, mostra tutti i contatti
@@ -229,22 +224,15 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     }
     
     // Only show contacts associated with selected company
-    if (!Array.isArray(contacts)) {
-      console.log("Contacts is not an array");
-      setFilteredContacts([]);
-      return;
-    }
-    
     const filteredContactsList = contacts.filter(contact => {
       // Check if the contact has areasOfActivity data
       if (!contact.areasOfActivity || !Array.isArray(contact.areasOfActivity)) {
-        console.log(`Contact ${contact.id} has no areasOfActivity data`);
         return false;
       }
       
       // Check if any area links the contact to the selected company
       const isAssociated = contact.areasOfActivity.some((area: { companyId: number }) => 
-        area.companyId === currentCompanyId
+        area.companyId === Number(currentCompanyId)
       );
       
       if (isAssociated) {
@@ -266,7 +254,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       setValue("contactId", null);
     }
     
-  }, [contacts, selectedCompany, setValue]);
+  }, [contacts, getValues, setValue, watch("companyId")]);
 
   // La funzionalità delle sinergie è stata rimossa
   /*
@@ -696,7 +684,8 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                             {Array.isArray(filteredCompanies) && filteredCompanies.map((company: any) => (
                               <CommandItem
                                 key={company.id}
-                                onSelect={() => {
+                                value={String(company.id)}
+                                onSelect={(currentValue) => {
                                   console.log("Company selection - Setting ID:", company.id, company.name);
                                   // Set the company ID using our single setter function
                                   setSelectedCompanyId(company.id);
@@ -760,7 +749,9 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                               filteredContacts.map((contact: any) => (
                                 <CommandItem
                                   key={contact.id}
+                                  value={String(contact.id)}
                                   onSelect={() => {
+                                    console.log("Contact selection - Setting ID:", contact.id, `${contact.firstName} ${contact.lastName}`);
                                     field.onChange(contact.id);
                                   }}
                                 >
