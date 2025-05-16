@@ -7,11 +7,30 @@ import RecentContacts from "@/components/dashboard/RecentContacts";
 import AISuggestions from "@/components/dashboard/AISuggestions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DashboardData } from "@/types";
+import { debugContext } from "@/lib/debugContext";
+import { useEffect } from "react";
 
 export default function Dashboard() {
   const { data, isLoading, isError } = useQuery<DashboardData>({
     queryKey: ['/api/dashboard'],
   });
+  
+  // Aggiungiamo alcuni log di test al caricamento della dashboard
+  useEffect(() => {
+    debugContext.logInfo('Dashboard caricata', { timestamp: new Date().toISOString() }, { component: 'Dashboard' });
+    
+    // Aggiungiamo un log di ogni tipo per testare
+    debugContext.logDebug('Test log di debug', { testId: 1 }, { component: 'Dashboard' });
+    debugContext.logWarning('Test log di warning', { testId: 2 }, { component: 'Dashboard' });
+    
+    // Test errore (non blocca l'esecuzione)
+    try {
+      // Simuliamo un errore per testare il logging
+      throw new Error('Errore simulato per test');
+    } catch (error) {
+      debugContext.logError('Test log di errore', error, { component: 'Dashboard' });
+    }
+  }, []);
 
   if (isError) {
     return (
