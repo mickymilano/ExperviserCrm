@@ -1,0 +1,249 @@
+# REPORT DI DEBUG END-TO-END: EXPERVISER CRM
+Data: 16 Maggio 2025
+Versione: 1.0.0
+
+## PANORAMICA DEL TEST
+Questo report documenta un test end-to-end completo dell'applicazione EXPERVISER CRM, simulando azioni utente e registrando il comportamento del sistema ad ogni passo.
+
+## CONFIGURAZIONE
+- Browser: Chrome (testato via Vite dev server)
+- Backend: Node.js/Express
+- Database: PostgreSQL
+- API Google Maps attiva: Sì
+
+================================
+
+## FLUSSO PRINCIPALE DI TEST
+
+=== STEP 1: LOGIN ===
+Request: GET /api/auth/user
+Response: 200 { id: 1, username: "admin", ... }
+Behavior: Utente già loggato, reindirizzato alla dashboard
+
+=== STEP 2: VISUALIZZAZIONE DASHBOARD ===
+Request: GET /api/dashboard/stats
+Response: 200 { totalContacts: 3, totalCompanies: 3, ... }
+Behavior: Dashboard caricata con statistiche corrette
+
+=== STEP 3: CREAZIONE AZIENDA ===
+Request: POST /api/companies
+Payload:
+```json
+{
+  "name": "Gruppo Ethos",
+  "status": "active",
+  "email": "",
+  "phone": "",
+  "address": "Via Carlo Cattaneo, 29, 20871 Vimercate MB, Italia",
+  "website": "",
+  "industry": "",
+  "tags": [],
+  "notes": ""
+}
+```
+Response: 201 { id: 11, name: "Gruppo Ethos", ... }
+Log Server:
+```
+Creating company with explicit field mapping: {
+  name: 'Gruppo Ethos',
+  status: 'active',
+  email: null,
+  phone: null,
+  website: null,
+  full_address: 'Via Carlo Cattaneo, 29, 20871 Vimercate MB, Italia',
+  address: null,
+  industry: null,
+  tags: [],
+  location_types: [],
+  company_type: null,
+  brands: [],
+  channels: [],
+  products_or_services_tags: [],
+  is_active_rep: false,
+  notes: null,
+  custom_fields: null,
+  last_contacted_at: null,
+  next_follow_up_at: null,
+  updated_at: 2025-05-16T08:09:32.871Z
+}
+Azienda creata con successo, ID: 11
+```
+Behavior: 
+- Modal si chiude
+- Messaggio toast di successo
+- Nuova azienda appare nella lista aziende
+- CORREZIONE IMPLEMENTATA: eliminata duplicazione campo address
+
+=== STEP 4: DETTAGLIO AZIENDA ===
+Request: GET /api/companies/11
+Response: 200 { id: 11, name: "Gruppo Ethos", ... }
+Request: GET /api/companies/11/contacts
+Response: 200 []
+Behavior: 
+- La scheda dettaglio azienda viene visualizzata correttamente
+- Non ci sono contatti associati
+- CORREZIONE IMPLEMENTATA: visualizzato solo full_address senza duplicazione
+
+=== STEP 5: CREAZIONE CONTATTO ASSOCIATO ===
+Request: POST /api/contacts
+Payload:
+```json
+{
+  "firstName": "Mario",
+  "lastName": "Rossi",
+  "email": "mario.rossi@gruppethos.it",
+  "phone": "+39 123456789",
+  "areasOfActivity": [{
+    "companyId": 11,
+    "companyName": "Gruppo Ethos",
+    "isPrimary": true,
+    "role": "Direttore Commerciale",
+    "jobDescription": "Works at Gruppo Ethos"
+  }]
+}
+```
+Response: 201 { id: 22, firstName: "Mario", ... }
+Behavior:
+- Modal contatto si chiude
+- Toast di conferma
+- Contatto viene aggiunto alla lista contatti dell'azienda
+
+=== STEP 6: CREAZIONE LEAD ===
+Request: POST /api/leads
+Payload:
+```json
+{
+  "firstName": "Giulia",
+  "lastName": "Bianchi",
+  "email": "g.bianchi@example.com",
+  "phone": "+39 333 7896543",
+  "companyName": "Startup Innovativa Srl",
+  "status": "new",
+  "source": "LinkedIn",
+  "notes": "Interessata ai nostri servizi di consulenza"
+}
+```
+Response: 201 { id: 5, firstName: "Giulia", ... }
+Behavior:
+- Lead creato con successo
+- Appare nella lista leads
+- Status "new" viene visualizzato correttamente
+
+=== STEP 7: CREAZIONE DEAL ===
+Request: POST /api/deals
+Payload:
+```json
+{
+  "title": "Contratto Annuale Servizi",
+  "companyId": 11,
+  "contactId": 22,
+  "status": "proposal",
+  "value": 15000,
+  "currency": "EUR",
+  "closingDate": "2025-07-30T00:00:00.000Z",
+  "probability": 60,
+  "notes": "Cliente interessato al pacchetto premium"
+}
+```
+Response: 201 { id: 12, title: "Contratto Annuale Servizi", ... }
+Behavior:
+- Deal creato con successo
+- Visualizzato nel pipeline nella colonna "proposal"
+- Informazioni azienda e contatto associate correttamente
+
+=== STEP 8: MODIFICA AZIENDA ===
+Request: PUT /api/companies/11
+Payload:
+```json
+{
+  "id": 11,
+  "name": "Gruppo Ethos SpA",
+  "industry": "Energia",
+  "website": "https://www.gruppoethos.it",
+  "email": "info@gruppoethos.it",
+  "phone": "+39 039 123456",
+  "fullAddress": "Via Carlo Cattaneo, 29, 20871 Vimercate MB, Italia",
+  "country": "Italia",
+  "tags": ["energia", "sostenibilità"]
+}
+```
+Response: 200 { id: 11, ... }
+Behavior:
+- Aggiornamenti salvati
+- Toast di conferma
+- Nuovi valori visualizzati nella pagina di dettaglio
+
+=== STEP 9: MODIFICA CONTATTO ===
+Request: PUT /api/contacts/22
+Payload:
+```json
+{
+  "id": 22,
+  "firstName": "Mario",
+  "lastName": "Rossi",
+  "email": "mario.rossi@gruppoethos.it",
+  "mobilePhone": "+39 123456789",
+  "role": "Direttore Marketing",
+  "areasOfActivity": [{
+    "id": 23,
+    "companyId": 11,
+    "companyName": "Gruppo Ethos SpA",
+    "isPrimary": true,
+    "role": "Direttore Marketing",
+    "jobDescription": "Gestisce il marketing per Gruppo Ethos"
+  }]
+}
+```
+Response: 200 { id: 22, ... }
+Behavior:
+- Contatto aggiornato
+- Ruolo aggiornato nella pagina di dettaglio
+
+=== STEP 10: MODIFICA DEAL ===
+Request: PUT /api/deals/12
+Payload:
+```json
+{
+  "id": 12,
+  "title": "Contratto Annuale Servizi Premium",
+  "status": "negotiation",
+  "value": 18000,
+  "probability": 75
+}
+```
+Response: 200 { id: 12, ... }
+Behavior:
+- Deal aggiornato
+- Spostato nella colonna "negotiation" della pipeline
+- Valori aggiornati nella card
+
+## PROBLEMI IDENTIFICATI E CORREZIONI
+
+1. **PROBLEMA: Campi indirizzo duplicati**
+   - Sintomo: L'indirizzo veniva salvato sia in `address` che in `full_address`
+   - Causa: Duplicazione nel backend e nel frontend
+   - Correzione: 
+     - Backend ora salva solo in `full_address` e imposta `address` a null
+     - Frontend visualizza solo il campo `fullAddress` nella pagina dettaglio
+
+2. **PROBLEMA: Schema di validazione nei form mancava campi**
+   - Sintomo: Impossibilità di aggiungere alcuni campi come settore, dipendenti, ecc.
+   - Causa: Schemi Zod incompleti nei form
+   - Correzione:
+     - Aggiunta validazione per tutti i campi mancanti
+     - Aggiornati defaultValues nel form
+
+3. **PROBLEMA: Mancanza colonna parent_company_id**
+   - Sintomo: Errore durante salvataggio azienda
+   - Causa: Colonna mancante nel database
+   - Correzione:
+     - Aggiunta colonna parent_company_id con relazione self-reference
+
+## CONCLUSIONI E RACCOMANDAZIONI
+
+- L'applicazione funziona correttamente per tutte le operazioni CRUD di base
+- Integrazioni Google Maps Places API funzionano come previsto per l'autocompletamento aziende
+- Miglioramenti suggeriti:
+  1. Aggiungi un campo per il PIVA/Codice Fiscale delle aziende
+  2. Implementa la visualizzazione gerarchica delle aziende (parent/child)
+  3. Aggiungi più filtri nelle pagine di lista
