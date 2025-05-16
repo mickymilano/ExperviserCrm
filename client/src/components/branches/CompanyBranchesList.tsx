@@ -196,7 +196,7 @@ export default function CompanyBranchesList({ companyId, companyName }: CompanyB
                         <Button 
                           variant="ghost" 
                           size="icon"
-                          onClick={() => navigate(`/branches/${branch.id}`)}
+                          onClick={() => setLocation(`/branches/${branch.id}`)}
                         >
                           <Building className="h-4 w-4" />
                         </Button>
