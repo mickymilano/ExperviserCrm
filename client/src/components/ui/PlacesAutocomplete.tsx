@@ -59,12 +59,13 @@ const loadGoogleMapsScript = (apiKey: string): Promise<void> => {
       // Timeout di sicurezza
       setTimeout(() => {
         if (!window.google?.maps?.places) {
-          console.error('Timeout caricamento Google Maps API');
-          reject(new Error('Timeout caricamento Google Maps API'));
+          const errorMsg = 'Timeout caricamento Google Maps API';
+          debugContext.logError(errorMsg, { timeout: true }, { component: 'PlacesAutocomplete' });
+          reject(new Error(errorMsg));
         }
       }, 10000);
     } catch (error) {
-      console.error('Errore caricamento script:', error);
+      debugContext.logError('Errore caricamento script Google Maps', error, { component: 'PlacesAutocomplete' });
       reject(error);
     }
   });
@@ -219,7 +220,7 @@ export function PlacesAutocomplete({
         try {
           const pacContainer = document.querySelector('.pac-container');
           if (pacContainer) {
-            console.log('Container suggerimenti trovato, aggiungo gestori eventi');
+            debugContext.logInfo('Container suggerimenti trovato, aggiungo gestori eventi', {}, { component: 'PlacesAutocomplete' });
             
             // Impedisci che i click nel container si propaghino (importante nei modali)
             pacContainer.addEventListener('click', (e) => {
@@ -238,7 +239,7 @@ export function PlacesAutocomplete({
             });
           }
         } catch (err) {
-          console.error('Errore setup container suggerimenti:', err);
+          debugContext.logError('Errore setup container suggerimenti', err, { component: 'PlacesAutocomplete' });
         }
       }, 1000);
       
@@ -266,7 +267,7 @@ export function PlacesAutocomplete({
         }
       };
     } catch (error) {
-      console.error('Errore inizializzazione autocomplete:', error);
+      debugContext.logError('Errore inizializzazione autocomplete', error, { component: 'PlacesAutocomplete' });
       setError('Errore inizializzazione autocomplete');
     }
   }, [scriptLoaded, types, internalValue]);
