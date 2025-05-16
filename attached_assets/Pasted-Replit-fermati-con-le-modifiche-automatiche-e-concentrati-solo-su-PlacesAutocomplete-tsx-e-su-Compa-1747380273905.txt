@@ -1,0 +1,42 @@
+Replit, fermati con le modifiche automatiche e concentrati solo su PlacesAutocomplete.tsx e su CompanyModal.tsx. Ecco cosa devi fare, passo-passo, senza applicare nulla che non faccia tu stesso:
+	1.	Verifica che lo script Google Maps si stia caricando correttamente
+	•	In loadGoogleMapsScript, aggiungi subito un console.log('Caricamento script Google Maps…') prima di appendere il <script>.
+	•	Nel .onload del <script>, fai un console.log('Google Maps API caricato:', window.google?.maps?.places) per confermare che places esista.
+	2.	Controlla se PlaceAutocompleteElement è definito
+	•	Subito dopo il script.onload, esegui:
+
+console.log('PlaceAutocompleteElement disponibile?', !!window.google?.maps?.places?.PlaceAutocompleteElement);
+
+
+	•	Se risulta false, significa che la nuova API non è ancora pronta: fai un fallback immediato a:
+
+new window.google.maps.places.Autocomplete(inputRef.current!, options)
+
+e commenta temporaneamente la parte di migrazione.
+
+	3.	Ripristina temporaneamente il vecchio Autocomplete fino a che non troviamo un modo stabile
+	•	In PlacesAutocomplete.tsx, avvolgi la creazione in:
+
+const AutocompleteClass = window.google.maps.places.PlaceAutocompleteElement 
+                        ? window.google.maps.places.PlaceAutocompleteElement 
+                        : window.google.maps.places.Autocomplete;
+
+const autocomplete = new AutocompleteClass(inputRef.current!, options);
+
+
+	•	Mantieni solo un listener place_changed (o place-changed per il nuovo elemento).
+
+	4.	Debug della selezione
+	•	Dentro il tuo callback handlePlaceChanged, stampa subito:
+
+console.log('handlePlaceChanged:', place);
+
+
+	•	In CompanyModal.tsx nel onChange, fai un console.log('Place ricevuto in onChange:', value, place).
+
+	5.	Test end-to-end
+	•	Apri la modal e digita “Grupp…”.
+	•	Verifica che appaiano suggerimenti e che il console.log in handlePlaceChanged venga effettivamente chiamato.
+	•	Una volta visualizzato il place corretto in console, controlla che setValue("name",…) e setValue("address",…) vengano invocati con i valori giusti.
+
+Solo quando questi log saranno tutti presenti e corretti, rimuovi il fallback e consolidiamo la migrazione a PlaceAutocompleteElement. Ogni modifica deve essere manuale e guidata da questi debug, altrimenti non si va avanti.

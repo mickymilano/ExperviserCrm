@@ -194,12 +194,22 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
               id="name"
               value={watch("name") || ""}
               onChange={(value, place) => {
+                console.log('Place ricevuto in onChange:', value, place);
+                
                 if (place) {
+                  console.log('Compilazione campi con:', {
+                    nome: place.name || value,
+                    indirizzo: place.formatted_address || "",
+                    country: place.address_components?.find(c => c.types.includes('country'))?.long_name
+                  });
+                  
                   setValue("name", place.name || value, { shouldValidate: true });
                   setValue("address", place.formatted_address || "", { shouldValidate: true });
                   setValue("fullAddress", place.formatted_address || "", { shouldValidate: true });
+                  
                   const country = place.address_components?.find(c => c.types.includes('country'))?.long_name;
                   if (country) setValue("country", country, { shouldValidate: true });
+                  
                   trigger(["name","address","fullAddress","country"]);
                 }
               }}

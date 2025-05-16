@@ -26,15 +26,19 @@ const loadGoogleMapsScript = (apiKey: string): Promise<void> => {
     try {
       // Verifichiamo se l'API è già stata caricata
       if (window.google && window.google.maps && window.google.maps.places) {
+        console.log('Google Maps API già caricata', window.google.maps.places);
         debugContext.logInfo('Google Maps API già caricata', {}, { component: 'PlacesAutocomplete' });
         resolve();
         return;
       }
 
+      console.log('Caricamento script Google Maps...');
       debugContext.logInfo('Caricamento Google Maps API...', {}, { component: 'PlacesAutocomplete' });
       
       // Creiamo una callback globale
       window.initGoogleMaps = () => {
+        console.log('Google Maps API caricato:', window.google?.maps?.places);
+        console.log('PlaceAutocompleteElement disponibile?', !!window.google?.maps?.places?.PlaceAutocompleteElement);
         debugContext.logInfo('Google Maps API caricata con successo', {}, { component: 'PlacesAutocomplete' });
         resolve();
       };
@@ -152,20 +156,45 @@ export function PlacesAutocomplete({
     }
     
     try {
-      debugContext.logInfo('Inizializzazione Google Maps PlaceAutocompleteElement', {}, { component: 'PlacesAutocomplete' });
+      console.log('Verifica disponibilità PlaceAutocompleteElement:', !!window.google?.maps?.places?.PlaceAutocompleteElement);
       
-      // Configurazione del PlaceAutocompleteElement (NUOVA API)
-      const element = new window.google.maps.places.PlaceAutocompleteElement({
-        input: inputRef.current!,
-        types,
-        fields: ['name','formatted_address','address_components','place_id']
-      });
-      autocompleteRef.current = element;
+      // Determiniamo quale classe usare in base alla disponibilità
+      const AutocompleteClass = window.google.maps.places.PlaceAutocompleteElement 
+                              ? window.google.maps.places.PlaceAutocompleteElement 
+                              : window.google.maps.places.Autocomplete;
+      
+      console.log('Classe Autocomplete selezionata:', AutocompleteClass.name || 'Sconosciuta');
+      
+      let autocomplete;
+      // Configurazione in base alla classe disponibile
+      if (AutocompleteClass === window.google.maps.places.PlaceAutocompleteElement) {
+        // Nuova API PlaceAutocompleteElement
+        debugContext.logInfo('Inizializzazione Google Maps PlaceAutocompleteElement', {}, { component: 'PlacesAutocomplete' });
+        
+        autocomplete = new AutocompleteClass({
+          input: inputRef.current!,
+          types,
+          fields: ['name','formatted_address','address_components','place_id']
+        });
+      } else {
+        // API classica Autocomplete
+        debugContext.logInfo('Fallback a Google Maps Autocomplete legacy', {}, { component: 'PlacesAutocomplete' });
+        
+        autocomplete = new AutocompleteClass(inputRef.current!, {
+          types: ['establishment'],
+          fields: ['name','formatted_address','address_components'],
+        });
+      }
+      
+      autocompleteRef.current = autocomplete;
+      console.log('Autocomplete inizializzato:', autocomplete);
       
       // Funzione che gestisce la selezione di un luogo
       const handlePlaceChanged = () => {
         try {
-          const place = element.getPlace();
+          const place = autocompleteRef.current?.getPlace?.();
+          
+          console.log('handlePlaceChanged:', place);
           
           // Debug dettagliato sul place ricevuto
           debugContext.logInfo('Place changed event triggered', { 
@@ -232,10 +261,43 @@ export function PlacesAutocomplete({
       };
       
       // Aggiungi il listener per place_changed
-      element.addListener('place_changed', handlePlaceChanged);
+      const listener = autocomplete.addListener('place_changed', handlePlaceChanged);
+      
+      // Per l'API Autocomplete vecchia, gestisci i container
+      if (AutocompleteClass === window.google.maps.places.Autocomplete) {
+        setTimeout(() => {
+          try {
+            const pacContainer = document.querySelector('.pac-container');
+            if (pacContainer) {
+              debugContext.logInfo('Container suggerimenti trovato per Autocomplete legacy', {}, { component: 'PlacesAutocomplete' });
+              
+              // Impedisci che i click nel container si propaghino (importante nei modali)
+              pacContainer.addEventListener('click', (e) => {
+                e.stopPropagation();
+              });
+              
+              // Il mousedown è cruciale per evitare che i modali si chiudano
+              pacContainer.addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+                e.preventDefault(); // Aggiungiamo preventDefault per maggiore sicurezza
+              });
+              
+              // Aggiungiamo uno stile per garantire che sia visibile sopra i modali
+              pacContainer.style.zIndex = '10000';
+            }
+          } catch (err) {
+            debugContext.logError('Errore setup container suggerimenti', err, { component: 'PlacesAutocomplete' });
+          }
+        }, 500);
+      }
       
       // Funzione di pulizia al dismount
       return () => {
+        // Rimuovi il listener quando il componente viene smontato
+        if (window.google?.maps?.event && listener) {
+          window.google.maps.event.removeListener(listener);
+        }
+        
         // Pulisci le istanze
         autocompleteRef.current = null;
         
@@ -251,7 +313,8 @@ export function PlacesAutocomplete({
         }
       };
     } catch (error) {
-      debugContext.logError('Errore inizializzazione PlaceAutocompleteElement', error, { component: 'PlacesAutocomplete' });
+      console.error('Errore inizializzazione autocomplete:', error);
+      debugContext.logError('Errore inizializzazione autocomplete', error, { component: 'PlacesAutocomplete' });
       setError('Errore inizializzazione autocomplete');
     }
   }, [scriptLoaded, types, internalValue]);
