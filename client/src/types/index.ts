@@ -98,7 +98,6 @@ export interface Company {
   address: string | null; // Deprecated: Use fullAddress instead
   fullAddress: string | null; // Unified location field
   country: string | null; // Direct property for country (Added 2025-05-13)
-  parentCompanyId: number | null; // For company hierarchy (Added 2025-05-16)
   tags: string[] | null;
   notes: string | null;
   customFields: Record<string, any> | null;

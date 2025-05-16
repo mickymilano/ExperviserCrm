@@ -1740,9 +1740,6 @@ export class PostgresStorage implements IStorage {
         industry: company.industry || null,
         tags: company.tags || [],
 
-        // Gerarchia aziendale
-        parent_company_id: company.parentCompanyId || null,
-
         // Categorizzazioni specifiche aziende
         location_types: company.locationTypes || [],
         company_type: company.companyType || null,
