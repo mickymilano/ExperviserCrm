@@ -12,26 +12,26 @@ export default function LeadsPage() {
   const [showLeadModal, setShowLeadModal] = useState(false);
   const [_, navigate] = useLocation();
   
-  const { data: leads = [], isLoading } = useQuery({
+  const { data: leads = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/leads"],
   });
   
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Leads</h1>
+        <h1 className="text-2xl font-bold">Lead</h1>
         <Button onClick={() => setShowLeadModal(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          Add Lead
+          Aggiungi Lead
         </Button>
       </div>
       
       <Tabs defaultValue="all" className="mb-6">
         <TabsList>
-          <TabsTrigger value="all">All Leads</TabsTrigger>
-          <TabsTrigger value="new">New</TabsTrigger>
-          <TabsTrigger value="qualified">Qualified</TabsTrigger>
-          <TabsTrigger value="unqualified">Unqualified</TabsTrigger>
+          <TabsTrigger value="all">Tutti i Lead</TabsTrigger>
+          <TabsTrigger value="new">Nuovi</TabsTrigger>
+          <TabsTrigger value="qualified">Qualificati</TabsTrigger>
+          <TabsTrigger value="unqualified">Non Qualificati</TabsTrigger>
         </TabsList>
         
         <TabsContent value="all" className="mt-4">
@@ -52,10 +52,10 @@ export default function LeadsPage() {
             
             {!isLoading && leads?.length === 0 && (
               <div className="col-span-3 text-center py-12">
-                <p className="text-neutral-medium mb-4">No leads found</p>
+                <p className="text-neutral-medium mb-4">Nessun lead trovato</p>
                 <Button onClick={() => setShowLeadModal(true)}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Your First Lead
+                  Aggiungi il tuo primo Lead
                 </Button>
               </div>
             )}
@@ -85,7 +85,7 @@ export default function LeadsPage() {
                   )}
                   {lead.tags && lead.tags.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-2">
-                      {lead.tags.map((tag, i) => (
+                      {lead.tags.map((tag: string, i: number) => (
                         <span 
                           key={i}
                           className="px-2 py-0.5 text-xs bg-primary/10 text-primary rounded-full"
@@ -104,7 +104,7 @@ export default function LeadsPage() {
                     onClick={() => navigate(`/leads/${lead.id}`)}
                   >
                     <Eye className="h-4 w-4 mr-1" />
-                    View
+                    Visualizza
                   </Button>
                 </CardFooter>
               </Card>
@@ -114,19 +114,19 @@ export default function LeadsPage() {
         
         <TabsContent value="new">
           <div className="text-center py-12 text-neutral-medium">
-            Filter for new leads
+            Filtro per nuovi lead
           </div>
         </TabsContent>
         
         <TabsContent value="qualified">
           <div className="text-center py-12 text-neutral-medium">
-            Filter for qualified leads
+            Filtro per lead qualificati
           </div>
         </TabsContent>
         
         <TabsContent value="unqualified">
           <div className="text-center py-12 text-neutral-medium">
-            Filter for unqualified leads
+            Filtro per lead non qualificati
           </div>
         </TabsContent>
       </Tabs>
