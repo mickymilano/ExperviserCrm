@@ -1,0 +1,57 @@
+Ecco le istruzioni strutturate da dare a Replit, comprensive di ricerca online e di un piano di verifica continuo:
+
+⸻
+
+Task Title: Implementazione Frontend modulo Branch (Filiali)
+
+Prompt/Descrizione per Replit (da inviare esattamente):
+
+	1.	Componenti React
+	•	Crea BranchList: tabella responsive con colonne
+	•	Nome filiale
+	•	Indirizzo
+	•	Data creazione
+	•	Azioni (Modifica, Elimina)
+	•	Crea BranchModal (modale di Create/Edit) con campi:
+	•	name (string, obbligatorio)
+	•	description (string, opzionale)
+	•	customFields (JSON o key/value, opzionale)
+	•	pulsanti Salva/Annulla
+	•	Aggiungi storybook/Component Playground per entrambi (opzionale ma raccomandato).
+	2.	Hooks e chiamate API (TanStack Query)
+	•	useBranches(): GET /api/branches
+	•	useBranch(id): GET /api/branches/:id
+	•	useCreateBranch(): POST
+	•	useUpdateBranch(): PUT/PATCH
+	•	useDeleteBranch(): DELETE
+	•	Invalidate cache in onSuccess.
+	3.	Struttura pagine e routing
+	•	Aggiungi voce “Filiali” al menu laterale.
+	•	Crea la pagina client/src/pages/branches/index.tsx che:
+	•	Monta BranchList.
+	•	Include pulsante “Aggiungi Filiale” che apre BranchModal.
+	•	Crea pagina client/src/pages/branches/[id].tsx per dettaglio/edit individuale (opzionale).
+	4.	Stile e UX
+	•	Usa gli stessi componenti UI del CRM (shadcn/ui, lucide-react).
+	•	Validazione form con Zod (nome obbligatorio).
+	•	Toast di conferma/errore con useToast.
+	5.	Verifica e debug
+	•	Scrivi unit e integration test per i componenti (React Testing Library).
+	•	Esegui un test end-to-end di base (crea/modifica/elimina).
+	•	Ricerca online:
+	•	Controlla su GitHub esempi “React TanStack Query CRUD table”
+	•	Cerca su StackOverflow “React Modal CRUD best practices”
+	•	Verifica issue note in repository ufficiale di Google Maps e React Query
+	•	Documenta ogni bug riscontrato in un file /debug/branch-frontend-report.txt con passi, payload e screenshot.
+	•	Automatizza: dopo ogni PR di frontend, esegui npm run test e npm run lint && npm run build e invia un report di stato.
+
+Obiettivo finale: modulo Branch completamente integrato e privo di errori, con test e documentazione, pronto per aggiungere custom fields dinamici in futuro.
+
+⸻
+
+Invia questo comando a Replit, chiedendo di:
+	1.	Applicare punto per punto le modifiche.
+	2.	Effettuare le ricerche online e citare le fonti principali.
+	3.	Generare i componenti e gli hook con codice di esempio.
+	4.	Scrivere il report di debug in testo che puoi scaricare/copiare.
+	5.	Validare automaticamente e notificarti via toast/log di completamento di ogni step.
