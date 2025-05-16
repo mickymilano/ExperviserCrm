@@ -21,13 +21,13 @@ export default function EmailAccounts() {
         <div className="flex items-center gap-2 mb-6">
           <Button variant="ghost" size="sm" onClick={() => navigate("/email/settings")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Accounts
+            Torna agli Account
           </Button>
         </div>
         
         <div className="bg-white rounded-lg shadow p-6">
           <h1 className="text-2xl font-bold mb-6">
-            {isAddRoute ? "Add Email Account" : "Edit Email Account"}
+            {isAddRoute ? "Aggiungi Account Email" : "Modifica Account Email"}
           </h1>
           
           {isAddRoute ? (
@@ -37,10 +37,10 @@ export default function EmailAccounts() {
             />
           ) : isLoading ? (
             // Edit mode - loading
-            <div>Loading account details...</div>
+            <div>Caricamento dettagli account...</div>
           ) : !account ? (
             // Edit mode - account not found
-            <div>Account not found. <Button onClick={() => navigate("/email/settings")}>Go back</Button></div>
+            <div>Account non trovato. <Button onClick={() => navigate("/email/settings")}>Torna indietro</Button></div>
           ) : (
             // Edit mode - show form with account data
             <EmailAccountForm 
@@ -57,13 +57,13 @@ export default function EmailAccounts() {
   return (
     <div className="max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Email Accounts</h1>
+        <h1 className="text-2xl font-bold">Account Email</h1>
       </div>
       
       <Tabs defaultValue="accounts" className="w-full">
         <TabsList className="w-full max-w-md mb-6">
-          <TabsTrigger value="accounts" className="flex-1">Accounts</TabsTrigger>
-          <TabsTrigger value="settings" className="flex-1">Settings</TabsTrigger>
+          <TabsTrigger value="accounts" className="flex-1">Account</TabsTrigger>
+          <TabsTrigger value="settings" className="flex-1">Impostazioni</TabsTrigger>
         </TabsList>
         
         <TabsContent value="accounts">
@@ -72,21 +72,21 @@ export default function EmailAccounts() {
         
         <TabsContent value="settings">
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-medium mb-4">Email Settings</h2>
+            <h2 className="text-lg font-medium mb-4">Impostazioni Email</h2>
             
             <div className="space-y-4">
               <div>
-                <h3 className="text-sm font-medium mb-2">Synchronization</h3>
+                <h3 className="text-sm font-medium mb-2">Sincronizzazione</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Control how often emails are synchronized with your email accounts.
+                  Controlla la frequenza con cui le email vengono sincronizzate con i tuoi account.
                 </p>
                 {/* Will implement settings form here in the future */}
               </div>
               
               <div>
-                <h3 className="text-sm font-medium mb-2">Email Templates</h3>
+                <h3 className="text-sm font-medium mb-2">Modelli Email</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Create and manage email templates for quick responses.
+                  Crea e gestisci modelli email per risposte rapide.
                 </p>
                 {/* Will implement template management here in the future */}
               </div>
