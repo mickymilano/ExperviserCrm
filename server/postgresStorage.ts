@@ -3049,4 +3049,125 @@ export class PostgresStorage implements IStorage {
 
     return updatedEmail;
   }
+
+  // BRANCH OPERATIONS
+  async getBranch(id: number): Promise<Branch | null> {
+    console.log(`PostgresStorage.getBranch: retrieving branch with id ${id}`);
+    try {
+      const [branch] = await db
+        .select()
+        .from(branches)
+        .where(eq(branches.id, id));
+      
+      return branch || null;
+    } catch (err) {
+      console.error('Error retrieving branch:', err);
+      throw err;
+    }
+  }
+
+  async getBranches(): Promise<Branch[]> {
+    console.log('PostgresStorage.getBranches: retrieving all branches');
+    try {
+      const allBranches = await db
+        .select()
+        .from(branches)
+        .orderBy(branches.name);
+      
+      console.log(`Retrieved ${allBranches.length} branches`);
+      return allBranches;
+    } catch (err) {
+      console.error('Error retrieving branches:', err);
+      throw err;
+    }
+  }
+
+  async getBranchesByCompanyId(companyId: number): Promise<Branch[]> {
+    console.log(`PostgresStorage.getBranchesByCompanyId: retrieving branches for company ${companyId}`);
+    try {
+      const companyBranches = await db
+        .select()
+        .from(branches)
+        .where(eq(branches.companyId, companyId))
+        .orderBy(branches.name);
+      
+      console.log(`Retrieved ${companyBranches.length} branches for company ${companyId}`);
+      return companyBranches;
+    } catch (err) {
+      console.error(`Error retrieving branches for company ${companyId}:`, err);
+      throw err;
+    }
+  }
+
+  async createBranch(branchData: InsertBranch): Promise<Branch> {
+    console.log('PostgresStorage.createBranch: creating new branch');
+    try {
+      const [newBranch] = await db
+        .insert(branches)
+        .values({
+          ...branchData,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+        .returning();
+      
+      console.log(`Branch created with id ${newBranch.id}`);
+      return newBranch;
+    } catch (err) {
+      console.error('Error creating branch:', err);
+      throw err;
+    }
+  }
+
+  async updateBranch(id: number, branchData: Partial<Branch>): Promise<Branch> {
+    console.log(`PostgresStorage.updateBranch: updating branch ${id}`);
+    try {
+      const [branch] = await db
+        .select()
+        .from(branches)
+        .where(eq(branches.id, id));
+      
+      if (!branch) {
+        throw new Error(`Branch with id ${id} not found`);
+      }
+      
+      const [updatedBranch] = await db
+        .update(branches)
+        .set({
+          ...branchData,
+          updatedAt: new Date()
+        })
+        .where(eq(branches.id, id))
+        .returning();
+      
+      console.log(`Branch ${id} updated successfully`);
+      return updatedBranch;
+    } catch (err) {
+      console.error(`Error updating branch ${id}:`, err);
+      throw err;
+    }
+  }
+
+  async deleteBranch(id: number): Promise<void> {
+    console.log(`PostgresStorage.deleteBranch: deleting branch ${id}`);
+    try {
+      const [branch] = await db
+        .select()
+        .from(branches)
+        .where(eq(branches.id, id));
+      
+      if (!branch) {
+        throw new Error(`Branch with id ${id} not found`);
+      }
+      
+      await db
+        .delete(branches)
+        .where(eq(branches.id, id));
+      
+      console.log(`Branch ${id} deleted successfully`);
+    } catch (err) {
+      console.error(`Error deleting branch ${id}:`, err);
+      throw err;
+    }
+  }
 }

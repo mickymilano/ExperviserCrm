@@ -846,6 +846,55 @@ export class MemStorage implements IStorage {
     return this.contactEmails[emailIndex];
   }
   
+  // BRANCH OPERATIONS
+
+  async getBranch(id: number): Promise<Branch | null> {
+    return this.branches.find(branch => branch.id === id) || null;
+  }
+
+  async getBranches(): Promise<Branch[]> {
+    return [...this.branches];
+  }
+
+  async getBranchesByCompanyId(companyId: number): Promise<Branch[]> {
+    return this.branches.filter(branch => branch.companyId === companyId);
+  }
+
+  async createBranch(branchData: InsertBranch): Promise<Branch> {
+    const now = new Date();
+    const newBranch: Branch = {
+      id: this.nextIds.branches++,
+      ...branchData,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.branches.push(newBranch);
+    return newBranch;
+  }
+
+  async updateBranch(id: number, branchData: Partial<Branch>): Promise<Branch> {
+    const index = this.branches.findIndex(branch => branch.id === id);
+    if (index === -1) {
+      throw new Error(`Branch with id ${id} not found`);
+    }
+
+    const updatedBranch = {
+      ...this.branches[index],
+      ...branchData,
+      updatedAt: new Date()
+    };
+
+    this.branches[index] = updatedBranch;
+    return updatedBranch;
+  }
+
+  async deleteBranch(id: number): Promise<void> {
+    const index = this.branches.findIndex(branch => branch.id === id);
+    if (index !== -1) {
+      this.branches.splice(index, 1);
+    }
+  }
+
   // Metodi aggiuntivi per compatibilità con l'API dashboard
   async getEmails(): Promise<Email[]> {
     return []; // Implementazione mock vuota per MemStorage
