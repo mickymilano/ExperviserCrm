@@ -40,13 +40,13 @@ export default function RecentContacts({ contacts }: RecentContactsProps) {
     <Card>
       <CardHeader className="px-5 pt-5 pb-0">
         <div className="flex justify-between items-center">
-          <CardTitle className="text-lg font-semibold">Recent Contacts</CardTitle>
+          <CardTitle className="text-lg font-semibold">Contatti Recenti</CardTitle>
           <Button 
             variant="link" 
             className="text-primary hover:text-primary-dark text-sm font-medium"
             onClick={() => navigate('/contacts')}
           >
-            View All Contacts
+            Vedi tutti i contatti
           </Button>
         </div>
       </CardHeader>

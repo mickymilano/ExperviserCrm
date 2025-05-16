@@ -64,9 +64,9 @@ export default function ActivityFeed({ activities }: ActivityFeedProps) {
     <Card>
       <CardHeader className="px-5 pt-5 pb-0">
         <div className="flex justify-between items-center">
-          <CardTitle className="text-lg font-semibold">Recent Activity</CardTitle>
+          <CardTitle className="text-lg font-semibold">Attività Recenti</CardTitle>
           <Button variant="link" className="text-primary hover:text-primary-dark text-sm font-medium">
-            View All
+            Vedi tutte
           </Button>
         </div>
       </CardHeader>

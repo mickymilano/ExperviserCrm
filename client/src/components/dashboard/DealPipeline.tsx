@@ -37,14 +37,14 @@ export default function DealPipeline({ dealsByStage }: DealPipelineProps) {
       <CardHeader className="px-5 pt-5 pb-0">
         <div className="flex justify-between items-center flex-wrap gap-2">
           <div className="flex items-center gap-3">
-            <CardTitle className="text-lg font-semibold">Deal Pipeline</CardTitle>
+            <CardTitle className="text-lg font-semibold">Pipeline Opportunità</CardTitle>
             <Select value={dealFilter} onValueChange={(value) => setDealFilter(value as DealAgeType)}>
               <SelectTrigger className="w-32 h-8">
-                <SelectValue placeholder="Filter deals" />
+                <SelectValue placeholder="Filtra" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Recent">Recent deals</SelectItem>
-                <SelectItem value="Oldest">Oldest deals</SelectItem>
+                <SelectItem value="Recent">Più recenti</SelectItem>
+                <SelectItem value="Oldest">Più vecchie</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -55,7 +55,7 @@ export default function DealPipeline({ dealsByStage }: DealPipelineProps) {
               onClick={() => setTimeFrame("Week")}
               className={`text-sm py-1 ${timeFrame === "Week" ? "bg-primary-light" : "bg-neutral-lightest hover:bg-neutral-light text-neutral-dark"}`}
             >
-              Week
+              Settimana
             </Button>
             <Button
               variant={timeFrame === "Month" ? "default" : "outline"}
@@ -63,7 +63,7 @@ export default function DealPipeline({ dealsByStage }: DealPipelineProps) {
               onClick={() => setTimeFrame("Month")}
               className={`text-sm py-1 ${timeFrame === "Month" ? "bg-primary-light" : "bg-neutral-lightest hover:bg-neutral-light text-neutral-dark"}`}
             >
-              Month
+              Mese
             </Button>
             <Button
               variant={timeFrame === "Quarter" ? "default" : "outline"}
@@ -71,7 +71,7 @@ export default function DealPipeline({ dealsByStage }: DealPipelineProps) {
               onClick={() => setTimeFrame("Quarter")}
               className={`text-sm py-1 ${timeFrame === "Quarter" ? "bg-primary-light" : "bg-neutral-lightest hover:bg-neutral-light text-neutral-dark"}`}
             >
-              Quarter
+              Trimestre
             </Button>
           </div>
         </div>
@@ -105,9 +105,9 @@ export default function DealPipeline({ dealsByStage }: DealPipelineProps) {
             
             {/* Pipeline Stats */}
             <div className="flex justify-between text-xs text-neutral-medium">
-              <span>Total Deals: {totalDeals}</span>
-              <span>Total Value: {formatCurrency(totalValue)}</span>
-              <span>Avg. Time to Close: 42 days</span>
+              <span>Totale Opportunità: {totalDeals}</span>
+              <span>Valore Totale: {formatCurrency(totalValue)}</span>
+              <span>Tempo Medio Chiusura: 42 giorni</span>
             </div>
           </div>
         </div>
