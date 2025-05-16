@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Plus, Search, Filter } from "lucide-react";
 import BranchModal from "@/components/modals/BranchModal";
 import { Skeleton } from "@/components/ui/skeleton";
-import BranchList from "@/components/branches/BranchList";
+import BranchCardViewList from "@/components/branches/BranchCardViewList";
 
 export default function Branches() {
   const [showModal, setShowModal] = useState(false);
@@ -75,7 +75,7 @@ export default function Branches() {
           ))}
         </div>
       ) : filteredBranches && filteredBranches.length > 0 ? (
-        <BranchList 
+        <BranchCardViewList 
           branches={filteredBranches} 
           onEdit={handleEdit} 
         />
