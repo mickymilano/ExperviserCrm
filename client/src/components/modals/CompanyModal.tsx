@@ -12,6 +12,14 @@ import { PlacesAutocomplete } from "@/components/ui/PlacesAutocomplete";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { logError, withErrorHandling } from "@/lib/errorTracking";
+import { useCompanies } from "@/hooks/useCompanies";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 
 interface CompanyModalProps {
   open: boolean;
@@ -367,6 +375,16 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
             />
           </div>
           
+          {/* Selezione azienda parent */}
+          <div className="space-y-2 mb-4">
+            <Label htmlFor="parentCompanyId">Azienda Parent</Label>
+            <ParentCompanySelector 
+              initialValue={initialData?.parentCompanyId} 
+              currentCompanyId={initialData?.id}
+              onChange={(value) => setValue("parentCompanyId", value)}
+            />
+          </div>
+
           <div className="space-y-2 mb-4">
             <Label htmlFor="notes">Note</Label>
             <Textarea id="notes" {...register("notes")} />
