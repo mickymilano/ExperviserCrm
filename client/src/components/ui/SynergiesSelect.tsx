@@ -1,0 +1,138 @@
+import React from "react";
+import { X, Check } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { Label } from "@/components/ui/label";
+import { Control, Controller } from "react-hook-form";
+
+// Tipo per rappresentare un contatto selezionabile nelle sinergie
+interface Contact {
+  id: number;
+  firstName?: string;
+  lastName?: string;
+  [key: string]: any;
+}
+
+interface SynergiesSelectProps {
+  contacts: Contact[];
+  control: Control<any>;
+  name: string;
+  label: string;
+  placeholder: string;
+  className?: string;
+}
+
+// Componente per selezionare contatti multipli per sinergie
+export function SynergiesSelect({
+  contacts,
+  control,
+  name,
+  label,
+  placeholder,
+  className,
+}: SynergiesSelectProps) {
+  return (
+    <div className={className}>
+      <Label htmlFor={name}>{label}</Label>
+      <Controller
+        control={control}
+        name={name}
+        render={({ field }) => {
+          // Prepara un array di id se non esiste
+          const selectedContactIds = field.value || [];
+          
+          // Trova i contatti completi in base agli ID selezionati
+          const selectedContacts = selectedContactIds
+            .map((id: number) => contacts.find((contact) => contact.id === id))
+            .filter(Boolean);
+          
+          // Formatta il nome completo di un contatto
+          const getContactFullName = (contact: Contact) => {
+            return `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || 'Unnamed Contact';
+          };
+
+          return (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  className={cn(
+                    "w-full justify-between",
+                    !selectedContactIds.length && "text-muted-foreground"
+                  )}
+                >
+                  {selectedContactIds.length > 0
+                    ? `${selectedContactIds.length} contatti selezionati`
+                    : placeholder}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0" align="start">
+                <Command>
+                  <CommandInput placeholder="Cerca contatto..." />
+                  <CommandEmpty>Nessun contatto trovato.</CommandEmpty>
+                  <CommandGroup className="max-h-64 overflow-y-auto">
+                    {contacts.map((contact) => {
+                      const isSelected = selectedContactIds.includes(contact.id);
+                      return (
+                        <CommandItem
+                          key={contact.id}
+                          value={String(contact.id)}
+                          onSelect={() => {
+                            const newSelectedIds = isSelected
+                              ? selectedContactIds.filter((id: number) => id !== contact.id)
+                              : [...selectedContactIds, contact.id];
+                            field.onChange(newSelectedIds);
+                          }}
+                        >
+                          <div className="flex items-center gap-2 w-full">
+                            <Check
+                              className={cn(
+                                "h-4 w-4",
+                                isSelected ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            <span>{getContactFullName(contact)}</span>
+                          </div>
+                        </CommandItem>
+                      );
+                    })}
+                  </CommandGroup>
+                </Command>
+                {selectedContacts.length > 0 && (
+                  <div className="p-2 flex flex-wrap gap-1 border-t">
+                    {selectedContacts.map((contact: Contact) => (
+                      <Badge
+                        key={contact.id}
+                        variant="secondary"
+                        className="flex items-center gap-1 px-1"
+                      >
+                        {getContactFullName(contact)}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-4 w-4 p-0 hover:bg-transparent"
+                          onClick={() => {
+                            field.onChange(
+                              selectedContactIds.filter((id: number) => id !== contact.id)
+                            );
+                          }}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </PopoverContent>
+            </Popover>
+          );
+        }}
+      />
+    </div>
+  );
+}

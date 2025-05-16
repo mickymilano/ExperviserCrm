@@ -19,6 +19,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "
 import { useCreateSynergy } from "@/hooks/useSynergies"; // Funzionalità sinergie ripristinata
 import { Badge } from "@/components/ui/badge";
 import AsyncSelect from "react-select/async";
+import { SynergiesSelect } from "@/components/ui/SynergiesSelect";
 
 interface DealModalProps {
   open: boolean;
