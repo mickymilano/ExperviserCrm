@@ -1731,13 +1731,10 @@ export class PostgresStorage implements IStorage {
         phone: company.phone || null,
         website: company.website || null,
 
-        // Indirizzo
-        address: company.address || null,
-        full_address:
-          company.full_address ||
-          company.fullAddress ||
-          company.address ||
-          null,
+        // Usiamo solo full_address come campo unificato per l'indirizzo
+        full_address: company.full_address || company.fullAddress || company.address || null,
+        // Non popoliamo più il campo address deprecato
+        address: null,
 
         // Categorizzazioni
         industry: company.industry || null,

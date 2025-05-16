@@ -327,12 +327,13 @@ export default function CompanyDetail() {
                   </div>
                   
                   <div className="space-y-4">
-                    {(company.fullAddress || company.address) && (
+                    {/* Mostriamo solo fullAddress che è il campo unificato */}
+                    {company.fullAddress && (
                       <div className="flex items-start">
                         <MapPin className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
                         <div>
                           <p className="text-sm font-medium mb-1">Indirizzo</p>
-                          <p className="whitespace-pre-line">{company.fullAddress || company.address}</p>
+                          <p className="whitespace-pre-line">{company.fullAddress}</p>
                         </div>
                       </div>
                     )}
