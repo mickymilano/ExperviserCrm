@@ -214,7 +214,7 @@ export default function Email() {
                 className="mb-2"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Inbox
+                Torna alla Posta
               </Button>
               <EmailDetail 
                 emailId={selectedEmailId} 
@@ -241,9 +241,9 @@ export default function Email() {
 
                   <Tabs defaultValue="all" className="w-full">
                     <TabsList className="grid w-full grid-cols-3">
-                      <TabsTrigger value="all">All</TabsTrigger>
-                      <TabsTrigger value="unread">Unread</TabsTrigger>
-                      <TabsTrigger value="important">Important</TabsTrigger>
+                      <TabsTrigger value="all">Tutte</TabsTrigger>
+                      <TabsTrigger value="unread">Non lette</TabsTrigger>
+                      <TabsTrigger value="important">Importanti</TabsTrigger>
                     </TabsList>
                   </Tabs>
                 </CardContent>
