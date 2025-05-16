@@ -125,7 +125,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       if (initialData.companyId !== undefined) {
         const companyId = initialData.companyId !== null ? Number(initialData.companyId) : null;
         setValue("companyId", companyId);
-        setSelectedCompanyId(companyId);
+        setCompanyIdInForm(companyId);
       }
       
       // Handle contact ID
@@ -156,7 +156,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       // Reset for new deal creation
       reset();
       setTagsInput("");
-      setSelectedCompanyId(null);
+      setCompanyIdInForm(null);
       
       // Set default stage if available
       if (Array.isArray(stages) && stages.length > 0 && stages[0]?.id) {
@@ -402,7 +402,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       onOpenChange(false);
       reset();
       setTagsInput("");
-      setSelectedCompanyId(null);
+      setCompanyIdInForm(null);
       setShowNoCompanyAlert(false);
       setShowNoContactAlert(false);
       formInitializedRef.current = false;
@@ -684,8 +684,8 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                                 onSelect={(currentValue) => {
                                   console.log("Company selection - Setting ID:", company.id, company.name);
                                   // Set the company ID using our single setter function
-                                  setSelectedCompanyId(company.id);
-                                  // Also set in the form directly
+                                  setCompanyIdInForm(company.id);
+                                  // Direct field update is handled by setCompanyIdInForm
                                   field.onChange(company.id);
                                   // Reset contact selection
                                   setValue("contactId", null);
