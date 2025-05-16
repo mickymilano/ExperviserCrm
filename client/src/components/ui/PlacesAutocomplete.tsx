@@ -283,10 +283,7 @@ export function PlacesAutocomplete({
         value={internalValue}
         onChange={handleInputChange}
         onClick={handleInputInteraction}
-        onTouchStart={handleInputInteraction}
-        onKeyDown={handleInputKeyDown}
         onFocus={handleInputInteraction}
-        onMouseDown={handleInputInteraction}
         placeholder={placeholder}
         className={className}
         id={id}

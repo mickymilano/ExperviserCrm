@@ -46,16 +46,7 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
   const [tagsInput, setTagsInput] = useState(initialData?.tags ? initialData.tags.join(", ") : "");
   const isEditMode = !!initialData;
   
-  // Gestione speciale per evitare che il dialogo si chiuda quando si seleziona un elemento di Google Places
-  useEffect(() => {
-    const handler = (e: PointerEvent) => {
-      if ((e.target as HTMLElement).closest('.pac-container')) {
-        e.stopPropagation();
-      }
-    };
-    document.addEventListener('pointerdown', handler, true);
-    return () => document.removeEventListener('pointerdown', handler, true);
-  }, []);
+
 
   const { register, handleSubmit, reset, setValue, watch, trigger, formState: { errors } } = useForm<CompanyFormData>({
     resolver: zodResolver(companySchema),
@@ -203,21 +194,14 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
               id="name"
               value={watch("name") || ""}
               onChange={(value, place) => {
-                // 1) nome azienda
-                if (place?.name) {
-                  setValue("name", place.name, { shouldValidate: true });
+                if (place) {
+                  setValue("name", place.name || value, { shouldValidate: true });
+                  setValue("address", place.formatted_address || "", { shouldValidate: true });
+                  setValue("fullAddress", place.formatted_address || "", { shouldValidate: true });
+                  const country = place.address_components?.find(c => c.types.includes('country'))?.long_name;
+                  if (country) setValue("country", country, { shouldValidate: true });
+                  trigger(["name","address","fullAddress","country"]);
                 }
-                // 2) indirizzo
-                if (place?.formatted_address) {
-                  setValue("address", place.formatted_address, { shouldValidate: true });
-                }
-                // 3) paese
-                const country = place?.address_components?.find(c => c.types.includes('country'))?.long_name;
-                if (country) {
-                  setValue("country", country, { shouldValidate: true });
-                }
-                // validazione
-                trigger(["name","address","country"]);
               }}
               placeholder="Cerca nome azienda…"
               className="w-full"
