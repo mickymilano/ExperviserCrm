@@ -23,6 +23,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import TaskList from "@/components/tasks/TaskList";
 import ContactModal from "@/components/modals/ContactModal";
 import { SynergiesList } from "@/components/synergies/SynergiesList";
+import { CompanyHierarchy } from "@/components/companies/CompanyHierarchy";
 
 export default function CompanyDetail() {
   const params = useParams();
@@ -338,6 +339,11 @@ export default function CompanyDetail() {
                       </div>
                     )}
                   </div>
+                </div>
+                
+                {/* Company Hierarchy Section */}
+                <div className="mb-6">
+                  <CompanyHierarchy companyId={companyId} />
                 </div>
                 
                 {/* Administrative Details Section */}
