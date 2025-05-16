@@ -2,7 +2,39 @@ import { Request, Response, Router } from 'express';
 import { z } from 'zod';
 import { storage } from './storage';
 import { insertBranchSchema } from '@shared/schema';
-import { authenticateJWT } from './routes';
+import jwt from 'jsonwebtoken';
+
+// Definiamo il middleware di authenticazione direttamente qui per evitare dipendenze circolari
+const authenticateJWT = (req: any, res: any, next: any) => {
+  // Ottieni il token dal cookie o dall'header Authorization
+  const token = req.cookies?.token || req.headers.authorization?.split(' ')[1];
+  
+  // Consenti l'autenticazione come utente di debug in sviluppo
+  if (process.env.NODE_ENV === 'development' && !token) {
+    console.log('Using debug authentication for Branch APIs');
+    req.user = {
+      id: 1,
+      username: 'debug',
+      role: 'super_admin'
+    };
+    return next();
+  }
+
+  if (!token) {
+    return res.status(401).json({ message: 'Autenticazione richiesta' });
+  }
+
+  const JWT_SECRET = process.env.JWT_SECRET || 'experviser-dev-secret';
+  
+  try {
+    // Verifica il token
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    return res.status(401).json({ message: 'Token non valido' });
+  }
+};
 
 const router = Router();
 

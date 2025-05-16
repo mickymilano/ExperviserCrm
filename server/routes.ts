@@ -6,6 +6,7 @@ import { storage } from './storage';
 import { pool } from './db'; // Importiamo il pool di connessione PostgreSQL
 import { z } from 'zod';
 import { insertUserSchema, insertContactSchema, insertCompanySchema, insertDealSchema, insertPipelineStageSchema, insertLeadSchema, insertAreaOfActivitySchema, insertContactEmailSchema, insertBranchSchema } from '@shared/schema';
+import branchRoutes from './branchRoutes';
 
 // Chiave segreta per JWT
 const JWT_SECRET = process.env.JWT_SECRET || 'experviser-dev-secret';
