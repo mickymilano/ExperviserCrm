@@ -120,6 +120,9 @@ export default function BranchModal({
         linkedin: initialData.linkedin || null,
         facebook: initialData.facebook || null,
         instagram: initialData.instagram || null,
+        // Adattamenti per supportare i nomi di campi nel DB
+        linkedinUrl: initialData.linkedinUrl || initialData.linkedin || null,
+        instagramUrl: initialData.instagramUrl || initialData.instagram || null,
       };
       form.reset(defaultValues);
     } else {
@@ -142,6 +145,8 @@ export default function BranchModal({
         linkedin: null,
         facebook: null,
         instagram: null,
+        linkedinUrl: null,
+        instagramUrl: null,
       });
     }
   }, [initialData, form, companies]);
@@ -424,15 +429,75 @@ export default function BranchModal({
                 )}
               />
               
+              {/* Website URL */}
+              <FormField
+                control={form.control}
+                name="website"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Sito Web</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://example.com" {...field} value={field.value || ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Manager */}
+              <FormField
+                control={form.control}
+                name="manager"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Responsabile</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Nome del responsabile" {...field} value={field.value || ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               {/* LinkedIn URL */}
+              <FormField
+                control={form.control}
+                name="linkedin"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>LinkedIn</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://linkedin.com/company/..." {...field} value={field.value || ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              {/* LinkedinUrl - compatibilità DB */}
               <FormField
                 control={form.control}
                 name="linkedinUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>URL LinkedIn</FormLabel>
+                    <FormLabel>LinkedIn URL (DB)</FormLabel>
                     <FormControl>
                       <Input placeholder="https://linkedin.com/company/..." {...field} value={field.value || ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              {/* Facebook URL */}
+              <FormField
+                control={form.control}
+                name="facebook"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Facebook</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://facebook.com/..." {...field} value={field.value || ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -442,10 +507,25 @@ export default function BranchModal({
               {/* Instagram URL */}
               <FormField
                 control={form.control}
+                name="instagram"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Instagram</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://instagram.com/..." {...field} value={field.value || ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              {/* InstagramUrl - compatibilità DB */}
+              <FormField
+                control={form.control}
                 name="instagramUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>URL Instagram</FormLabel>
+                    <FormLabel>Instagram URL (DB)</FormLabel>
                     <FormControl>
                       <Input placeholder="https://instagram.com/..." {...field} value={field.value || ""} />
                     </FormControl>
