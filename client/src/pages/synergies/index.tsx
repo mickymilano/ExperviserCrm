@@ -81,10 +81,10 @@ export default function SynergiesPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight flex items-center">
             <Handshake className="h-8 w-8 mr-2" />
-            Business Synergies
+            Sinergie di Business
           </h1>
           <p className="text-muted-foreground">
-            Manage business relationships between contacts and companies
+            Gestisci le relazioni di business tra contatti e aziende
           </p>
         </div>
         <div className="flex items-center space-x-2">
@@ -95,7 +95,7 @@ export default function SynergiesPage() {
             className="h-9"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
+            Aggiorna
           </Button>
           {/* DISABLED: Synergy actions only allowed in DealModal
           <Button 
@@ -148,7 +148,7 @@ export default function SynergiesPage() {
                   </Badge>
                 </div>
                 <CardDescription>
-                  ID: {synergy.id} • Created on {format(new Date(synergy.createdAt), 'MMM d, yyyy')}
+                  ID: {synergy.id} • Creata il {format(new Date(synergy.createdAt), 'dd/MM/yyyy')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-4">
@@ -169,14 +169,14 @@ export default function SynergiesPage() {
                 </div>
                 
                 <div className="mb-4">
-                  <p className="text-sm text-muted-foreground mb-1">Description</p>
+                  <p className="text-sm text-muted-foreground mb-1">Descrizione</p>
                   <p className="text-sm">
-                    {synergy.description || "No description provided"}
+                    {synergy.description || "Nessuna descrizione fornita"}
                   </p>
                 </div>
                 <div className="flex justify-between text-sm">
                   <div>
-                    <p className="text-muted-foreground mb-1">Contact</p>
+                    <p className="text-muted-foreground mb-1">Contatto</p>
                     <Button 
                       variant="link" 
                       className="p-0 h-auto text-sm flex items-center"
@@ -190,7 +190,7 @@ export default function SynergiesPage() {
                     </Button>
                   </div>
                   <div>
-                    <p className="text-muted-foreground mb-1">Company</p>
+                    <p className="text-muted-foreground mb-1">Azienda</p>
                     <Button 
                       variant="link" 
                       className="p-0 h-auto text-sm flex items-center"
@@ -206,7 +206,7 @@ export default function SynergiesPage() {
                 </div>
                 {synergy.dealId && (
                   <div className="mt-2">
-                    <p className="text-muted-foreground mb-1 text-sm">Associated Deal</p>
+                    <p className="text-muted-foreground mb-1 text-sm">Opportunità Associata</p>
                     <Button 
                       variant="link" 
                       className="p-0 h-auto text-sm flex items-center"
