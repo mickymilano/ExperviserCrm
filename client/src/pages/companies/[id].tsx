@@ -291,10 +291,21 @@ export default function CompanyDetail() {
                 {/* Location Section */}
                 <h3 className="text-md font-medium mb-4 flex items-center">
                   <MapPinned className="h-4 w-4 mr-2 text-muted-foreground" />
-                  Indirizzo
+                  Sede e Localizzazione
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   <div className="space-y-4">
+                    {/* Mostriamo solo fullAddress che è il campo unificato */}
+                    {company.fullAddress && (
+                      <div className="flex items-start">
+                        <MapPin className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium mb-1">Indirizzo Completo</p>
+                          <p className="whitespace-pre-line">{company.fullAddress}</p>
+                        </div>
+                      </div>
+                    )}
+                    
                     {(company.country || company.customFields?.country) && (
                       <div className="flex items-start">
                         <Flag className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
@@ -306,7 +317,9 @@ export default function CompanyDetail() {
                         </div>
                       </div>
                     )}
-                    
+                  </div>
+                  
+                  <div className="space-y-4">
                     {company.customFields?.city && (
                       <div className="flex items-start">
                         <MapPin className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
@@ -323,19 +336,6 @@ export default function CompanyDetail() {
                         <div>
                           <p className="text-sm font-medium mb-1">Fuso Orario</p>
                           <p>{company.customFields.timezone}</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-4">
-                    {/* Mostriamo solo fullAddress che è il campo unificato */}
-                    {company.fullAddress && (
-                      <div className="flex items-start">
-                        <MapPin className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
-                        <div>
-                          <p className="text-sm font-medium mb-1">Indirizzo</p>
-                          <p className="whitespace-pre-line">{company.fullAddress}</p>
                         </div>
                       </div>
                     )}
