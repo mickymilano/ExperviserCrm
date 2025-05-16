@@ -48,6 +48,7 @@ export default function CompanyBranchesList({ companyId, companyName }: CompanyB
   const { toast } = useToast();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
+  const [addingNewBranch, setAddingNewBranch] = useState(false);
   
   // Utilizziamo l'hook useBranches passando companyId per filtrare le filiali dell'azienda
   const { branches, isLoading, error, deleteBranch } = useBranches(companyId);
@@ -74,10 +75,18 @@ export default function CompanyBranchesList({ companyId, companyName }: CompanyB
     }
   };
   
+  // Gestisce l'apertura del modal per aggiungere una nuova filiale
+  const handleAddBranch = () => {
+    setEditingBranch(null);
+    setAddingNewBranch(true);
+    setIsAddModalOpen(true);
+  };
+
   // Chiudi il modal dopo aver aggiunto o modificato una filiale
   const onModalClose = () => {
     setIsAddModalOpen(false);
     setEditingBranch(null);
+    setAddingNewBranch(false);
   };
 
   return (
@@ -85,7 +94,7 @@ export default function CompanyBranchesList({ companyId, companyName }: CompanyB
       <BranchModal 
         open={isAddModalOpen} 
         onOpenChange={setIsAddModalOpen}
-        initialData={editingBranch}
+        initialData={addingNewBranch ? { companyId } as Branch : editingBranch}
         onClose={onModalClose}
       />
     
@@ -96,7 +105,7 @@ export default function CompanyBranchesList({ companyId, companyName }: CompanyB
             {branches?.length || 0} filiali associate a {companyName}
           </p>
         </div>
-        <Button onClick={() => setIsAddModalOpen(true)}>
+        <Button onClick={handleAddBranch}>
           <Plus className="h-4 w-4 mr-2" />
           Aggiungi Filiale
         </Button>

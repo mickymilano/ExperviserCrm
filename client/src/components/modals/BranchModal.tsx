@@ -66,6 +66,7 @@ export default function BranchModal({
   open,
   onOpenChange,
   initialData,
+  onClose,
 }: BranchModalProps) {
   const { toast } = useToast();
   const { companies, isLoading: isLoadingCompanies } = useCompanies();
@@ -76,19 +77,24 @@ export default function BranchModal({
   const form = useForm<BranchFormValues>({
     resolver: zodResolver(branchFormSchema),
     defaultValues: {
-      name: "",
-      companyId: 0,
-      type: null,
-      address: null,
-      city: null,
-      region: null,
-      postalCode: null,
-      country: null,
-      phone: null,
-      email: null,
-      description: null,
-      isHeadquarters: false,
-      customFields: null,
+      name: initialData?.name || "",
+      companyId: initialData?.companyId || 0,
+      type: initialData?.type || null,
+      address: initialData?.address || null,
+      city: initialData?.city || null,
+      region: initialData?.region || null,
+      postalCode: initialData?.postalCode || null,
+      country: initialData?.country || null,
+      phone: initialData?.phone || null,
+      email: initialData?.email || null,
+      description: initialData?.description || null,
+      isHeadquarters: initialData?.isHeadquarters || false,
+      customFields: initialData?.customFields || null,
+      website: initialData?.website || null,
+      manager: initialData?.manager || null,
+      linkedin: initialData?.linkedin || null,
+      facebook: initialData?.facebook || null,
+      instagram: initialData?.instagram || null,
     },
   });
 
@@ -153,6 +159,11 @@ export default function BranchModal({
       }
       // Chiudi il modale dopo il completamento
       onOpenChange(false);
+      
+      // Chiama la funzione onClose se è stata fornita
+      if (onClose) {
+        onClose();
+      }
     } catch (error) {
       console.error("Errore durante il salvataggio della filiale:", error);
       toast({
