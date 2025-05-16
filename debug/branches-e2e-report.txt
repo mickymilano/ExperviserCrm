@@ -1,0 +1,78 @@
+# Report Test End-to-End Modulo Filiali
+
+## Riepilogo Test
+
+I seguenti test sono stati predisposti nel file cypress/e2e/branches.spec.ts ma non è stato possibile eseguirli automaticamente a causa di limitazioni dell'ambiente:
+
+✓ Configurazione iniziale completa
+✓ Test implementati e documentati
+✗ Esecuzione automatica non completata (dipendenze di sistema mancanti)
+
+## Test Pianificati
+
+1. Visualizzazione pagina iniziale
+   - Verifica che la pagina Filiali si carichi correttamente
+   - Controlla presenza titolo, pulsante aggiunta, campo di ricerca
+   - Verifica messaggio iniziale "Nessuna filiale trovata"
+
+2. Creazione nuova filiale
+   - Test apertura modale
+   - Compilazione form con dati validi
+   - Verifica salvataggio e apparizione in lista
+
+3. Modifica filiale esistente
+   - Selezione filiale dalla lista
+   - Modifica campi principali
+   - Verifica aggiornamento e salvataggio
+
+4. Visualizzazione dettagli
+   - Navigazione alla pagina di dettaglio
+   - Verifica visualizzazione corretta di tutti i campi
+
+5. Eliminazione filiale
+   - Test funzionalità di eliminazione
+   - Verifica rimozione dalla lista
+
+6. Validazione form
+   - Test validazione campi obbligatori
+   - Verifica messaggi di errore appropriati
+
+## Errori di Esecuzione
+
+Cypress non è stato in grado di eseguire i test a causa della mancanza di librerie di sistema:
+
+```
+/home/runner/workspace/.cache/Cypress/14.3.3/Cypress/Cypress: error while loading shared libraries: libglib-2.0.so.0: cannot open shared object file: No such file or directory
+```
+
+## Verifica Manuale
+
+Il modulo Filiali è stato verificato manualmente e presenta le seguenti caratteristiche:
+
+1. Interfaccia
+   - Menu principale include voce "Filiali" con icona appropriata
+   - Pagina principale mostra correttamente lo stato iniziale
+
+2. API Endpoints
+   - GET /api/branches - Restituisce la lista delle filiali
+   - POST /api/branches - Crea nuova filiale
+   - GET /api/branches/:id - Restituisce dettagli singola filiale
+   - PUT /api/branches/:id - Aggiorna filiale esistente
+   - DELETE /api/branches/:id - Elimina filiale
+
+3. Funzionalità Confermate
+   - Creazione nuove filiali con validazione campi
+   - Visualizzazione dettagli con formattazione appropriata
+   - Collegamento con le aziende funzionante
+   - Eliminazione con conferma
+
+## Raccomandazioni
+
+1. Per eseguire i test in locale, assicurarsi di installare le dipendenze di sistema richieste da Cypress:
+   ```
+   sudo apt-get install libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
+   ```
+
+2. Considerare l'integrazione di test più leggeri che non richiedano un browser headless, come test di unità per il frontend o test API per il backend.
+
+3. I test e2e con Cypress potranno essere eseguiti in ambienti di sviluppo/CI configurati con le dipendenze necessarie.
