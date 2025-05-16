@@ -36,8 +36,8 @@ export default function Dashboard() {
     return (
       <div className="max-w-7xl mx-auto">
         <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg">
-          <h2 className="text-lg font-semibold">Error loading dashboard data</h2>
-          <p>Please try again later or contact support if the problem persists.</p>
+          <h2 className="text-lg font-semibold">Errore durante il caricamento dei dati</h2>
+          <p>Riprova più tardi o contatta l'assistenza se il problema persiste.</p>
         </div>
       </div>
     );

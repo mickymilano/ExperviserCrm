@@ -100,7 +100,7 @@ export default function Contacts() {
 
   // Handle delete contact
   const handleDelete = async (id: number) => {
-    if (window.confirm("Are you sure you want to delete this contact?")) {
+    if (window.confirm("Sei sicuro di voler eliminare questo contatto?")) {
       deleteContact.mutate(id);
     }
   };
@@ -113,12 +113,12 @@ export default function Contacts() {
   return (
     <div className="max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-        <h1 className="text-2xl font-bold mb-4 sm:mb-0">Contacts</h1>
+        <h1 className="text-2xl font-bold mb-4 sm:mb-0">Contatti</h1>
         <Button onClick={() => {
           setSelectedContact(null);
           setShowModal(true);
         }}>
-          <Plus className="mr-2 h-4 w-4" /> Add Contact
+          <Plus className="mr-2 h-4 w-4" /> Aggiungi Contatto
         </Button>
       </div>
 
@@ -128,14 +128,14 @@ export default function Contacts() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search contacts..."
+                placeholder="Cerca contatti..."
                 className="pl-9"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             <Button variant="outline" className="md:w-auto">
-              <Filter className="mr-2 h-4 w-4" /> Filter
+              <Filter className="mr-2 h-4 w-4" /> Filtra
             </Button>
           </div>
         </CardContent>
@@ -152,12 +152,12 @@ export default function Contacts() {
           <table className="w-full min-w-[800px] border-collapse">
             <thead>
               <tr className="border-b border-border">
-                <th className="py-3 px-4 text-left text-sm font-medium text-muted-foreground">Name</th>
+                <th className="py-3 px-4 text-left text-sm font-medium text-muted-foreground">Nome</th>
                 <th className="py-3 px-4 text-left text-sm font-medium text-muted-foreground">Email</th>
-                <th className="py-3 px-4 text-left text-sm font-medium text-muted-foreground">Phone</th>
-                <th className="py-3 px-4 text-left text-sm font-medium text-muted-foreground">Company</th>
-                <th className="py-3 px-4 text-left text-sm font-medium text-muted-foreground">Tags</th>
-                <th className="py-3 px-4 text-left text-sm font-medium text-muted-foreground">Actions</th>
+                <th className="py-3 px-4 text-left text-sm font-medium text-muted-foreground">Telefono</th>
+                <th className="py-3 px-4 text-left text-sm font-medium text-muted-foreground">Azienda</th>
+                <th className="py-3 px-4 text-left text-sm font-medium text-muted-foreground">Tag</th>
+                <th className="py-3 px-4 text-left text-sm font-medium text-muted-foreground">Azioni</th>
               </tr>
             </thead>
             <tbody>
@@ -252,13 +252,13 @@ export default function Contacts() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => handleEdit(contact)}>
-                            Edit Contact
+                            Modifica Contatto
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-destructive"
                             onClick={() => handleDelete(contact.id)}
                           >
-                            Delete Contact
+                            Elimina Contatto
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -275,15 +275,15 @@ export default function Contacts() {
             <div className="rounded-full bg-muted w-12 h-12 flex items-center justify-center mb-4">
               <Search className="h-6 w-6 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-medium mb-2">No contacts found</h3>
+            <h3 className="text-lg font-medium mb-2">Nessun contatto trovato</h3>
             <p className="text-muted-foreground text-center mb-4">
               {searchTerm
-                ? "Try adjusting your search terms."
-                : "Get started by adding your first contact."}
+                ? "Prova a modificare i termini di ricerca."
+                : "Inizia aggiungendo il tuo primo contatto."}
             </p>
             {!searchTerm && (
               <Button onClick={() => setShowModal(true)}>
-                <Plus className="mr-2 h-4 w-4" /> Add Contact
+                <Plus className="mr-2 h-4 w-4" /> Aggiungi Contatto
               </Button>
             )}
           </CardContent>
