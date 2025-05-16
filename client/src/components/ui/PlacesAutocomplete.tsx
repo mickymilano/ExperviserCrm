@@ -145,30 +145,29 @@ export function PlacesAutocomplete({
     initGoogleMaps();
   }, [apiKey]);
 
-  // Inizializza l'autocomplete quando lo script è caricato
+  // Inizializza l'autocomplete quando lo script è caricato - NUOVA API PlaceAutocompleteElement
   useEffect(() => {
     if (!scriptLoaded || !inputRef.current || !window.google?.maps?.places) {
       return;
     }
     
     try {
-      debugContext.logInfo('Inizializzazione Google Maps Autocomplete', {}, { component: 'PlacesAutocomplete' });
+      debugContext.logInfo('Inizializzazione Google Maps PlaceAutocompleteElement', {}, { component: 'PlacesAutocomplete' });
       
-      // Configurazione dell'autocomplete
-      const autocomplete = new google.maps.places.Autocomplete(inputRef.current!, {
-        types: ['establishment'],
-        fields: ['name','formatted_address','address_components'],
-        // componentRestrictions: { country: 'it' } // commentare temporaneamente se blocca i risultati
+      // Configurazione del PlaceAutocompleteElement (NUOVA API)
+      const element = new google.maps.places.PlaceAutocompleteElement({
+        input: inputRef.current!,
+        fields: ['name', 'formatted_address', 'address_components', 'place_id', 'geometry'],
+        types: ['establishment']
       });
-      console.log("Init Autocomplete:", autocomplete);
-      autocompleteRef.current = autocomplete;
+      
+      console.log("Init PlaceAutocompleteElement:", element);
       
       // Funzione che gestisce la selezione di un luogo
       const handlePlaceChanged = () => {
         try {
-          if (!autocompleteRef.current) return;
-          
-          const place = autocompleteRef.current.getPlace();
+          // Otteniamo il luogo selezionato
+          const place = element.getPlace();
           
           // Debug dettagliato sul place ricevuto
           debugContext.logInfo('Place changed event triggered', { 
@@ -212,7 +211,7 @@ export function PlacesAutocomplete({
                 displayValue, 
                 hasPlaceData: !!place 
               }, { component: 'PlacesAutocomplete' });
-              onChangeRef.current(displayValue, place);
+              onChangeRef.current(place.name, place);
             }
             
             // Gestisce il callback per il paese se richiesto
@@ -225,6 +224,9 @@ export function PlacesAutocomplete({
                 onCountrySelectRef.current(countryComponent.long_name);
               }
             }
+            
+            // Aggiungiamo un piccolo timeout per far sì che il blur avvenga dopo che l'onChange è stato processato
+            setTimeout(() => inputRef.current?.blur(), 0);
           }, 0);
         } catch (error) {
           debugContext.logError('Errore nella gestione del place_changed', error, { component: 'PlacesAutocomplete' });
@@ -232,80 +234,18 @@ export function PlacesAutocomplete({
       };
       
       // Aggiungi il listener per place_changed
-      const listener = autocomplete.addListener('place_changed', handlePlaceChanged);
+      element.addListener('place_changed', handlePlaceChanged);
       
-      // Gestisci l'interazione con i suggerimenti in dropdown
-      setTimeout(() => {
-        try {
-          const pacContainer = document.querySelector('.pac-container');
-          if (pacContainer) {
-            debugContext.logInfo('Container suggerimenti trovato, aggiungo gestori eventi', {}, { component: 'PlacesAutocomplete' });
-            
-            // Impedisci che i click nel container si propaghino (importante nei modali)
-            pacContainer.addEventListener('click', (e) => {
-              e.stopPropagation();
-              debugContext.logInfo('Click sul container .pac-container', {}, { component: 'PlacesAutocomplete' });
-            });
-            
-            // Il mousedown è cruciale per evitare che i modali si chiudano
-            pacContainer.addEventListener('mousedown', (e) => {
-              e.stopPropagation();
-              e.preventDefault(); // Aggiungiamo preventDefault per maggiore sicurezza
-              debugContext.logInfo('Mousedown sul container .pac-container prevenuto', {}, { component: 'PlacesAutocomplete' });
-            });
-            
-            // Aggiungiamo un gestore per gli elementi interni (suggerimenti)
-            const handleSuggestionInteraction = (event: Event) => {
-              event.stopPropagation();
-              // Non chiamiamo preventDefault qui per permettere la selezione
-              debugContext.logInfo('Interazione con suggerimento', { 
-                type: event.type,
-                target: (event.target as HTMLElement).className
-              }, { component: 'PlacesAutocomplete' });
-            };
-            
-            // Aggiungiamo listener per ogni elemento .pac-item
-            pacContainer.querySelectorAll('.pac-item').forEach(item => {
-              item.addEventListener('mousedown', handleSuggestionInteraction);
-              item.addEventListener('touchstart', handleSuggestionInteraction);
-              item.addEventListener('click', handleSuggestionInteraction);
-            });
-            
-            // Supporto per touch devices
-            ['touchstart', 'touchend', 'touchmove'].forEach(eventType => {
-              pacContainer.addEventListener(eventType, (e) => {
-                e.stopPropagation();
-                debugContext.logInfo(`Evento touch ${eventType} sul container`, {}, { component: 'PlacesAutocomplete' });
-              });
-            });
-            
-            // Aggiunta di un attributo per identificarlo facilmente
-            pacContainer.setAttribute('data-experviser-autocomplete', 'true');
-            
-            // Aggiungiamo uno stile per garantire che sia visibile sopra i modali
-            pacContainer.style.zIndex = '10000';
-          } else {
-            debugContext.logWarning('Container .pac-container non trovato', {}, { component: 'PlacesAutocomplete' });
-          }
-        } catch (err) {
-          debugContext.logError('Errore setup container suggerimenti', err, { component: 'PlacesAutocomplete' });
-        }
-      }, 500); // Riduciamo il timeout per una risposta più rapida
+      // Gestisci l'interazione con i suggerimenti che ora sono parte della shadow DOM dell'elemento
+      // Nota: PlaceAutocompleteElement gestisce già molti eventi in modo nativo
       
       // Funzione di pulizia al dismount
       return () => {
-        // Rimuovi il listener quando il componente viene smontato
-        if (window.google?.maps?.event && listener) {
-          window.google.maps.event.removeListener(listener);
-        }
-        
-        // Pulisci le istanze
-        if (autocompleteRef.current) {
-          autocompleteRef.current = null;
-        }
-        
-        // Pulisci eventuali containers di suggerimenti
         try {
+          // PlaceAutocompleteElement si pulisce automaticamente quando viene rimosso dal DOM
+          // Non è necessario rimuovere manualmente i listener o le istanze
+          
+          // Se necessario, possiamo ancora fare pulizia esplicita per i container residui
           document.querySelectorAll('.pac-container').forEach(container => {
             if (container && container.parentNode) {
               container.parentNode.removeChild(container);
@@ -316,7 +256,7 @@ export function PlacesAutocomplete({
         }
       };
     } catch (error) {
-      debugContext.logError('Errore inizializzazione autocomplete', error, { component: 'PlacesAutocomplete' });
+      debugContext.logError('Errore inizializzazione PlaceAutocompleteElement', error, { component: 'PlacesAutocomplete' });
       setError('Errore inizializzazione autocomplete');
     }
   }, [scriptLoaded, types, internalValue]);
