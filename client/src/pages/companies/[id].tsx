@@ -23,6 +23,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import TaskList from "@/components/tasks/TaskList";
 import ContactModal from "@/components/modals/ContactModal";
 import { SynergiesList } from "@/components/synergies/SynergiesList";
+import CompanyBranchesList from "@/components/branches/CompanyBranchesList";
 
 export default function CompanyDetail() {
   const params = useParams();

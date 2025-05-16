@@ -1,0 +1,148 @@
+Ecco un piano in quattro step per avere, nella scheda di ogni azienda, un tab “Filiali” che mostri le filiali collegate:
+
+⸻
+
+1. Modello dati (Postgres)
+
+-- Assicurati che in filiali esista la FK verso aziende
+ALTER TABLE filiali
+  ADD COLUMN azienda_id UUID NOT NULL
+    REFERENCES aziende(id)
+    ON DELETE CASCADE;
+
+-- (Ri-importa o aggiorna i record esistenti assegnando azienda_id)
+
+Pro: integrità referenziale, elimina automaticamente le filiali se cancelli l’azienda
+Contro: serve gestire la migrazione dati se già esistono filiali “orfane”
+
+⸻
+
+2. Endpoint API
+
+// routes/aziende.js  (Express + pg)
+const express = require('express');
+const router = express.Router();
+const pool   = require('../db');   // pg Pool
+
+// GET /api/aziende/:id/filiali
+router.get('/:id/filiali', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { rows } = await pool.query(
+      `SELECT id, nome, indirizzo, comune, telefono
+         FROM filiali
+        WHERE azienda_id = $1
+        ORDER BY nome`,
+      [id]
+    );
+    res.json(rows);
+  } catch (err) {
+    next(err);
+  }
+});
+
+module.exports = router;
+
+Pro: endpoint dedicato, facile da integrare nel frontend
+Contro: potenzialmente molte filiali → prevedere paginazione o lazy‐load
+
+⸻
+
+3. Frontend: aggiungere il tab
+
+// components/AziendaDetail.jsx
+import { useState, useEffect } from 'react';
+import FilialiTab from './FilialiTab';
+
+export default function AziendaDetail({ aziendaId }) {
+  const tabs = ['Info', 'Contatti', 'Filiali'];
+  const [active, setActive] = useState(tabs[0]);
+
+  return (
+    <div className="p-4">
+      {/* Tab navigation */}
+      <ul className="flex border-b">
+        {tabs.map(tab => (
+          <li 
+            key={tab}
+            onClick={() => setActive(tab)}
+            className={`mr-4 pb-2 cursor-pointer ${active===tab ? 'border-b-2 font-semibold' : 'text-gray-500'}`}
+          >
+            {tab}
+          </li>
+        ))}
+      </ul>
+
+      {/* Tab content */}
+      <div className="mt-4">
+        {active === 'Info'     && <InfoAzienda id={aziendaId} />}
+        {active === 'Contatti' && <ContattiAzienda id={aziendaId} />}
+        {active === 'Filiali'  && <FilialiTab  aziendaId={aziendaId} />}
+      </div>
+    </div>
+  );
+}
+
+
+⸻
+
+4. Frontend: componente FilialiTab
+
+// components/FilialiTab.jsx
+import { useState, useEffect } from 'react';
+
+export default function FilialiTab({ aziendaId }) {
+  const [filiali, setFiliali] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`/api/aziende/${aziendaId}/filiali`)
+      .then(r => r.json())
+      .then(data => {
+        setFiliali(data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [aziendaId]);
+
+  if (loading) return <div>Caricamento filiali…</div>;
+  if (!filiali.length) return <div>Nessuna filiale collegata</div>;
+
+  return (
+    <table className="min-w-full table-auto">
+      <thead>
+        <tr>
+          <th className="px-4 py-2">Nome</th>
+          <th className="px-4 py-2">Indirizzo</th>
+          <th className="px-4 py-2">Comune</th>
+          <th className="px-4 py-2">Telefono</th>
+        </tr>
+      </thead>
+      <tbody>
+        {filiali.map(f => (
+          <tr key={f.id} className="hover:bg-gray-50">
+            <td className="border px-4 py-2">{f.nome}</td>
+            <td className="border px-4 py-2">{f.indirizzo}</td>
+            <td className="border px-4 py-2">{f.comune}</td>
+            <td className="border px-4 py-2">{f.telefono}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+
+⸻
+
+Vantaggi di questo approccio
+	•	Modulare: il tab è un componente riutilizzabile
+	•	Scalabile: l’API può gestire paginazione, filtri, ricerca
+	•	UX chiara: l’utente vede subito le filiali senza uscire dalla scheda azienda
+
+Considerazioni aggiuntive
+	•	Autorizzazioni: filtra le filiali in base ai permessi utente
+	•	Paginazione: se superi 50 record, carica 10–20 per pagina
+	•	Aggiornamenti in tempo reale: puoi integrare WebSocket o polling se le filiali cambiano spesso
+
+Fammi sapere se serve un esempio di migrazione, o se preferisci un’implementazione diversa (ad es. Prisma/TypeORM, GraphQL, oppure un’altra UI library).
