@@ -394,6 +394,31 @@ export type ContactEmail = typeof contactEmails.$inferSelect;
 export type InsertContactEmail = z.infer<typeof insertContactEmailSchema>;
 
 /**
+ * BRANCHES
+ * Tabella delle filiali/sedi delle aziende
+ */
+export const branches = pgTable('branches', {
+  id: serial('id').primaryKey(),
+  companyId: integer('company_id').notNull().references(() => companies.id, { onDelete: 'cascade' }),
+  name: varchar('name', { length: 100 }).notNull(),
+  type: varchar('type', { length: 50 }),
+  address: text('address'),
+  country: varchar('country', { length: 50 }),
+  linkedinUrl: varchar('linkedin_url', { length: 255 }),
+  instagramUrl: varchar('instagram_url', { length: 255 }),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+}, (table) => {
+  return {
+    companyIdIdx: index('branch_company_id_idx').on(table.companyId),
+  };
+});
+
+export const insertBranchSchema = createInsertSchema(branches).omit({ id: true, createdAt: true, updatedAt: true });
+export type Branch = typeof branches.$inferSelect;
+export type InsertBranch = z.infer<typeof insertBranchSchema>;
+
+/**
  * EMAIL ACCOUNT SCHEMA
  * Tabella degli account email 
  */
