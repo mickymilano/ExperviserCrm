@@ -95,15 +95,32 @@ router.get('/company/:companyId', authenticateJWT, async (req: Request, res: Res
 // Crea una nuova filiale
 router.post('/', authenticateJWT, async (req: Request, res: Response) => {
   try {
-    const branchData = insertBranchSchema.parse(req.body);
+    // Aggiunta della sincronizzazione dei campi linkedin/linkedinUrl e instagram/instagramUrl
+    const branchData = { ...req.body };
+    
+    // Sincronizziamo i campi linkedinUrl e linkedin
+    if (branchData.linkedin && !branchData.linkedinUrl) {
+      branchData.linkedinUrl = branchData.linkedin;
+    } else if (branchData.linkedinUrl && !branchData.linkedin) {
+      branchData.linkedin = branchData.linkedinUrl;
+    }
+    
+    // Sincronizziamo i campi instagramUrl e instagram
+    if (branchData.instagram && !branchData.instagramUrl) {
+      branchData.instagramUrl = branchData.instagram;
+    } else if (branchData.instagramUrl && !branchData.instagram) {
+      branchData.instagram = branchData.instagramUrl;
+    }
+
+    const validatedBranchData = insertBranchSchema.parse(branchData);
     
     // Verifica che l'azienda esista
-    const company = await storage.getCompany(branchData.companyId);
+    const company = await storage.getCompany(validatedBranchData.companyId);
     if (!company) {
       return res.status(400).json({ message: 'Company not found' });
     }
     
-    const newBranch = await storage.createBranch(branchData);
+    const newBranch = await storage.createBranch(validatedBranchData);
     res.status(201).json(newBranch);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -138,8 +155,25 @@ router.put('/:id', authenticateJWT, async (req: Request, res: Response) => {
         return res.status(400).json({ message: 'Company not found' });
       }
     }
+    
+    // Aggiunta della sincronizzazione dei campi linkedin/linkedinUrl e instagram/instagramUrl
+    const branchData = { ...req.body };
+    
+    // Sincronizziamo i campi linkedinUrl e linkedin
+    if (branchData.linkedin && !branchData.linkedinUrl) {
+      branchData.linkedinUrl = branchData.linkedin;
+    } else if (branchData.linkedinUrl && !branchData.linkedin) {
+      branchData.linkedin = branchData.linkedinUrl;
+    }
+    
+    // Sincronizziamo i campi instagramUrl e instagram
+    if (branchData.instagram && !branchData.instagramUrl) {
+      branchData.instagramUrl = branchData.instagram;
+    } else if (branchData.instagramUrl && !branchData.instagram) {
+      branchData.instagram = branchData.instagramUrl;
+    }
 
-    const updatedBranchData = insertBranchSchema.partial().parse(req.body);
+    const updatedBranchData = insertBranchSchema.partial().parse(branchData);
     const updatedBranch = await storage.updateBranch(id, updatedBranchData);
     
     res.json(updatedBranch);

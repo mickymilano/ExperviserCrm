@@ -154,11 +154,21 @@ export default function BranchModal({
   // Gestione form submit
   const onSubmit = async (data: BranchFormValues) => {
     try {
+      // Sincronizziamo i campi linkedinUrl/linkedin e instagramUrl/instagram
+      const processedData = {
+        ...data,
+        // Assicuriamoci che i campi siano sincronizzati nei due formati
+        linkedin: data.linkedin || data.linkedinUrl || null,
+        linkedinUrl: data.linkedinUrl || data.linkedin || null,
+        instagram: data.instagram || data.instagramUrl || null,
+        instagramUrl: data.instagramUrl || data.instagram || null,
+      };
+      
       if (initialData) {
         // Aggiorna filiale esistente
         await updateBranch.mutateAsync({
           id: initialData.id,
-          ...data,
+          ...processedData,
         });
         toast({
           title: "Filiale aggiornata",
@@ -166,7 +176,7 @@ export default function BranchModal({
         });
       } else {
         // Crea nuova filiale
-        await createBranch.mutateAsync(data);
+        await createBranch.mutateAsync(processedData);
         toast({
           title: "Filiale creata",
           description: "La nuova filiale è stata creata con successo.",
