@@ -1559,54 +1559,68 @@ export class PostgresStorage implements IStorage {
   }
 
   async createCompany(company: InsertCompany): Promise<Company> {
-    // **VERSIONE COMPLETAMENTE RISCRITTA PER EVITARE ERRORI CON CAMPI RIMOSSI DAL DATABASE**
+    // **VERSIONE RIPROGETTATA DA ZERO 2025-05-16**
     console.log('Ricevuta richiesta di creazione azienda:', company);
     
-    // Crea un oggetto pulito con solo i campi che sappiamo esistere nel database
-    const cleanCompanyData: Record<string, any> = {
-      name: company.name || '',
-      status: company.status || 'active'
+    // Crea un oggetto che include SOLO i campi esistenti nel database
+    // Lista esplicita di tutti i campi presenti nella tabella companies
+    const companyData = {
+      // Campi obbligatori
+      name: company.name,
+      status: company.status || 'active',
+      
+      // Campi opzionali di contatto
+      email: company.email || null,
+      phone: company.phone || null,
+      website: company.website || null,
+      
+      // Indirizzo unificato
+      address: company.address || null,      // mantenuto per retrocompatibilità
+      full_address: company.fullAddress || company.address || null,
+      
+      // Informazioni aziendali
+      industry: company.industry || null,
+      description: company.description || null,
+      employee_count: company.employeeCount || null,
+      annual_revenue: company.annualRevenue || null,
+      founded_year: company.foundedYear || null,
+      
+      // Media e riferimenti
+      logo: company.logo || null,
+      linkedin_url: company.linkedinUrl || null,
+      
+      // Relazioni
+      parent_company_id: company.parentCompanyId || null,
+      
+      // Categorizzazione
+      tags: company.tags || [],
+      location_types: company.locationTypes || [],
+      company_type: company.companyType || null,
+      brands: company.brands || [],
+      channels: company.channels || [],
+      products_or_services_tags: company.productsOrServicesTags || [],
+      is_active_rep: company.isActiveRep || false,
+      
+      // Dati aggiuntivi
+      notes: company.notes || null,
+      custom_fields: company.customFields || null,
+      
+      // Date di follow-up
+      last_contacted_at: company.lastContactedAt || null,
+      next_follow_up_at: company.nextFollowUpAt || null,
+      
+      // Metadata (gestiti automaticamente)
+      updated_at: new Date()
     };
     
-    // Aggiungi solo i campi che esistono davvero nel database e sono presenti nell'input
-    const safeFields = [
-      'email', 'phone', 'website', 'industry', 
-      'address', 'fullAddress', /* 'country' RIMOSSO: non esiste nel database */ 'notes',
-      'tags', 'customFields', 'parentCompanyId', 
-      'linkedinUrl', 'locationTypes', 'lastContactedAt',
-      'nextFollowUpAt', 'isActiveRep', 'companyType',
-      'brands', 'channels', 'productsOrServicesTags',
-      'logo', 'description', 'employeeCount', 'annualRevenue', 
-      'foundedYear' /* 'postalCode' RIMOSSO: non esiste nel database */
-    ];
-    
-    // Copia solo i campi sicuri che esistono nell'input
-    for (const field of safeFields) {
-      if (field in company && company[field as keyof InsertCompany] !== undefined) {
-        cleanCompanyData[field] = company[field as keyof InsertCompany];
-      }
-    }
-    
-    // Gestisci la migrazione da address a fullAddress
-    if (company.address && !cleanCompanyData.fullAddress) {
-      cleanCompanyData.fullAddress = company.address;
-    }
-    
-    // SICUREZZA: rimuovi esplicitamente i campi che sappiamo non esistere più
-    delete (cleanCompanyData as any).city;
-    delete (cleanCompanyData as any).region;
-    delete (cleanCompanyData as any).country;
-    delete (cleanCompanyData as any).postalCode; // Se ci sono problemi anche con questo campo
-    
-    // Log dei dati puliti prima dell'inserimento
-    console.log('Creating company with sanitized data:', cleanCompanyData);
+    // Log dei dati espliciti prima dell'inserimento
+    console.log('Creating company with explicit field mapping:', companyData);
     
     try {
-      // NOTA: Specificare una lista esplicita di campi per l'inserimento
-      // è l'unico modo sicuro per evitare errori di "column does not exist"
+      // Esegui l'inserimento con campi espliciti per evitare ogni errore di colonna mancante
       const [newCompany] = await db
         .insert(companies)
-        .values(cleanCompanyData)
+        .values(companyData)
         .returning();
       
       console.log('Azienda creata con successo, ID:', newCompany.id);
