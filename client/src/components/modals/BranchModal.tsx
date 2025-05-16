@@ -102,8 +102,8 @@ export default function BranchModal({
   useEffect(() => {
     if (initialData) {
       const defaultValues = {
-        name: initialData.name,
-        companyId: initialData.companyId,
+        name: initialData.name || "",
+        companyId: initialData.companyId || 0,
         type: initialData.type || null,
         address: initialData.address || null,
         city: initialData.city || null,
@@ -115,6 +115,11 @@ export default function BranchModal({
         description: initialData.description || null,
         isHeadquarters: initialData.isHeadquarters || false,
         customFields: initialData.customFields || null,
+        website: initialData.website || null,
+        manager: initialData.manager || null,
+        linkedin: initialData.linkedin || null,
+        facebook: initialData.facebook || null,
+        instagram: initialData.instagram || null,
       };
       form.reset(defaultValues);
     } else {
@@ -132,6 +137,11 @@ export default function BranchModal({
         description: null,
         isHeadquarters: false,
         customFields: null,
+        website: null,
+        manager: null,
+        linkedin: null,
+        facebook: null,
+        instagram: null,
       });
     }
   }, [initialData, form, companies]);
