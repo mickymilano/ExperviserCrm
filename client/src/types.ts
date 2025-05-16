@@ -179,6 +179,13 @@ export interface Email {
   updatedAt: Date | null;
 }
 
+// Interfaccia per definire la struttura di un manager
+export interface BranchManager {
+  id: string;
+  name: string;
+  role: string;
+}
+
 export interface Branch {
   id: number;
   companyId: number;
@@ -194,6 +201,7 @@ export interface Branch {
   email: string | null;
   description: string | null;
   isHeadquarters: boolean | null;
+  managers: BranchManager[] | null;
   linkedinUrl: string | null;
   instagramUrl: string | null;
   customFields: Record<string, any> | null;

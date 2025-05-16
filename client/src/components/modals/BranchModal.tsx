@@ -32,7 +32,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Branch } from "@/types";
+import { Branch, BranchManager } from "@/types";
+
+// Schema di validazione per un manager
+const managerSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1, { message: "Il nome del responsabile è obbligatorio" }),
+  role: z.string().min(1, { message: "Il ruolo è obbligatorio" })
+});
 
 // Schema di validazione per il form
 const branchFormSchema = z.object({
@@ -49,8 +56,15 @@ const branchFormSchema = z.object({
   description: z.string().optional().nullable(),
   isHeadquarters: z.boolean().optional().default(false),
   customFields: z.record(z.string(), z.any()).optional().nullable(),
+  managers: z.array(managerSchema).optional().default([]),
   linkedinUrl: z.string().url({ message: "URL LinkedIn non valido" }).optional().nullable(),
   instagramUrl: z.string().url({ message: "URL Instagram non valido" }).optional().nullable(),
+  // Campi aggiuntivi compatibili con UI
+  linkedin: z.string().optional().nullable(),
+  facebook: z.string().optional().nullable(),
+  instagram: z.string().optional().nullable(),
+  website: z.string().optional().nullable(),
+  manager: z.string().optional().nullable(), // vecchio campo singolo manager, per compatibilità
 });
 
 type BranchFormValues = z.infer<typeof branchFormSchema>;
@@ -92,9 +106,12 @@ export default function BranchModal({
       customFields: initialData?.customFields || null,
       website: initialData?.website || null,
       manager: initialData?.manager || null,
+      managers: initialData?.managers || [],
       linkedin: initialData?.linkedin || null,
+      linkedinUrl: initialData?.linkedinUrl || null,
       facebook: initialData?.facebook || null,
       instagram: initialData?.instagram || null,
+      instagramUrl: initialData?.instagramUrl || null,
     },
   });
 

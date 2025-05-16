@@ -413,6 +413,7 @@ export const branches = pgTable('branches', {
   description: text('description'),
   isHeadquarters: boolean('is_headquarters').default(false),
   customFields: jsonb('custom_fields'),
+  managers: jsonb('managers').default('[]').notNull(), // Array di responsabili con ruoli
   linkedinUrl: varchar('linkedin_url', { length: 255 }),
   instagramUrl: varchar('instagram_url', { length: 255 }),
   createdAt: timestamp('created_at').defaultNow(),
