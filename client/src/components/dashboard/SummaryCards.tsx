@@ -26,7 +26,7 @@ function PercentChange({ value }: { value: number }) {
           d="M5 10l7-7m0 0l7 7m-7-7v18"
         />
       </svg>
-      {Math.abs(value)}% from last {isPositive ? 'week' : 'month'}
+      {Math.abs(value)}% rispetto {isPositive ? 'alla settimana' : 'al mese'} scorso
     </p>
   );
 }
@@ -44,11 +44,11 @@ export default function SummaryCards({ summary }: SummaryCardsProps) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      {/* Open Deals */}
+      {/* Opportunità Aperte */}
       <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={goToDeals}>
         <CardContent className="p-5">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-neutral-medium text-sm font-medium">Open Deals</h3>
+            <h3 className="text-neutral-medium text-sm font-medium">Opportunità Aperte</h3>
             <span className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-50 text-primary">
               <TrendingUp className="h-5 w-5" />
             </span>
@@ -63,11 +63,11 @@ export default function SummaryCards({ summary }: SummaryCardsProps) {
         </CardContent>
       </Card>
 
-      {/* Active Contacts */}
+      {/* Contatti Attivi */}
       <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={goToContacts}>
         <CardContent className="p-5">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-neutral-medium text-sm font-medium">Active Contacts</h3>
+            <h3 className="text-neutral-medium text-sm font-medium">Contatti Attivi</h3>
             <span className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-50 text-secondary">
               <Users className="h-5 w-5" />
             </span>
@@ -77,16 +77,16 @@ export default function SummaryCards({ summary }: SummaryCardsProps) {
               <p className="text-2xl font-semibold">{summary.activeContacts}</p>
               <PercentChange value={12} />
             </div>
-            <span className="text-neutral-medium text-sm">28 new</span>
+            <span className="text-neutral-medium text-sm">28 nuovi</span>
           </div>
         </CardContent>
       </Card>
 
-      {/* Companies */}
+      {/* Aziende */}
       <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={goToCompanies}>
         <CardContent className="p-5">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-neutral-medium text-sm font-medium">Companies</h3>
+            <h3 className="text-neutral-medium text-sm font-medium">Aziende</h3>
             <span className="flex items-center justify-center w-8 h-8 rounded-full bg-teal-50 text-accent">
               <Building2 className="h-5 w-5" />
             </span>
@@ -96,16 +96,16 @@ export default function SummaryCards({ summary }: SummaryCardsProps) {
               <p className="text-2xl font-semibold">{summary.totalCompanies}</p>
               <PercentChange value={3} />
             </div>
-            <span className="text-neutral-medium text-sm">4 new</span>
+            <span className="text-neutral-medium text-sm">4 nuove</span>
           </div>
         </CardContent>
       </Card>
 
-      {/* Upcoming Tasks */}
+      {/* Attività Imminenti */}
       <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={goToTasks}>
         <CardContent className="p-5">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-neutral-medium text-sm font-medium">Upcoming Tasks</h3>
+            <h3 className="text-neutral-medium text-sm font-medium">Attività Imminenti</h3>
             <span className="flex items-center justify-center w-8 h-8 rounded-full bg-amber-50 text-warning">
               <CheckSquare className="h-5 w-5" />
             </span>
@@ -128,10 +128,10 @@ export default function SummaryCards({ summary }: SummaryCardsProps) {
                     d="M19 14l-7 7m0 0l-7-7m7 7V3"
                   />
                 </svg>
-                {summary.tasks?.overdueCount || summary.overdueTasksCount || 0} overdue
+                {summary.tasks?.overdueCount || summary.overdueTasksCount || 0} in ritardo
               </p>
             </div>
-            <span className="text-neutral-medium text-sm">Tasks</span>
+            <span className="text-neutral-medium text-sm">Attività</span>
           </div>
         </CardContent>
       </Card>
