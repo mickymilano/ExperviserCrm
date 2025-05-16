@@ -82,10 +82,12 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
         companyData.address = data.fullAddress;
       }
       
-      console.log("Dati finali azienda:", companyData);
+      // Mappa correttamente l'indirizzo al campo full_address
+      companyData.full_address = companyData.address;
+      delete companyData.fullAddress; // se presente
       
-      // Rimuovi il campo fullAddress che non esiste nel database
-      delete companyData.fullAddress;
+      // Log dettagliato del payload prima dell'invio
+      console.log("🔍 Payload companyData:", companyData);
       
       // Convert tags string to array if provided
       if (tagsInput.trim()) {
@@ -103,19 +105,37 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
         method = "PATCH";
       }
       
+      // Adattiamo il fetch body con solo i campi verificati
+      const requestData = {
+        name: companyData.name,
+        address: companyData.address,
+        full_address: companyData.full_address,
+        email: companyData.email || "",
+        phone: companyData.phone || "",
+        website: companyData.website || "",
+        industry: companyData.industry || "",
+        country: companyData.country || "",
+        tags: companyData.tags || [],
+        notes: companyData.notes || "",
+        status: companyData.status || "active"
+      };
+      
       const response = await fetch(url, {
         method, 
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(companyData),
+        body: JSON.stringify(requestData),
         credentials: "include"
       });
       
+      // Controlla la risposta del server e logga dettagli
+      const text = await response.text();
+      console.log("🛠️ Response status:", response.status, text);
+      
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`${response.status}: ${errorText}`);
+        throw new Error(`${response.status}: ${text}`);
       }
       
-      return response.json();
+      return text ? JSON.parse(text) : {};
     },
     onSuccess: () => {
       toast({

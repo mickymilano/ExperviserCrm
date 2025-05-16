@@ -1577,7 +1577,7 @@ export class PostgresStorage implements IStorage {
         
         // Indirizzo
         address: company.address || null,
-        full_address: company.fullAddress || company.address || null,
+        full_address: company.full_address || company.fullAddress || company.address || null,
         
         // Categorizzazioni
         industry: company.industry || null,
