@@ -80,12 +80,12 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     enabled: open,
   });
 
-  // La funzionalità delle sinergie è stata rimossa
-  // const { data: dealSynergies = [] } = useQuery({
-  //   queryKey: [`/api/deals/${initialData?.id}/synergies`],
-  //   enabled: open && isEditMode && initialData?.id !== undefined,
-  //   staleTime: Infinity
-  // });
+  // Query per recuperare le sinergie esistenti quando siamo in modalità di modifica
+  const { data: dealSynergies = [] } = useQuery({
+    queryKey: [`/api/deals/${initialData?.id}/synergies`],
+    enabled: open && isEditMode && initialData?.id !== undefined,
+    staleTime: Infinity
+  });
 
   const { register, handleSubmit, reset, setValue, getValues, control, formState: { errors } } = useForm<DealFormData>({
     resolver: zodResolver(dealSchema),
@@ -259,8 +259,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     updateFilteredContacts(companyId);
   }, [contacts]);
 
-  // La funzionalità delle sinergie è stata rimossa
-  /*
+  // Carica le sinergie esistenti nel form quando siamo in modalità di modifica
   useEffect(() => {
     if (isEditMode && dealSynergies && Array.isArray(dealSynergies) && dealSynergies.length > 0) {
       const contactIds = dealSynergies.map(synergy => 
@@ -273,10 +272,8 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       }
     }
   }, [dealSynergies, isEditMode, getValues, setValue]);
-  */
 
-  // La funzionalità delle sinergie è stata rimossa
-  /*
+  // Funzione per creare sinergie per i contatti selezionati
   const createSynergiesForContacts = async (dealId: number, companyId: number, contactIds: number[]) => {
     const results = [];
 
@@ -299,7 +296,6 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
 
     return results;
   };
-  */
 
   // Save deal mutation
   const saveDeal = useMutation({
@@ -369,8 +365,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
 
       const savedDeal = await response.json();
 
-      // La funzionalità delle sinergie è stata rimossa
-      /*
+      // Creiamo le sinergie se ci sono contatti selezionati
       if (data.synergyContactIds && data.synergyContactIds.length > 0 && data.companyId) {
         try {
           await createSynergiesForContacts(
@@ -395,7 +390,6 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
           });
         }
       }
-      */
 
       return savedDeal;
     },
@@ -778,7 +772,16 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                 />
               </div>
               
-              {/* La sezione delle sinergie è stata rimossa */}
+              <div className="space-y-2">
+                <SynergiesSelect
+                  contacts={filteredContacts || []}
+                  control={control}
+                  name="synergyContactIds"
+                  label="Contatti Sinergia"
+                  placeholder="Seleziona contatti sinergia"
+                  className="w-full"
+                />
+              </div>
             </div>
             
             {/* Notes */}
