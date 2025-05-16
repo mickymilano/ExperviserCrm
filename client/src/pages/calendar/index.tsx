@@ -114,9 +114,9 @@ export default function Calendar() {
   return (
     <div className="max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-        <h1 className="text-2xl font-bold mb-4 sm:mb-0">Calendar</h1>
+        <h1 className="text-2xl font-bold mb-4 sm:mb-0">Calendario</h1>
         <Button onClick={handleAddMeeting}>
-          <Plus className="mr-2 h-4 w-4" /> Add Meeting
+          <Plus className="mr-2 h-4 w-4" /> Aggiungi Riunione
         </Button>
       </div>
 
@@ -125,7 +125,7 @@ export default function Calendar() {
         <div className="col-span-1">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle>Calendar</CardTitle>
+              <CardTitle>Calendario</CardTitle>
             </CardHeader>
             <CardContent>
               <CalendarComponent
@@ -138,17 +138,17 @@ export default function Calendar() {
               <div className="mt-4 space-y-2">
                 <Select value={view} onValueChange={(v) => setView(v as ViewType)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select view" />
+                    <SelectValue placeholder="Seleziona vista" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="month">Month</SelectItem>
-                    <SelectItem value="week">Week</SelectItem>
-                    <SelectItem value="day">Day</SelectItem>
+                    <SelectItem value="month">Mese</SelectItem>
+                    <SelectItem value="week">Settimana</SelectItem>
+                    <SelectItem value="day">Giorno</SelectItem>
                   </SelectContent>
                 </Select>
                 
                 <Button className="w-full" onClick={handleAddMeeting}>
-                  <Plus className="mr-2 h-4 w-4" /> Add Meeting
+                  <Plus className="mr-2 h-4 w-4" /> Aggiungi Riunione
                 </Button>
               </div>
               
@@ -160,7 +160,7 @@ export default function Calendar() {
                 </div>
               ) : (
                 <div className="mt-6">
-                  <h3 className="text-sm font-medium mb-2">Upcoming Meetings</h3>
+                  <h3 className="text-sm font-medium mb-2">Prossime Riunioni</h3>
                   {Array.isArray(meetings) && meetings.length > 0 ? (
                     <div className="space-y-2">
                       {/* Garantisco che meetings sia sempre un Array */}
@@ -177,14 +177,14 @@ export default function Calendar() {
                             <div className="font-medium truncate">{meeting.title}</div>
                             <div className="flex items-center text-xs text-muted-foreground">
                               <CalendarIcon className="h-3 w-3 mr-1" />
-                              {format(new Date(meeting.startTime), "MMM d, h:mm a")}
+                              {format(new Date(meeting.startTime), "d MMM, H:mm")}
                             </div>
                           </div>
                         ))}
                     </div>
                   ) : (
                     <div className="text-sm text-muted-foreground">
-                      No upcoming meetings.
+                      Nessuna riunione in programma.
                     </div>
                   )}
                 </div>
@@ -199,7 +199,7 @@ export default function Calendar() {
             <CardHeader className="pb-3 flex flex-row items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Button variant="outline" size="icon" onClick={() => setSelectedDate(new Date())}>
-                  Today
+                  Oggi
                 </Button>
                 <div className="flex items-center">
                   <Button variant="ghost" size="icon" onClick={() => {
@@ -291,7 +291,7 @@ export default function Calendar() {
                         ))
                       ) : (
                         <div className="text-center py-10 text-muted-foreground">
-                          No meetings scheduled for this day.
+                          Nessuna riunione programmata per questo giorno.
                         </div>
                       )}
                     </div>
@@ -335,7 +335,7 @@ export default function Calendar() {
                             )}
                             {!isLoading && getMeetingsForDate(day).length === 0 && (
                               <div className="h-16 flex items-center justify-center text-xs text-muted-foreground">
-                                No meetings
+                                Nessuna riunione
                               </div>
                             )}
                           </div>
@@ -346,7 +346,7 @@ export default function Calendar() {
                 </div>
               ) : (
                 <div className="text-center py-10 text-muted-foreground">
-                  Month view is coming soon. Please use Week or Day view.
+                  La vista mensile sarà disponibile presto. Per favore utilizza la vista Settimana o Giorno.
                 </div>
               )}
             </CardContent>
