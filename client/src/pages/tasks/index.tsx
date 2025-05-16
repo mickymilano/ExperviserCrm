@@ -113,7 +113,7 @@ export default function Tasks() {
 
   // Handle delete task
   const handleDeleteTask = (id: number) => {
-    if (window.confirm("Are you sure you want to delete this task?")) {
+    if (window.confirm("Sei sicuro di voler eliminare questa attività?")) {
       deleteTask.mutate(id);
     }
   };
@@ -160,13 +160,13 @@ export default function Tasks() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => handleEditTask(task)}>
-                              Edit Task
+                              Modifica Attività
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               className="text-destructive"
                               onClick={() => handleDeleteTask(task.id)}
                             >
-                              Delete Task
+                              Elimina Attività
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -217,12 +217,12 @@ export default function Tasks() {
   return (
     <div className="max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-        <h1 className="text-2xl font-bold mb-4 sm:mb-0">Tasks</h1>
+        <h1 className="text-2xl font-bold mb-4 sm:mb-0">Attività</h1>
         <Button onClick={() => {
           setSelectedTask(null);
           setShowModal(true);
         }}>
-          <Plus className="mr-2 h-4 w-4" /> Add Task
+          <Plus className="mr-2 h-4 w-4" /> Aggiungi Attività
         </Button>
       </div>
 
@@ -232,23 +232,23 @@ export default function Tasks() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search tasks..."
+                placeholder="Cerca attività..."
                 className="pl-9"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             <Button variant="outline" className="md:w-auto">
-              <Filter className="mr-2 h-4 w-4" /> Filter
+              <Filter className="mr-2 h-4 w-4" /> Filtra
             </Button>
           </div>
           
           <Tabs value={taskView} onValueChange={(value) => setTaskView(value as "all" | "today" | "upcoming" | "completed")} className="w-full">
             <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="today">Today</TabsTrigger>
-              <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-              <TabsTrigger value="completed">Completed</TabsTrigger>
+              <TabsTrigger value="all">Tutte</TabsTrigger>
+              <TabsTrigger value="today">Oggi</TabsTrigger>
+              <TabsTrigger value="upcoming">In Arrivo</TabsTrigger>
+              <TabsTrigger value="completed">Completate</TabsTrigger>
             </TabsList>
           </Tabs>
         </CardContent>
@@ -262,12 +262,12 @@ export default function Tasks() {
         </div>
       ) : filteredTasks && filteredTasks.length > 0 ? (
         <div>
-          {renderTaskGroup("Overdue", groupedTasks.overdue, "text-destructive")}
-          {renderTaskGroup("Today", groupedTasks.today)}
-          {renderTaskGroup("Tomorrow", groupedTasks.tomorrow)}
-          {renderTaskGroup("Upcoming", groupedTasks.upcoming)}
-          {renderTaskGroup("No Due Date", groupedTasks.noDueDate)}
-          {renderTaskGroup("Completed", groupedTasks.completed, "text-muted-foreground")}
+          {renderTaskGroup("In Ritardo", groupedTasks.overdue, "text-destructive")}
+          {renderTaskGroup("Oggi", groupedTasks.today)}
+          {renderTaskGroup("Domani", groupedTasks.tomorrow)}
+          {renderTaskGroup("In Arrivo", groupedTasks.upcoming)}
+          {renderTaskGroup("Senza Scadenza", groupedTasks.noDueDate)}
+          {renderTaskGroup("Completate", groupedTasks.completed, "text-muted-foreground")}
         </div>
       ) : (
         <Card>
@@ -275,21 +275,21 @@ export default function Tasks() {
             <div className="rounded-full bg-muted w-12 h-12 flex items-center justify-center mb-4">
               <CheckSquare className="h-6 w-6 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-medium mb-2">No tasks found</h3>
+            <h3 className="text-lg font-medium mb-2">Nessuna attività trovata</h3>
             <p className="text-muted-foreground text-center mb-4">
               {searchTerm
-                ? "Try adjusting your search terms."
+                ? "Prova a modificare i termini di ricerca."
                 : taskView === "today"
-                ? "You don't have any tasks due today."
+                ? "Non hai attività in scadenza oggi."
                 : taskView === "upcoming"
-                ? "You don't have any upcoming tasks."
+                ? "Non hai attività in arrivo."
                 : taskView === "completed"
-                ? "You haven't completed any tasks yet."
-                : "Get started by adding your first task."}
+                ? "Non hai ancora completato nessuna attività."
+                : "Inizia aggiungendo la tua prima attività."}
             </p>
             {!searchTerm && (
               <Button onClick={() => setShowModal(true)}>
-                <Plus className="mr-2 h-4 w-4" /> Add Task
+                <Plus className="mr-2 h-4 w-4" /> Aggiungi Attività
               </Button>
             )}
           </CardContent>

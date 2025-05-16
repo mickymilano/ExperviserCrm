@@ -228,17 +228,17 @@ export default function SynergiesPage() {
         <Card className="w-full">
           <CardContent className="flex flex-col items-center justify-center p-12 text-center">
             <Handshake className="h-16 w-16 mb-4 text-muted-foreground opacity-50" />
-            <h3 className="text-xl font-medium mb-2">No Business Synergies Found</h3>
+            <h3 className="text-xl font-medium mb-2">Nessuna Sinergia di Business Trovata</h3>
             <p className="text-muted-foreground mb-6 max-w-md">
-              There are currently no business synergies in the system. Business synergies can only 
-              be created from a Deal. Go to a specific Deal page and create synergies there.
+              Attualmente non ci sono sinergie di business nel sistema. Le sinergie di business possono 
+              essere create solo da un'Opportunità. Vai alla pagina di un'Opportunità specifica e crea le sinergie lì.
             </p>
             <Button 
               variant="outline"
               onClick={() => navigate('/deals')}
             >
               <DollarSign className="h-4 w-4 mr-2" />
-              Go to Deals
+              Vai alle Opportunità
             </Button>
           </CardContent>
         </Card>
