@@ -35,7 +35,7 @@ const loadGoogleMapsScript = (apiKey: string): Promise<void> => {
       
       // Creiamo una callback globale
       window.initGoogleMaps = () => {
-        console.log('Google Maps API caricata con successo');
+        debugContext.logInfo('Google Maps API caricata con successo', {}, { component: 'PlacesAutocomplete' });
         resolve();
       };
       
@@ -151,7 +151,7 @@ export function PlacesAutocomplete({
     }
     
     try {
-      console.log('Inizializzazione Google Maps Autocomplete');
+      debugContext.logInfo('Inizializzazione Google Maps Autocomplete', {}, { component: 'PlacesAutocomplete' });
       
       // Configurazione dell'autocomplete
       const options: google.maps.places.AutocompleteOptions = {
@@ -174,11 +174,14 @@ export function PlacesAutocomplete({
           
           const place = autocompleteRef.current.getPlace();
           if (!place || !place.place_id) {
-            console.warn('Luogo selezionato non valido');
+            debugContext.logWarning('Luogo selezionato non valido', {}, { component: 'PlacesAutocomplete' });
             return;
           }
           
-          console.log('Luogo selezionato:', place.name || place.formatted_address);
+          debugContext.logInfo('Luogo selezionato', { 
+            name: place.name || place.formatted_address,
+            placeId: place.place_id
+          }, { component: 'PlacesAutocomplete' });
           
           // Formatta il valore da mostrare (nome e/o indirizzo)
           const displayValue = place.name 
@@ -204,7 +207,7 @@ export function PlacesAutocomplete({
             }
           }
         } catch (error) {
-          console.error('Errore nella gestione del place_changed:', error);
+          debugContext.logError('Errore nella gestione del place_changed', error, { component: 'PlacesAutocomplete' });
         }
       };
       
