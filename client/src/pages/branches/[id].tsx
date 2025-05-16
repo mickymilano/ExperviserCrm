@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import BranchModal from "@/components/modals/BranchModal";
 import { 
   ArrowLeft, Edit, Globe, Phone, Mail, MapPin, Building, Calendar, Info,
-  Flag, Hash
+  Flag, Hash, Users, User
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 
@@ -156,6 +156,43 @@ export default function BranchDetail() {
                       <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
                       <span className="mr-2 font-medium">Telefono:</span>
                       <span>{branch.phone}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* Responsabili */}
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground mb-2">
+                  <div className="flex items-center">
+                    <Users className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <span>Responsabili</span>
+                  </div>
+                </h3>
+                <div className="space-y-2">
+                  {branch.managers && branch.managers.length > 0 ? (
+                    branch.managers.map((manager, index) => (
+                      <div key={manager.id || index} className="flex items-center p-2 bg-muted/30 rounded-md">
+                        <User className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <div>
+                          <span className="font-medium">{manager.name}</span>
+                          {manager.role && (
+                            <span className="ml-2 text-sm text-muted-foreground">
+                              ({manager.role})
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  ) : branch.manager ? (
+                    // Fallback per supportare il vecchio formato
+                    <div className="flex items-center p-2 bg-muted/30 rounded-md">
+                      <User className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <span className="font-medium">{branch.manager}</span>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-muted-foreground italic">
+                      Nessun responsabile assegnato
                     </div>
                   )}
                 </div>

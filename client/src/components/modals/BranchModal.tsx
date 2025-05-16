@@ -134,6 +134,8 @@ export default function BranchModal({
         customFields: initialData.customFields || null,
         website: initialData.website || null,
         manager: initialData.manager || null,
+        // Supporto per i responsabili multipli
+        managers: initialData.managers || [],
         linkedin: initialData.linkedin || null,
         facebook: initialData.facebook || null,
         instagram: initialData.instagram || null,
@@ -159,6 +161,7 @@ export default function BranchModal({
         customFields: null,
         website: null,
         manager: null,
+        managers: [],
         linkedin: null,
         facebook: null,
         instagram: null,
@@ -171,6 +174,15 @@ export default function BranchModal({
   // Gestione form submit
   const onSubmit = async (data: BranchFormValues) => {
     try {
+      // Assicuriamoci che tutti i responsabili abbiano un ID valido
+      const processedManagers = data.managers?.map(manager => {
+        // Se non c'è un ID, generiamo un UUID
+        if (!manager.id) {
+          return { ...manager, id: crypto.randomUUID() };
+        }
+        return manager;
+      }) || [];
+      
       // Sincronizziamo i campi linkedinUrl/linkedin e instagramUrl/instagram
       const processedData = {
         ...data,
@@ -179,6 +191,10 @@ export default function BranchModal({
         linkedinUrl: data.linkedinUrl || data.linkedin || null,
         instagram: data.instagram || data.instagramUrl || null,
         instagramUrl: data.instagramUrl || data.instagram || null,
+        // Assicuriamoci che i manager abbiano sempre un ID
+        managers: processedManagers,
+        // Aggiorniamo anche il campo manager legacy per compatibilità
+        manager: processedManagers.length > 0 ? processedManagers[0].name : data.manager,
       };
       
       if (initialData) {
@@ -471,17 +487,114 @@ export default function BranchModal({
                 )}
               />
 
-              {/* Manager */}
+              {/* Responsabili (fino a 3) */}
+              <div className="col-span-2">
+                <div className="mb-2 mt-4">
+                  <h3 className="text-lg font-medium">Responsabili</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Aggiungi fino a 3 responsabili per questa filiale
+                  </p>
+                </div>
+                
+                <FormField
+                  control={form.control}
+                  name="managers"
+                  render={({ field }) => {
+                    // Funzione per aggiungere un nuovo responsabile
+                    const addManager = () => {
+                      if (field.value && field.value.length < 3) {
+                        field.onChange([
+                          ...field.value,
+                          { id: crypto.randomUUID(), name: "", role: "" }
+                        ]);
+                      }
+                    };
+                    
+                    // Funzione per rimuovere un responsabile
+                    const removeManager = (index: number) => {
+                      const newManagers = [...field.value];
+                      newManagers.splice(index, 1);
+                      field.onChange(newManagers);
+                    };
+                    
+                    // Funzione per aggiornare i dati di un responsabile
+                    const updateManager = (index: number, key: string, value: string) => {
+                      const newManagers = [...field.value];
+                      newManagers[index] = { ...newManagers[index], [key]: value };
+                      field.onChange(newManagers);
+                    };
+                    
+                    return (
+                      <FormItem>
+                        <div>
+                          {field.value && field.value.length > 0 ? (
+                            <div className="space-y-3">
+                              {field.value.map((manager, index) => (
+                                <div key={manager.id || index} className="flex items-end gap-2 p-3 border rounded-md bg-muted/20">
+                                  <div className="flex-1">
+                                    <FormLabel htmlFor={`manager-name-${index}`}>Nome</FormLabel>
+                                    <Input
+                                      id={`manager-name-${index}`}
+                                      value={manager.name || ""}
+                                      onChange={(e) => updateManager(index, "name", e.target.value)}
+                                      placeholder="Nome del responsabile"
+                                    />
+                                  </div>
+                                  
+                                  <div className="flex-1">
+                                    <FormLabel htmlFor={`manager-role-${index}`}>Ruolo</FormLabel>
+                                    <Input
+                                      id={`manager-role-${index}`}
+                                      value={manager.role || ""}
+                                      onChange={(e) => updateManager(index, "role", e.target.value)}
+                                      placeholder="Ruolo"
+                                    />
+                                  </div>
+                                  
+                                  <Button 
+                                    type="button" 
+                                    variant="ghost" 
+                                    className="px-3" 
+                                    onClick={() => removeManager(index)}
+                                  >
+                                    Rimuovi
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="flex items-center justify-center p-4 border border-dashed rounded-md">
+                              <p className="text-sm text-muted-foreground">Nessun responsabile aggiunto</p>
+                            </div>
+                          )}
+                          
+                          {field.value && field.value.length < 3 && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="mt-3"
+                              onClick={addManager}
+                            >
+                              Aggiungi Responsabile
+                            </Button>
+                          )}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
+                />
+              </div>
+              
+              {/* Campo legacy per compatibilità */}
               <FormField
                 control={form.control}
                 name="manager"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Responsabile</FormLabel>
+                  <FormItem className="hidden">
                     <FormControl>
-                      <Input placeholder="Nome del responsabile" {...field} value={field.value || ""} />
+                      <Input type="hidden" {...field} value={field.value || ""} />
                     </FormControl>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
