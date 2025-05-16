@@ -3,6 +3,21 @@ import ReactDOM from 'react-dom/client';
 import * as Sentry from "@sentry/react";
 import App from './App';
 import './index.css';
+import { debugContext } from './lib/debugContext';
+import { initializeApiMonitoring } from './lib/monitoredFetch';
+
+// Inizializza il sistema di debug
+initializeApiMonitoring();
+
+// Installa gli override della console
+const resetConsole = debugContext.installConsoleOverrides();
+
+// Log iniziale per verificare il funzionamento
+debugContext.logInfo('Applicazione inizializzata', {
+  time: new Date().toISOString(),
+  environment: import.meta.env.MODE,
+  userAgent: navigator.userAgent
+}, { component: 'AppInit' });
 
 // Inizializza Sentry per il monitoraggio degli errori
 // Nota: in produzione, usare un DSN reale fornito da Sentry
