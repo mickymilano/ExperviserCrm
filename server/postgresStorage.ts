@@ -3057,12 +3057,45 @@ export class PostgresStorage implements IStorage {
   async getBranch(id: number): Promise<Branch | null> {
     console.log(`PostgresStorage.getBranch: retrieving branch with id ${id}`);
     try {
-      const [branch] = await db
-        .select()
-        .from(branches)
-        .where(eq(branches.id, id));
+      // Utilizziamo SQL grezzo per includere il nome dell'azienda nei risultati
+      const query = `
+        SELECT b.*, c.name as company_name
+        FROM branches b
+        LEFT JOIN companies c ON b.company_id = c.id
+        WHERE b.id = $1
+      `;
       
-      return branch || null;
+      const result = await pool.query(query, [id]);
+      
+      if (result.rows.length === 0) {
+        return null;
+      }
+      
+      const row = result.rows[0];
+      const branchWithCompanyName = {
+        id: row.id,
+        companyId: row.company_id,
+        companyName: row.company_name,
+        name: row.name,
+        type: row.type,
+        address: row.address,
+        city: row.city,
+        region: row.region,
+        postalCode: row.postal_code,
+        country: row.country,
+        phone: row.phone,
+        email: row.email,
+        description: row.description,
+        isHeadquarters: row.is_headquarters,
+        customFields: row.custom_fields,
+        managers: row.managers,
+        linkedinUrl: row.linkedin_url,
+        instagramUrl: row.instagram_url,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+      };
+      
+      return branchWithCompanyName;
     } catch (err) {
       console.error('Error retrieving branch:', err);
       throw err;
@@ -3072,13 +3105,40 @@ export class PostgresStorage implements IStorage {
   async getBranches(): Promise<Branch[]> {
     console.log('PostgresStorage.getBranches: retrieving all branches');
     try {
-      const allBranches = await db
-        .select()
-        .from(branches)
-        .orderBy(branches.name);
+      // Utilizziamo SQL grezzo per includere il nome dell'azienda nei risultati
+      const query = `
+        SELECT b.*, c.name as company_name
+        FROM branches b
+        LEFT JOIN companies c ON b.company_id = c.id
+        ORDER BY b.name
+      `;
       
-      console.log(`Retrieved ${allBranches.length} branches`);
-      return allBranches;
+      const result = await pool.query(query);
+      const branchesWithCompanyName = result.rows.map(row => ({
+        id: row.id,
+        companyId: row.company_id,
+        companyName: row.company_name,
+        name: row.name,
+        type: row.type,
+        address: row.address,
+        city: row.city,
+        region: row.region,
+        postalCode: row.postal_code,
+        country: row.country,
+        phone: row.phone,
+        email: row.email,
+        description: row.description,
+        isHeadquarters: row.is_headquarters,
+        customFields: row.custom_fields,
+        managers: row.managers,
+        linkedinUrl: row.linkedin_url,
+        instagramUrl: row.instagram_url,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+      }));
+      
+      console.log(`Retrieved ${branchesWithCompanyName.length} branches with company names`);
+      return branchesWithCompanyName;
     } catch (err) {
       console.error('Error retrieving branches:', err);
       throw err;
@@ -3088,14 +3148,41 @@ export class PostgresStorage implements IStorage {
   async getBranchesByCompanyId(companyId: number): Promise<Branch[]> {
     console.log(`PostgresStorage.getBranchesByCompanyId: retrieving branches for company ${companyId}`);
     try {
-      const companyBranches = await db
-        .select()
-        .from(branches)
-        .where(eq(branches.companyId, companyId))
-        .orderBy(branches.name);
+      // Utilizziamo SQL grezzo per includere il nome dell'azienda nei risultati
+      const query = `
+        SELECT b.*, c.name as company_name
+        FROM branches b
+        LEFT JOIN companies c ON b.company_id = c.id
+        WHERE b.company_id = $1
+        ORDER BY b.name
+      `;
       
-      console.log(`Retrieved ${companyBranches.length} branches for company ${companyId}`);
-      return companyBranches;
+      const result = await pool.query(query, [companyId]);
+      const branchesWithCompanyName = result.rows.map(row => ({
+        id: row.id,
+        companyId: row.company_id,
+        companyName: row.company_name,
+        name: row.name,
+        type: row.type,
+        address: row.address,
+        city: row.city,
+        region: row.region,
+        postalCode: row.postal_code,
+        country: row.country,
+        phone: row.phone,
+        email: row.email,
+        description: row.description,
+        isHeadquarters: row.is_headquarters,
+        customFields: row.custom_fields,
+        managers: row.managers,
+        linkedinUrl: row.linkedin_url,
+        instagramUrl: row.instagram_url,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+      }));
+      
+      console.log(`Retrieved ${branchesWithCompanyName.length} branches for company ${companyId}`);
+      return branchesWithCompanyName;
     } catch (err) {
       console.error(`Error retrieving branches for company ${companyId}:`, err);
       throw err;
