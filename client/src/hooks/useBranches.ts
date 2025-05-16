@@ -14,9 +14,7 @@ export const useBranches = (companyId?: number) => {
   // Mutation per eliminare una filiale
   const deleteBranch = useMutation({
     mutationFn: async (branchId: number) => {
-      return await apiRequest(`/api/branches/${branchId}`, {
-        method: "DELETE",
-      });
+      return await apiRequest(`/api/branches/${branchId}`, "DELETE");
     },
     onSuccess: () => {
       // Invalida la query esistente per aggiornare l'elenco delle filiali
@@ -43,10 +41,7 @@ export const useCreateBranch = () => {
   
   return useMutation({
     mutationFn: async (branch: Omit<Branch, "id" | "createdAt" | "updatedAt">) => {
-      return await apiRequest("/api/branches", {
-        method: "POST",
-        body: JSON.stringify(branch)
-      });
+      return await apiRequest("/api/branches", "POST", branch);
     },
     onSuccess: (data, variables) => {
       // Invalida la query esistente per aggiornare l'elenco delle filiali
@@ -61,10 +56,7 @@ export const useUpdateBranch = () => {
   
   return useMutation({
     mutationFn: async (branch: Partial<Branch> & { id: number }) => {
-      return await apiRequest(`/api/branches/${branch.id}`, {
-        method: "PUT",
-        body: JSON.stringify(branch)
-      });
+      return await apiRequest(`/api/branches/${branch.id}`, "PUT", branch);
     },
     onSuccess: (data, variables) => {
       // Invalida le query esistenti per aggiornare i dati

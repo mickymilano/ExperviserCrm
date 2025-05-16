@@ -49,6 +49,8 @@ const branchFormSchema = z.object({
   description: z.string().optional().nullable(),
   isHeadquarters: z.boolean().optional().default(false),
   customFields: z.record(z.string(), z.any()).optional().nullable(),
+  linkedinUrl: z.string().url({ message: "URL LinkedIn non valido" }).optional().nullable(),
+  instagramUrl: z.string().url({ message: "URL Instagram non valido" }).optional().nullable(),
 });
 
 type BranchFormValues = z.infer<typeof branchFormSchema>;
