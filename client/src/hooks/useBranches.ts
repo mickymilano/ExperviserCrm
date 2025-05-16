@@ -5,9 +5,16 @@ import { apiRequest } from "@/lib/queryClient";
 export const useBranches = (companyId?: number) => {
   const queryClient = useQueryClient();
   
-  // Query per ottenere tutte le filiali
+  // Query per ottenere tutte le filiali o quelle di una specifica azienda
   const { data: branches, isLoading, error } = useQuery({
-    queryKey: companyId ? ['/api/branches', companyId] : ['/api/branches'],
+    queryKey: companyId ? ['/api/branches/company', companyId] : ['/api/branches'],
+    queryFn: async ({ queryKey }) => {
+      if (companyId) {
+        return await apiRequest(`/api/branches/company/${companyId}`, "GET");
+      } else {
+        return await apiRequest('/api/branches', "GET");
+      }
+    },
     retry: false,
   });
 
@@ -20,7 +27,7 @@ export const useBranches = (companyId?: number) => {
       // Invalida la query esistente per aggiornare l'elenco delle filiali
       queryClient.invalidateQueries({ queryKey: ['/api/branches'] });
       if (companyId) {
-        queryClient.invalidateQueries({ queryKey: ['/api/branches', companyId] });
+        queryClient.invalidateQueries({ queryKey: ['/api/branches/company', companyId] });
       }
     },
   });
@@ -46,7 +53,7 @@ export const useCreateBranch = () => {
     onSuccess: (data, variables) => {
       // Invalida la query esistente per aggiornare l'elenco delle filiali
       queryClient.invalidateQueries({ queryKey: ['/api/branches'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/branches', variables.companyId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/branches/company', variables.companyId] });
     },
   });
 };
@@ -62,7 +69,7 @@ export const useUpdateBranch = () => {
       // Invalida le query esistenti per aggiornare i dati
       queryClient.invalidateQueries({ queryKey: ['/api/branches'] });
       queryClient.invalidateQueries({ queryKey: [`/api/branches/${variables.id}`] });
-      queryClient.invalidateQueries({ queryKey: ['/api/branches', variables.companyId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/branches/company', variables.companyId] });
     },
   });
 };
