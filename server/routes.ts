@@ -1719,6 +1719,9 @@ export function registerRoutes(app: any) {
     }
   });
   
+  // Integrazione API filiali/sedi (Branch)
+  app.use('/api/branches', branchRoutes);
+  
   // Crea il server HTTP
   const httpServer = createServer(app);
   
