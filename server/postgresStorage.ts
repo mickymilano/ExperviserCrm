@@ -1596,6 +1596,7 @@ export class PostgresStorage implements IStorage {
     delete (cleanCompanyData as any).city;
     delete (cleanCompanyData as any).region;
     delete (cleanCompanyData as any).country;
+    delete (cleanCompanyData as any).postalCode; // Se ci sono problemi anche con questo campo
     
     // Log dei dati puliti prima dell'inserimento
     console.log('Creating company with sanitized data:', cleanCompanyData);

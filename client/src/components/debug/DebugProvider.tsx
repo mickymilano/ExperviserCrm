@@ -16,15 +16,15 @@ interface DebugProviderProps {
 export default function DebugProvider({ children }: DebugProviderProps) {
   // Accedi all'hook per i log e allo store della console
   const debugLogs = useDebugLogs();
-  const { toggleVisibility } = useDebugConsoleStore();
+  const { showConsole } = useDebugConsoleStore();
   
   // Inizializza il sistema di debug al mount del componente
   useEffect(() => {
     // Installa il monitoraggio globale delle API
     initializeApiMonitoring();
     
-    // Installa gli override della console
-    const resetConsole = debugLogs.installGlobalConsoleOverrides();
+    // Installa gli override della console direttamente dal context
+    const resetConsole = debugContext.installConsoleOverrides();
     
     // Log iniziale per verificare il funzionamento
     debugContext.logInfo('Debug Console inizializzata', {
@@ -34,12 +34,12 @@ export default function DebugProvider({ children }: DebugProviderProps) {
     }, { component: 'DebugProvider' });
     
     // In ambiente di sviluppo, aggiungiamo alcuni log di esempio
-    if (import.meta.env.DEV) {
+    if (import.meta.env.DEV || import.meta.env.MODE === 'development') {
       // Simula alcuni eventi di logging
       setTimeout(() => {
         debugContext.logInfo('Applicazione avviata correttamente', {
           version: '1.0.0',
-          buildDate: '2025-05-15',
+          buildDate: '2025-05-16',
           environment: import.meta.env.MODE
         }, { component: 'AppStartup' });
         
@@ -48,17 +48,26 @@ export default function DebugProvider({ children }: DebugProviderProps) {
           sessionStarted: new Date().toISOString()
         }, { component: 'Authentication' });
         
-        // Simula un avviso
+        // Simula errori e avvisi
         setTimeout(() => {
+          // Genera alcuni log per popolare la console
           debugContext.logWarning('Prestazioni API lente', {
             endpoint: '/api/customers',
             responseTime: '2.5s',
             threshold: '1.0s'
           }, { component: 'APIMonitor' });
           
-          // Mostra la console quando viene generato l'avviso
-          toggleVisibility();
-        }, 2000);
+          debugContext.logError('Errore durante il caricamento dei dati', {
+            resource: '/api/dashboard/stats',
+            status: 404,
+            message: 'Resource not found'
+          }, { component: 'DataLoader', reportToSentry: false });
+          
+          // Mostra la console dopo un breve ritardo
+          setTimeout(() => {
+            showConsole();
+          }, 500);
+        }, 1000);
       }, 1000);
     }
     
@@ -66,7 +75,7 @@ export default function DebugProvider({ children }: DebugProviderProps) {
     return () => {
       resetConsole();
     };
-  }, [toggleVisibility]);
+  }, [showConsole]);
   
   // Il provider non renderizza nulla di aggiuntivo, solo i children
   return <>{children}</>;

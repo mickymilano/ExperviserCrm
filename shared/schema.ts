@@ -128,7 +128,9 @@ export const companies = pgTable('companies', {
   address: text('address'), // Mantenuto solo per retrocompatibilità col frontend
   fullAddress: text('full_address'),
   
-  country: varchar('country', { length: 50 }),
+  // IMPORTANTE: 'country' non esiste nel database! (2025-05-16)
+  // Commentato per evitare errori ma mantenuto nel tipo TypeScript per retrocompatibilità
+  // country: varchar('country', { length: 50 }),
   postalCode: varchar('postal_code', { length: 20 }),
   website: varchar('website', { length: 255 }),
   industry: varchar('industry', { length: 100 }),
