@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { PlacesAutocomplete } from "@/components/ui/PlacesAutocomplete";
+import { ParentCompanySelector } from "@/components/ui/ParentCompanySelector";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { logError, withErrorHandling } from "@/lib/errorTracking";
@@ -180,6 +181,7 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
         website: companyData.website || "",
         industry: companyData.industry || "",
         country: companyData.country || "",
+        parent_company_id: companyData.parentCompanyId, // Aggiunto campo per gerarchia aziendale
         tags: companyData.tags || [],
         notes: companyData.notes || "",
         status: companyData.status || "active"
