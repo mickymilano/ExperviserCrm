@@ -1571,7 +1571,7 @@ export class PostgresStorage implements IStorage {
     // Aggiungi solo i campi che esistono davvero nel database e sono presenti nell'input
     const safeFields = [
       'email', 'phone', 'website', 'industry', 
-      'address', 'fullAddress', 'country', 'notes',
+      'address', 'fullAddress', /* 'country' RIMOSSO: non esiste nel database */ 'notes',
       'tags', 'customFields', 'parentCompanyId', 
       'linkedinUrl', 'locationTypes', 'lastContactedAt',
       'nextFollowUpAt', 'isActiveRep', 'companyType',
@@ -1595,6 +1595,7 @@ export class PostgresStorage implements IStorage {
     // SICUREZZA: rimuovi esplicitamente i campi che sappiamo non esistere più
     delete (cleanCompanyData as any).city;
     delete (cleanCompanyData as any).region;
+    delete (cleanCompanyData as any).country;
     
     // Log dei dati puliti prima dell'inserimento
     console.log('Creating company with sanitized data:', cleanCompanyData);
