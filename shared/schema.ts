@@ -412,7 +412,7 @@ export const branches = pgTable('branches', {
   email: varchar('email', { length: 255 }),
   description: text('description'),
   isHeadquarters: boolean('is_headquarters').default(false),
-  customFields: json('custom_fields'),
+  customFields: jsonb('custom_fields'),
   linkedinUrl: varchar('linkedin_url', { length: 255 }),
   instagramUrl: varchar('instagram_url', { length: 255 }),
   createdAt: timestamp('created_at').defaultNow(),
