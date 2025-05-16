@@ -31,6 +31,14 @@ class DebugContext {
       debug: console.debug,
       log: console.log
     };
+    
+    // Aggiungi log di inizializzazione
+    this.addLog({ 
+      level: 'info',
+      message: 'Debug Context Initialized',
+      component: 'DebugSystem',
+      details: { timestamp: new Date().toISOString() }
+    });
   }
   
   // Metodi originali della console per il ripristino

@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { getGoogleMapsApiKey } from '@/lib/environment';
-import { logError, logMessage } from '@/lib/errorTracking';
+import { debugContext } from '@/lib/debugContext';
 
 // Definisce le proprietà del componente
 interface PlacesAutocompleteProps {
@@ -26,12 +26,12 @@ const loadGoogleMapsScript = (apiKey: string): Promise<void> => {
     try {
       // Verifichiamo se l'API è già stata caricata
       if (window.google && window.google.maps && window.google.maps.places) {
-        console.log('Google Maps API già caricata');
+        debugContext.logInfo('Google Maps API già caricata', {}, { component: 'PlacesAutocomplete' });
         resolve();
         return;
       }
 
-      console.log('Caricamento Google Maps API...');
+      debugContext.logInfo('Caricamento Google Maps API...', {}, { component: 'PlacesAutocomplete' });
       
       // Creiamo una callback globale
       window.initGoogleMaps = () => {
@@ -113,12 +113,12 @@ export function PlacesAutocomplete({
         
         if (!key) {
           setError('Chiave API non disponibile');
-          logError(new Error('Google Maps API key non disponibile'), {
-            component: 'PlacesAutocomplete'
-          });
+          debugContext.logError('Google Maps API key non disponibile', 
+            { timestamp: new Date().toISOString() },
+            { component: 'PlacesAutocomplete' });
         }
       } catch (err) {
-        console.error('Errore recupero Google Maps API key:', err);
+        debugContext.logError('Errore recupero Google Maps API key', err, { component: 'PlacesAutocomplete' });
         setError('Impossibile recuperare API key');
       }
     };
@@ -136,7 +136,7 @@ export function PlacesAutocomplete({
         setScriptLoaded(true);
         setError(null);
       } catch (err) {
-        console.error('Errore caricamento script Google Maps:', err);
+        debugContext.logError('Errore caricamento script Google Maps', err, { component: 'PlacesAutocomplete' });
         setError('Impossibile caricare Google Maps');
       }
     };
