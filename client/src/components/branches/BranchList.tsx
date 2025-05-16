@@ -40,6 +40,9 @@ export default function BranchList({ branches, onEdit }: BranchListProps) {
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="text-lg font-semibold mb-1">{branch.name}</h3>
+                {branch.companyName && (
+                  <p className="text-blue-600 text-sm mb-2">{branch.companyName}</p>
+                )}
                 <div className="flex items-center">
                   {branch.type && (
                     <Badge variant="outline" className="mr-2">
@@ -100,13 +103,6 @@ export default function BranchList({ branches, onEdit }: BranchListProps) {
                     <div className="flex items-center text-sm">
                       <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
                       <span className="truncate max-w-[200px]">{branch.address}</span>
-                    </div>
-                  )}
-                  
-                  {branch.companyName && (
-                    <div className="flex items-center text-sm">
-                      <Building className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <span className="truncate max-w-[200px]">{branch.companyName}</span>
                     </div>
                   )}
                 </div>
