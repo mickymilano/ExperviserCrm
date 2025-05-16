@@ -1,0 +1,52 @@
+Ecco le istruzioni passo‐a‐passo da dare a Replit, esposte in modo netto e imperativo:
+
+⸻
+
+Replit, procedi così:
+	1.	Esporta lo schema corrente
+	•	Esegui un \d companies (o equivalente) in Postgres per elencare tutte le colonne attive nella tabella companies.
+	•	Apri il file schema.ts (shared/schema) e estrai l’interfaccia Company con tutte le sue proprietà.
+	•	Apri il componente CompanyModal.tsx e annota tutti i campi usati nel form.
+	2.	Confronta con i campi richiesti
+	•	La lista completa dei campi da avere per il modello di business CRM-franchising deve includere (ma non limitarsi a):
+
+id, name, description, logo, website, email, phone,
+industry, sector, country, region, city, postalCode,
+address, fullAddress, employeeCount, annualRevenue,
+foundedYear, parentCompanyId, status, isActiveRep,
+brands, channels, productsOrServicesTags,
+locationTypes, tags, notes, customFields,
+lastContactedAt, nextFollowUpAt, createdAt, updatedAt
+
+
+	•	Produci una tabella di disallineamento tra:
+	•	Colonne effettive in Postgres
+	•	Proprietà dell’interfaccia TypeScript
+	•	Campi presenti nel form React
+
+	3.	Allinea il database
+	•	Genera ed esegui una migration SQL che:
+	•	Aggiunge le colonne mancanti
+	•	Rimuove o rinomina quelle non più usate
+	•	Imposta eventuali DEFAULT dove serve
+	•	Verifica che il comando CREATE TABLE o le ALTER TABLE risultino corretti.
+	4.	Aggiorna lo schema TypeScript
+	•	In schema.ts (shared), aggiorna l’interfaccia Company per includere esattamente le stesse colonne del DB, con i tipi corretti.
+	•	Ricorda di rimuovere o marcare come deprecate le proprietà non più in tabella.
+	5.	Rigenera il form React
+	•	In CompanyModal.tsx (e in qualsiasi altro form di dettaglio/scheda):
+	•	Aggiungi input, label e validazione per ogni proprietà del modello.
+	•	Assicurati che useForm (Zod) e onSubmit mappino esattamente i campi che esistono in DB.
+	•	Rimuovi ogni logica “ad hoc” che prova a leggere campi inesistenti.
+	6.	Seed di esempio
+	•	Scrivi uno script NodeJS o SQL per popolare la tabella companies con record di test che includano tutti i nuovi campi, così da verificare la persistenza completa.
+	7.	Verifica end‐to‐end
+	•	Apri il form “Aggiungi Azienda”, compila tutti i campi, invia e verifica in console / DB che i valori siano salvati correttamente.
+	•	Ripeti la verifica in modalità “Modifica Azienda”.
+
+⸻
+
+Obiettivo finale:
+– Schema Postgres, interfacce TS e form React perfettamente allineati.
+– Nessuna colonna mancante o extra in tabella.
+– Form che salva tutti i campi senza errori.

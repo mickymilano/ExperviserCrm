@@ -22,20 +22,48 @@ interface CompanyModalProps {
 import { Company } from "@/types";
 
 const companySchema = z.object({
+  // Campi principali
   name: z.string().min(1, "Nome azienda obbligatorio"),
   email: z.string().email("Indirizzo email non valido").optional().or(z.literal('')),
   phone: z.string().optional(),
   website: z.string().optional(),
   industry: z.string().optional(),
-  // DEPRECATED: old address field - Added 2025-05-13 by Lead Architect: unified location
+  sector: z.string().optional(),
+  description: z.string().optional(),
+  
+  // Campi indirizzo
   address: z.string().optional(),
-  // Added 2025-05-13 by Lead Architect: unified location field
   fullAddress: z.string().optional(),
-  // Added 2025-05-13: country field is now a direct property on companies table
   country: z.string().optional(),
-  // Rimuoviamo city, region e postalCode dallo schema poiché non esistono nel database
+  
+  // Campi finanziari e dimensionali
+  employeeCount: z.number().int().min(0).optional().nullable(),
+  annualRevenue: z.number().min(0).optional().nullable(),
+  foundedYear: z.number().int().min(1800).max(new Date().getFullYear()).optional().nullable(),
+  
+  // Campi di relazione
+  parentCompanyId: z.number().int().optional().nullable(),
+  
+  // Campi di stato e categorizzazione
+  status: z.string().default("active"),
+  isActiveRep: z.boolean().default(false),
+  logoUrl: z.string().optional().nullable(),
+  
+  // Array
   tags: z.array(z.string()).optional().nullable(),
+  brands: z.array(z.string()).optional().nullable(),
+  channels: z.array(z.string()).optional().nullable(),
+  productsOrServicesTags: z.array(z.string()).optional().nullable(),
+  locationTypes: z.array(z.string()).optional().nullable(),
+  
+  // Altri campi
   notes: z.string().optional().nullable(),
+  customFields: z.any().optional().nullable(),
+  linkedinUrl: z.string().optional(),
+  
+  // Date
+  lastContactedAt: z.date().optional().nullable(),
+  nextFollowUpAt: z.date().optional().nullable(),
 });
 
 type CompanyFormData = z.infer<typeof companySchema>;
@@ -51,19 +79,48 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
   const { register, handleSubmit, reset, setValue, watch, trigger, formState: { errors } } = useForm<CompanyFormData>({
     resolver: zodResolver(companySchema),
     defaultValues: {
+      // Campi principali
       name: initialData?.name || "",
       email: initialData?.email || "",
       phone: initialData?.phone || "",
       website: initialData?.website || "",
       industry: initialData?.industry || "",
-      // DEPRECATED: old address field - Added 2025-05-13 by Lead Architect: unified location
+      sector: initialData?.sector || "",
+      description: initialData?.description || "",
+      
+      // Campi indirizzo
       address: initialData?.address || "",
-      // Added 2025-05-13 by Lead Architect: unified location field
       fullAddress: initialData?.fullAddress || initialData?.address || "",
-      // Added 2025-05-13: country field is now a direct property on companies table
       country: initialData?.country || "",
+      
+      // Campi finanziari e dimensionali
+      employeeCount: initialData?.employeeCount || null,
+      annualRevenue: initialData?.annualRevenue || null,
+      foundedYear: initialData?.foundedYear || null,
+      
+      // Campi di relazione
+      parentCompanyId: initialData?.parentCompanyId || null,
+      
+      // Campi di stato e categorizzazione
+      status: initialData?.status || "active",
+      isActiveRep: initialData?.isActiveRep || false,
+      logoUrl: initialData?.logo || null,
+      
+      // Array
       tags: initialData?.tags || [],
+      brands: initialData?.brands || [],
+      channels: initialData?.channels || [],
+      productsOrServicesTags: initialData?.productsOrServicesTags || [],
+      locationTypes: initialData?.locationTypes || [],
+      
+      // Altri campi
       notes: initialData?.notes || "",
+      customFields: initialData?.customFields || null,
+      linkedinUrl: initialData?.linkedinUrl || "",
+      
+      // Date
+      lastContactedAt: initialData?.lastContactedAt || null,
+      nextFollowUpAt: initialData?.nextFollowUpAt || null,
     },
     mode: "onSubmit" // Importante: valida solo al submit, non su onChange
   });

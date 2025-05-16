@@ -134,6 +134,7 @@ export const companies = pgTable('companies', {
   // postalCode: varchar('postal_code', { length: 20 }),
   website: varchar('website', { length: 255 }),
   industry: varchar('industry', { length: 100 }),
+  sector: varchar('sector', { length: 100 }),
   description: text('description'),
   employeeCount: integer('employee_count'),
   annualRevenue: decimal('annual_revenue', { precision: 15, scale: 2 }),

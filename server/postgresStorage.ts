@@ -1,9 +1,9 @@
 import { db, pool } from "./db";
 import { IStorage } from "./storage";
-import { 
-  users, 
-  leads, 
-  contacts, 
+import {
+  users,
+  leads,
+  contacts,
   companies,
   areasOfActivity,
   pipelineStages,
@@ -13,39 +13,49 @@ import {
   type User,
   type InsertUser,
   type UserSession,
-  type InsertUserSession, 
+  type InsertUserSession,
   type SecurityLog,
-  type InsertSecurityLog, 
+  type InsertSecurityLog,
   type Lead,
-  type InsertLead, 
+  type InsertLead,
   type Contact,
-  type InsertContact, 
+  type InsertContact,
   type Company,
-  type InsertCompany, 
+  type InsertCompany,
   type AreaOfActivity,
-  type InsertAreaOfActivity, 
+  type InsertAreaOfActivity,
   type PipelineStage,
-  type InsertPipelineStage, 
+  type InsertPipelineStage,
   type Deal,
-  type InsertDeal, 
+  type InsertDeal,
   type Task,
-  type InsertTask, 
+  type InsertTask,
   type EmailAccount,
-  type InsertEmailAccount, 
+  type InsertEmailAccount,
   type Email,
-  type InsertEmail, 
+  type InsertEmail,
   type Signature,
-  type InsertSignature, 
+  type InsertSignature,
   type AccountSignature,
-  type InsertAccountSignature, 
+  type InsertAccountSignature,
   type Activity,
-  type InsertActivity, 
+  type InsertActivity,
   type Meeting,
   type InsertMeeting,
   type ContactEmail,
-  type InsertContactEmail
+  type InsertContactEmail,
 } from "@shared/schema";
-import { eq, and, desc, sql, isNull, isNotNull, or, asc, inArray } from "drizzle-orm";
+import {
+  eq,
+  and,
+  desc,
+  sql,
+  isNull,
+  isNotNull,
+  or,
+  asc,
+  inArray,
+} from "drizzle-orm";
 
 export class PostgresStorage implements IStorage {
   // Espone l'oggetto db per query dirette
@@ -58,7 +68,7 @@ export class PostgresStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {
     try {
       console.log(`PostgresStorage.getUser: cercando utente con id ${id}`);
-      
+
       // Utilizziamo SQL nativo con un prepared statement corretto
       const result = await pool.query(
         `SELECT 
@@ -84,14 +94,14 @@ export class PostgresStorage implements IStorage {
           updated_at as "updatedAt"
         FROM users 
         WHERE id = $1`,
-        [id]
+        [id],
       );
-      
+
       if (result.rows.length === 0) {
         console.log(`Nessun utente trovato con id ${id}`);
         return undefined;
       }
-      
+
       console.log(`Utente trovato con id ${id}`);
       return result.rows[0] as User;
     } catch (error) {
@@ -102,8 +112,10 @@ export class PostgresStorage implements IStorage {
 
   async getUserByUsername(username: string): Promise<User | undefined> {
     try {
-      console.log(`PostgresStorage.getUserByUsername: cercando utente con username ${username}`);
-      
+      console.log(
+        `PostgresStorage.getUserByUsername: cercando utente con username ${username}`,
+      );
+
       // Utilizziamo SQL nativo con un prepared statement corretto
       const result = await pool.query(
         `SELECT 
@@ -129,14 +141,14 @@ export class PostgresStorage implements IStorage {
           updated_at as "updatedAt"
         FROM users 
         WHERE username = $1`,
-        [username]
+        [username],
       );
-      
+
       if (result.rows.length === 0) {
         console.log(`Nessun utente trovato con username ${username}`);
         return undefined;
       }
-      
+
       console.log(`Utente trovato con username ${username}`);
       return result.rows[0] as User;
     } catch (error) {
@@ -147,8 +159,10 @@ export class PostgresStorage implements IStorage {
 
   async getUserByEmail(email: string): Promise<User | undefined> {
     try {
-      console.log(`PostgresStorage.getUserByEmail: cercando utente con email ${email}`);
-      
+      console.log(
+        `PostgresStorage.getUserByEmail: cercando utente con email ${email}`,
+      );
+
       // Utilizziamo SQL nativo con un prepared statement corretto
       const result = await pool.query(
         `SELECT 
@@ -174,14 +188,14 @@ export class PostgresStorage implements IStorage {
           updated_at as "updatedAt"
         FROM users 
         WHERE email = $1`,
-        [email]
+        [email],
       );
-      
+
       if (result.rows.length === 0) {
         console.log(`Nessun utente trovato con email ${email}`);
         return undefined;
       }
-      
+
       console.log(`Utente trovato con email ${email}`);
       return result.rows[0] as User;
     } catch (error) {
@@ -192,8 +206,10 @@ export class PostgresStorage implements IStorage {
 
   async getUserByResetToken(token: string): Promise<User | undefined> {
     try {
-      console.log(`PostgresStorage.getUserByResetToken: cercando utente con token ${token}`);
-      
+      console.log(
+        `PostgresStorage.getUserByResetToken: cercando utente con token ${token}`,
+      );
+
       // Utilizziamo SQL nativo con un prepared statement corretto
       const result = await pool.query(
         `SELECT 
@@ -219,14 +235,14 @@ export class PostgresStorage implements IStorage {
           updated_at as "updatedAt"
         FROM users 
         WHERE reset_password_token = $1`,
-        [token]
+        [token],
       );
-      
+
       if (result.rows.length === 0) {
         console.log(`Nessun utente trovato con token di reset ${token}`);
         return undefined;
       }
-      
+
       console.log(`Utente trovato con token di reset ${token}`);
       return result.rows[0] as User;
     } catch (error) {
@@ -240,7 +256,10 @@ export class PostgresStorage implements IStorage {
     return newUser;
   }
 
-  async updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined> {
+  async updateUser(
+    id: number,
+    userData: Partial<InsertUser>,
+  ): Promise<User | undefined> {
     const [updatedUser] = await db
       .update(users)
       .set({ ...userData, updatedAt: new Date() })
@@ -251,16 +270,25 @@ export class PostgresStorage implements IStorage {
 
   // USER SESSIONS
   async getUserSessionByToken(token: string): Promise<UserSession | undefined> {
-    const [session] = await db.select().from(userSessions).where(eq(userSessions.token, token));
+    const [session] = await db
+      .select()
+      .from(userSessions)
+      .where(eq(userSessions.token, token));
     return session;
   }
 
   async createUserSession(session: InsertUserSession): Promise<UserSession> {
-    const [newSession] = await db.insert(userSessions).values(session).returning();
+    const [newSession] = await db
+      .insert(userSessions)
+      .values(session)
+      .returning();
     return newSession;
   }
 
-  async updateUserSession(token: string, sessionData: Partial<InsertUserSession>): Promise<UserSession | undefined> {
+  async updateUserSession(
+    token: string,
+    sessionData: Partial<InsertUserSession>,
+  ): Promise<UserSession | undefined> {
     const [updatedSession] = await db
       .update(userSessions)
       .set(sessionData)
@@ -270,12 +298,16 @@ export class PostgresStorage implements IStorage {
   }
 
   async deleteUserSession(token: string): Promise<boolean> {
-    const result = await db.delete(userSessions).where(eq(userSessions.token, token));
+    const result = await db
+      .delete(userSessions)
+      .where(eq(userSessions.token, token));
     return result.rowCount > 0;
   }
 
   async deleteAllUserSessions(userId: number): Promise<boolean> {
-    const result = await db.delete(userSessions).where(eq(userSessions.userId, userId));
+    const result = await db
+      .delete(userSessions)
+      .where(eq(userSessions.userId, userId));
     return result.rowCount > 0;
   }
 
@@ -310,11 +342,16 @@ export class PostgresStorage implements IStorage {
   }
 
   async getAreaOfActivity(id: number): Promise<AreaOfActivity | undefined> {
-    const [area] = await db.select().from(areasOfActivity).where(eq(areasOfActivity.id, id));
+    const [area] = await db
+      .select()
+      .from(areasOfActivity)
+      .where(eq(areasOfActivity.id, id));
     return area;
   }
 
-  async createAreaOfActivity(area: InsertAreaOfActivity): Promise<AreaOfActivity> {
+  async createAreaOfActivity(
+    area: InsertAreaOfActivity,
+  ): Promise<AreaOfActivity> {
     // Se questa è la principale, rendi tutte le altre non principali
     if (area.isPrimary) {
       await db
@@ -322,16 +359,22 @@ export class PostgresStorage implements IStorage {
         .set({ isPrimary: false })
         .where(eq(areasOfActivity.contactId, area.contactId));
     }
-    
+
     const [newArea] = await db.insert(areasOfActivity).values(area).returning();
     return newArea;
   }
 
-  async updateAreaOfActivity(id: number, area: Partial<InsertAreaOfActivity>): Promise<AreaOfActivity | undefined> {
+  async updateAreaOfActivity(
+    id: number,
+    area: Partial<InsertAreaOfActivity>,
+  ): Promise<AreaOfActivity | undefined> {
     // Se questa è la principale, rendi tutte le altre non principali
     if (area.isPrimary) {
-      const [currentArea] = await db.select().from(areasOfActivity).where(eq(areasOfActivity.id, id));
-      
+      const [currentArea] = await db
+        .select()
+        .from(areasOfActivity)
+        .where(eq(areasOfActivity.id, id));
+
       if (currentArea) {
         await db
           .update(areasOfActivity)
@@ -339,26 +382,30 @@ export class PostgresStorage implements IStorage {
           .where(eq(areasOfActivity.contactId, currentArea.contactId));
       }
     }
-    
+
     const [updatedArea] = await db
       .update(areasOfActivity)
       .set({ ...area, updatedAt: new Date() })
       .where(eq(areasOfActivity.id, id))
       .returning();
-    
+
     return updatedArea;
   }
 
   async deleteAreaOfActivity(id: number): Promise<boolean> {
-    const result = await db.delete(areasOfActivity).where(eq(areasOfActivity.id, id));
+    const result = await db
+      .delete(areasOfActivity)
+      .where(eq(areasOfActivity.id, id));
     return result.rowCount > 0;
   }
-  
+
   // SYNERGIES
   async getAllSynergies(): Promise<Synergy[]> {
     try {
-      console.log("PostgresStorage.getAllSynergies: recuperando tutte le sinergie attive");
-      
+      console.log(
+        "PostgresStorage.getAllSynergies: recuperando tutte le sinergie attive",
+      );
+
       // Utilizziamo SQL nativo per avere più controllo e filtriamo solo le sinergie attive
       const result = await pool.query(`
         SELECT 
@@ -378,11 +425,11 @@ export class PostgresStorage implements IStorage {
         WHERE is_active = true
         ORDER BY created_at DESC
       `);
-      
+
       console.log(`getAllSynergies: Found ${result.rows.length} synergies`);
-      
+
       // Adattiamo il formato per essere compatibile con quello che si aspetta il frontend
-      return result.rows.map(synergy => {
+      return result.rows.map((synergy) => {
         return {
           id: synergy.id,
           contactId: synergy.contact_id,
@@ -395,7 +442,7 @@ export class PostgresStorage implements IStorage {
           endDate: synergy.end_date,
           isActive: synergy.is_active,
           createdAt: synergy.created_at,
-          updatedAt: synergy.updated_at
+          updatedAt: synergy.updated_at,
         };
       });
     } catch (error) {
@@ -403,28 +450,33 @@ export class PostgresStorage implements IStorage {
       return [];
     }
   }
-  
+
   async getSynergiesCount(): Promise<number> {
     try {
-      console.log("PostgresStorage.getSynergiesCount: retrieving active synergies count");
-      
+      console.log(
+        "PostgresStorage.getSynergiesCount: retrieving active synergies count",
+      );
+
       const queryStr = `SELECT COUNT(*) as count FROM synergies WHERE is_active = true`;
       const result = await pool.query(queryStr);
-      
+
       console.log(`Retrieved ${result.rows[0].count} active synergies count`);
-      
+
       return parseInt(result.rows[0].count) || 0;
     } catch (error) {
       console.error("Error in getSynergiesCount:", error);
       return 0;
     }
   }
-  
+
   async getSynergiesByContactId(contactId: number): Promise<Synergy[]> {
     try {
-      console.log(`PostgresStorage.getSynergiesByContactId: retrieving synergies for contact ${contactId}`);
-      
-      const result = await pool.query(`
+      console.log(
+        `PostgresStorage.getSynergiesByContactId: retrieving synergies for contact ${contactId}`,
+      );
+
+      const result = await pool.query(
+        `
         SELECT 
           id,
           contact_id, 
@@ -440,10 +492,12 @@ export class PostgresStorage implements IStorage {
         FROM synergies
         WHERE contact_id = $1 AND is_active = true
         ORDER BY created_at DESC
-      `, [contactId]);
-      
+      `,
+        [contactId],
+      );
+
       // Adattiamo il formato per essere compatibile con quello che si aspetta il frontend
-      return result.rows.map(synergy => {
+      return result.rows.map((synergy) => {
         return {
           id: synergy.id,
           contactId: synergy.contact_id,
@@ -455,7 +509,7 @@ export class PostgresStorage implements IStorage {
           description: synergy.description || "",
           status: synergy.status || "Active",
           createdAt: synergy.created_at,
-          updatedAt: synergy.updated_at
+          updatedAt: synergy.updated_at,
         };
       });
     } catch (error) {
@@ -463,12 +517,15 @@ export class PostgresStorage implements IStorage {
       return [];
     }
   }
-  
+
   async getSynergiesByCompanyId(companyId: number): Promise<Synergy[]> {
     try {
-      console.log(`PostgresStorage.getSynergiesByCompanyId: retrieving synergies for company ${companyId}`);
-      
-      const result = await pool.query(`
+      console.log(
+        `PostgresStorage.getSynergiesByCompanyId: retrieving synergies for company ${companyId}`,
+      );
+
+      const result = await pool.query(
+        `
         SELECT 
           id,
           contact_id, 
@@ -484,10 +541,12 @@ export class PostgresStorage implements IStorage {
         FROM synergies
         WHERE company_id = $1 AND is_active = true
         ORDER BY created_at DESC
-      `, [companyId]);
-      
+      `,
+        [companyId],
+      );
+
       // Adattiamo il formato per essere compatibile con quello che si aspetta il frontend
-      return result.rows.map(synergy => {
+      return result.rows.map((synergy) => {
         return {
           id: synergy.id,
           contactId: synergy.contact_id,
@@ -499,7 +558,7 @@ export class PostgresStorage implements IStorage {
           description: synergy.description || "",
           status: synergy.status || "Active",
           createdAt: synergy.created_at,
-          updatedAt: synergy.updated_at
+          updatedAt: synergy.updated_at,
         };
       });
     } catch (error) {
@@ -507,12 +566,15 @@ export class PostgresStorage implements IStorage {
       return [];
     }
   }
-  
+
   async getSynergiesByDealId(dealId: number): Promise<Synergy[]> {
     try {
-      console.log(`PostgresStorage.getSynergiesByDealId: retrieving synergies for deal ${dealId}`);
-      
-      const result = await pool.query(`
+      console.log(
+        `PostgresStorage.getSynergiesByDealId: retrieving synergies for deal ${dealId}`,
+      );
+
+      const result = await pool.query(
+        `
         SELECT 
           id,
           contact_id, 
@@ -528,17 +590,21 @@ export class PostgresStorage implements IStorage {
         FROM synergies
         WHERE deal_id = $1 AND is_active = true
         ORDER BY created_at DESC
-      `, [dealId]);
-      
+      `,
+        [dealId],
+      );
+
       console.log(`Found ${result.rows.length} synergies for deal ${dealId}`);
-      
+
       // Array per memorizzare i risultati finali
       const synergiesWithRelations = [];
-      
+
       // Per ogni sinergia, recupera i dati del contatto associato
       for (const synergy of result.rows) {
-        console.log(`Processing synergy ID=${synergy.id}, contactId=${synergy.contact_id}`);
-        
+        console.log(
+          `Processing synergy ID=${synergy.id}, contactId=${synergy.contact_id}`,
+        );
+
         // Prepara l'oggetto base della sinergia
         const synergyObject: any = {
           id: synergy.id,
@@ -551,15 +617,18 @@ export class PostgresStorage implements IStorage {
           description: synergy.description || "",
           status: synergy.status || "Active",
           createdAt: synergy.created_at,
-          updatedAt: synergy.updated_at
+          updatedAt: synergy.updated_at,
         };
-        
+
         // Se c'è un contatto associato, recuperane i dati
         if (synergy.contact_id) {
           try {
-            console.log(`Retrieving contact data for contactId=${synergy.contact_id}`);
-            
-            const contactQuery = await pool.query(`
+            console.log(
+              `Retrieving contact data for contactId=${synergy.contact_id}`,
+            );
+
+            const contactQuery = await pool.query(
+              `
               SELECT 
                 id, first_name, middle_name, last_name, status, 
                 mobile_phone, company_email, private_email, 
@@ -568,12 +637,16 @@ export class PostgresStorage implements IStorage {
                 last_contacted_at, next_follow_up_at, created_at, updated_at
               FROM contacts 
               WHERE id = $1
-            `, [synergy.contact_id]);
-            
+            `,
+              [synergy.contact_id],
+            );
+
             if (contactQuery.rows.length > 0) {
               const contactData = contactQuery.rows[0];
-              console.log(`Contact data found for ID=${synergy.contact_id}: ${contactData.first_name} ${contactData.last_name}`);
-              
+              console.log(
+                `Contact data found for ID=${synergy.contact_id}: ${contactData.first_name} ${contactData.last_name}`,
+              );
+
               // Trasforma i dati del contatto nel formato atteso dal frontend
               synergyObject.contact = {
                 id: contactData.id,
@@ -585,38 +658,49 @@ export class PostgresStorage implements IStorage {
                 companyEmail: contactData.company_email,
                 privateEmail: contactData.private_email,
                 officePhone: contactData.office_phone,
-                privatePhone: contactData.private_phone
+                privatePhone: contactData.private_phone,
               };
-              
+
               // Validazione debug: verifica che i dati del contatto siano effettivamente inclusi
-              console.log(`Contact info added to synergy: firstName=${synergyObject.contact.firstName}, lastName=${synergyObject.contact.lastName}`);
+              console.log(
+                `Contact info added to synergy: firstName=${synergyObject.contact.firstName}, lastName=${synergyObject.contact.lastName}`,
+              );
             } else {
               console.log(`No contact found with ID=${synergy.contact_id}`);
             }
           } catch (contactError) {
-            console.error(`Error retrieving contact data for ID=${synergy.contact_id}:`, contactError);
+            console.error(
+              `Error retrieving contact data for ID=${synergy.contact_id}:`,
+              contactError,
+            );
           }
         }
-        
+
         // Aggiungi la sinergia arricchita all'array dei risultati
         synergiesWithRelations.push(synergyObject);
       }
-      
-      console.log(`Returning ${synergiesWithRelations.length} synergies with relations for deal ${dealId}`);
-      console.log('First synergy sample:', JSON.stringify(synergiesWithRelations[0], null, 2));
-      
+
+      console.log(
+        `Returning ${synergiesWithRelations.length} synergies with relations for deal ${dealId}`,
+      );
+      console.log(
+        "First synergy sample:",
+        JSON.stringify(synergiesWithRelations[0], null, 2),
+      );
+
       return synergiesWithRelations;
     } catch (error) {
       console.error(`Error in getSynergiesByDealId(${dealId}):`, error);
       return [];
     }
   }
-  
+
   async getSynergyById(id: number): Promise<Synergy | undefined> {
     try {
       console.log(`PostgresStorage.getSynergyById: retrieving synergy ${id}`);
-      
-      const result = await pool.query(`
+
+      const result = await pool.query(
+        `
         SELECT 
           id,
           contact_id, 
@@ -631,14 +715,16 @@ export class PostgresStorage implements IStorage {
           updated_at
         FROM synergies
         WHERE id = $1 AND is_active = true
-      `, [id]);
-      
+      `,
+        [id],
+      );
+
       if (result.rows.length === 0) {
         return undefined;
       }
-      
+
       const synergy = result.rows[0];
-      
+
       // Adattiamo il formato per essere compatibile con quello che si aspetta il frontend
       return {
         id: synergy.id,
@@ -651,19 +737,20 @@ export class PostgresStorage implements IStorage {
         startDate: synergy.start_date,
         endDate: synergy.end_date,
         createdAt: synergy.created_at,
-        updatedAt: synergy.updated_at
+        updatedAt: synergy.updated_at,
       };
     } catch (error) {
       console.error(`Error in getSynergyById(${id}):`, error);
       return undefined;
     }
   }
-  
+
   async createSynergy(synergyData: InsertSynergy): Promise<Synergy> {
     try {
       console.log(`PostgresStorage.createSynergy: creating new synergy`);
-      
-      const result = await pool.query(`
+
+      const result = await pool.query(
+        `
         INSERT INTO synergies (
           contact_id, 
           company_id, 
@@ -685,17 +772,19 @@ export class PostgresStorage implements IStorage {
           status,
           created_at,
           updated_at
-      `, [
-        synergyData.contactId,
-        synergyData.companyId,
-        synergyData.dealId || null,
-        synergyData.type || "business",
-        synergyData.description || "",
-        synergyData.status || "Active"
-      ]);
-      
+      `,
+        [
+          synergyData.contactId,
+          synergyData.companyId,
+          synergyData.dealId || null,
+          synergyData.type || "business",
+          synergyData.description || "",
+          synergyData.status || "Active",
+        ],
+      );
+
       const newSynergy = result.rows[0];
-      
+
       // Adattiamo il formato per essere compatibile con quello che si aspetta il frontend
       return {
         id: newSynergy.id,
@@ -706,67 +795,71 @@ export class PostgresStorage implements IStorage {
         description: newSynergy.description || "",
         status: newSynergy.status || "Active",
         createdAt: newSynergy.created_at,
-        updatedAt: newSynergy.updated_at
+        updatedAt: newSynergy.updated_at,
       };
     } catch (error) {
       console.error("Error in createSynergy:", error);
       throw new Error("Failed to create synergy");
     }
   }
-  
-  async updateSynergy(id: number, synergyData: Partial<InsertSynergy>): Promise<Synergy | undefined> {
+
+  async updateSynergy(
+    id: number,
+    synergyData: Partial<InsertSynergy>,
+  ): Promise<Synergy | undefined> {
     try {
       console.log(`PostgresStorage.updateSynergy: updating synergy ${id}`);
-      
+
       // Costruiamo dinamicamente la query di aggiornamento
       let updateFields = [];
       let params = [];
       let paramCounter = 1;
-      
+
       // Aggiungiamo solo i campi che esistono nel synergyData
       if (synergyData.contactId !== undefined) {
         updateFields.push(`contact_id = $${paramCounter++}`);
         params.push(synergyData.contactId);
       }
-      
+
       if (synergyData.companyId !== undefined) {
         updateFields.push(`company_id = $${paramCounter++}`);
         params.push(synergyData.companyId);
       }
-      
+
       if (synergyData.dealId !== undefined) {
         updateFields.push(`deal_id = $${paramCounter++}`);
         params.push(synergyData.dealId);
       }
-      
+
       if (synergyData.type !== undefined) {
         updateFields.push(`type = $${paramCounter++}`);
         params.push(synergyData.type);
       }
-      
+
       if (synergyData.description !== undefined) {
         updateFields.push(`description = $${paramCounter++}`);
         params.push(synergyData.description);
       }
-      
+
       if (synergyData.status !== undefined) {
         updateFields.push(`status = $${paramCounter++}`);
         params.push(synergyData.status);
       }
-      
+
       // Aggiungiamo sempre l'updated_at
       updateFields.push(`updated_at = NOW()`);
-      
+
       // Se non ci sono campi da aggiornare, restituiamo la sinergia esistente
       if (updateFields.length === 1) {
         return this.getSynergyById(id);
       }
-      
+
       // Aggiungiamo l'id come ultimo parametro
       params.push(id);
-      
-      const result = await pool.query(`
-        UPDATE synergies SET ${updateFields.join(', ')}
+
+      const result = await pool.query(
+        `
+        UPDATE synergies SET ${updateFields.join(", ")}
         WHERE id = $${paramCounter}
         RETURNING 
           id,
@@ -778,14 +871,16 @@ export class PostgresStorage implements IStorage {
           status,
           created_at,
           updated_at
-      `, params);
-      
+      `,
+        params,
+      );
+
       if (result.rows.length === 0) {
         return undefined;
       }
-      
+
       const updatedSynergy = result.rows[0];
-      
+
       // Adattiamo il formato per essere compatibile con quello che si aspetta il frontend
       return {
         id: updatedSynergy.id,
@@ -796,69 +891,80 @@ export class PostgresStorage implements IStorage {
         description: updatedSynergy.description || "",
         status: updatedSynergy.status || "Active",
         createdAt: updatedSynergy.created_at,
-        updatedAt: updatedSynergy.updated_at
+        updatedAt: updatedSynergy.updated_at,
       };
     } catch (error) {
       console.error(`Error in updateSynergy(${id}):`, error);
       return undefined;
     }
   }
-  
+
   async deleteSynergy(id: number): Promise<boolean> {
     try {
-      console.log(`PostgresStorage.deleteSynergy: soft-deleting synergy ${id} (setting isActive=false)`);
-      
+      console.log(
+        `PostgresStorage.deleteSynergy: soft-deleting synergy ${id} (setting isActive=false)`,
+      );
+
       // Implementa soft delete invece di una cancellazione fisica
-      const result = await pool.query(`
+      const result = await pool.query(
+        `
         UPDATE synergies
         SET is_active = false, 
             updated_at = NOW()
         WHERE id = $1
-      `, [id]);
-      
+      `,
+        [id],
+      );
+
       return result.rowCount > 0;
     } catch (error) {
       console.error(`Error in deleteSynergy(${id}):`, error);
       return false;
     }
   }
-  
+
   // Metodi per AreaOfActivity
-  async getAreasOfActivityByContactId(contactId: number): Promise<AreaOfActivity[]> {
-    return await db.select()
+  async getAreasOfActivityByContactId(
+    contactId: number,
+  ): Promise<AreaOfActivity[]> {
+    return await db
+      .select()
       .from(areasOfActivity)
       .where(eq(areasOfActivity.contactId, contactId));
   }
-  
+
   async resetPrimaryAreasOfActivity(contactId: number): Promise<boolean> {
     const result = await db
       .update(areasOfActivity)
       .set({ isPrimary: false, updatedAt: new Date() })
       .where(eq(areasOfActivity.contactId, contactId));
-    
+
     return true;
   }
 
   async setPrimaryAreaOfActivity(id: number): Promise<boolean> {
-    const [area] = await db.select().from(areasOfActivity).where(eq(areasOfActivity.id, id));
-    
+    const [area] = await db
+      .select()
+      .from(areasOfActivity)
+      .where(eq(areasOfActivity.id, id));
+
     if (!area) {
       return false;
     }
-    
+
     // Rendi tutte le aree di attività per questo contatto non principali
     await db
       .update(areasOfActivity)
       .set({ isPrimary: false })
       .where(eq(areasOfActivity.contactId, area.contactId));
-    
+
     // Imposta questa come principale
     const [updatedArea] = await db
       .update(areasOfActivity)
       .set({ isPrimary: true, updatedAt: new Date() })
       .where(eq(areasOfActivity.id, id))
       .returning();
-    
+
     return !!updatedArea;
   }
 
@@ -897,14 +1003,15 @@ export class PostgresStorage implements IStorage {
         FROM leads 
         ORDER BY first_name, last_name
       `);
-      
+
       console.log(`getLeads: Found ${result.rows.length} leads`);
-      
+
       // Adattiamo il formato per essere compatibile con quello che si aspetta il frontend
-      return result.rows.map(lead => {
-        const phone = lead.mobile_phone || lead.office_phone || lead.private_phone || '';
-        const email = lead.company_email || lead.private_email || '';
-        
+      return result.rows.map((lead) => {
+        const phone =
+          lead.mobile_phone || lead.office_phone || lead.private_phone || "";
+        const email = lead.company_email || lead.private_email || "";
+
         return {
           id: lead.id,
           firstName: lead.first_name || "",
@@ -925,7 +1032,7 @@ export class PostgresStorage implements IStorage {
           notes: lead.notes || "",
           tags: lead.tags || [],
           createdAt: lead.created_at,
-          updatedAt: lead.updated_at
+          updatedAt: lead.updated_at,
         };
       });
     } catch (error) {
@@ -933,12 +1040,12 @@ export class PostgresStorage implements IStorage {
       return [];
     }
   }
-  
+
   async getAllLeads(): Promise<Lead[]> {
     // Metodo alias per compatibilità con l'interfaccia
     return this.getLeads();
   }
-  
+
   async getLeadsCount(): Promise<number> {
     try {
       // Utilizziamo SQL nativo per evitare problemi con l'ORM
@@ -953,7 +1060,8 @@ export class PostgresStorage implements IStorage {
   async getLead(id: number): Promise<Lead | undefined> {
     try {
       // Utilizziamo SQL nativo per evitare problemi con l'ORM
-      const result = await pool.query(`
+      const result = await pool.query(
+        `
         SELECT 
           id, 
           first_name,
@@ -981,16 +1089,19 @@ export class PostgresStorage implements IStorage {
           updated_at
         FROM leads 
         WHERE id = $1
-      `, [id]);
-      
+      `,
+        [id],
+      );
+
       if (result.rows.length === 0) {
         return undefined;
       }
-      
+
       const lead = result.rows[0];
-      const phone = lead.mobile_phone || lead.office_phone || lead.private_phone || '';
-      const email = lead.company_email || lead.private_email || '';
-      
+      const phone =
+        lead.mobile_phone || lead.office_phone || lead.private_phone || "";
+      const email = lead.company_email || lead.private_email || "";
+
       // Adaptiamo il formato per essere compatibile con il frontend
       return {
         id: lead.id,
@@ -1010,7 +1121,7 @@ export class PostgresStorage implements IStorage {
         notes: lead.notes || "",
         tags: lead.tags || [],
         createdAt: lead.created_at,
-        updatedAt: lead.updated_at
+        updatedAt: lead.updated_at,
       };
     } catch (error) {
       console.error(`Error in getLead(${id}):`, error);
@@ -1021,10 +1132,12 @@ export class PostgresStorage implements IStorage {
   async createLead(lead: InsertLead): Promise<Lead> {
     try {
       // Estraiamo i campi dal lead object
-      const { name, status, source, notes, companyName, jobTitle, leadOwner } = lead;
-      
+      const { name, status, source, notes, companyName, jobTitle, leadOwner } =
+        lead;
+
       // Usando una query SQL nativa
-      const result = await pool.query(`
+      const result = await pool.query(
+        `
         INSERT INTO leads (
           name, 
           status, 
@@ -1047,8 +1160,10 @@ export class PostgresStorage implements IStorage {
           lead_owner as "leadOwner", 
           created_at as "createdAt", 
           updated_at as "updatedAt"
-      `, [name, status, source, notes, companyName, jobTitle, leadOwner]);
-      
+      `,
+        [name, status, source, notes, companyName, jobTitle, leadOwner],
+      );
+
       return result.rows[0];
     } catch (error) {
       console.error("Error in createLead:", error);
@@ -1056,62 +1171,66 @@ export class PostgresStorage implements IStorage {
     }
   }
 
-  async updateLead(id: number, leadData: Partial<InsertLead>): Promise<Lead | undefined> {
+  async updateLead(
+    id: number,
+    leadData: Partial<InsertLead>,
+  ): Promise<Lead | undefined> {
     try {
       // Costruiamo dinamicamente la query di aggiornamento
       let updateFields = [];
       let params = [];
       let paramCounter = 1;
-      
+
       // Aggiungiamo solo i campi che esistono nel leadData
       if (leadData.name !== undefined) {
         updateFields.push(`name = $${paramCounter++}`);
         params.push(leadData.name);
       }
-      
+
       if (leadData.status !== undefined) {
         updateFields.push(`status = $${paramCounter++}`);
         params.push(leadData.status);
       }
-      
+
       if (leadData.source !== undefined) {
         updateFields.push(`source = $${paramCounter++}`);
         params.push(leadData.source);
       }
-      
+
       if (leadData.notes !== undefined) {
         updateFields.push(`notes = $${paramCounter++}`);
         params.push(leadData.notes);
       }
-      
+
       if (leadData.companyName !== undefined) {
         updateFields.push(`company_name = $${paramCounter++}`);
         params.push(leadData.companyName);
       }
-      
+
       if (leadData.jobTitle !== undefined) {
         updateFields.push(`job_title = $${paramCounter++}`);
         params.push(leadData.jobTitle);
       }
-      
+
       if (leadData.leadOwner !== undefined) {
         updateFields.push(`lead_owner = $${paramCounter++}`);
         params.push(leadData.leadOwner);
       }
-      
+
       // Aggiungiamo sempre l'updated_at
       updateFields.push(`updated_at = NOW()`);
-      
+
       // Se non ci sono campi da aggiornare, restituiamo il lead esistente
       if (updateFields.length === 1) {
         return this.getLead(id);
       }
-      
+
       // Aggiungiamo l'id come ultimo parametro
       params.push(id);
-      
-      const result = await pool.query(`
-        UPDATE leads SET ${updateFields.join(', ')}
+
+      const result = await pool.query(
+        `
+        UPDATE leads SET ${updateFields.join(", ")}
         WHERE id = $${paramCounter}
         RETURNING 
           id, 
@@ -1124,8 +1243,10 @@ export class PostgresStorage implements IStorage {
           lead_owner as "leadOwner", 
           created_at as "createdAt", 
           updated_at as "updatedAt"
-      `, params);
-      
+      `,
+        params,
+      );
+
       return result.rows.length > 0 ? result.rows[0] : undefined;
     } catch (error) {
       console.error("Error in updateLead:", error);
@@ -1135,7 +1256,7 @@ export class PostgresStorage implements IStorage {
 
   async deleteLead(id: number): Promise<boolean> {
     try {
-      const result = await pool.query('DELETE FROM leads WHERE id = $1', [id]);
+      const result = await pool.query("DELETE FROM leads WHERE id = $1", [id]);
       return result.rowCount > 0;
     } catch (error) {
       console.error("Error in deleteLead:", error);
@@ -1147,7 +1268,9 @@ export class PostgresStorage implements IStorage {
   async getContacts(): Promise<Contact[]> {
     // Simplified query without relational features to prevent 'map' errors
     // Rimosso filtro per status per ottenere tutti i contatti, come per leads
-    console.log("PostgresStorage.getContacts: retrieving all contacts regardless of status");
+    console.log(
+      "PostgresStorage.getContacts: retrieving all contacts regardless of status",
+    );
     try {
       // Seleziona colonne esattamente come sono definite nel database
       const result = await db.execute(
@@ -1164,7 +1287,7 @@ export class PostgresStorage implements IStorage {
           created_at as "createdAt", 
           updated_at as "updatedAt" 
         FROM contacts 
-        ORDER BY first_name, last_name`
+        ORDER BY first_name, last_name`,
       );
       return result.rows as Contact[];
     } catch (error) {
@@ -1172,20 +1295,24 @@ export class PostgresStorage implements IStorage {
       return [];
     }
   }
-  
+
   async getAllContacts(): Promise<Contact[]> {
     // Metodo alias per compatibilità con l'interfaccia
     return this.getContacts();
   }
 
   async getContactsCount(): Promise<number> {
-    const result = await db.select({ count: sql<number>`count(*)` }).from(contacts);
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(contacts);
     return result[0].count;
   }
 
   async getRecentContacts(limit: number = 5): Promise<Contact[]> {
     try {
-      console.log("PostgresStorage.getRecentContacts: retrieving recent contacts");
+      console.log(
+        "PostgresStorage.getRecentContacts: retrieving recent contacts",
+      );
       // Seleziona colonne esattamente come sono definite nel database
       // Aggiunge fullName come concatenazione di first_name e last_name
       const result = await pool.query(
@@ -1206,7 +1333,7 @@ export class PostgresStorage implements IStorage {
         FROM contacts 
         ORDER BY updated_at DESC
         LIMIT $1`,
-        [limit]
+        [limit],
       );
       return result.rows as Contact[];
     } catch (error) {
@@ -1217,24 +1344,28 @@ export class PostgresStorage implements IStorage {
 
   async getContactsByCompany(companyId: number): Promise<Contact[]> {
     try {
-      console.log(`PostgresStorage.getContactsByCompany: retrieving contacts for company ${companyId}`);
+      console.log(
+        `PostgresStorage.getContactsByCompany: retrieving contacts for company ${companyId}`,
+      );
       // Simplified query without relational features - find contacts by areas of activity
       const contactIds = await db
         .select({
-          contactId: areasOfActivity.contactId
+          contactId: areasOfActivity.contactId,
         })
         .from(areasOfActivity)
         .where(eq(areasOfActivity.companyId, companyId));
-      
-      console.log(`Found ${contactIds.length} contact IDs for company ${companyId}`);
-      
+
+      console.log(
+        `Found ${contactIds.length} contact IDs for company ${companyId}`,
+      );
+
       // If no contacts found, return empty array
       if (contactIds.length === 0) {
         return [];
       }
-      
+
       // Get all contacts with these IDs usando SQL nativo
-      const idsList = contactIds.map(c => c.contactId).join(',');
+      const idsList = contactIds.map((c) => c.contactId).join(",");
       const result = await db.execute(
         `SELECT 
           id, 
@@ -1250,26 +1381,28 @@ export class PostgresStorage implements IStorage {
           updated_at as "updatedAt" 
         FROM contacts 
         WHERE id IN (${idsList})
-        ORDER BY first_name, last_name`
+        ORDER BY first_name, last_name`,
       );
-      
-      console.log(`Retrieved ${result.rows.length} contacts for company ${companyId}`);
+
+      console.log(
+        `Retrieved ${result.rows.length} contacts for company ${companyId}`,
+      );
       return result.rows as Contact[];
     } catch (error) {
       console.error(`Error in getContactsByCompany(${companyId}):`, error);
       return [];
     }
   }
-  
+
   // Alias per compatibilità con lo script di correzione delle relazioni
   async getCompanyContacts(companyId: number): Promise<Contact[]> {
     return this.getContactsByCompany(companyId);
   }
-  
+
   // Ottieni le aziende associate ad un contatto attraverso le aree di attività
   async getContactCompanies(contactId: number): Promise<Company[]> {
     console.log(`Getting companies for contact ID ${contactId}`);
-    
+
     // Trova tutte le aree di attività per questo contatto
     const areas = await db
       .select()
@@ -1277,44 +1410,52 @@ export class PostgresStorage implements IStorage {
       .where(
         and(
           eq(areasOfActivity.contactId, contactId),
-          isNotNull(areasOfActivity.companyId)
-        )
+          isNotNull(areasOfActivity.companyId),
+        ),
       );
-    
-    console.log(`Found ${areas.length} areas of activity for contact ${contactId}`);
-    
+
+    console.log(
+      `Found ${areas.length} areas of activity for contact ${contactId}`,
+    );
+
     if (areas.length === 0) {
       return [];
     }
-    
+
     // Ottieni gli ID delle aziende (rimuovi i duplicati)
-    const companyIds = [...new Set(areas.map(area => area.companyId).filter(Boolean))];
-    console.log(`Unique company IDs for contact ${contactId}: ${companyIds.join(', ')}`);
-    
+    const companyIds = [
+      ...new Set(areas.map((area) => area.companyId).filter(Boolean)),
+    ];
+    console.log(
+      `Unique company IDs for contact ${contactId}: ${companyIds.join(", ")}`,
+    );
+
     // Interroga le aziende corrispondenti
     const companiesData = await db
       .select()
       .from(companies)
       .where(inArray(companies.id, companyIds as number[]));
-    
+
     console.log(`Retrieved ${companiesData.length} companies by ID`);
-    
+
     // Aggiungi le informazioni delle aree di attività a ciascuna azienda
-    const result = companiesData.map(company => {
-      const area = areas.find(a => a.companyId === company.id);
+    const result = companiesData.map((company) => {
+      const area = areas.find((a) => a.companyId === company.id);
       return {
         ...company,
-        areaOfActivity: area
+        areaOfActivity: area,
       };
     });
-    
-    console.log(`Returning ${result.length} companies for contact ${contactId}`);
+
+    console.log(
+      `Returning ${result.length} companies for contact ${contactId}`,
+    );
     return result;
   }
 
   async getContact(id: number): Promise<Contact | undefined> {
     console.log(`getContact: Processing request for contact id ${id}`);
-    
+
     // Utilizzando direttamente il pool invece di Drizzle ORM
     try {
       // Query SQL per ottenere i dati del contatto
@@ -1327,34 +1468,34 @@ export class PostgresStorage implements IStorage {
           last_contacted_at, next_follow_up_at, created_at, updated_at
         FROM contacts 
         WHERE id = $1`,
-        values: [id]
+        values: [id],
       };
-      
+
       console.log(`getContact: Executing contact query: ${contactQuery.text}`);
       const contactResult = await pool.query(contactQuery);
-      
+
       // Verifico se abbiamo trovato il contatto
       if (contactResult.rows.length === 0) {
         console.log(`getContact: No contact found with id ${id}`);
         return undefined;
       }
-      
+
       const contactData = contactResult.rows[0];
       console.log(`getContact: Found contact:`, contactData);
-      
+
       // Query per ottenere le aree di attività del contatto
       const areasQuery = {
         text: `SELECT id, contact_id, company_id, company_name, role, job_description, is_primary, created_at, updated_at
                FROM areas_of_activity 
                WHERE contact_id = $1`,
-        values: [id]
+        values: [id],
       };
-      
+
       console.log(`getContact: Executing areas query: ${areasQuery.text}`);
       const areasResult = await pool.query(areasQuery);
-      
+
       // Mappatura degli oggetti dalle righe di risultato
-      const areas = areasResult.rows.map(row => ({
+      const areas = areasResult.rows.map((row) => ({
         id: row.id,
         contactId: row.contact_id,
         companyId: row.company_id,
@@ -1363,9 +1504,9 @@ export class PostgresStorage implements IStorage {
         jobDescription: row.job_description,
         isPrimary: row.is_primary,
         createdAt: row.created_at,
-        updatedAt: row.updated_at
+        updatedAt: row.updated_at,
       }));
-      
+
       // Creo il contatto con i campi mappati correttamente
       const contact: Contact = {
         id: contactData.id,
@@ -1390,15 +1531,19 @@ export class PostgresStorage implements IStorage {
         nextFollowUpAt: contactData.next_follow_up_at,
         createdAt: contactData.created_at,
         updatedAt: contactData.updated_at,
-        
+
         // Campi di compatibilità
         email: contactData.company_email || contactData.private_email || null,
-        phone: contactData.mobile_phone || contactData.office_phone || contactData.private_phone || null,
-        
+        phone:
+          contactData.mobile_phone ||
+          contactData.office_phone ||
+          contactData.private_phone ||
+          null,
+
         // Relazioni
-        areasOfActivity: areas
+        areasOfActivity: areas,
       };
-      
+
       return contact;
     } catch (error) {
       console.error("Error fetching contact:", error);
@@ -1411,20 +1556,23 @@ export class PostgresStorage implements IStorage {
     return newContact;
   }
 
-  async updateContact(id: number, contactData: Partial<InsertContact>): Promise<Contact | undefined> {
+  async updateContact(
+    id: number,
+    contactData: Partial<InsertContact>,
+  ): Promise<Contact | undefined> {
     const [updatedContact] = await db
       .update(contacts)
       .set({ ...contactData, updatedAt: new Date() })
       .where(eq(contacts.id, id))
       .returning();
-    
+
     return updatedContact;
   }
 
   async deleteContact(id: number): Promise<boolean> {
     // Prima elimina tutte le aree di attività associate
     await db.delete(areasOfActivity).where(eq(areasOfActivity.contactId, id));
-    
+
     // Poi elimina il contatto
     const result = await db.delete(contacts).where(eq(contacts.id, id));
     return result.rowCount > 0;
@@ -1433,7 +1581,9 @@ export class PostgresStorage implements IStorage {
   // COMPANIES
   async getCompanies(): Promise<Company[]> {
     // Rimosso filtro per status per ottenere tutte le aziende, come per contatti e leads
-    console.log("PostgresStorage.getCompanies: retrieving all companies regardless of status");
+    console.log(
+      "PostgresStorage.getCompanies: retrieving all companies regardless of status",
+    );
     try {
       // Utilizziamo SQL nativo per avere più controllo
       const result = await pool.query(`
@@ -1465,11 +1615,11 @@ export class PostgresStorage implements IStorage {
         FROM companies 
         ORDER BY name
       `);
-      
+
       console.log(`getCompanies: Found ${result.rows.length} companies`);
-      
+
       // Adattiamo il formato per essere compatibile con quello che si aspetta il frontend
-      return result.rows.map(company => {
+      return result.rows.map((company) => {
         return {
           id: company.id,
           name: company.name || "",
@@ -1494,7 +1644,7 @@ export class PostgresStorage implements IStorage {
           lastContactedAt: company.last_contacted_at,
           nextFollowUpAt: company.next_follow_up_at,
           createdAt: company.created_at,
-          updatedAt: company.updated_at
+          updatedAt: company.updated_at,
         };
       });
     } catch (error) {
@@ -1502,48 +1652,54 @@ export class PostgresStorage implements IStorage {
       return [];
     }
   }
-  
+
   async getAllCompanies(): Promise<Company[]> {
     // Metodo alias per compatibilità con l'interfaccia
     return this.getCompanies();
   }
-  
+
   async getCompaniesCount(): Promise<number> {
-    const result = await db.select({ count: sql<number>`count(*)` }).from(companies);
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(companies);
     return result[0].count;
   }
 
   async getCompany(id: number): Promise<Company | undefined> {
     // Selezioniamo solo campi specifici che esistono sicuramente nel database
-    const [company] = await db.select({
-      id: companies.id,
-      name: companies.name,
-      status: companies.status,
-      email: companies.email,
-      phone: companies.phone,
-      // DEPRECATED: old address field - Added 2025-05-13 by Lead Architect: unified location
-      address: companies.address,
-      // Added 2025-05-13 by Lead Architect: unified location field
-      fullAddress: companies.fullAddress,
-      website: companies.website,
-      industry: companies.industry,
-      // Rimuoviamo le colonne problematiche (description, logo)
-      tags: companies.tags,
-      notes: companies.notes,
-      customFields: companies.customFields,
-      createdAt: companies.createdAt,
-      updatedAt: companies.updatedAt
-    })
-    .from(companies)
-    .where(eq(companies.id, id));
-    
+    const [company] = await db
+      .select({
+        id: companies.id,
+        name: companies.name,
+        status: companies.status,
+        email: companies.email,
+        phone: companies.phone,
+        // DEPRECATED: old address field - Added 2025-05-13 by Lead Architect: unified location
+        address: companies.address,
+        // Added 2025-05-13 by Lead Architect: unified location field
+        fullAddress: companies.fullAddress,
+        website: companies.website,
+        industry: companies.industry,
+        // Rimuoviamo le colonne problematiche (description, logo)
+        tags: companies.tags,
+        notes: companies.notes,
+        customFields: companies.customFields,
+        createdAt: companies.createdAt,
+        updatedAt: companies.updatedAt,
+      })
+      .from(companies)
+      .where(eq(companies.id, id));
+
     if (!company) {
       return undefined;
     }
-    
+
     // Then fetch areas of activity separately
-    const areas = await db.select().from(areasOfActivity).where(eq(areasOfActivity.companyId, id));
-    
+    const areas = await db
+      .select()
+      .from(areasOfActivity)
+      .where(eq(areasOfActivity.companyId, id));
+
     // Return the company with areas attached
     return {
       ...company,
@@ -1554,35 +1710,39 @@ export class PostgresStorage implements IStorage {
       postalCode: null,
       description: null, // Aggiungiamo anche questo campo per evitare errori nel frontend
       logo: null, // Aggiungiamo anche il logo come null
-      areasOfActivity: areas
+      areasOfActivity: areas,
     };
   }
 
   async createCompany(company: InsertCompany): Promise<Company> {
     // **VERSIONE VALIDATA CON DATABASE REALE 2025-05-16**
-    console.log('Ricevuta richiesta di creazione azienda:', company);
-    
+    console.log("Ricevuta richiesta di creazione azienda:", company);
+
     try {
       // Crea un oggetto che include SOLO i campi VERIFICATI dalla query information_schema
       // Campi confermati dalla query: SELECT column_name FROM information_schema.columns WHERE table_name = 'companies'
       const companyData = {
         // Campi obbligatori
         name: company.name,
-        status: company.status || 'active',
-        
+        status: company.status || "active",
+
         // Campi opzionali di contatto
         email: company.email || null,
         phone: company.phone || null,
         website: company.website || null,
-        
+
         // Indirizzo
         address: company.address || null,
-        full_address: company.full_address || company.fullAddress || company.address || null,
-        
+        full_address:
+          company.full_address ||
+          company.fullAddress ||
+          company.address ||
+          null,
+
         // Categorizzazioni
         industry: company.industry || null,
         tags: company.tags || [],
-        
+
         // Categorizzazioni specifiche aziende
         location_types: company.locationTypes || [],
         company_type: company.companyType || null,
@@ -1590,37 +1750,39 @@ export class PostgresStorage implements IStorage {
         channels: company.channels || [],
         products_or_services_tags: company.productsOrServicesTags || [],
         is_active_rep: company.isActiveRep || false,
-        
+
         // Dati aggiuntivi
         notes: company.notes || null,
         custom_fields: company.customFields || null,
-        
+
         // Date di follow-up
         last_contacted_at: company.lastContactedAt || null,
         next_follow_up_at: company.nextFollowUpAt || null,
-        
+
         // Metadata (gestiti automaticamente)
-        updated_at: new Date()
+        updated_at: new Date(),
       };
-      
+
       // Log dei dati espliciti prima dell'inserimento
-      console.log('Creating company with explicit field mapping:', companyData);
-      
+      console.log("Creating company with explicit field mapping:", companyData);
+
       // Esegui l'inserimento con campi espliciti per evitare ogni errore di colonna mancante
       const [newCompany] = await db
         .insert(companies)
         .values(companyData)
         .returning();
-      
-      console.log('Azienda creata con successo, ID:', newCompany.id);
+
+      console.log("Azienda creata con successo, ID:", newCompany.id);
       return newCompany;
     } catch (error) {
-      console.error('ERRORE CRITICO durante inserimento azienda:', error);
-      
+      console.error("ERRORE CRITICO durante inserimento azienda:", error);
+
       // Log struttura dettagliata dell'errore per debug
-      if (error.code === '42703') {
-        console.error('Errore di colonna mancante. La tabella "companies" non contiene tutti i campi necessari.');
-        console.error('Dettagli errore:', {
+      if (error.code === "42703") {
+        console.error(
+          'Errore di colonna mancante. La tabella "companies" non contiene tutti i campi necessari.',
+        );
+        console.error("Dettagli errore:", {
           errorCode: error.code,
           position: error.position,
           constraint: error.constraint,
@@ -1628,76 +1790,114 @@ export class PostgresStorage implements IStorage {
           column: error.column,
           detail: error.detail,
           hint: error.hint,
-          message: error.message
+          message: error.message,
         });
-        
+
         // Verifica quali colonne esistono realmente nel database
         try {
           const result = await db.execute(
-            "SELECT column_name FROM information_schema.columns WHERE table_name = 'companies'"
+            "SELECT column_name FROM information_schema.columns WHERE table_name = 'companies'",
           );
-          console.log('Colonne disponibili in companies:', result.rows.map(r => r.column_name));
+          console.log(
+            "Colonne disponibili in companies:",
+            result.rows.map((r) => r.column_name),
+          );
         } catch (dbErr) {
-          console.error('Impossibile ottenere la struttura della tabella:', dbErr);
+          console.error(
+            "Impossibile ottenere la struttura della tabella:",
+            dbErr,
+          );
         }
       }
-      
+
       throw error;
     }
   }
 
-  async updateCompany(id: number, companyData: Partial<InsertCompany>): Promise<Company | undefined> {
+  async updateCompany(
+    id: number,
+    companyData: Partial<InsertCompany>,
+  ): Promise<Company | undefined> {
     // **VERSIONE COMPLETAMENTE RISCRITTA PER EVITARE ERRORI CON CAMPI RIMOSSI DAL DATABASE**
-    console.log('Ricevuta richiesta di aggiornamento azienda ID', id, ':', companyData);
-    
+    console.log(
+      "Ricevuta richiesta di aggiornamento azienda ID",
+      id,
+      ":",
+      companyData,
+    );
+
     // Crea un oggetto pulito con solo i campi che sappiamo esistere nel database
     const cleanCompanyData: Record<string, any> = {
       // Aggiungi sempre updatedAt
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
-    
+
     // Aggiungi solo i campi che esistono davvero nel database e sono presenti nell'input
     const safeFields = [
-      'name', 'email', 'phone', 'website', 'industry', 
-      'address', 'fullAddress', 'country', 'notes', 'status',
-      'tags', 'customFields', 'parentCompanyId', 
-      'linkedinUrl', 'locationTypes', 'lastContactedAt',
-      'nextFollowUpAt', 'isActiveRep', 'companyType',
-      'brands', 'channels', 'productsOrServicesTags',
-      'logo', 'description', 'employeeCount', 'annualRevenue', 
-      'foundedYear', 'postalCode'
+      "name",
+      "email",
+      "phone",
+      "website",
+      "industry",
+      "address",
+      "fullAddress",
+      "country",
+      "notes",
+      "status",
+      "tags",
+      "customFields",
+      "parentCompanyId",
+      "linkedinUrl",
+      "locationTypes",
+      "lastContactedAt",
+      "nextFollowUpAt",
+      "isActiveRep",
+      "companyType",
+      "brands",
+      "channels",
+      "productsOrServicesTags",
+      "logo",
+      "description",
+      "employeeCount",
+      "annualRevenue",
+      "foundedYear",
+      "postalCode",
     ];
-    
+
     // Copia solo i campi sicuri che esistono nell'input
     for (const field of safeFields) {
-      if (field in companyData && companyData[field as keyof Partial<InsertCompany>] !== undefined) {
-        cleanCompanyData[field] = companyData[field as keyof Partial<InsertCompany>];
+      if (
+        field in companyData &&
+        companyData[field as keyof Partial<InsertCompany>] !== undefined
+      ) {
+        cleanCompanyData[field] =
+          companyData[field as keyof Partial<InsertCompany>];
       }
     }
-    
+
     // Gestisci la migrazione da address a fullAddress
     if (companyData.address && !cleanCompanyData.fullAddress) {
       cleanCompanyData.fullAddress = companyData.address;
     }
-    
+
     // SICUREZZA: rimuovi esplicitamente i campi che sappiamo non esistere più
     delete (cleanCompanyData as any).city;
     delete (cleanCompanyData as any).region;
-    
+
     // Log dei dati puliti prima dell'aggiornamento
-    console.log('Updating company with sanitized data:', cleanCompanyData);
-    
+    console.log("Updating company with sanitized data:", cleanCompanyData);
+
     try {
       const [updatedCompany] = await db
         .update(companies)
         .set(cleanCompanyData)
         .where(eq(companies.id, id))
         .returning();
-      
-      console.log('Azienda aggiornata con successo, ID:', updatedCompany.id);
+
+      console.log("Azienda aggiornata con successo, ID:", updatedCompany.id);
       return updatedCompany;
     } catch (error) {
-      console.error('ERRORE CRITICO durante aggiornamento azienda:', error);
+      console.error("ERRORE CRITICO durante aggiornamento azienda:", error);
       throw error;
     }
   }
@@ -1705,7 +1905,7 @@ export class PostgresStorage implements IStorage {
   async deleteCompany(id: number): Promise<boolean> {
     // Prima elimina tutte le aree di attività associate
     await db.delete(areasOfActivity).where(eq(areasOfActivity.companyId, id));
-    
+
     // Poi elimina l'azienda
     const result = await db.delete(companies).where(eq(companies.id, id));
     return result.rowCount > 0;
@@ -1715,34 +1915,47 @@ export class PostgresStorage implements IStorage {
   async getPipelineStages(): Promise<PipelineStage[]> {
     return await db.select().from(pipelineStages).orderBy(pipelineStages.order);
   }
-  
+
   async getAllPipelineStages(): Promise<PipelineStage[]> {
     // Metodo alias per compatibilità con l'interfaccia
     return this.getPipelineStages();
   }
-  
-  async updatePipelineStage(id: number, stageData: Partial<InsertPipelineStage>): Promise<PipelineStage | undefined> {
+
+  async updatePipelineStage(
+    id: number,
+    stageData: Partial<InsertPipelineStage>,
+  ): Promise<PipelineStage | undefined> {
     const [updatedStage] = await db
       .update(pipelineStages)
       .set({ ...stageData, updatedAt: new Date() })
       .where(eq(pipelineStages.id, id))
       .returning();
-    
+
     return updatedStage;
   }
-  
+
   async deletePipelineStage(id: number): Promise<boolean> {
-    const result = await db.delete(pipelineStages).where(eq(pipelineStages.id, id));
+    const result = await db
+      .delete(pipelineStages)
+      .where(eq(pipelineStages.id, id));
     return result.rowCount > 0;
   }
 
   async getPipelineStage(id: number): Promise<PipelineStage | undefined> {
-    const [stage] = await db.select().from(pipelineStages).where(eq(pipelineStages.id, id));
+    const [stage] = await db
+      .select()
+      .from(pipelineStages)
+      .where(eq(pipelineStages.id, id));
     return stage;
   }
 
-  async createPipelineStage(insertStage: InsertPipelineStage): Promise<PipelineStage> {
-    const [newStage] = await db.insert(pipelineStages).values(insertStage).returning();
+  async createPipelineStage(
+    insertStage: InsertPipelineStage,
+  ): Promise<PipelineStage> {
+    const [newStage] = await db
+      .insert(pipelineStages)
+      .values(insertStage)
+      .returning();
     return newStage;
   }
 
@@ -1750,55 +1963,61 @@ export class PostgresStorage implements IStorage {
   async getDeals(): Promise<Deal[]> {
     // This method is kept for backward compatibility
     // Rimosso filtro per status per ottenere tutti i deal, come per contatti e aziende
-    console.log("PostgresStorage.getDeals: retrieving all deals regardless of status");
+    console.log(
+      "PostgresStorage.getDeals: retrieving all deals regardless of status",
+    );
     return this.getDealsWithFilters({}); // Nessun filtro per ottenere tutti i deal
   }
-  
+
   async getAllDeals(): Promise<Deal[]> {
     // Metodo alias per compatibilità con l'interfaccia
     return this.getDeals();
   }
-  
+
   async getDealsCount(options?: { status?: string }): Promise<number> {
     try {
-      console.log(`PostgresStorage.getDealsCount: retrieving deals count with options:`, options);
-      
+      console.log(
+        `PostgresStorage.getDealsCount: retrieving deals count with options:`,
+        options,
+      );
+
       let queryStr = `SELECT COUNT(*) as count FROM deals`;
       const params: any[] = [];
-      
+
       if (options?.status) {
         params.push(options.status);
         queryStr += ` WHERE status = $1`;
       }
-      
+
       const result = await pool.query(queryStr, params);
       console.log(`Retrieved ${result.rows[0].count} deals count`);
-      
+
       return parseInt(result.rows[0].count) || 0;
     } catch (error) {
       console.error("Error in getDealsCount:", error);
       return 0;
     }
   }
-  
+
   async getRecentDeals(limit: number = 5): Promise<Deal[]> {
     try {
-      // Use a basic query without problematic columns 
-      const dealsResult = await db.select({
-        id: deals.id,
-        name: deals.name,
-        value: deals.value,
-        status: deals.status,
-        contactId: deals.contactId,
-        companyId: deals.companyId,
-        stageId: deals.stageId, 
-        createdAt: deals.createdAt,
-        updatedAt: deals.updatedAt
-      })
-      .from(deals)
-      .orderBy(desc(deals.updatedAt))
-      .limit(limit);
-        
+      // Use a basic query without problematic columns
+      const dealsResult = await db
+        .select({
+          id: deals.id,
+          name: deals.name,
+          value: deals.value,
+          status: deals.status,
+          contactId: deals.contactId,
+          companyId: deals.companyId,
+          stageId: deals.stageId,
+          createdAt: deals.createdAt,
+          updatedAt: deals.updatedAt,
+        })
+        .from(deals)
+        .orderBy(desc(deals.updatedAt))
+        .limit(limit);
+
       // Manually populate relations as needed
       const result = [];
       for (const deal of dealsResult) {
@@ -1820,18 +2039,18 @@ export class PostgresStorage implements IStorage {
               updated_at as "updatedAt" 
             FROM contacts 
             WHERE id = $1`,
-            [deal.contactId]
+            [deal.contactId],
           );
           if (contactResult.rows.length > 0) {
             contactData = contactResult.rows[0];
           }
         }
-      
-      // Get company using SQL native query with correct column names
-      let companyData = null;
-      if (deal.companyId) {
-        const companyResult = await pool.query(
-          `SELECT 
+
+        // Get company using SQL native query with correct column names
+        let companyData = null;
+        if (deal.companyId) {
+          const companyResult = await pool.query(
+            `SELECT 
             id, 
             name, 
             website, 
@@ -1841,50 +2060,50 @@ export class PostgresStorage implements IStorage {
             updated_at as "updatedAt" 
           FROM companies 
           WHERE id = $1`,
-          [deal.companyId]
-        );
-        if (companyResult.rows.length > 0) {
-          companyData = companyResult.rows[0];
+            [deal.companyId],
+          );
+          if (companyResult.rows.length > 0) {
+            companyData = companyResult.rows[0];
+          }
         }
-      }
-      
-      // Get stage using SQL native query with correct column names
-      let stageData = null;
-      if (deal.stageId) {
-        const stageResult = await pool.query(
-          `SELECT 
+
+        // Get stage using SQL native query with correct column names
+        let stageData = null;
+        if (deal.stageId) {
+          const stageResult = await pool.query(
+            `SELECT 
             id, 
             name, 
             "order"
           FROM pipeline_stages 
           WHERE id = $1`,
-          [deal.stageId]
-        );
-        if (stageResult.rows.length > 0) {
-          stageData = stageResult.rows[0];
+            [deal.stageId],
+          );
+          if (stageResult.rows.length > 0) {
+            stageData = stageResult.rows[0];
+          }
         }
+
+        result.push({
+          ...deal,
+          contact: contactData,
+          company: companyData,
+          stage: stageData,
+        });
       }
-      
-      result.push({
-        ...deal,
-        contact: contactData,
-        company: companyData,
-        stage: stageData
-      });
-    }
-    
-    return result;
+
+      return result;
     } catch (error) {
       console.error("Error in getRecentDeals:", error);
       // Return empty array in case of error
       return [];
     }
   }
-  
+
   async getDealsByStageId(stageId: number): Promise<Deal[]> {
     return this.getDealsWithFilters({ stageId });
   }
-  
+
   async getDealsWithFilters(filters: {
     status?: string;
     companyId?: number;
@@ -1892,8 +2111,11 @@ export class PostgresStorage implements IStorage {
     stageId?: number;
   }): Promise<Deal[]> {
     try {
-      console.log("PostgresStorage.getDealsWithFilters: retrieving deals with filters:", filters);
-      
+      console.log(
+        "PostgresStorage.getDealsWithFilters: retrieving deals with filters:",
+        filters,
+      );
+
       // Build query with appropriate filters - usando pool.query per maggiore stabilità
       let queryStr = `
         SELECT 
@@ -1909,38 +2131,38 @@ export class PostgresStorage implements IStorage {
         FROM deals
         WHERE 1=1
       `;
-      
+
       const params: any[] = [];
-      
+
       // Apply filters
       if (filters.status) {
         params.push(filters.status);
         queryStr += ` AND status = $${params.length}`;
       }
-      
+
       if (filters.companyId) {
         params.push(filters.companyId);
         queryStr += ` AND company_id = $${params.length}`;
       }
-      
+
       if (filters.contactId) {
         params.push(filters.contactId);
         queryStr += ` AND contact_id = $${params.length}`;
       }
-      
+
       if (filters.stageId) {
         params.push(filters.stageId);
         queryStr += ` AND stage_id = $${params.length}`;
       }
-      
+
       // Order by stage_id and value
       queryStr += ` ORDER BY stage_id ASC, value DESC`;
-      
+
       const queryResult = await pool.query(queryStr, params);
       const dealsResult = queryResult.rows || [];
-      
+
       console.log(`Retrieved ${dealsResult.length} deals from database`);
-      
+
       // Manually populate relations
       const result = [];
       for (const deal of dealsResult) {
@@ -1955,18 +2177,18 @@ export class PostgresStorage implements IStorage {
                 last_name as "lastName", 
                 company_email as "email"
               FROM contacts 
-              WHERE id = $1`, 
-              [deal.contactId]
+              WHERE id = $1`,
+              [deal.contactId],
             );
-            
+
             if (contactResult.rows && contactResult.rows.length > 0) {
               contactData = contactResult.rows[0];
             }
           } catch (contactError) {
-            console.error('Error getting contact data:', contactError);
+            console.error("Error getting contact data:", contactError);
           }
         }
-        
+
         // Get company
         let companyData = null;
         if (deal.companyId) {
@@ -1977,18 +2199,18 @@ export class PostgresStorage implements IStorage {
                 name, 
                 email
               FROM companies 
-              WHERE id = $1`, 
-              [deal.companyId]
+              WHERE id = $1`,
+              [deal.companyId],
             );
-            
+
             if (companyResult.rows && companyResult.rows.length > 0) {
               companyData = companyResult.rows[0];
             }
           } catch (companyError) {
-            console.error('Error getting company data:', companyError);
+            console.error("Error getting company data:", companyError);
           }
         }
-        
+
         // Get pipeline stage
         let stageData = null;
         if (deal.stageId) {
@@ -1999,26 +2221,26 @@ export class PostgresStorage implements IStorage {
                 name, 
                 "order" as position
               FROM pipeline_stages 
-              WHERE id = $1`, 
-              [deal.stageId]
+              WHERE id = $1`,
+              [deal.stageId],
             );
-            
+
             if (stageResult.rows && stageResult.rows.length > 0) {
               stageData = stageResult.rows[0];
             }
           } catch (stageError) {
-            console.error('Error getting stage data:', stageError);
+            console.error("Error getting stage data:", stageError);
           }
         }
-        
+
         result.push({
           ...deal,
           contact: contactData,
           company: companyData,
-          stage: stageData
+          stage: stageData,
         });
       }
-      
+
       return result;
     } catch (error) {
       console.error("Error in getDealsWithFilters:", error);
@@ -2028,100 +2250,125 @@ export class PostgresStorage implements IStorage {
 
   async getDealsByContact(contactId: number): Promise<Deal[]> {
     // Using a simpler approach without relational queries
-    const dealsResult = await db.select().from(deals)
+    const dealsResult = await db
+      .select()
+      .from(deals)
       .where(eq(deals.contactId, contactId))
       .orderBy(asc(deals.stageId), desc(deals.value));
-    
+
     // Manually populate relations
     const result = [];
     for (const deal of dealsResult) {
       // Get contact
       let contactData = null;
       if (deal.contactId) {
-        const [contact] = await db.select().from(contacts).where(eq(contacts.id, deal.contactId));
+        const [contact] = await db
+          .select()
+          .from(contacts)
+          .where(eq(contacts.id, deal.contactId));
         contactData = contact;
       }
-      
+
       // Get company
       let companyData = null;
       if (deal.companyId) {
-        const [company] = await db.select().from(companies).where(eq(companies.id, deal.companyId));
+        const [company] = await db
+          .select()
+          .from(companies)
+          .where(eq(companies.id, deal.companyId));
         companyData = company;
       }
-      
+
       // Get stage
       let stageData = null;
       if (deal.stageId) {
-        const [stage] = await db.select().from(pipelineStages).where(eq(pipelineStages.id, deal.stageId));
+        const [stage] = await db
+          .select()
+          .from(pipelineStages)
+          .where(eq(pipelineStages.id, deal.stageId));
         stageData = stage;
       }
-      
+
       result.push({
         ...deal,
         contact: contactData,
         company: companyData,
-        stage: stageData
+        stage: stageData,
       });
     }
-    
+
     return result;
   }
 
   async getDealsByCompany(companyId: number): Promise<Deal[]> {
     // Using a simpler approach without relational queries
-    const dealsResult = await db.select().from(deals)
+    const dealsResult = await db
+      .select()
+      .from(deals)
       .where(eq(deals.companyId, companyId))
       .orderBy(asc(deals.stageId), desc(deals.value));
-    
+
     // Manually populate relations
     const result = [];
     for (const deal of dealsResult) {
       // Get contact
       let contactData = null;
       if (deal.contactId) {
-        const [contact] = await db.select().from(contacts).where(eq(contacts.id, deal.contactId));
+        const [contact] = await db
+          .select()
+          .from(contacts)
+          .where(eq(contacts.id, deal.contactId));
         contactData = contact;
       }
-      
+
       // Get company
       let companyData = null;
       if (deal.companyId) {
-        const [company] = await db.select().from(companies).where(eq(companies.id, deal.companyId));
+        const [company] = await db
+          .select()
+          .from(companies)
+          .where(eq(companies.id, deal.companyId));
         companyData = company;
       }
-      
+
       // Get stage
       let stageData = null;
       if (deal.stageId) {
-        const [stage] = await db.select().from(pipelineStages).where(eq(pipelineStages.id, deal.stageId));
+        const [stage] = await db
+          .select()
+          .from(pipelineStages)
+          .where(eq(pipelineStages.id, deal.stageId));
         stageData = stage;
       }
-      
+
       result.push({
         ...deal,
         contact: contactData,
         company: companyData,
-        stage: stageData
+        stage: stageData,
       });
     }
-    
+
     return result;
   }
 
   async getDeal(id: number): Promise<Deal | undefined> {
     // Using a simpler approach without relational queries
     const [deal] = await db.select().from(deals).where(eq(deals.id, id));
-    
+
     if (!deal) return undefined;
-    
+
     // Manually populate relations
     // Get contact
     let contactData = null;
     if (deal.contactId) {
-      const [contact] = await db.select().from(contacts).where(eq(contacts.id, deal.contactId));
+      const [contact] = await db
+        .select()
+        .from(contacts)
+        .where(eq(contacts.id, deal.contactId));
       contactData = contact;
     }
-    
+
     // Get company
     let companyData = null;
     if (deal.companyId) {
@@ -2148,25 +2395,28 @@ export class PostgresStorage implements IStorage {
           channels: companies.channels,
           productsOrServicesTags: companies.productsOrServicesTags,
           createdAt: companies.createdAt,
-          updatedAt: companies.updatedAt
+          updatedAt: companies.updatedAt,
         })
         .from(companies)
         .where(eq(companies.id, deal.companyId));
       companyData = company;
     }
-    
+
     // Get stage
     let stageData = null;
     if (deal.stageId) {
-      const [stage] = await db.select().from(pipelineStages).where(eq(pipelineStages.id, deal.stageId));
+      const [stage] = await db
+        .select()
+        .from(pipelineStages)
+        .where(eq(pipelineStages.id, deal.stageId));
       stageData = stage;
     }
-    
+
     return {
       ...deal,
       contact: contactData,
       company: companyData,
-      stage: stageData
+      stage: stageData,
     };
   }
 
@@ -2175,13 +2425,16 @@ export class PostgresStorage implements IStorage {
     return newDeal;
   }
 
-  async updateDeal(id: number, dealData: Partial<InsertDeal>): Promise<Deal | undefined> {
+  async updateDeal(
+    id: number,
+    dealData: Partial<InsertDeal>,
+  ): Promise<Deal | undefined> {
     const [updatedDeal] = await db
       .update(deals)
       .set({ ...dealData, updatedAt: new Date() })
       .where(eq(deals.id, id))
       .returning();
-    
+
     return updatedDeal;
   }
 
@@ -2192,10 +2445,7 @@ export class PostgresStorage implements IStorage {
 
   // TASKS
   async getTasks(): Promise<Task[]> {
-    return await db
-      .select()
-      .from(tasks)
-      .orderBy(tasks.dueDate);
+    return await db.select().from(tasks).orderBy(tasks.dueDate);
   }
 
   async getTask(id: number): Promise<Task | undefined> {
@@ -2208,13 +2458,16 @@ export class PostgresStorage implements IStorage {
     return newTask;
   }
 
-  async updateTask(id: number, taskData: Partial<InsertTask>): Promise<Task | undefined> {
+  async updateTask(
+    id: number,
+    taskData: Partial<InsertTask>,
+  ): Promise<Task | undefined> {
     const [updatedTask] = await db
       .update(tasks)
       .set({ ...taskData, updatedAt: new Date() })
       .where(eq(tasks.id, id))
       .returning();
-    
+
     return updatedTask;
   }
 
@@ -2237,7 +2490,10 @@ export class PostgresStorage implements IStorage {
   }
 
   async getEmailAccount(id: number): Promise<EmailAccount | undefined> {
-    const [account] = await db.select().from(emailAccounts).where(eq(emailAccounts.id, id));
+    const [account] = await db
+      .select()
+      .from(emailAccounts)
+      .where(eq(emailAccounts.id, id));
     return account;
   }
 
@@ -2249,16 +2505,25 @@ export class PostgresStorage implements IStorage {
         .set({ isPrimary: false })
         .where(eq(emailAccounts.userId, account.userId));
     }
-    
-    const [newAccount] = await db.insert(emailAccounts).values(account).returning();
+
+    const [newAccount] = await db
+      .insert(emailAccounts)
+      .values(account)
+      .returning();
     return newAccount;
   }
 
-  async updateEmailAccount(id: number, accountData: Partial<InsertEmailAccount>): Promise<EmailAccount | undefined> {
+  async updateEmailAccount(
+    id: number,
+    accountData: Partial<InsertEmailAccount>,
+  ): Promise<EmailAccount | undefined> {
     // Se questo account è principale, rendi tutti gli altri non principali
     if (accountData.isPrimary) {
-      const [currentAccount] = await db.select().from(emailAccounts).where(eq(emailAccounts.id, id));
-      
+      const [currentAccount] = await db
+        .select()
+        .from(emailAccounts)
+        .where(eq(emailAccounts.id, id));
+
       if (currentAccount) {
         await db
           .update(emailAccounts)
@@ -2266,41 +2531,46 @@ export class PostgresStorage implements IStorage {
           .where(eq(emailAccounts.userId, currentAccount.userId));
       }
     }
-    
+
     const [updatedAccount] = await db
       .update(emailAccounts)
       .set({ ...accountData, updatedAt: new Date() })
       .where(eq(emailAccounts.id, id))
       .returning();
-    
+
     return updatedAccount;
   }
 
   async deleteEmailAccount(id: number): Promise<boolean> {
-    const result = await db.delete(emailAccounts).where(eq(emailAccounts.id, id));
+    const result = await db
+      .delete(emailAccounts)
+      .where(eq(emailAccounts.id, id));
     return result.rowCount > 0;
   }
 
   async setPrimaryEmailAccount(id: number): Promise<boolean> {
-    const [account] = await db.select().from(emailAccounts).where(eq(emailAccounts.id, id));
-    
+    const [account] = await db
+      .select()
+      .from(emailAccounts)
+      .where(eq(emailAccounts.id, id));
+
     if (!account) {
       return false;
     }
-    
+
     // Rendi tutti gli account per questo utente non principali
     await db
       .update(emailAccounts)
       .set({ isPrimary: false })
       .where(eq(emailAccounts.userId, account.userId));
-    
+
     // Imposta questo come principale
     const [updatedAccount] = await db
       .update(emailAccounts)
       .set({ isPrimary: true, updatedAt: new Date() })
       .where(eq(emailAccounts.id, id))
       .returning();
-    
+
     return !!updatedAccount;
   }
 
@@ -2338,7 +2608,10 @@ export class PostgresStorage implements IStorage {
     }
   }
 
-  async updateEmail(id: number, emailData: Partial<InsertEmail>): Promise<Email | undefined> {
+  async updateEmail(
+    id: number,
+    emailData: Partial<InsertEmail>,
+  ): Promise<Email | undefined> {
     try {
       // Implementazione temporanea che restituisce un oggetto vuoto
       // ma potrebbe essere aggiornata in futuro quando il modulo email sarà implementato
@@ -2370,7 +2643,10 @@ export class PostgresStorage implements IStorage {
   }
 
   async getSignature(id: number): Promise<Signature | undefined> {
-    const [signature] = await db.select().from(signatures).where(eq(signatures.id, id));
+    const [signature] = await db
+      .select()
+      .from(signatures)
+      .where(eq(signatures.id, id));
     return signature;
   }
 
@@ -2382,16 +2658,25 @@ export class PostgresStorage implements IStorage {
         .set({ isDefault: false })
         .where(eq(signatures.userId, signature.userId));
     }
-    
-    const [newSignature] = await db.insert(signatures).values(signature).returning();
+
+    const [newSignature] = await db
+      .insert(signatures)
+      .values(signature)
+      .returning();
     return newSignature;
   }
 
-  async updateSignature(id: number, signatureData: Partial<InsertSignature>): Promise<Signature | undefined> {
+  async updateSignature(
+    id: number,
+    signatureData: Partial<InsertSignature>,
+  ): Promise<Signature | undefined> {
     // Se questa firma è predefinita, rendi tutte le altre non predefinite
     if (signatureData.isDefault) {
-      const [currentSignature] = await db.select().from(signatures).where(eq(signatures.id, id));
-      
+      const [currentSignature] = await db
+        .select()
+        .from(signatures)
+        .where(eq(signatures.id, id));
+
       if (currentSignature) {
         await db
           .update(signatures)
@@ -2399,45 +2684,50 @@ export class PostgresStorage implements IStorage {
           .where(eq(signatures.userId, currentSignature.userId));
       }
     }
-    
+
     const [updatedSignature] = await db
       .update(signatures)
       .set({ ...signatureData, updatedAt: new Date() })
       .where(eq(signatures.id, id))
       .returning();
-    
+
     return updatedSignature;
   }
 
   async deleteSignature(id: number): Promise<boolean> {
     // Prima elimina tutte le associazioni account-firma
-    await db.delete(accountSignatures).where(eq(accountSignatures.signatureId, id));
-    
+    await db
+      .delete(accountSignatures)
+      .where(eq(accountSignatures.signatureId, id));
+
     // Poi elimina la firma
     const result = await db.delete(signatures).where(eq(signatures.id, id));
     return result.rowCount > 0;
   }
 
   async setDefaultSignature(id: number): Promise<boolean> {
-    const [signature] = await db.select().from(signatures).where(eq(signatures.id, id));
-    
+    const [signature] = await db
+      .select()
+      .from(signatures)
+      .where(eq(signatures.id, id));
+
     if (!signature) {
       return false;
     }
-    
+
     // Rendi tutte le firme per questo utente non predefinite
     await db
       .update(signatures)
       .set({ isDefault: false })
       .where(eq(signatures.userId, signature.userId));
-    
+
     // Imposta questa come predefinita
     const [updatedSignature] = await db
       .update(signatures)
       .set({ isDefault: true, updatedAt: new Date() })
       .where(eq(signatures.id, id))
       .returning();
-    
+
     return !!updatedSignature;
   }
 
@@ -2445,22 +2735,25 @@ export class PostgresStorage implements IStorage {
   async getEmailAccountSignatures(accountId: number): Promise<Signature[]> {
     const signatureAccounts = await db
       .select({
-        signature: signatures
+        signature: signatures,
       })
       .from(signatures)
       .innerJoin(
         accountSignatures,
         and(
           eq(signatures.id, accountSignatures.signatureId),
-          eq(accountSignatures.accountId, accountId)
-        )
+          eq(accountSignatures.accountId, accountId),
+        ),
       )
       .orderBy(desc(signatures.isDefault), signatures.name);
-    
-    return signatureAccounts.map(sa => sa.signature);
+
+    return signatureAccounts.map((sa) => sa.signature);
   }
 
-  async addSignatureToEmailAccount(accountId: number, signatureId: number): Promise<AccountSignature> {
+  async addSignatureToEmailAccount(
+    accountId: number,
+    signatureId: number,
+  ): Promise<AccountSignature> {
     // Verifica che questa associazione non esista già
     const [existingAssociation] = await db
       .select()
@@ -2468,36 +2761,39 @@ export class PostgresStorage implements IStorage {
       .where(
         and(
           eq(accountSignatures.accountId, accountId),
-          eq(accountSignatures.signatureId, signatureId)
-        )
+          eq(accountSignatures.signatureId, signatureId),
+        ),
       );
-    
+
     if (existingAssociation) {
       return existingAssociation;
     }
-    
+
     const [newAssociation] = await db
       .insert(accountSignatures)
       .values({
         accountId,
         signatureId,
-        isActive: true
+        isActive: true,
       })
       .returning();
-    
+
     return newAssociation;
   }
 
-  async removeSignatureFromEmailAccount(accountId: number, signatureId: number): Promise<boolean> {
+  async removeSignatureFromEmailAccount(
+    accountId: number,
+    signatureId: number,
+  ): Promise<boolean> {
     const result = await db
       .delete(accountSignatures)
       .where(
         and(
           eq(accountSignatures.accountId, accountId),
-          eq(accountSignatures.signatureId, signatureId)
-        )
+          eq(accountSignatures.signatureId, signatureId),
+        ),
       );
-    
+
     return result.rowCount > 0;
   }
 
@@ -2531,7 +2827,10 @@ export class PostgresStorage implements IStorage {
   }
 
   async createActivity(activity: InsertActivity): Promise<Activity> {
-    const [newActivity] = await db.insert(activities).values(activity).returning();
+    const [newActivity] = await db
+      .insert(activities)
+      .values(activity)
+      .returning();
     return newActivity;
   }
 
@@ -2541,13 +2840,16 @@ export class PostgresStorage implements IStorage {
   }
 
   async getMeeting(id: number): Promise<Meeting | undefined> {
-    const [meeting] = await db.select().from(meetings).where(eq(meetings.id, id));
+    const [meeting] = await db
+      .select()
+      .from(meetings)
+      .where(eq(meetings.id, id));
     return meeting;
   }
 
   async createMeeting(meeting: InsertMeeting): Promise<Meeting> {
     const [newMeeting] = await db.insert(meetings).values(meeting).returning();
-    
+
     // Crea anche un'attività per questo meeting
     await this.createActivity({
       type: "meeting",
@@ -2562,20 +2864,23 @@ export class PostgresStorage implements IStorage {
         startTime: meeting.startTime,
         endTime: meeting.endTime,
         location: meeting.location,
-        meetingType: meeting.meetingType
-      }
+        meetingType: meeting.meetingType,
+      },
     });
-    
+
     return newMeeting;
   }
 
-  async updateMeeting(id: number, meetingData: Partial<InsertMeeting>): Promise<Meeting | undefined> {
+  async updateMeeting(
+    id: number,
+    meetingData: Partial<InsertMeeting>,
+  ): Promise<Meeting | undefined> {
     const [updatedMeeting] = await db
       .update(meetings)
       .set({ ...meetingData, updatedAt: new Date() })
       .where(eq(meetings.id, id))
       .returning();
-    
+
     return updatedMeeting;
   }
 
@@ -2596,7 +2901,10 @@ export class PostgresStorage implements IStorage {
 
   // CONTACT EMAILS
   async getContactEmail(id: number): Promise<ContactEmail | null> {
-    const [email] = await db.select().from(contactEmails).where(eq(contactEmails.id, id));
+    const [email] = await db
+      .select()
+      .from(contactEmails)
+      .where(eq(contactEmails.id, id));
     return email || null;
   }
 
@@ -2608,28 +2916,36 @@ export class PostgresStorage implements IStorage {
       .orderBy(desc(contactEmails.isPrimary), asc(contactEmails.emailType));
   }
 
-  async getPrimaryContactEmail(contactId: number): Promise<ContactEmail | null> {
+  async getPrimaryContactEmail(
+    contactId: number,
+  ): Promise<ContactEmail | null> {
     const [primaryEmail] = await db
       .select()
       .from(contactEmails)
-      .where(and(
-        eq(contactEmails.contactId, contactId),
-        eq(contactEmails.isPrimary, true)
-      ));
+      .where(
+        and(
+          eq(contactEmails.contactId, contactId),
+          eq(contactEmails.isPrimary, true),
+        ),
+      );
     return primaryEmail || null;
   }
 
-  async createContactEmail(contactEmailData: InsertContactEmail): Promise<ContactEmail> {
+  async createContactEmail(
+    contactEmailData: InsertContactEmail,
+  ): Promise<ContactEmail> {
     // If setting this email as primary, reset other emails to non-primary
     if (contactEmailData.isPrimary) {
       await db
         .update(contactEmails)
         .set({ isPrimary: false, updatedAt: new Date() })
         .where(eq(contactEmails.contactId, contactEmailData.contactId));
-    } 
+    }
     // If this is the first email for the contact, make it primary by default
     else {
-      const existingEmails = await this.getContactEmails(contactEmailData.contactId);
+      const existingEmails = await this.getContactEmails(
+        contactEmailData.contactId,
+      );
       if (existingEmails.length === 0) {
         contactEmailData.isPrimary = true;
       }
@@ -2640,46 +2956,59 @@ export class PostgresStorage implements IStorage {
       .values({
         ...contactEmailData,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .returning();
-      
+
     return newEmail;
   }
 
-  async updateContactEmail(id: number, contactEmailData: Partial<ContactEmail>): Promise<ContactEmail> {
+  async updateContactEmail(
+    id: number,
+    contactEmailData: Partial<ContactEmail>,
+  ): Promise<ContactEmail> {
     // If setting this email as primary, reset other emails to non-primary
     if (contactEmailData.isPrimary) {
-      const [email] = await db.select().from(contactEmails).where(eq(contactEmails.id, id));
+      const [email] = await db
+        .select()
+        .from(contactEmails)
+        .where(eq(contactEmails.id, id));
       if (email) {
         await db
           .update(contactEmails)
           .set({ isPrimary: false, updatedAt: new Date() })
-          .where(and(
-            eq(contactEmails.contactId, email.contactId),
-            sql`${contactEmails.id} != ${id}`
-          ));
+          .where(
+            and(
+              eq(contactEmails.contactId, email.contactId),
+              sql`${contactEmails.id} != ${id}`,
+            ),
+          );
       }
     }
-    
+
     const [updatedEmail] = await db
       .update(contactEmails)
       .set({ ...contactEmailData, updatedAt: new Date() })
       .where(eq(contactEmails.id, id))
       .returning();
-      
+
     return updatedEmail;
   }
 
   async deleteContactEmail(id: number): Promise<boolean> {
     // Check if this is a primary email
-    const [email] = await db.select().from(contactEmails).where(eq(contactEmails.id, id));
+    const [email] = await db
+      .select()
+      .from(contactEmails)
+      .where(eq(contactEmails.id, id));
     if (!email) {
       return false;
     }
-    
-    const result = await db.delete(contactEmails).where(eq(contactEmails.id, id));
-    
+
+    const result = await db
+      .delete(contactEmails)
+      .where(eq(contactEmails.id, id));
+
     // If we deleted a primary email, set another one as primary if available
     if (email.isPrimary) {
       const [anotherEmail] = await db
@@ -2687,7 +3016,7 @@ export class PostgresStorage implements IStorage {
         .from(contactEmails)
         .where(eq(contactEmails.contactId, email.contactId))
         .limit(1);
-        
+
       if (anotherEmail) {
         await db
           .update(contactEmails)
@@ -2695,29 +3024,32 @@ export class PostgresStorage implements IStorage {
           .where(eq(contactEmails.id, anotherEmail.id));
       }
     }
-    
+
     return result.rowCount > 0;
   }
 
   async setContactEmailAsPrimary(id: number): Promise<ContactEmail> {
-    const [email] = await db.select().from(contactEmails).where(eq(contactEmails.id, id));
+    const [email] = await db
+      .select()
+      .from(contactEmails)
+      .where(eq(contactEmails.id, id));
     if (!email) {
       throw new Error(`ContactEmail with id ${id} not found`);
     }
-    
+
     // Reset all emails for this contact to non-primary
     await db
       .update(contactEmails)
       .set({ isPrimary: false, updatedAt: new Date() })
       .where(eq(contactEmails.contactId, email.contactId));
-    
+
     // Set the selected email as primary
     const [updatedEmail] = await db
       .update(contactEmails)
       .set({ isPrimary: true, updatedAt: new Date() })
       .where(eq(contactEmails.id, id))
       .returning();
-      
+
     return updatedEmail;
   }
 }
