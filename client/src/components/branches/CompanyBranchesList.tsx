@@ -44,7 +44,7 @@ interface CompanyBranchesListProps {
 }
 
 export default function CompanyBranchesList({ companyId, companyName }: CompanyBranchesListProps) {
-  const [_, navigate] = useLocation();
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
