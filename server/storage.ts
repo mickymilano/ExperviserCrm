@@ -8,6 +8,7 @@ import {
   areasOfActivity, AreaOfActivity, InsertAreaOfActivity,
   synergies, Synergy, InsertSynergy,
   contactEmails, ContactEmail, InsertContactEmail,
+  branches, Branch, InsertBranch,
 } from '@shared/schema';
 import { db } from './db';
 import { eq } from 'drizzle-orm';
@@ -98,6 +99,14 @@ export interface IStorage {
   updateContactEmail(id: number, contactEmailData: Partial<ContactEmail>): Promise<ContactEmail>;
   deleteContactEmail(id: number): Promise<boolean>;
   setContactEmailAsPrimary(id: number): Promise<ContactEmail>;
+
+  // Branch operations
+  getBranch(id: number): Promise<Branch | null>;
+  getBranches(): Promise<Branch[]>;
+  getBranchesByCompanyId(companyId: number): Promise<Branch[]>;
+  createBranch(branchData: InsertBranch): Promise<Branch>;
+  updateBranch(id: number, branchData: Partial<Branch>): Promise<Branch>;
+  deleteBranch(id: number): Promise<void>;
 }
 
 /**
@@ -115,6 +124,7 @@ export class MemStorage implements IStorage {
   private areasOfActivity: AreaOfActivity[] = [];
   private synergies: Synergy[] = [];
   private contactEmails: ContactEmail[] = [];
+  private branches: Branch[] = [];
 
   private nextIds = {
     users: 1,
@@ -126,6 +136,7 @@ export class MemStorage implements IStorage {
     areasOfActivity: 1,
     synergies: 1,
     contactEmails: 1,
+    branches: 1,
   };
   
   // Funzioni di conteggio
