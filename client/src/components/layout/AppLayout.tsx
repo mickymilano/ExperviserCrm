@@ -5,6 +5,7 @@ import {
   Home,
   Users,
   Building2,
+  Building,
   Briefcase,
   Target,
   Calendar,
@@ -54,6 +55,12 @@ const getMainMenuItems = (stats?: any): MenuItemProps[] => [
     path: '/companies',
     icon: <Building2 className="h-5 w-5" />,
     badge: stats?.companies
+  },
+  {
+    label: 'Filiali',
+    path: '/branches',
+    icon: <Buildings className="h-5 w-5" />,
+    badge: stats?.branches
   },
   {
     label: 'Opportunità',
