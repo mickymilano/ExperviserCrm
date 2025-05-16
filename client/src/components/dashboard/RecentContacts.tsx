@@ -30,10 +30,12 @@ export default function RecentContacts({ contacts }: RecentContactsProps) {
   };
   
   // Gestisce l'invio di email
-  const handleSendEmail = (email: string) => {
+  const handleSendEmail = (email: string | undefined) => {
     // Se abbiamo una vera funzionalità di email in futuro, la usiamo qui
     // Per ora, apriamo il client email predefinito
-    window.location.href = `mailto:${email}`;
+    if (email) {
+      window.location.href = `mailto:${email}`;
+    }
   };
 
   return (
@@ -55,11 +57,11 @@ export default function RecentContacts({ contacts }: RecentContactsProps) {
           <table className="min-w-full divide-y divide-neutral-light">
             <thead>
               <tr>
-                <th className="px-3 py-3 text-left text-xs font-medium text-neutral-medium uppercase tracking-wider">Name</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-neutral-medium uppercase tracking-wider">Company</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-neutral-medium uppercase tracking-wider">Nome</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-neutral-medium uppercase tracking-wider">Azienda</th>
                 <th className="px-3 py-3 text-left text-xs font-medium text-neutral-medium uppercase tracking-wider">Email</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-neutral-medium uppercase tracking-wider">Last Contact</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-neutral-medium uppercase tracking-wider">Actions</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-neutral-medium uppercase tracking-wider">Ultimo Contatto</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-neutral-medium uppercase tracking-wider">Azioni</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-neutral-light">
@@ -81,8 +83,8 @@ export default function RecentContacts({ contacts }: RecentContactsProps) {
                     </div>
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap text-sm text-neutral-dark">
-                    {/* Placeholder for company name - in a real app we'd look this up from company ID */}
-                    Company Name
+                    {/* Recupererebbe il nome dell'azienda dal database */}
+                    Nome Azienda
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap text-sm text-neutral-medium">
                     {contact.email}
@@ -97,7 +99,7 @@ export default function RecentContacts({ contacts }: RecentContactsProps) {
                         size="icon" 
                         className="text-primary hover:text-primary-dark h-8 w-8" 
                         title="Email"
-                        onClick={() => handleSendEmail(contact.email)}
+                        onClick={() => contact.email && handleSendEmail(contact.email)}
                       >
                         <Mail className="h-4 w-4" />
                       </Button>
@@ -105,7 +107,7 @@ export default function RecentContacts({ contacts }: RecentContactsProps) {
                         variant="ghost" 
                         size="icon" 
                         className="text-primary hover:text-primary-dark h-8 w-8" 
-                        title="View"
+                        title="Visualizza"
                         onClick={() => handleViewContact(contact.id)}
                       >
                         <Eye className="h-4 w-4" />

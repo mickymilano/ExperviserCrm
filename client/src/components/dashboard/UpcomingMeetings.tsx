@@ -11,10 +11,13 @@ interface UpcomingMeetingsProps {
 const getMeetingColor = (type: string) => {
   switch (type) {
     case "Call":
+    case "Chiamata":
       return "border-primary";
     case "In-Person":
+    case "Di Persona":
       return "border-secondary";
     case "Virtual":
+    case "Virtuale":
       return "border-accent";
     default:
       return "border-primary";
@@ -24,10 +27,13 @@ const getMeetingColor = (type: string) => {
 const getMeetingBadgeColor = (type: string) => {
   switch (type) {
     case "Call":
+    case "Chiamata":
       return "bg-blue-100 text-primary";
     case "In-Person":
+    case "Di Persona":
       return "bg-purple-100 text-secondary";
     case "Virtual":
+    case "Virtuale":
       return "bg-teal-100 text-accent";
     default:
       return "bg-blue-100 text-primary";
@@ -41,9 +47,9 @@ export default function UpcomingMeetings({ meetings }: UpcomingMeetingsProps) {
     <Card>
       <CardHeader className="px-5 pt-5 pb-0">
         <div className="flex justify-between items-center">
-          <CardTitle className="text-lg font-semibold">Upcoming Meetings</CardTitle>
+          <CardTitle className="text-lg font-semibold">Riunioni Imminenti</CardTitle>
           <Button variant="link" className="text-primary hover:text-primary-dark text-sm font-medium">
-            View Calendar
+            Vedi Calendario
           </Button>
         </div>
       </CardHeader>
