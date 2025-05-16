@@ -1,0 +1,50 @@
+Ecco la patch da applicare **senza ulteriore intervento**:
+
+— applica questa diff in blocco:
+
+--- a/client/src/components/ui/PlacesAutocomplete.tsx
++++ b/client/src/components/ui/PlacesAutocomplete.tsx
+@@ -88,7 +88,7 @@ export function PlacesAutocomplete({
+-  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
++  const autocompleteRef = useRef<google.maps.places.PlaceAutocompleteElement | null>(null);
+@@ -152,27 +152,25 @@ export function PlacesAutocomplete({
+-      const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, options);
+-      autocompleteRef.current = autocomplete;
+-      const listener = autocomplete.addListener('place_changed', () => {
+-        const place = autocompleteRef.current!.getPlace();
++      const element = new window.google.maps.places.PlaceAutocompleteElement({
++        input: inputRef.current!,
++        types,
++        fields: ['name','formatted_address','address_components','place_id']
++      });
++      autocompleteRef.current = element;
++      const listener = element.addListener('place_changed', () => {
++        const place = element.getPlace();
+@@ -212,7 +210,7 @@ export function PlacesAutocomplete({
+-              onChangeRef.current(place.name, place);
++              onChangeRef.current(place.name || displayValue, place);
+@@ -231,67 +229,21 @@ export function PlacesAutocomplete({
+-      const listener = autocomplete.addListener('place_changed', handlePlaceChanged);
++      element.addListener('place_changed', handlePlaceChanged);
+@@ -301,19 +253,10 @@ export function PlacesAutocomplete({
+-        if (autocompleteRef.current) {
+-          autocompleteRef.current = null;
+-        }
++        autocompleteRef.current = null;
+@@ -341,13 +284,6 @@ export function PlacesAutocomplete({
+-  const handleInputKeyDown = (e: React.KeyboardEvent) => {
+-    if (e.key === 'Escape') {
+-      e.stopPropagation();
+-    }
+-  };
++  // rimosso blocco eventi superflui
+
+     return (
+       <div className="places-autocomplete relative">
+@@ -357,10 +293,7 @@ export function PlacesAutocomplete({
+-        onTouchStart={handleInputInteraction}
+-        onKeyDown={handleInputKeyDown}
+-        onFocus={handleInputInteraction}
+-        onMouseDown={handleInputInteraction}
++        onFocus={handleInputInteraction}
+       />

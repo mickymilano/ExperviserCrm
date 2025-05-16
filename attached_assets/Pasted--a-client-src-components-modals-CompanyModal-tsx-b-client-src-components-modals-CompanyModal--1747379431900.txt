@@ -1,0 +1,38 @@
+--- a/client/src/components/modals/CompanyModal.tsx
++++ b/client/src/components/modals/CompanyModal.tsx
+@@ -46,15 +46,6 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
+-  useEffect(() => {
+-    const handler = (e: PointerEvent) => {
+-      if ((e.target as HTMLElement).closest('.pac-container')) {
+-        e.stopPropagation();
+-      }
+-    };
+-    document.addEventListener('pointerdown', handler, true);
+-    return () => document.removeEventListener('pointerdown', handler, true);
+-  }, []);
++
+   const { register, handleSubmit, reset, setValue, watch, trigger, formState: { errors } } = useForm<CompanyFormData>({
+@@ -203,21 +194,19 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
+-              onChange={(value, place) => {
+-                if (place?.name) {
+-                  setValue("name", place.name, { shouldValidate: true });
+-                }
+-                if (place?.formatted_address) {
+-                  setValue("address", place.formatted_address, { shouldValidate: true });
+-                }
+-                const country = place?.address_components?.find(c => c.types.includes('country'))?.long_name;
+-                if (country) {
+-                  setValue("country", country, { shouldValidate: true });
+-                }
+-                trigger(["name","address","country"]);
+-              }}
++            onChange={(value, place) => {
++              if (place) {
++                setValue("name", place.name || value, { shouldValidate: true });
++                setValue("address", place.formatted_address || "", { shouldValidate: true });
++                setValue("fullAddress", place.formatted_address || "", { shouldValidate: true });
++                const country = place.address_components?.find(c => c.types.includes('country'))?.long_name;
++                if (country) setValue("country", country, { shouldValidate: true });
++                trigger(["name","address","fullAddress","country"]);
++              }
++            }}
