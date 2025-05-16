@@ -44,7 +44,7 @@ interface CompanyBranchesListProps {
 }
 
 export default function CompanyBranchesList({ companyId, companyName }: CompanyBranchesListProps) {
-  const [_, navigate] = useNavigate();
+  const [_, navigate] = useLocation();
   const { toast } = useToast();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
@@ -85,7 +85,7 @@ export default function CompanyBranchesList({ companyId, companyName }: CompanyB
       <BranchModal 
         open={isAddModalOpen} 
         onOpenChange={setIsAddModalOpen}
-        initialData={editingBranch || { companyId, companyName }}
+        initialData={editingBranch || { companyId }}
         onClose={onModalClose}
       />
     

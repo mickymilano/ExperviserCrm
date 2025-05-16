@@ -153,10 +153,11 @@ export default function CompanyDetail() {
       
       {/* Main content with tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-4 md:w-fit mb-4">
+        <TabsList className="grid grid-cols-5 md:w-fit mb-4">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="contacts">Contacts</TabsTrigger>
           <TabsTrigger value="deals">Deals</TabsTrigger>
+          <TabsTrigger value="branches">Filiali</TabsTrigger>
           <TabsTrigger value="activities">Activities</TabsTrigger>
         </TabsList>
         
@@ -670,6 +671,14 @@ export default function CompanyDetail() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+        
+        {/* Branches Tab */}
+        <TabsContent value="branches" className="space-y-4">
+          <CompanyBranchesList 
+            companyId={companyId} 
+            companyName={company.name}
+          />
         </TabsContent>
         
         {/* Activities Tab */}
