@@ -69,7 +69,7 @@ export default function Email() {
         <h1 className="text-2xl font-bold mb-4 sm:mb-0">Email</h1>
         <div className="flex items-center space-x-2">
           <Button onClick={() => setShowComposeModal(true)}>
-            <Plus className="mr-2 h-4 w-4" /> Compose
+            <Plus className="mr-2 h-4 w-4" /> Componi
           </Button>
           <Button 
             variant="outline" 
@@ -92,7 +92,7 @@ export default function Email() {
           <Card>
             <CardContent className="p-4">
               <Button className="w-full mb-4" onClick={() => setShowComposeModal(true)}>
-                <Plus className="mr-2 h-4 w-4" /> Compose
+                <Plus className="mr-2 h-4 w-4" /> Componi
               </Button>
               
               <div className="space-y-1 mb-6">
@@ -101,7 +101,7 @@ export default function Email() {
                   className="w-full justify-start"
                   onClick={() => handleFolderChange("inbox")}
                 >
-                  <Inbox className="mr-2 h-4 w-4" /> Inbox
+                  <Inbox className="mr-2 h-4 w-4" /> Posta in arrivo
                   {unreadCount > 0 && (
                     <Badge variant="secondary" className="ml-auto">
                       {unreadCount}
@@ -113,34 +113,34 @@ export default function Email() {
                   className="w-full justify-start"
                   onClick={() => handleFolderChange("sent")}
                 >
-                  <Send className="mr-2 h-4 w-4" /> Sent
+                  <Send className="mr-2 h-4 w-4" /> Inviati
                 </Button>
                 <Button 
                   variant={selectedFolder === "starred" ? "default" : "ghost"} 
                   className="w-full justify-start"
                   onClick={() => handleFolderChange("starred")}
                 >
-                  <Star className="mr-2 h-4 w-4" /> Starred
+                  <Star className="mr-2 h-4 w-4" /> Preferiti
                 </Button>
                 <Button 
                   variant={selectedFolder === "archive" ? "default" : "ghost"} 
                   className="w-full justify-start"
                   onClick={() => handleFolderChange("archive")}
                 >
-                  <Archive className="mr-2 h-4 w-4" /> Archive
+                  <Archive className="mr-2 h-4 w-4" /> Archivio
                 </Button>
                 <Button 
                   variant={selectedFolder === "trash" ? "default" : "ghost"} 
                   className="w-full justify-start"
                   onClick={() => handleFolderChange("trash")}
                 >
-                  <Trash2 className="mr-2 h-4 w-4" /> Trash
+                  <Trash2 className="mr-2 h-4 w-4" /> Cestino
                 </Button>
               </div>
               
               <div className="pt-2 border-t">
                 <div className="flex justify-between items-center mb-2">
-                  <h3 className="text-sm font-medium">Email Accounts</h3>
+                  <h3 className="text-sm font-medium">Account Email</h3>
                   <div className="flex space-x-1">
                     <Link href="/email/settings">
                       <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Email Settings">
@@ -178,18 +178,18 @@ export default function Email() {
                             </div>
                           ))}
                           <Link href="/email/settings" className="block pt-1 text-xs text-primary hover:underline text-center">
-                            Manage Email Settings
+                            Gestisci Impostazioni Email
                           </Link>
                         </div>
                       ) : (
                         <div className="text-sm text-muted-foreground space-y-2">
-                          <p>No email accounts configured.</p>
+                          <p>Nessun account email configurato.</p>
                           <div className="flex flex-col gap-1">
                             <Link href="/email/accounts" className="block text-xs text-primary hover:underline">
-                              Add Email Account
+                              Aggiungi Account Email
                             </Link>
                             <Link href="/email/settings" className="block text-xs text-primary hover:underline">
-                              Email Settings
+                              Impostazioni Email
                             </Link>
                           </div>
                         </div>
