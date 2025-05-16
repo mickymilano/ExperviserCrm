@@ -10,6 +10,7 @@ import {
   deals,
   synergies,
   contactEmails,
+  branches,
   type User,
   type InsertUser,
   type UserSession,
@@ -44,6 +45,8 @@ import {
   type InsertMeeting,
   type ContactEmail,
   type InsertContactEmail,
+  type Branch,
+  type InsertBranch,
 } from "@shared/schema";
 import {
   eq,
