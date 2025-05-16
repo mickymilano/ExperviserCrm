@@ -1577,7 +1577,7 @@ export class PostgresStorage implements IStorage {
       'nextFollowUpAt', 'isActiveRep', 'companyType',
       'brands', 'channels', 'productsOrServicesTags',
       'logo', 'description', 'employeeCount', 'annualRevenue', 
-      'foundedYear', 'postalCode'
+      'foundedYear' /* 'postalCode' RIMOSSO: non esiste nel database */
     ];
     
     // Copia solo i campi sicuri che esistono nell'input
