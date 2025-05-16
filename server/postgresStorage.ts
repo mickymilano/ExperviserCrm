@@ -1562,50 +1562,50 @@ export class PostgresStorage implements IStorage {
     // **VERSIONE VALIDATA CON DATABASE REALE 2025-05-16**
     console.log('Ricevuta richiesta di creazione azienda:', company);
     
-    // Crea un oggetto che include SOLO i campi VERIFICATI dalla query information_schema
-    // Campi confermati dalla query: SELECT column_name FROM information_schema.columns WHERE table_name = 'companies'
-    const companyData = {
-      // Campi obbligatori
-      name: company.name,
-      status: company.status || 'active',
-      
-      // Campi opzionali di contatto
-      email: company.email || null,
-      phone: company.phone || null,
-      website: company.website || null,
-      
-      // Indirizzo
-      address: company.address || null,
-      full_address: company.fullAddress || company.address || null,
-      
-      // Categorizzazioni
-      industry: company.industry || null,
-      tags: company.tags || [],
-      
-      // Categorizzazioni specifiche aziende
-      location_types: company.locationTypes || [],
-      company_type: company.companyType || null,
-      brands: company.brands || [],
-      channels: company.channels || [],
-      products_or_services_tags: company.productsOrServicesTags || [],
-      is_active_rep: company.isActiveRep || false,
-      
-      // Dati aggiuntivi
-      notes: company.notes || null,
-      custom_fields: company.customFields || null,
-      
-      // Date di follow-up
-      last_contacted_at: company.lastContactedAt || null,
-      next_follow_up_at: company.nextFollowUpAt || null,
-      
-      // Metadata (gestiti automaticamente)
-      updated_at: new Date()
-    };
-    
-    // Log dei dati espliciti prima dell'inserimento
-    console.log('Creating company with explicit field mapping:', companyData);
-    
     try {
+      // Crea un oggetto che include SOLO i campi VERIFICATI dalla query information_schema
+      // Campi confermati dalla query: SELECT column_name FROM information_schema.columns WHERE table_name = 'companies'
+      const companyData = {
+        // Campi obbligatori
+        name: company.name,
+        status: company.status || 'active',
+        
+        // Campi opzionali di contatto
+        email: company.email || null,
+        phone: company.phone || null,
+        website: company.website || null,
+        
+        // Indirizzo
+        address: company.address || null,
+        full_address: company.fullAddress || company.address || null,
+        
+        // Categorizzazioni
+        industry: company.industry || null,
+        tags: company.tags || [],
+        
+        // Categorizzazioni specifiche aziende
+        location_types: company.locationTypes || [],
+        company_type: company.companyType || null,
+        brands: company.brands || [],
+        channels: company.channels || [],
+        products_or_services_tags: company.productsOrServicesTags || [],
+        is_active_rep: company.isActiveRep || false,
+        
+        // Dati aggiuntivi
+        notes: company.notes || null,
+        custom_fields: company.customFields || null,
+        
+        // Date di follow-up
+        last_contacted_at: company.lastContactedAt || null,
+        next_follow_up_at: company.nextFollowUpAt || null,
+        
+        // Metadata (gestiti automaticamente)
+        updated_at: new Date()
+      };
+      
+      // Log dei dati espliciti prima dell'inserimento
+      console.log('Creating company with explicit field mapping:', companyData);
+      
       // Esegui l'inserimento con campi espliciti per evitare ogni errore di colonna mancante
       const [newCompany] = await db
         .insert(companies)
@@ -1616,6 +1616,32 @@ export class PostgresStorage implements IStorage {
       return newCompany;
     } catch (error) {
       console.error('ERRORE CRITICO durante inserimento azienda:', error);
+      
+      // Log struttura dettagliata dell'errore per debug
+      if (error.code === '42703') {
+        console.error('Errore di colonna mancante. La tabella "companies" non contiene tutti i campi necessari.');
+        console.error('Dettagli errore:', {
+          errorCode: error.code,
+          position: error.position,
+          constraint: error.constraint,
+          table: error.table,
+          column: error.column,
+          detail: error.detail,
+          hint: error.hint,
+          message: error.message
+        });
+        
+        // Verifica quali colonne esistono realmente nel database
+        try {
+          const result = await db.execute(
+            "SELECT column_name FROM information_schema.columns WHERE table_name = 'companies'"
+          );
+          console.log('Colonne disponibili in companies:', result.rows.map(r => r.column_name));
+        } catch (dbErr) {
+          console.error('Impossibile ottenere la struttura della tabella:', dbErr);
+        }
+      }
+      
       throw error;
     }
   }
