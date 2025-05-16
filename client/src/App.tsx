@@ -32,6 +32,10 @@ const SettingsPage = lazy(() => import('@/pages/settings'));
 const HelpPage = lazy(() => import('@/pages/help'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
+// Branches module
+const BranchesPage = lazy(() => import('@/pages/branches'));
+const BranchDetailPage = lazy(() => import('@/pages/branches/[id]'));
+
 // Componente di caricamento
 function LoadingScreen() {
   return (
@@ -156,6 +160,18 @@ export default function App() {
           <Route path="/emails/settings">
             <ProtectedRoute>
               <LayoutPage component={lazy(() => import('@/pages/email/settings'))} />
+            </ProtectedRoute>
+          </Route>
+          
+          {/* Routes for Branches */}
+          <Route path="/branches">
+            <ProtectedRoute>
+              <LayoutPage component={BranchesPage} />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/branches/:id">
+            <ProtectedRoute>
+              <LayoutPage component={BranchDetailPage} />
             </ProtectedRoute>
           </Route>
           

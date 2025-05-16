@@ -59,7 +59,7 @@ const getMainMenuItems = (stats?: any): MenuItemProps[] => [
   {
     label: 'Filiali',
     path: '/branches',
-    icon: <Buildings className="h-5 w-5" />,
+    icon: <Building className="h-5 w-5" />,
     badge: stats?.branches
   },
   {
