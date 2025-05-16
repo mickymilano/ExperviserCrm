@@ -401,6 +401,36 @@ export default function BranchModal({
                   </FormItem>
                 )}
               />
+              
+              {/* LinkedIn URL */}
+              <FormField
+                control={form.control}
+                name="linkedinUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>URL LinkedIn</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://linkedin.com/company/..." {...field} value={field.value || ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              {/* Instagram URL */}
+              <FormField
+                control={form.control}
+                name="instagramUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>URL Instagram</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://instagram.com/..." {...field} value={field.value || ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             <DialogFooter className="flex justify-between">
