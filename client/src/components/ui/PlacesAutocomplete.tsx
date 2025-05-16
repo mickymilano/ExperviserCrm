@@ -155,17 +155,12 @@ export function PlacesAutocomplete({
       debugContext.logInfo('Inizializzazione Google Maps Autocomplete', {}, { component: 'PlacesAutocomplete' });
       
       // Configurazione dell'autocomplete
-      const options: google.maps.places.AutocompleteOptions = {
-        fields: ['address_components', 'formatted_address', 'name', 'place_id', 'geometry'],
-        componentRestrictions: { country: 'it' }
-      };
-      
-      if (types && types.length > 0) {
-        options.types = types;
-      }
-      
-      // Crea una nuova istanza di autocomplete sull'input
-      const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, options);
+      const autocomplete = new google.maps.places.Autocomplete(inputRef.current!, {
+        types: ['establishment'],
+        fields: ['name','formatted_address','address_components'],
+        // componentRestrictions: { country: 'it' } // commentare temporaneamente se blocca i risultati
+      });
+      console.log("Init Autocomplete:", autocomplete);
       autocompleteRef.current = autocomplete;
       
       // Funzione che gestisce la selezione di un luogo

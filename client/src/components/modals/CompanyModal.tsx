@@ -155,13 +155,7 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
     withErrorHandling(
       () => {
         // Log per verificare i dati inviati
-        console.log("Submitting company data:", {
-          name: data.name,
-          address: data.address || data.fullAddress,
-          country: data.country,
-          tags: data.tags,
-          notes: data.notes
-        });
+        console.log("Dati submit company:", data);
         
         // IMPORTANTE: Verifica se ci sono dati nel form prima di inviare
         if (!data.name || data.name.trim() === '') {
@@ -208,64 +202,26 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
             <PlacesAutocomplete 
               id="name"
               value={watch("name") || ""}
-              onChange={(value, placeDetails) => {
-                console.log("PlacesAutocomplete onChange triggered for company name:", { value, placeDetails });
-                
-                // Se non ci sono dettagli del luogo, aggiorna solo il nome
-                if (!placeDetails) {
-                  setValue("name", value, { shouldValidate: false });
-                  return;
+              onChange={(value, place) => {
+                // 1) nome azienda
+                if (place?.name) {
+                  setValue("name", place.name, { shouldValidate: true });
                 }
-                
-                // Se ci sono dettagli del luogo, estrai le informazioni
-                if (placeDetails?.name) {
-                  // SOLO la ragione sociale va su name
-                  setValue("name", placeDetails.name, { shouldValidate: false });
-                  console.log("Company name set to:", placeDetails.name);
+                // 2) indirizzo
+                if (place?.formatted_address) {
+                  setValue("address", place.formatted_address, { shouldValidate: true });
                 }
-                
-                if (placeDetails?.formatted_address) {
-                  // L'indirizzo completo va su address (e su fullAddress, se usate entrambi)
-                  setValue("address", placeDetails.formatted_address, { shouldValidate: false });
-                  setValue("fullAddress", placeDetails.formatted_address, { shouldValidate: false });
-                  console.log("Address set to:", placeDetails.formatted_address);
+                // 3) paese
+                const country = place?.address_components?.find(c => c.types.includes('country'))?.long_name;
+                if (country) {
+                  setValue("country", country, { shouldValidate: true });
                 }
-                
-                // Estrae il paese se disponibile
-                if (placeDetails?.address_components) {
-                  const countryComponent = placeDetails.address_components.find(component => 
-                    component.types.includes("country")
-                  );
-                  
-                  if (countryComponent) {
-                    console.log("Country found:", countryComponent.long_name);
-                    setValue("country", countryComponent.long_name, { shouldValidate: false });
-                  }
-                }
-                
-                // Ricarica la validazione su tutti i campi solo alla fine
-                // per evitare validazioni parziali che potrebbero creare problemi
-                setTimeout(() => {
-                  trigger(["name", "address", "fullAddress", "country"]);
-                }, 100);
-                
-                // Commento: verifica se abbiamo informazioni sulla città
-                if (placeDetails.address_components) {
-                  const cityComponent = placeDetails.address_components.find(component => 
-                    component.types.includes("locality") || 
-                    component.types.includes("administrative_area_level_3")
-                  );
-                  
-                  if (cityComponent) {
-                    console.log("City found:", cityComponent.long_name);
-                    // NON impostiamo la città perché non è nello schema e causa errori
-                    // setValue("city", cityComponent.long_name, { shouldValidate: false });
-                  }
-                }
+                // validazione
+                trigger(["name","address","country"]);
               }}
-              placeholder="Cerca aziende e attività commerciali" 
+              placeholder="Cerca nome azienda…"
               className="w-full"
-              types={["establishment"]} // Specifica che vogliamo solo aziende
+              types={['establishment']}
             />
             {errors.name && (
               <p className="text-xs text-destructive">{errors.name.message}</p>

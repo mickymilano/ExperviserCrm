@@ -1559,11 +1559,11 @@ export class PostgresStorage implements IStorage {
   }
 
   async createCompany(company: InsertCompany): Promise<Company> {
-    // **VERSIONE RIPROGETTATA DA ZERO 2025-05-16**
+    // **VERSIONE VALIDATA CON DATABASE REALE 2025-05-16**
     console.log('Ricevuta richiesta di creazione azienda:', company);
     
-    // Crea un oggetto che include SOLO i campi esistenti nel database
-    // Lista esplicita di tutti i campi presenti nella tabella companies
+    // Crea un oggetto che include SOLO i campi VERIFICATI dalla query information_schema
+    // Campi confermati dalla query: SELECT column_name FROM information_schema.columns WHERE table_name = 'companies'
     const companyData = {
       // Campi obbligatori
       name: company.name,
@@ -1574,26 +1574,15 @@ export class PostgresStorage implements IStorage {
       phone: company.phone || null,
       website: company.website || null,
       
-      // Indirizzo unificato
-      address: company.address || null,      // mantenuto per retrocompatibilità
+      // Indirizzo
+      address: company.address || null,
       full_address: company.fullAddress || company.address || null,
       
-      // Informazioni aziendali
+      // Categorizzazioni
       industry: company.industry || null,
-      description: company.description || null,
-      employee_count: company.employeeCount || null,
-      annual_revenue: company.annualRevenue || null,
-      founded_year: company.foundedYear || null,
-      
-      // Media e riferimenti
-      logo: company.logo || null,
-      linkedin_url: company.linkedinUrl || null,
-      
-      // Relazioni
-      parent_company_id: company.parentCompanyId || null,
-      
-      // Categorizzazione
       tags: company.tags || [],
+      
+      // Categorizzazioni specifiche aziende
       location_types: company.locationTypes || [],
       company_type: company.companyType || null,
       brands: company.brands || [],

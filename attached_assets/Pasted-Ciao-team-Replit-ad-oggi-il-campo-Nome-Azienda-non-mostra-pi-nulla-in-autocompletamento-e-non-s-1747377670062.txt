@@ -1,0 +1,66 @@
+Ciao team Replit,
+
+ad oggi il campo “Nome Azienda” non mostra più nulla in autocompletamento e non salva i valori. Vi prego di applicare queste modifiche precise:
+
+1. **Ripristino Autocomplete nel CompanyModal**  
+   - In CompanyModal.tsx, sul componente PlacesAutocomplete per il campo name, passate obbligatoriamente:
+     ```tsx
+     <PlacesAutocomplete
+       id="name"
+       value={watch("name")}
+       onChange={…}
+       types={['establishment']}
+       placeholder="Cerca nome azienda…"
+     />
+     ```
+   - Nel file PlacesAutocomplete.tsx, nel `useEffect` che inizializza l’autocomplete, assicuratevi di costruire l’istanza così:
+     ```ts
+     const autocomplete = new google.maps.places.Autocomplete(inputRef.current!, {
+       types: ['establishment'],
+       fields: ['name','formatted_address','address_components'],
+       // componentRestrictions: { country: 'it' } // commentare temporaneamente se blocca i risultati
+     });
+     console.log("Init Autocomplete:", autocomplete);
+     ```
+   - Verificate in console (Developer Tools) che questo log compaia: se manca, significa che il codice non viene eseguito.
+
+2. **Dropdown e CSS**  
+   - Controllate che non ci siano regole CSS che nascondono `.pac-container` (display: none, z-index basso, overflow: hidden su parent).
+   - Rimuovete ogni `autoComplete="off"` sull’`<Input>` o impedimenti al focus.
+
+3. **Gestione onChange e separazione campi**  
+   - Nel callback `onChange` che passate da CompanyModal:
+     ```ts
+     onChange={(value, place) => {
+       // 1) nome azienda
+       if (place?.name) {
+         setValue("name", place.name, { shouldValidate: true });
+       }
+       // 2) indirizzo
+       if (place?.formatted_address) {
+         setValue("address", place.formatted_address, { shouldValidate: true });
+       }
+       // 3) paese
+       const country = place?.address_components?.find(c => c.types.includes('country'))?.long_name;
+       if (country) {
+         setValue("country", country, { shouldValidate: true });
+       }
+       // validazione
+       trigger(["name","address","country"]);
+     }}
+     ```
+   - Rimuovete qualsiasi `blur()` o timeout che leva il focus subito dopo la selezione.
+
+4. **Verifica submit e debug console**  
+   - In `onSubmit` di CompanyModal, aggiungete subito prima del `mutate`:
+     ```ts
+     console.log("Dati submit company:", data);
+     ```
+   - Assicuratevi che questi log compaiano in console al click su “Aggiungi Azienda”: se non vedete nulla, la console di debug non è agganciata correttamente.
+
+Per favore eseguite **solo** queste quattro modifiche e poi fatemi sapere:  
+- se vedete in console i log di init Autocomplete e di submit  
+- se il dropdown riappare e permette la selezione con click/tasto invio  
+- se, dopo la selezione, “Nome Azienda” contiene solo la ragione sociale e “Indirizzo” il solo indirizzo  
+
+Grazie!  
