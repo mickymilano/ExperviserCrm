@@ -159,14 +159,14 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
       
       if (isEditMode && initialData) {
         url = `/api/companies/${initialData.id}`;
-        method = "PATCH";
+        method = "PUT"; // Modificato da PATCH a PUT per adattarsi all'API del server
       }
       
       // Adattiamo il fetch body con solo i campi verificati
       const requestData = {
         name: companyData.name,
         address: companyData.address,
-        full_address: companyData.full_address,
+        fullAddress: companyData.full_address, // Corretta mappatura del campo 
         email: companyData.email || "",
         phone: companyData.phone || "",
         website: companyData.website || "",
@@ -174,7 +174,17 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
         country: companyData.country || "",
         tags: companyData.tags || [],
         notes: companyData.notes || "",
-        status: companyData.status || "active"
+        status: companyData.status || "active",
+        // Aggiungiamo tutti i campi necessari
+        linkedinUrl: companyData.linkedinUrl || "",
+        sector: companyData.sector || "",
+        description: companyData.description || "",
+        parentCompanyId: companyData.parentCompanyId || null,
+        isActiveRep: companyData.isActiveRep || false,
+        employeeCount: companyData.employeeCount || null,
+        annualRevenue: companyData.annualRevenue || null,
+        foundedYear: companyData.foundedYear || null,
+        customFields: companyData.customFields || null
       };
       
       const response = await fetch(url, {

@@ -143,7 +143,7 @@ export const companies = pgTable('companies', {
   logo: text('logo'),
   tags: text('tags').array(),
   notes: text('notes'),
-  customFields: json('custom_fields'),
+  customFields: jsonb('custom_fields'),
   parentCompanyId: integer('parent_company_id').references(() => companies.id),
   linkedinUrl: varchar('linkedin_url', { length: 255 }),
   locationTypes: text('location_types').array(),
