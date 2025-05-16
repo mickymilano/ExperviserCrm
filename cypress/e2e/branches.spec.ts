@@ -66,6 +66,8 @@ describe('Branch Module Tests', () => {
     cy.get('input[name="postalCode"]').type('20100');
     cy.get('input[name="email"]').type('filiale.test@example.com');
     cy.get('input[name="phone"]').type('02 1234567');
+    cy.get('input[name="linkedinUrl"]').type('https://linkedin.com/company/filiale-test');
+    cy.get('input[name="instagramUrl"]').type('https://instagram.com/filiale.test');
     
     // Salva la filiale
     cy.contains('button', 'Crea Filiale').click();
@@ -156,6 +158,20 @@ describe('Branch Module Tests', () => {
     
     // Verifica che compaia il messaggio di errore per l'email
     cy.contains('Email non valida').should('be.visible');
+    
+    // Inserisci URL LinkedIn non valido
+    cy.get('input[name="linkedinUrl"]').clear().type('linkedin-non-valido');
+    cy.contains('button', 'Crea Filiale').click();
+    
+    // Verifica che compaia il messaggio di errore per LinkedIn
+    cy.contains('URL LinkedIn non valido').should('be.visible');
+    
+    // Inserisci URL Instagram non valido
+    cy.get('input[name="instagramUrl"]').clear().type('instagram-non-valido');
+    cy.contains('button', 'Crea Filiale').click();
+    
+    // Verifica che compaia il messaggio di errore per Instagram
+    cy.contains('URL Instagram non valido').should('be.visible');
     
     // Chiudi il modale
     cy.contains('button', 'Annulla').click();

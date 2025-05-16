@@ -32,7 +32,7 @@ I test end-to-end per il modulo Branch verificano:
 
 2. **Creazione di una nuova filiale**
    - Apre il modale di creazione
-   - Compila tutti i campi richiesti
+   - Compila tutti i campi richiesti (inclusi profili social LinkedIn e Instagram)
    - Salva la filiale e verifica che appaia nella lista
 
 3. **Modifica di una filiale esistente**
@@ -50,8 +50,8 @@ I test end-to-end per il modulo Branch verificano:
    - Verifica che la filiale venga rimossa dalla lista
 
 6. **Validazione dei campi del form**
-   - Testa i requisiti di validazione (campi obbligatori, formati email, ecc.)
-   - Verifica i messaggi di errore
+   - Testa i requisiti di validazione (campi obbligatori, formati email, URL LinkedIn e Instagram, ecc.)
+   - Verifica i messaggi di errore per tutti i campi, compresi quelli per i profili social
 
 ## Struttura dei test
 
