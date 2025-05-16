@@ -47,10 +47,9 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
   const [companySearchQuery, setCompanySearchQuery] = useState("");
   const [filteredCompanies, setFilteredCompanies] = useState<any[]>([]);
   const [filteredContacts, setFilteredContacts] = useState<any[]>([]);
-  const [selectedCompany, setSelectedCompany] = useState<number | null>(null);
+  // Rimuoviamo lo stato separato per selectedCompany e usiamo solo i valori del form
   
-  // Use ref for selected company to avoid render cycles
-  const selectedCompanyIdRef = useRef<number | null>(null);
+  // Rimuoviamo anche il ref per l'id dell'azienda
   const formInitializedRef = useRef(false);
   
   // Form reference for alert dialog submission
@@ -103,17 +102,14 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     }
   });
 
-  // Helper function to manage company selection with proper logging
-  const setSelectedCompanyId = (id: number | null) => {
-    console.log("Setting selected company ID to:", id);
-    selectedCompanyIdRef.current = id;
-    setSelectedCompany(id);
-    // Also update the form value directly
+  // Helper function solo per logging
+  const setCompanyIdInForm = (id: number | null) => {
+    console.log("Setting company ID in form:", id);
     setValue("companyId", id);
   };
   
-  // Helper function to get company ID from state
-  const getSelectedCompanyId = () => selectedCompany;
+  // Helper function che utilizza direttamente i valori del form
+  const getSelectedCompanyId = () => getValues("companyId");
 
   // Initialize form when in edit mode or reset for create mode
   useEffect(() => {
@@ -199,7 +195,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     }
   }, [companySearchQuery, companies]);
 
-  // Rimuoviamo il primo useEffect per evitare duplicazioni e potenziali loop
+  // Non usiamo più uno stato separato per l'ID dell'azienda, usiamo direttamente getValues
 
 
 
@@ -254,7 +250,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       setValue("contactId", null);
     }
     
-  }, [contacts, getValues, setValue, watch("companyId")]);
+  }, [contacts, getValues, setValue]);
 
   // La funzionalità delle sinergie è stata rimossa
   /*
