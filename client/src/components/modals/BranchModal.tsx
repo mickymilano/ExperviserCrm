@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -24,6 +24,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useCompanies } from "@/hooks/useCompanies";
+import { useContacts } from "@/hooks/useContacts";
 import { useCreateBranch, useUpdateBranch } from "@/hooks/useBranches";
 import {
   Select,
@@ -32,13 +33,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Branch, BranchManager } from "@/types";
+import { Branch, BranchManager, Contact } from "@/types";
+import { ContactCombobox } from "@/components/ui/ContactCombobox";
 
 // Schema di validazione per un manager
 const managerSchema = z.object({
-  id: z.string().optional(),
+  id: z.string().optional(), // ID del manager (generato automaticamente)
   name: z.string().min(1, { message: "Il nome del responsabile è obbligatorio" }),
-  role: z.string().min(1, { message: "Il ruolo è obbligatorio" })
+  role: z.string().min(1, { message: "Il ruolo è obbligatorio" }),
+  contactId: z.string().optional() // ID del contatto collegato (opzionale)
 });
 
 // Schema di validazione per il form
