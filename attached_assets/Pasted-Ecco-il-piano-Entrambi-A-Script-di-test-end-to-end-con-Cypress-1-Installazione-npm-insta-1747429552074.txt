@@ -1,0 +1,75 @@
+Ecco il piano “Entrambi”:
+
+⸻
+
+A. Script di test end-to-end con Cypress
+	1.	Installazione:
+
+npm install --save-dev cypress
+
+
+	2.	Configurazione: crea cypress.config.ts con baseUrl puntato al tuo server locale.
+	3.	Spec dei test: in cypress/e2e/branches.spec.ts definisci tutti i passaggi:
+	•	Login (magari bypassare l’UI con API)
+	•	Visita /branches
+	•	Verifica lista vuota / popolata
+	•	Creazione filiale (aprire modal, compilare, salvare, assert toast e riga)
+	•	Modifica filiale
+	•	Eliminazione filiale
+	•	Edge-case: validazione, errori server
+
+Usa cy.intercept() per mock API e rendere i test stabili.
+
+⸻
+
+B. Ricerca best-practice CRUD React + TanStack Query
+	1.	Parole chiave GitHub:
+	•	react tanstack query crud example
+	•	react-query material-ui table crud repo
+	2.	Parole chiave StackOverflow:
+	•	“best practices react-query CRUD list”
+	•	“tanstack query pagination sorting best practices”
+	3.	Raccogli pattern di gestione stato, refetching, invalidation, paginazione, error handling.
+	4.	Sintesi in docs/best-practices-react-query.md.
+
+⸻
+
+Comando unico per Replit
+
+Replit, procedi così in autonomia:
+
+1. **Setup Cypress**  
+   - Installa cypress (`npm install --save-dev cypress`)  
+   - Aggiungi `cypress.config.ts` con baseUrl (es. http://localhost:3000)
+
+2. **Crea spec di E2E**  
+   - File: `cypress/e2e/branches.spec.ts`  
+   - Scrivi i test che simulano:  
+     • Login via API  
+     • Visit /branches  
+     • Verifica stato iniziale (vuoto/messaggio)  
+     • Creazione filiale (modal open, inserimento, submit, toast e riga)  
+     • Modifica filiale  
+     • Cancellazione filiale  
+     • Edge-case (senza nome, errori backend, nomi troppo lunghi)
+
+3. **Esegui i test**  
+   - Aggiungi script `"cy:open": "cypress open"`  
+   - Lancia `npm run cy:open` e verifica il passaggio di tutti i test
+
+4. **Ricerca online best-practice CRUD**  
+   - Su GitHub: cerca repo con “react tanstack query crud example”  
+   - Su StackOverflow: cerca “best practices react-query CRUD list”  
+   - Raccogli link e snippet rilevanti
+
+5. **Crea documento di sintesi**  
+   - File: `docs/best-practices-react-query.md`  
+   - Inserisci: pattern di invalidation, refetching, paginazione, gestione errori
+
+6. **Report finale**  
+   - Esporta in `debug/e2e-report.txt` l’esito dei test Cypress  
+   - Esporta in `docs/best-practices-react-query.md` la sintesi delle ricerche
+
+Al termine, consegnami i due file (`e2e-test-report.txt` e `best-practices-react-query.md`) e un breve log di conferma su eventuali errori riscontrati.
+
+Così avrai sia un pacchetto di test automatici per il modulo Branch sia una guida alle migliori pratiche per il CRUD con React + TanStack Query.
