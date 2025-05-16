@@ -85,7 +85,7 @@ export default function CompanyBranchesList({ companyId, companyName }: CompanyB
       <BranchModal 
         open={isAddModalOpen} 
         onOpenChange={setIsAddModalOpen}
-        initialData={editingBranch || { companyId }}
+        initialData={editingBranch}
         onClose={onModalClose}
       />
     
@@ -156,7 +156,9 @@ export default function CompanyBranchesList({ companyId, companyName }: CompanyB
                       <div className="flex items-start">
                         <MapPin className="h-4 w-4 mr-2 text-muted-foreground mt-0.5" />
                         <div>
-                          {branch.fullAddress || 'Indirizzo non specificato'}
+                          {branch.address ? 
+                            `${branch.address}${branch.city ? `, ${branch.city}` : ''}${branch.postalCode ? ` ${branch.postalCode}` : ''}${branch.region ? ` (${branch.region})` : ''}` 
+                            : 'Indirizzo non specificato'}
                         </div>
                       </div>
                     </TableCell>

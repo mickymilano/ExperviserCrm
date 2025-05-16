@@ -59,6 +59,7 @@ interface BranchModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialData?: Branch | null;
+  onClose?: () => void;
 }
 
 export default function BranchModal({
