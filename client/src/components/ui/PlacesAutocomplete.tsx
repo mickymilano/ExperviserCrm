@@ -174,14 +174,31 @@ export function PlacesAutocomplete({
           if (!autocompleteRef.current) return;
           
           const place = autocompleteRef.current.getPlace();
-          if (!place || !place.place_id) {
-            debugContext.logWarning('Luogo selezionato non valido', {}, { component: 'PlacesAutocomplete' });
+          
+          // Debug dettagliato sul place ricevuto
+          debugContext.logInfo('Place changed event triggered', { 
+            hasPlace: !!place,
+            hasPlaceId: place && !!place.place_id,
+            placeProperties: place ? Object.keys(place) : []
+          }, { component: 'PlacesAutocomplete' });
+          
+          if (!place) {
+            debugContext.logWarning('Oggetto place vuoto dalla API', {}, { component: 'PlacesAutocomplete' });
             return;
           }
           
-          debugContext.logInfo('Luogo selezionato', { 
+          // Se non c'è un place_id ma c'è un nome, potrebbe essere una selezione parziale
+          // In questo caso procediamo comunque per migliorare l'esperienza utente
+          if (!place.place_id && !place.name && !place.formatted_address) {
+            debugContext.logWarning('Luogo selezionato senza identificatori', {
+              placeContent: JSON.stringify(place)
+            }, { component: 'PlacesAutocomplete' });
+            return;
+          }
+          
+          debugContext.logInfo('Luogo selezionato correttamente', { 
             name: place.name || place.formatted_address,
-            placeId: place.place_id
+            placeId: place.place_id || 'N/A'
           }, { component: 'PlacesAutocomplete' });
           
           // Formatta il valore da mostrare (nome e/o indirizzo)
@@ -192,21 +209,28 @@ export function PlacesAutocomplete({
           // Imposta il valore interno
           setInternalValue(displayValue);
           
-          // Chiama il callback onChange con il valore e i dettagli del luogo
-          if (onChangeRef.current) {
-            onChangeRef.current(displayValue, place);
-          }
-          
-          // Gestisce il callback per il paese se richiesto
-          if (onCountrySelectRef.current && place.address_components) {
-            const countryComponent = place.address_components.find(
-              component => component.types.includes('country')
-            );
-            
-            if (countryComponent) {
-              onCountrySelectRef.current(countryComponent.long_name);
+          // Importante: delay zero per assicurarsi che l'evento si verifichi dopo l'aggiornamento UI
+          setTimeout(() => {
+            // Chiama il callback onChange con il valore e i dettagli del luogo
+            if (onChangeRef.current) {
+              debugContext.logInfo('Invocazione callback onChange', { 
+                displayValue, 
+                hasPlaceData: !!place 
+              }, { component: 'PlacesAutocomplete' });
+              onChangeRef.current(displayValue, place);
             }
-          }
+            
+            // Gestisce il callback per il paese se richiesto
+            if (onCountrySelectRef.current && place.address_components) {
+              const countryComponent = place.address_components.find(
+                component => component.types.includes('country')
+              );
+              
+              if (countryComponent) {
+                onCountrySelectRef.current(countryComponent.long_name);
+              }
+            }
+          }, 0);
         } catch (error) {
           debugContext.logError('Errore nella gestione del place_changed', error, { component: 'PlacesAutocomplete' });
         }
@@ -225,23 +249,53 @@ export function PlacesAutocomplete({
             // Impedisci che i click nel container si propaghino (importante nei modali)
             pacContainer.addEventListener('click', (e) => {
               e.stopPropagation();
+              debugContext.logInfo('Click sul container .pac-container', {}, { component: 'PlacesAutocomplete' });
             });
             
+            // Il mousedown è cruciale per evitare che i modali si chiudano
             pacContainer.addEventListener('mousedown', (e) => {
               e.stopPropagation();
+              e.preventDefault(); // Aggiungiamo preventDefault per maggiore sicurezza
+              debugContext.logInfo('Mousedown sul container .pac-container prevenuto', {}, { component: 'PlacesAutocomplete' });
+            });
+            
+            // Aggiungiamo un gestore per gli elementi interni (suggerimenti)
+            const handleSuggestionInteraction = (event: Event) => {
+              event.stopPropagation();
+              // Non chiamiamo preventDefault qui per permettere la selezione
+              debugContext.logInfo('Interazione con suggerimento', { 
+                type: event.type,
+                target: (event.target as HTMLElement).className
+              }, { component: 'PlacesAutocomplete' });
+            };
+            
+            // Aggiungiamo listener per ogni elemento .pac-item
+            pacContainer.querySelectorAll('.pac-item').forEach(item => {
+              item.addEventListener('mousedown', handleSuggestionInteraction);
+              item.addEventListener('touchstart', handleSuggestionInteraction);
+              item.addEventListener('click', handleSuggestionInteraction);
             });
             
             // Supporto per touch devices
-            ['touchstart', 'touchend'].forEach(eventType => {
+            ['touchstart', 'touchend', 'touchmove'].forEach(eventType => {
               pacContainer.addEventListener(eventType, (e) => {
                 e.stopPropagation();
+                debugContext.logInfo(`Evento touch ${eventType} sul container`, {}, { component: 'PlacesAutocomplete' });
               });
             });
+            
+            // Aggiunta di un attributo per identificarlo facilmente
+            pacContainer.setAttribute('data-experviser-autocomplete', 'true');
+            
+            // Aggiungiamo uno stile per garantire che sia visibile sopra i modali
+            pacContainer.style.zIndex = '10000';
+          } else {
+            debugContext.logWarning('Container .pac-container non trovato', {}, { component: 'PlacesAutocomplete' });
           }
         } catch (err) {
           debugContext.logError('Errore setup container suggerimenti', err, { component: 'PlacesAutocomplete' });
         }
-      }, 1000);
+      }, 500); // Riduciamo il timeout per una risposta più rapida
       
       // Funzione di pulizia al dismount
       return () => {
@@ -281,13 +335,25 @@ export function PlacesAutocomplete({
     }
   };
   
-  // Gestisce l'interazione con l'input
+  // Gestisce l'interazione con l'input per evitare chiusura di modali
   const handleInputInteraction = (e: React.SyntheticEvent) => {
     e.stopPropagation();
+    debugContext.logInfo('Interazione con input prevenuta', { 
+      type: e.type 
+    }, { component: 'PlacesAutocomplete' });
+  };
+  
+  // Previene propagazione di tutti gli eventi
+  const handleInputKeyDown = (e: React.KeyboardEvent) => {
+    // Non blocchiamo i tasti di navigazione come Tab, ma blocchiamo altri che potrebbero chiudere il modale
+    if (e.key === 'Escape') {
+      e.stopPropagation();
+      debugContext.logInfo('Evento keydown Escape prevenuto', {}, { component: 'PlacesAutocomplete' });
+    }
   };
 
   return (
-    <div className={`relative w-full ${error ? 'has-error' : ''}`}>
+    <div className={`relative w-full ${error ? 'has-error' : ''}`} onClick={handleInputInteraction}>
       <Input
         ref={inputRef}
         type="text"
@@ -295,6 +361,9 @@ export function PlacesAutocomplete({
         onChange={handleInputChange}
         onClick={handleInputInteraction}
         onTouchStart={handleInputInteraction}
+        onKeyDown={handleInputKeyDown}
+        onFocus={handleInputInteraction}
+        onMouseDown={handleInputInteraction}
         placeholder={placeholder}
         className={className}
         id={id}
