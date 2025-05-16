@@ -16,7 +16,7 @@ import { Check, ChevronsUpDown, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
-// import { useCreateSynergy } from "@/hooks/useSynergies.tsx"; // Funzionalità sinergie rimossa
+import { useCreateSynergy } from "@/hooks/useSynergies"; // Funzionalità sinergie ripristinata
 import { Badge } from "@/components/ui/badge";
 import AsyncSelect from "react-select/async";
 
@@ -35,7 +35,7 @@ const dealSchema = z.object({
   expectedCloseDate: z.string().optional(),
   tags: z.array(z.string()).optional().nullable(),
   notes: z.string().optional().nullable(),
-  // La proprietà synergyContactIds è stata rimossa in quanto la funzionalità sinergie non è più supportata
+  synergyContactIds: z.array(z.number()).optional()
 });
 
 type DealFormData = z.infer<typeof dealSchema>;
@@ -59,8 +59,8 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
   const [showNoContactAlert, setShowNoContactAlert] = useState(false);
   const isEditMode = !!initialData && initialData.id !== undefined;
 
-  // La funzionalità delle sinergie è stata rimossa
-  // const createSynergyMutation = useCreateSynergy();
+  // Hook per la creazione di sinergie  
+  const createSynergyMutation = useCreateSynergy();
 
   // Fetch pipeline stages 
   const { data: stages = [] } = useQuery({
@@ -98,14 +98,16 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       expectedCloseDate: "",
       tags: [],
       notes: "",
-      // synergyContactIds: [], // campo rimosso dalla funzionalità
+      synergyContactIds: []
     }
   });
 
-  // Helper function solo per logging
+  // Helper function che aggiorna l'azienda e inoltre aggiorna i contatti filtrati
   const setCompanyIdInForm = (id: number | null) => {
     console.log("Setting company ID in form:", id);
     setValue("companyId", id);
+    // Aggiorna i contatti filtrati quando cambia l'azienda
+    updateFilteredContacts(id);
   };
   
   // Helper function che utilizza direttamente i valori del form
@@ -201,19 +203,19 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
 
 
   
-  // Filter contacts based on selected company
-  useEffect(() => {
+  // Utilizziamo una funzione separata per filtrare i contatti in base all'azienda selezionata
+  // anziché un useEffect per evitare aggiornamenti non necessari
+  const updateFilteredContacts = (companyId: number | null) => {
     if (!contacts || !Array.isArray(contacts)) {
       console.warn("Contacts data is not available or not an array");
+      setFilteredContacts([]);
       return;
     }
     
-    // Usiamo il valore dal form direttamente invece di dipendere da selectedCompany
-    const currentCompanyId = getValues("companyId");
-    console.log("Filtering contacts for company ID from form:", currentCompanyId);
+    console.log("Filtering contacts for company ID:", companyId);
     
-    if (!currentCompanyId) {
-      // Se non c'è un'azienda selezionata, mostra tutti i contatti
+    if (!companyId) {
+      // Se non c'è un'azienda selezionata, mostra lista vuota
       setFilteredContacts([]);
       console.log("No company selected, clearing contacts selection");
       return;
@@ -228,17 +230,17 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       
       // Check if any area links the contact to the selected company
       const isAssociated = contact.areasOfActivity.some((area: { companyId: number }) => 
-        area.companyId === Number(currentCompanyId)
+        area.companyId === Number(companyId)
       );
       
       if (isAssociated) {
-        console.log(`Contact ${contact.id} (${contact.firstName} ${contact.lastName}) is associated with company ${currentCompanyId}`);
+        console.log(`Contact ${contact.id} (${contact.firstName} ${contact.lastName}) is associated with company ${companyId}`);
       }
       
       return isAssociated;
     });
     
-    console.log(`Filtered contacts for company ID ${currentCompanyId}: found ${filteredContactsList.length} contacts`);
+    console.log(`Filtered contacts for company ID ${companyId}: found ${filteredContactsList.length} contacts`);
     setFilteredContacts(filteredContactsList);
     
     // If there's only one contact for this company, auto-select it
@@ -249,8 +251,13 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       // Clear contact selection if no contacts available
       setValue("contactId", null);
     }
-    
-  }, [contacts, getValues, setValue]);
+  };
+  
+  // Quando i contatti cambiano, aggiorniamo il filtro
+  useEffect(() => {
+    const companyId = getValues("companyId");
+    updateFilteredContacts(companyId);
+  }, [contacts]);
 
   // La funzionalità delle sinergie è stata rimossa
   /*
