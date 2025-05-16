@@ -1,0 +1,72 @@
+Replit, procedi così per individuare e correggere le discrepanze tra frontend e tabella companies:
+	1.	Estrai la struttura della tabella
+Esegui in psql (o dove puoi accedere al database):
+
+SELECT column_name, data_type
+FROM information_schema.columns
+WHERE table_name = 'companies'
+ORDER BY ordinal_position;
+
+Salva l’elenco dei campi restituiti.
+
+	2.	Esporta il payload che mandi dal frontend
+In CompanyModal.tsx, subito prima del fetch, assicurati di avere:
+
+console.log("➡️ Inviando a /api/companies:", companyData);
+
+Apri la console del client e copia esattamente i nomi delle proprietà di companyData.
+
+	3.	Confronta i due elenchi
+	•	Metti a confronto i column_name del database con le chiavi di companyData.
+	•	Individua:
+	•	Campi che esistono nel DB ma non sono nel payload.
+	•	Proprietà che mandi ma non corrispondono a nessuna colonna.
+	4.	Allinea il payload al database
+	•	In CompanyModal.tsx, rimappa ogni proprietà di companyData al nome di colonna corretto.
+Esempio, se la colonna si chiama full_address ma tu invii fullAddress, fai:
+
+body: JSON.stringify({
+  name: companyData.name,
+  full_address: companyData.fullAddress,  // usa snake_case come in DB
+  address:      companyData.address,
+  email:        companyData.email,
+  // …ecc.
+})
+
+
+	•	Rimuovi tutte le proprietà non presenti in tabella.
+
+	5.	Aggiorna lo schema di validazione
+In companySchema (Zod), rinomina gli stessi campi in snake_case o mantieni camelCase solo per quelli che poi rimappi.
+Ad esempio:
+
+const companySchema = z.object({
+  name: z.string().min(1),
+  full_address: z.string().optional(),  // corrisponde al DB
+  address: z.string().optional(),
+  email: z.string().email().optional(),
+  // …
+});
+
+
+	6.	Verifica il backend
+	•	In PostgresStorage.createCompany assicurati di usare esattamente gli stessi nomi di colonna:
+
+const companyData = {
+  name: company.name,
+  address: company.address,
+  full_address: company.full_address,
+  email: company.email,
+  // …
+};
+
+
+	•	Rimuovi ogni campo nel payload che non ha colonna corrispondente.
+
+	7.	Test completo
+	•	Ridigita nome + indirizzo nell’autocomplete.
+	•	Apri la console del browser e controlla il log del payload.
+	•	Apri la console del server e verifica il risultato di INSERT INTO companies.
+	•	Controlla infine direttamente la tabella per vedere il nuovo record.
+
+Solo quando payload, Zod schema e colonne DB saranno perfettamente allineati, il salvataggio funzionerà. Fai questi passaggi e riportami il risultato.
