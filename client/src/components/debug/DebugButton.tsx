@@ -1,65 +1,38 @@
-import { useState } from 'react';
-import { Bug, AlertTriangle } from 'lucide-react';
-import { useDebugConsoleStore } from '@/stores/debugConsoleStore';
-import { useDebugLogs } from '@/hooks/useDebugLogs';
-import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Badge } from '@/components/ui/badge';
+import { BugIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useDebugConsoleStore } from "@/stores/debugConsoleStore";
+import { useDebugLogs } from "@/hooks/useDebugLogs";
+import { Badge } from "@/components/ui/badge";
+import { useState, useEffect } from "react";
 
 export default function DebugButton() {
   const { toggleVisibility, isVisible } = useDebugConsoleStore();
   const { logs } = useDebugLogs();
-  
-  // Conteggio errori e avvisi
-  const errorCount = logs.filter(log => log.level === 'error').length;
-  const warningCount = logs.filter(log => log.level === 'warn').length;
-  
+  const [errorCount, setErrorCount] = useState(0);
+
+  // Conta il numero di errori
+  useEffect(() => {
+    const count = logs.filter(log => log.level === 'error').length;
+    setErrorCount(count);
+  }, [logs]);
+
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button 
-            variant="outline" 
-            size="icon" 
-            className="relative h-8 w-8 rounded-full"
-            onClick={toggleVisibility}
-          >
-            <Bug className="h-4 w-4" />
-            
-            {/* Badge per mostrare errori */}
-            {errorCount > 0 && (
-              <Badge 
-                variant="destructive" 
-                className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center"
-              >
-                {errorCount}
-              </Badge>
-            )}
-            
-            {/* Indicatore di avvisi (solo se non ci sono errori) */}
-            {errorCount === 0 && warningCount > 0 && (
-              <Badge 
-                className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center bg-yellow-500"
-              >
-                {warningCount}
-              </Badge>
-            )}
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side="bottom">
-          <p>{isVisible ? 'Nascondi' : 'Mostra'} Console Debug</p>
-          {(errorCount > 0 || warningCount > 0) && (
-            <div className="flex gap-2 mt-1 text-xs">
-              {errorCount > 0 && (
-                <span className="text-red-500">{errorCount} errori</span>
-              )}
-              {warningCount > 0 && (
-                <span className="text-yellow-500">{warningCount} avvisi</span>
-              )}
-            </div>
-          )}
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Button
+      variant={errorCount > 0 ? "destructive" : "outline"}
+      size="sm"
+      className="fixed bottom-4 right-4 z-50 flex items-center gap-1 rounded-full shadow-md"
+      onClick={toggleVisibility}
+      title="Apri console di debug"
+    >
+      <BugIcon className="h-4 w-4" />
+      {errorCount > 0 && (
+        <Badge variant="outline" className="ml-1 bg-white text-destructive">
+          {errorCount}
+        </Badge>
+      )}
+      <span className="ml-1 hidden md:inline">
+        {isVisible ? "Chiudi Console" : "Debug Console"}
+      </span>
+    </Button>
   );
 }

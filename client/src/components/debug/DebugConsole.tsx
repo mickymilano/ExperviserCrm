@@ -1,454 +1,411 @@
-import { useState, useEffect, useRef } from 'react';
-import { X, ChevronDown, ChevronUp, AlertCircle, Info, AlertTriangle, CheckCircle, Copy, Download, Trash, Maximize2, Minimize2 } from 'lucide-react';
-import { useDebugLogs } from '@/hooks/useDebugLogs';
-import { useDebugConsoleStore } from '@/stores/debugConsoleStore';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import * as Sentry from "@sentry/react";
-
-type LogLevel = 'error' | 'warn' | 'info' | 'debug' | 'log';
-
-interface LogEntry {
-  id: string;
-  timestamp: Date;
-  level: LogLevel;
-  message: string;
-  details?: any;
-  component?: string;
-  stack?: string;
-}
-
-const LogLevelIcon = ({ level }: { level: LogLevel }) => {
-  switch (level) {
-    case 'error':
-      return <AlertCircle className="h-4 w-4 text-red-500" />;
-    case 'warn':
-      return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
-    case 'info':
-      return <Info className="h-4 w-4 text-blue-500" />;
-    case 'debug':
-      return <Info className="h-4 w-4 text-purple-500" />;
-    default:
-      return <Info className="h-4 w-4 text-gray-500" />;
-  }
-};
+import { useState, useEffect } from "react";
+import { useDebugConsoleStore } from "@/stores/debugConsoleStore";
+import { useDebugLogs } from "@/hooks/useDebugLogs";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  XIcon, 
+  MinimizeIcon, 
+  MaximizeIcon, 
+  ClipboardCopyIcon,
+  RefreshCwIcon, 
+  FilterIcon,
+  AlertTriangleIcon,
+  InfoIcon, 
+  AlertCircleIcon
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { type LogEntry, type LogLevel } from "@/lib/debugContext";
 
 export default function DebugConsole() {
-  const {
-    isVisible,
-    toggleVisibility,
-    position,
-    setPosition,
-    size,
-    setSize,
-    isMinimized,
-    toggleMinimized,
-    isFilterPanelOpen,
-    toggleFilterPanel
+  const { 
+    isVisible, 
+    isMinimized, 
+    activeTab, 
+    toggleVisibility, 
+    toggleMinimize, 
+    setActiveTab 
   } = useDebugConsoleStore();
-
-  const { logs, clearLogs, setLogFilter, logFilter } = useDebugLogs();
-  const [activeTab, setActiveTab] = useState<string>('all');
-  const [filterText, setFilterText] = useState<string>('');
-  const [autoScroll, setAutoScroll] = useState<boolean>(true);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const [isResizing, setIsResizing] = useState(false);
-  const [resizeStart, setResizeStart] = useState({ x: 0, y: 0 });
-  const [downloadFormat, setDownloadFormat] = useState<'json' | 'txt'>('json');
-
-  // Filtro dei log in base al tab attivo e al testo di ricerca
-  const filteredLogs = logs.filter(log => {
-    // Filtra per livello se non è selezionato "all"
-    if (activeTab !== 'all' && log.level !== activeTab) {
-      return false;
-    }
-    
-    // Filtra per testo
-    if (filterText) {
-      const searchLower = filterText.toLowerCase();
-      return (
-        log.message.toLowerCase().includes(searchLower) ||
-        (log.component && log.component.toLowerCase().includes(searchLower)) ||
-        (log.details && JSON.stringify(log.details).toLowerCase().includes(searchLower))
-      );
-    }
-    
-    return true;
-  });
-
-  // Auto-scroll alla fine
+  
+  const { logs, clearLogs } = useDebugLogs();
+  
+  // Stato locale per filtri
+  const [levelFilters, setLevelFilters] = useState<LogLevel[]>([
+    'error', 'warn', 'info', 'debug', 'log'
+  ]);
+  
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filteredLogs, setFilteredLogs] = useState<LogEntry[]>(logs);
+  
+  // Aggiorna i log filtrati quando cambiano i filtri o i log
   useEffect(() => {
-    if (autoScroll && scrollAreaRef.current) {
-      const scrollElement = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-      if (scrollElement) {
-        scrollElement.scrollTop = scrollElement.scrollHeight;
+    const filtered = logs.filter(log => {
+      // Filtro per livello di log
+      if (!levelFilters.includes(log.level)) {
+        return false;
       }
-    }
-  }, [logs, autoScroll]);
-
-  // Gestione del resize della console
-  const handleResizeStart = (e: React.MouseEvent) => {
-    setIsResizing(true);
-    setResizeStart({ x: e.clientX, y: e.clientY });
+      
+      // Filtro per testo di ricerca
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const messageMatch = log.message.toLowerCase().includes(query);
+        const componentMatch = log.component?.toLowerCase().includes(query);
+        const detailsMatch = log.details ? 
+          JSON.stringify(log.details).toLowerCase().includes(query) : false;
+        
+        return messageMatch || componentMatch || detailsMatch;
+      }
+      
+      return true;
+    });
+    
+    setFilteredLogs(filtered);
+  }, [logs, levelFilters, searchQuery]);
+  
+  // Conteggi per tipologia di log
+  const errorCount = logs.filter(log => log.level === 'error').length;
+  const warningCount = logs.filter(log => log.level === 'warn').length;
+  const infoCount = logs.filter(log => log.level === 'info').length;
+  const debugCount = logs.filter(log => log.level === 'debug').length;
+  
+  // Handler per il click sul filtro per livello
+  const toggleLevelFilter = (level: LogLevel) => {
+    setLevelFilters(prev => {
+      if (prev.includes(level)) {
+        return prev.filter(l => l !== level);
+      } else {
+        return [...prev, level];
+      }
+    });
   };
-
-  useEffect(() => {
-    const handleResize = (e: MouseEvent) => {
-      if (isResizing) {
-        // Calcolo nuove dimensioni
-        const deltaY = resizeStart.y - e.clientY;
-        setSize({
-          width: size.width,
-          height: size.height + deltaY
-        });
-        setResizeStart({ x: e.clientX, y: e.clientY });
-      }
-    };
-
-    const handleResizeEnd = () => {
-      setIsResizing(false);
-    };
-
-    if (isResizing) {
-      window.addEventListener('mousemove', handleResize);
-      window.addEventListener('mouseup', handleResizeEnd);
-    }
-
-    return () => {
-      window.removeEventListener('mousemove', handleResize);
-      window.removeEventListener('mouseup', handleResizeEnd);
-    };
-  }, [isResizing, resizeStart, size, setSize]);
-
-  // Funzione per copiare i log negli appunti
+  
+  // Handler per la copia dei log negli appunti
   const copyLogsToClipboard = () => {
-    const logText = filteredLogs.map(log => 
-      `[${log.timestamp.toLocaleTimeString()}] [${log.level.toUpperCase()}] ${log.component ? `[${log.component}] ` : ''}${log.message}${log.details ? `\nDetails: ${JSON.stringify(log.details, null, 2)}` : ''}${log.stack ? `\nStack: ${log.stack}` : ''}`
-    ).join('\n');
+    const logText = filteredLogs
+      .map(log => {
+        const timestamp = log.timestamp.toISOString();
+        const level = log.level.toUpperCase();
+        const component = log.component ? `[${log.component}]` : '';
+        const details = log.details ? `\n  ${JSON.stringify(log.details, null, 2)}` : '';
+        
+        return `${timestamp} ${level} ${component} ${log.message}${details}`;
+      })
+      .join('\n');
     
     navigator.clipboard.writeText(logText)
       .then(() => {
-        // Feedback visivo
-        const tempLog = {
-          id: Math.random().toString(36).substring(7),
-          timestamp: new Date(),
-          level: 'info' as LogLevel,
-          message: 'Logs copied to clipboard',
-          component: 'DebugConsole'
-        };
-        // Qui potresti aggiungere un toast o un altro feedback visivo
+        alert('Log copiati negli appunti');
       })
       .catch(err => {
-        console.error('Failed to copy logs to clipboard:', err);
+        console.error('Errore durante la copia dei log:', err);
       });
   };
-
-  // Funzione per scaricare i log
-  const downloadLogs = () => {
-    let content: string;
-    let fileName: string;
-    
-    if (downloadFormat === 'json') {
-      content = JSON.stringify(filteredLogs, null, 2);
-      fileName = `experviser-crm-logs-${new Date().toISOString()}.json`;
-    } else {
-      content = filteredLogs.map(log => 
-        `[${log.timestamp.toLocaleTimeString()}] [${log.level.toUpperCase()}] ${log.component ? `[${log.component}] ` : ''}${log.message}${log.details ? `\nDetails: ${JSON.stringify(log.details, null, 2)}` : ''}${log.stack ? `\nStack: ${log.stack}` : ''}`
-      ).join('\n');
-      fileName = `experviser-crm-logs-${new Date().toISOString()}.txt`;
+  
+  if (!isVisible) {
+    return null;
+  }
+  
+  const getLogIcon = (level: LogLevel) => {
+    switch(level) {
+      case 'error':
+        return <AlertCircleIcon className="h-4 w-4 text-red-500" />;
+      case 'warn':
+        return <AlertTriangleIcon className="h-4 w-4 text-yellow-500" />;
+      case 'info':
+        return <InfoIcon className="h-4 w-4 text-blue-500" />;
+      default:
+        return <InfoIcon className="h-4 w-4 text-gray-500" />;
     }
-    
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
   };
-
-  if (!isVisible) return null;
-
+  
+  const getLogLevelClass = (level: LogLevel) => {
+    switch(level) {
+      case 'error':
+        return 'text-red-500 border-red-300 bg-red-50';
+      case 'warn':
+        return 'text-yellow-500 border-yellow-300 bg-yellow-50';
+      case 'info':
+        return 'text-blue-500 border-blue-300 bg-blue-50';
+      case 'debug':
+      case 'log':
+      default:
+        return 'text-gray-500 border-gray-300 bg-gray-50';
+    }
+  };
+  
+  // Formattatore per timestamp
+  const formatTimestamp = (date: Date) => {
+    return new Intl.DateTimeFormat('it-IT', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      fractionalSecondDigits: 3
+    }).format(date);
+  };
+  
   return (
-    <div 
-      className={`fixed bg-background border border-border shadow-lg rounded-t-md flex flex-col z-50 transition-all duration-200 ease-in-out`}
-      style={{
-        bottom: 0,
-        right: 16,
-        width: isMinimized ? '300px' : size.width,
-        height: isMinimized ? '40px' : size.height,
-        maxHeight: isMinimized ? '40px' : 'calc(100vh - 60px)',
-      }}
-    >
-      {/* Header della console */}
-      <div 
-        className="bg-secondary p-2 flex items-center justify-between rounded-t-md cursor-move"
-        onMouseDown={(e) => {
-          // Handle dragging logic
-        }}
+    <AnimatePresence>
+      <motion.div
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 20, opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        className={`fixed bottom-20 right-4 z-50 h-[70vh] w-[90vw] overflow-hidden rounded-lg border bg-white shadow-2xl md:right-8 md:w-[80vw] lg:w-[70vw] xl:w-[60vw] ${
+          isMinimized ? 'h-auto' : ''
+        }`}
       >
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="bg-primary/10">
-            Debug Console
-          </Badge>
-          <Badge variant="outline" className="bg-destructive/10">
-            {filteredLogs.filter(l => l.level === 'error').length} Errors
-          </Badge>
-          <Badge variant="outline" className="bg-warning/10">
-            {filteredLogs.filter(l => l.level === 'warn').length} Warnings
-          </Badge>
-        </div>
-        <div className="flex items-center gap-1">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => toggleFilterPanel()}>
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Filter Options</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={toggleMinimized}>
-                  {isMinimized ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{isMinimized ? 'Expand' : 'Minimize'}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={toggleVisibility}>
-                  <X className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Close</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      </div>
-
-      {!isMinimized && (
-        <>
-          {/* Pannello filtri */}
-          {isFilterPanelOpen && (
-            <div className="bg-background/80 p-2 border-b border-border flex flex-wrap gap-2 items-center">
-              <div className="flex items-center gap-2">
-                <Input 
-                  type="text" 
-                  placeholder="Filter logs..." 
-                  value={filterText}
-                  onChange={(e) => setFilterText(e.target.value)}
-                  className="h-7 text-xs w-44"
-                />
-              </div>
-
-              <div className="flex items-center gap-2 ml-auto">
-                <div className="flex items-center gap-1">
-                  <Label htmlFor="auto-scroll" className="text-xs">Auto-scroll</Label>
-                  <Switch id="auto-scroll" checked={autoScroll} onCheckedChange={setAutoScroll} />
-                </div>
-
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={copyLogsToClipboard}>
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Copy to Clipboard</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={downloadLogs}>
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Download Logs</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={clearLogs}>
-                        <Trash className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Clear Logs</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-            </div>
-          )}
-
-          {/* Tabs e contenuto */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 min-h-0 flex flex-col">
-            <TabsList className="bg-background border-b border-border rounded-none justify-start h-8 px-2">
-              <TabsTrigger value="all" className="h-7 text-xs">All ({logs.length})</TabsTrigger>
-              <TabsTrigger value="error" className="h-7 text-xs">Errors ({logs.filter(l => l.level === 'error').length})</TabsTrigger>
-              <TabsTrigger value="warn" className="h-7 text-xs">Warnings ({logs.filter(l => l.level === 'warn').length})</TabsTrigger>
-              <TabsTrigger value="info" className="h-7 text-xs">Info ({logs.filter(l => l.level === 'info').length})</TabsTrigger>
-              <TabsTrigger value="debug" className="h-7 text-xs">Debug ({logs.filter(l => l.level === 'debug').length})</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value={activeTab} className="flex-1 min-h-0 p-0 m-0">
-              <ScrollArea className="h-full" ref={scrollAreaRef}>
-                <div className="p-1 space-y-1">
-                  {filteredLogs.length > 0 ? (
-                    filteredLogs.map((log) => (
-                      <LogEntryComponent key={log.id} log={log} />
-                    ))
-                  ) : (
-                    <div className="text-center py-6 text-muted-foreground">
-                      <p>No logs to display</p>
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
-            </TabsContent>
-          </Tabs>
-
-          {/* Resize handle */}
-          <div 
-            className="absolute top-0 left-0 right-0 h-1 cursor-row-resize"
-            onMouseDown={handleResizeStart}
-          />
-        </>
-      )}
-    </div>
-  );
-}
-
-const LogEntryComponent = ({ log }: { log: LogEntry }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  
-  // Determina colore di background basato sul livello
-  const getBgColor = (level: LogLevel) => {
-    switch (level) {
-      case 'error': return 'bg-red-500/10 border-red-500/30';
-      case 'warn': return 'bg-yellow-500/10 border-yellow-500/30';
-      case 'info': return 'bg-blue-500/10 border-blue-500/30';
-      case 'debug': return 'bg-purple-500/10 border-purple-500/30';
-      default: return 'bg-gray-500/10 border-gray-500/30';
-    }
-  };
-
-  const reportToDiagnostics = (log: LogEntry) => {
-    if (log.level === 'error') {
-      Sentry.captureException(new Error(log.message), {
-        extra: {
-          ...log.details,
-          component: log.component,
-          originalStack: log.stack
-        }
-      });
-    } else {
-      Sentry.captureMessage(log.message, {
-        level: log.level as Sentry.SeverityLevel,
-        extra: {
-          ...log.details,
-          component: log.component
-        }
-      });
-    }
-  };
-  
-  return (
-    <div 
-      className={`border text-xs rounded p-1.5 ${getBgColor(log.level)} transition-all duration-200`}
-    >
-      <div className="flex items-start gap-1">
-        <LogLevelIcon level={log.level} />
-        
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1 text-xs">
-            <span className="text-muted-foreground">{log.timestamp.toLocaleTimeString()}</span>
-            
-            {log.component && (
-              <Badge variant="outline" className="text-[10px] h-4 px-1">
-                {log.component}
-              </Badge>
-            )}
-          </div>
-          
-          <p className="whitespace-pre-wrap break-words">{log.message}</p>
-          
-          {(log.details || log.stack) && (
+        {/* Header */}
+        <div className="flex items-center justify-between bg-primary px-4 py-2 text-white">
+          <h3 className="flex items-center text-sm font-medium">
+            <span className="mr-2">Debug Console</span>
+            <Badge variant="outline" className="bg-white/10 text-white">
+              {logs.length} entries
+            </Badge>
+          </h3>
+          <div className="flex gap-1">
             <Button
               variant="ghost"
-              size="sm"
-              className="h-5 text-[10px] px-1 mt-1"
-              onClick={() => setIsExpanded(!isExpanded)}
+              size="icon"
+              className="h-6 w-6 text-white hover:bg-primary-foreground/10"
+              onClick={toggleMinimize}
+              title={isMinimized ? "Espandi" : "Minimizza"}
             >
-              {isExpanded ? "Less" : "More"}
-              <ChevronDown className={`h-3 w-3 ml-1 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} />
+              {isMinimized ? <MaximizeIcon className="h-3 w-3" /> : <MinimizeIcon className="h-3 w-3" />}
             </Button>
-          )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 text-white hover:bg-primary-foreground/10"
+              onClick={toggleVisibility}
+              title="Chiudi"
+            >
+              <XIcon className="h-3 w-3" />
+            </Button>
+          </div>
         </div>
         
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-5 w-5 p-0 ml-1"
-          onClick={() => reportToDiagnostics(log)}
-        >
-          <AlertCircle className="h-3 w-3" />
-        </Button>
-      </div>
-      
-      {isExpanded && (
-        <div className="mt-2 space-y-2">
-          {log.details && (
-            <div>
-              <div className="font-semibold text-[10px] text-muted-foreground mb-1">Details:</div>
-              <pre className="text-[10px] bg-background/50 p-1 rounded overflow-x-auto">
-                {typeof log.details === 'string' 
-                  ? log.details 
-                  : JSON.stringify(log.details, null, 2)}
-              </pre>
+        {!isMinimized && (
+          <>
+            {/* Toolbar */}
+            <div className="flex flex-wrap items-center justify-between border-b bg-muted/30 px-4 py-2">
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <FilterIcon className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="Filtra log..."
+                    className="h-8 w-48 rounded-md border border-input bg-background pl-8 pr-2 text-xs"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+                
+                <div className="flex items-center gap-1 text-xs">
+                  <Button
+                    variant={levelFilters.includes('error') ? "default" : "outline"}
+                    size="sm"
+                    className="h-7 px-2 text-xs"
+                    onClick={() => toggleLevelFilter('error')}
+                  >
+                    Errori
+                    {errorCount > 0 && (
+                      <Badge variant="outline" className="ml-1 text-[10px]">
+                        {errorCount}
+                      </Badge>
+                    )}
+                  </Button>
+                  
+                  <Button
+                    variant={levelFilters.includes('warn') ? "default" : "outline"}
+                    size="sm"
+                    className="h-7 px-2 text-xs"
+                    onClick={() => toggleLevelFilter('warn')}
+                  >
+                    Warning
+                    {warningCount > 0 && (
+                      <Badge variant="outline" className="ml-1 text-[10px]">
+                        {warningCount}
+                      </Badge>
+                    )}
+                  </Button>
+                  
+                  <Button
+                    variant={levelFilters.includes('info') ? "default" : "outline"}
+                    size="sm"
+                    className="h-7 px-2 text-xs"
+                    onClick={() => toggleLevelFilter('info')}
+                  >
+                    Info
+                    {infoCount > 0 && (
+                      <Badge variant="outline" className="ml-1 text-[10px]">
+                        {infoCount}
+                      </Badge>
+                    )}
+                  </Button>
+                  
+                  <Button
+                    variant={levelFilters.includes('debug') ? "default" : "outline"}
+                    size="sm"
+                    className="h-7 px-2 text-xs"
+                    onClick={() => toggleLevelFilter('debug')}
+                  >
+                    Debug
+                    {debugCount > 0 && (
+                      <Badge variant="outline" className="ml-1 text-[10px]">
+                        {debugCount}
+                      </Badge>
+                    )}
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="mt-2 flex gap-2 sm:mt-0">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-2 text-xs"
+                  onClick={clearLogs}
+                >
+                  <RefreshCwIcon className="mr-1 h-3 w-3" />
+                  Pulisci
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-2 text-xs"
+                  onClick={copyLogsToClipboard}
+                >
+                  <ClipboardCopyIcon className="mr-1 h-3 w-3" />
+                  Copia
+                </Button>
+              </div>
             </div>
-          )}
-          
-          {log.stack && (
-            <div>
-              <div className="font-semibold text-[10px] text-muted-foreground mb-1">Stack:</div>
-              <pre className="text-[10px] bg-background/50 p-1 rounded overflow-x-auto">
-                {log.stack}
-              </pre>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
+            
+            {/* Tabs */}
+            <Tabs value={activeTab} onValueChange={(tab: any) => setActiveTab(tab)} className="h-full">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="logs">Log</TabsTrigger>
+                <TabsTrigger value="network">Network</TabsTrigger>
+                <TabsTrigger value="performance">Performance</TabsTrigger>
+                <TabsTrigger value="settings">Impostazioni</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="logs" className="h-[calc(100%-40px)]">
+                <ScrollArea className="h-full">
+                  <div className="space-y-1 p-4">
+                    {filteredLogs.length === 0 ? (
+                      <div className="flex h-40 flex-col items-center justify-center text-muted-foreground">
+                        <InfoIcon className="mb-2 h-10 w-10 opacity-20" />
+                        <p className="text-sm">Nessun log disponibile con i filtri correnti</p>
+                      </div>
+                    ) : (
+                      filteredLogs.map((log) => (
+                        <Card
+                          key={log.id}
+                          className={`overflow-hidden border p-2 text-xs ${getLogLevelClass(log.level)}`}
+                        >
+                          <div className="flex items-start gap-2">
+                            {getLogIcon(log.level)}
+                            <div className="flex-1 overflow-hidden">
+                              <div className="flex items-baseline justify-between">
+                                <span className="font-medium">{log.message}</span>
+                                <span className="text-[10px] text-muted-foreground">
+                                  {formatTimestamp(log.timestamp)}
+                                </span>
+                              </div>
+                              
+                              {log.component && (
+                                <div className="mt-1 text-[10px] text-muted-foreground">
+                                  Componente: {log.component}
+                                </div>
+                              )}
+                              
+                              {log.details && (
+                                <div className="mt-1">
+                                  <Separator className="my-1 opacity-30" />
+                                  <pre className="max-h-32 overflow-auto rounded-sm bg-black/5 p-1 text-[10px]">
+                                    {typeof log.details === 'object'
+                                      ? JSON.stringify(log.details, null, 2)
+                                      : String(log.details)}
+                                  </pre>
+                                </div>
+                              )}
+                              
+                              {log.stack && (
+                                <div className="mt-1">
+                                  <Separator className="my-1 opacity-30" />
+                                  <details>
+                                    <summary className="cursor-pointer text-[10px] font-medium">
+                                      Stack Trace
+                                    </summary>
+                                    <pre className="mt-1 max-h-32 overflow-auto rounded-sm bg-black/5 p-1 text-[10px]">
+                                      {log.stack}
+                                    </pre>
+                                  </details>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </Card>
+                      ))
+                    )}
+                  </div>
+                </ScrollArea>
+              </TabsContent>
+              
+              <TabsContent value="network" className="h-[calc(100%-40px)]">
+                <div className="flex h-full items-center justify-center text-muted-foreground">
+                  <p className="text-sm">Monitoraggio rete in fase di implementazione</p>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="performance" className="h-[calc(100%-40px)]">
+                <div className="flex h-full items-center justify-center text-muted-foreground">
+                  <p className="text-sm">Monitoraggio performance in fase di implementazione</p>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="settings" className="h-[calc(100%-40px)]">
+                <div className="p-4">
+                  <h3 className="mb-4 text-sm font-medium">Impostazioni Debug Console</h3>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="mb-2 text-xs font-medium">Limite massimo log</h4>
+                      <div className="text-xs text-muted-foreground">
+                        Massimo 1000 log memorizzati
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <h4 className="mb-2 text-xs font-medium">Opzioni di tracciamento</h4>
+                      <div className="text-xs text-muted-foreground">
+                        - Tracciamento errori API ✓
+                        <br />
+                        - Tracciamento errori React Query ✓
+                        <br />
+                        - Override metodi console ✓
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <h4 className="mb-2 text-xs font-medium">Versione Debug Tools</h4>
+                      <div className="text-xs text-muted-foreground">
+                        v1.0.0
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </>
+        )}
+      </motion.div>
+    </AnimatePresence>
   );
-};
+}
