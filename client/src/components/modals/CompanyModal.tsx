@@ -163,8 +163,8 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
         method = "PUT"; // Modificato da PATCH a PUT per adattarsi all'API del server
       }
       
-      // Adattiamo il fetch body con solo i campi verificati e utilizziamo i nomi in snake_case per il database
-      const requestData = toSnakeCase({
+      // Prepariamo i dati nel formato camelCase compatibile con il frontend
+      const camelCaseData = {
         name: companyData.name,
         address: companyData.address,
         fullAddress: companyData.full_address, // Mappatura del campo tra frontend e backend
@@ -210,10 +210,15 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
         customFields: companyData.customFields || null
       };
       
+      // Convertiamo i dati da camelCase a snake_case prima dell'invio al server
+      const snakeCaseData = toSnakeCase(camelCaseData);
+      
+      console.log("🔍 Dati convertiti in snake_case:", snakeCaseData);
+      
       const response = await fetch(url, {
         method, 
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestData),
+        body: JSON.stringify(snakeCaseData),
         credentials: "include"
       });
       
