@@ -1965,6 +1965,7 @@ export class PostgresStorage implements IStorage {
       "employeeCount",
       "annualRevenue",
       "foundedYear",
+      "primary_contact_id",
       "postalCode",
     ];
 
