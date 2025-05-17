@@ -22,7 +22,7 @@ echo -e "\n=== Test 1: Creazione Lead ==="
 CREATE_RESPONSE=$(curl -s -X POST "${API_BASE}/api/leads" \
   -H "Content-Type: application/json" \
   -H "${AUTH_HEADER}" \
-  -d "{\"firstName\":\"${TEST_NAME}\",\"lastName\":\"${TEST_LASTNAME}\",\"company\":\"${TEST_COMPANY}\",\"companyEmail\":\"${TEST_EMAIL}\",\"status\":\"new\",\"notes\":\"Test Lead creato automaticamente\"}")
+  -d "{\"firstName\":\"${TEST_NAME}\",\"lastName\":\"${TEST_LASTNAME}\",\"company\":\"${TEST_COMPANY}\",\"email\":\"${TEST_EMAIL}\",\"status\":\"new\",\"notes\":\"Test Lead creato automaticamente\"}")
 
 echo "Risposta: $CREATE_RESPONSE"
 
