@@ -396,9 +396,9 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
             <Input id="address" {...register("address")} />
           </div>
           
-          <div className="space-y-2 mb-4 p-3 border rounded-md bg-gray-50">
-            <h3 className="font-semibold mb-2">Relazioni con me</h3>
-            <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-2 mb-4 p-2 border rounded-md bg-gray-50">
+            <h3 className="font-semibold mb-1 text-sm">Relazioni con me</h3>
+            <div className="grid grid-cols-2 gap-1 text-xs">
               {[
                 ['prospect', 'In fase di valutazione'],
                 ['clienteAttivo', 'Cliente attivo'],
@@ -432,7 +432,7 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
                     />
                     <label 
                       htmlFor={`relationship-${value}`}
-                      className="ml-2 text-sm text-gray-700 cursor-pointer"
+                      className="ml-2 text-xs text-gray-700 cursor-pointer"
                     >
                       {label}
                     </label>
