@@ -194,6 +194,7 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
         channels: companyData.channels || [],
         productsOrServicesTags: companyData.productsOrServicesTags || [],
         locationTypes: companyData.locationTypes || [],
+        relationshipType: companyData.relationshipType || [],
         
         // Altri campi
         notes: companyData.notes || "",
@@ -393,6 +394,48 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
           <div className="hidden">
             <Label htmlFor="address">Old Address (DEPRECATED)</Label>
             <Input id="address" {...register("address")} />
+          </div>
+          
+          <div className="space-y-2 mb-4">
+            <Label htmlFor="relationshipType">Relazioni con me</Label>
+            <Select
+              isMulti
+              options={[
+                { value: 'prospect', label: 'In fase di valutazione' },
+                { value: 'clienteAttivo', label: 'Cliente attivo' },
+                { value: 'exCliente', label: 'Ex-cliente' },
+                { value: 'mandante', label: 'Mandante' },
+                { value: 'clienteRitenuto', label: 'Cliente retainer' },
+                { value: 'clienteUnaTantum', label: 'Cliente una-tantum' },
+                { value: 'segnalatore', label: 'Segnalatore' },
+                { value: 'fornitore', label: 'Fornitore' },
+                { value: 'partnerStrategico', label: 'Partner strategico' },
+                { value: 'concorrente', label: 'Concorrente' },
+                { value: 'investitoreCliente', label: 'Investitore-cliente' }
+              ]}
+              value={(watch("relationshipType") || []).map(rt => ({
+                value: rt,
+                label: {
+                  prospect: 'In fase di valutazione',
+                  clienteAttivo: 'Cliente attivo',
+                  exCliente: 'Ex-cliente',
+                  mandante: 'Mandante',
+                  clienteRitenuto: 'Cliente retainer',
+                  clienteUnaTantum: 'Cliente una-tantum',
+                  segnalatore: 'Segnalatore',
+                  fornitore: 'Fornitore',
+                  partnerStrategico: 'Partner strategico',
+                  concorrente: 'Concorrente',
+                  investitoreCliente: 'Investitore-cliente'
+                }[rt] || rt
+              }))}
+              onChange={selected => {
+                const values = selected ? selected.map(opt => opt.value) : [];
+                setValue("relationshipType", values, { shouldValidate: true });
+              }}
+              placeholder="Seleziona o digita relazioni..."
+              className="w-full"
+            />
           </div>
           
           <div className="space-y-2 mb-4">
