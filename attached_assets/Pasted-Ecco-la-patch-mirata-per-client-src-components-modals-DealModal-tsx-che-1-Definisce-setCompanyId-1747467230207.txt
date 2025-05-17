@@ -1,0 +1,83 @@
+Ecco la patch mirata per client/src/components/modals/DealModal.tsx, che:
+	1.	Definisce setCompanyIdInForm
+	2.	Sposta la logica di filtraggio dei contatti sinergici dentro il componente, eliminando il blocco “fluttuante” dopo la riga 154
+
+--- a/client/src/components/modals/DealModal.tsx
++++ b/client/src/components/modals/DealModal.tsx
+@@ -10,6 +10,8 @@ import { Formik, Form, Field } from 'formik';
+ 
+ export default function DealModal({ isOpen, onClose, initialValues, onSave }) {
+   const [sinergiaContacts, setSinergiaContacts] = useState<Contact[]>([]);
++  const [companyId, setCompanyId] = useState<string>(initialValues.companyId || '');
++
+   // --- NUOVA FUNZIONE PER AGGIORNARE FORM E STATO ---
+   const setCompanyIdInForm = (id: string) => {
+     setCompanyId(id);
+     formik.setFieldValue('companyId', id);
+   };
+ 
+   // Carico i contatti sinergici all'apertura e ogni volta che cambia l'azienda
+   useEffect(() => {
+-    if (formik.values.companyId) {
+-      fetch(`/api/companies/${formik.values.companyId}/contacts/sinergie`)
+-        .then(r => r.json())
+-        .then(setSinergiaContacts);
+-    }
++    if (companyId) {
++      fetch(`/api/companies/${companyId}/contacts/sinergie`)
++        .then(r => r.json())
++        .then(setSinergiaContacts);
++    } else {
++      setSinergiaContacts([]);
++    }
+   }, [companyId]);
+ 
+   return (
+@@ -150,14 +152,23 @@ export default function DealModal({ isOpen, onClose, initialValues, onSave }) {
+           {/* SELECT AZIENDA */}
+           <Field name="companyId">
+             {({ field, form }: any) => (
+-              <Select
+-                {...field}
+-                options={companyOptions}
+-                onChange={opt => form.setFieldValue('companyId', opt?.value)}
++              <Select
++                {...field}
++                options={companyOptions}
++                value={companyOptions.find(o => o.value === companyId)}
++                onChange={opt => setCompanyIdInForm(opt?.value || '')}
+               />
+             )}
+           </Field>
+ 
+           {/* SELECT CONTATTO SINERGICO */}
+-          <Field name="sinergiaContactId">
+-            {({ field, form }: any) => (
+-              <Select {...field} options={sinergiaContacts.map(c => ({ value: c.id, label: c.name }))} />
+-            )}
+-          </Field>
++          <Field name="sinergiaContactId">
++            {({ field, form }: any) => {
++              const filtered = sinergiaContacts
++                .filter(c => c.companyId === companyId)
++                .map(c => ({ value: c.id, label: c.name }));
++              return (
++                <Select
++                  {...field}
++                  options={filtered}
++                  isDisabled={!companyId}
++                  noOptionsMessage={() => companyId ? 'Nessun contatto trovato' : 'Seleziona prima un\'azienda'}
++                />
++              );
++            }}
++          </Field>
+ 
+           {/* …resto del form… */}
+         </Form>
+
+Cosa fa questa patch
+	•	Introduce lo stato locale companyId e la funzione setCompanyIdInForm per mantenere in sync selezione e formik.
+	•	Sposta la chiamata a fetch dentro un useEffect che dipende da companyId.
+	•	Filtra i contatti sinergici in base a companyId e disabilita il Select finché non viene scelta un’azienda.
+
+Copia e incolla questo diff nella tua repo Replit, ricompila e prova di nuovo il form: ora i contatti sinergici dovrebbero apparire e selezionarsi correttamente.
