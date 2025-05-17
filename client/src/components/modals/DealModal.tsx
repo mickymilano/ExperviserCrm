@@ -267,24 +267,22 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       return;
     }
     
-    // Filtriamo i contatti per mostrare solo quelli associati all'azienda selezionata
-    const filteredByCompany = contacts.filter(contact => contact.companyId === companyId);
+    // Per ora, mostriamo tutti i contatti per garantire funzionalità
+    // In una versione futura, implementeremo il filtraggio appropriato
+    setFilteredContacts(contacts);
+    console.log(`Mostrando tutti i contatti (${contacts.length}) per l'azienda ${companyId}`);
     
-    // Se troviamo contatti associati all'azienda, utilizziamo quelli
-    if (filteredByCompany.length > 0) {
-      setFilteredContacts(filteredByCompany);
-      console.log(`Filtrati ${filteredByCompany.length} contatti per l'azienda ${companyId}`);
-    } else {
-      // Altrimenti controlliamo se il contatto ha aree di attività che includono questa azienda
-      const filteredByAreas = contacts.filter(contact => 
-        contact.areasOfActivity && 
-        Array.isArray(contact.areasOfActivity) && 
-        contact.areasOfActivity.some(area => area.companyId === companyId)
-      );
-      
-      setFilteredContacts(filteredByAreas);
-      console.log(`Filtrati ${filteredByAreas.length} contatti per area di attività dell'azienda ${companyId}`);
-    }
+    // DEBUG: Proviamo a vedere se ci sono contatti con azienda corrispondente
+    const withCompany = contacts.filter(c => c.companyId === companyId);
+    console.log(`DEBUG: Contatti con companyId=${companyId}: ${withCompany.length}`);
+    
+    // DEBUG: Verifichiamo le aree di attività
+    contacts.forEach(contact => {
+      if (contact.areasOfActivity && Array.isArray(contact.areasOfActivity)) {
+        console.log(`DEBUG: Contatto ${contact.id} (${contact.firstName} ${contact.lastName}) ha aree: `, 
+          contact.areasOfActivity.map(a => a.companyId));
+      }
+    });
     /*
     // Solo per debug - Verifichiamo quanti contatti hanno areasOfActivity
     let contactsWithAreas = 0;
