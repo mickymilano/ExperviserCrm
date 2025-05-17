@@ -858,6 +858,39 @@ export function registerRoutes(app: any) {
     }
   });
   
+  // Imposta il contatto primario per un'azienda
+  app.patch('/api/companies/:id/primary-contact', authenticate, async (req, res) => {
+    try {
+      const companyId = parseInt(req.params.id);
+      const { primaryContactId } = req.body;
+      
+      // Verifica se l'azienda esiste
+      const company = await storage.getCompany(companyId);
+      if (!company) {
+        return res.status(404).json({ message: 'Azienda non trovata' });
+      }
+      
+      // Se primaryContactId è fornito, verifica che il contatto esista
+      if (primaryContactId) {
+        const contactId = parseInt(primaryContactId);
+        const contact = await storage.getContact(contactId);
+        if (!contact) {
+          return res.status(404).json({ message: 'Contatto non trovato' });
+        }
+      }
+      
+      // Aggiorna l'azienda con il nuovo contatto primario
+      const updatedCompany = await storage.updateCompany(companyId, {
+        primary_contact_id: primaryContactId ? parseInt(primaryContactId) : null
+      });
+      
+      res.json(updatedCompany);
+    } catch (error) {
+      console.error('Error setting primary contact:', error);
+      res.status(500).json({ message: 'Errore durante l\'impostazione del contatto primario' });
+    }
+  });
+  
   // --- LEAD ROUTES ---
   
   // Ottieni tutti i lead

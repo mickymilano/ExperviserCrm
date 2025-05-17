@@ -43,6 +43,8 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   const [isContactLoading, setIsContactLoading] = useState(false);
+  const [primaryContactId, setPrimaryContactId] = useState<number | null>(null);
+  const [isUpdatingPrimary, setIsUpdatingPrimary] = useState(false);
   
   // Fetch contatti associati all'azienda
   const { 
@@ -56,6 +58,21 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
       const res = await fetch(`/api/companies/${companyId}/contacts`);
       if (!res.ok) throw new Error("Failed to fetch company contacts");
       return res.json();
+    }
+  });
+  
+  // Fetch dati dell'azienda per ottenere il contatto primario
+  const { data: company } = useQuery({
+    queryKey: ["/api/companies", companyId],
+    queryFn: async () => {
+      const res = await fetch(`/api/companies/${companyId}`);
+      if (!res.ok) throw new Error("Failed to fetch company details");
+      return res.json();
+    },
+    onSuccess: (data) => {
+      if (data.primary_contact_id) {
+        setPrimaryContactId(data.primary_contact_id);
+      }
     }
   });
 
