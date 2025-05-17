@@ -151,20 +151,15 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     const value = getValues("companyId");
     return typeof value === 'number' && !isNaN(value) ? value : null;
   };
-    if (!contacts || !Array.isArray(contacts)) {
-      console.warn("Synergy contacts data is not available or not an array");
-      setSynergyContacts([]);
-      return;
-    }
+  
+  // Funzione per aggiornare l'azienda nel form
+  const setCompanyIdInForm = (id: number | null) => {
+    console.log("Setting company ID in form:", id);
+    setValue("companyId", id);
     
-    console.log("Filtering synergy contacts for company ID:", companyId, "Available contacts:", contacts.length);
-    
-    if (!companyId) {
-      // Se non c'è un'azienda selezionata, mostra lista vuota
-      setSynergyContacts([]);
-      console.log("No company selected, clearing synergy contacts selection");
-      return;
-    }
+    // Aggiorniamo i contatti filtrati
+    updateFilteredContacts(id);
+  };
     
     // Filtriamo i contatti che NON appartengono all'azienda selezionata
     const filteredForSynergies = contacts.filter(contact => {
