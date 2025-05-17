@@ -13,6 +13,7 @@ import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { logError, withErrorHandling } from "@/lib/errorTracking";
 import { toSnakeCase } from "@/../../shared/mappers";
+import Select from 'react-select';
 
 interface CompanyModalProps {
   open: boolean;
@@ -56,6 +57,7 @@ const companySchema = z.object({
   channels: z.array(z.string()).optional().nullable(),
   productsOrServicesTags: z.array(z.string()).optional().nullable(),
   locationTypes: z.array(z.string()).optional().nullable(),
+  relationshipType: z.array(z.string()).optional().nullable(),
   
   // Altri campi
   notes: z.string().optional().nullable(),
@@ -113,6 +115,7 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
       channels: initialData?.channels || [],
       productsOrServicesTags: initialData?.productsOrServicesTags || [],
       locationTypes: initialData?.locationTypes || [],
+      relationshipType: initialData?.relationshipType || [],
       
       // Altri campi
       notes: initialData?.notes || "",

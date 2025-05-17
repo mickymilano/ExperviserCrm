@@ -1,0 +1,125 @@
+Ecco i passi e il patch da incollare in Replit per sostituire il dropdown con un controllo “tag multipli” per relationshipType, usando ad esempio react-select in modalità multi-autocomplete:
+
+# 1) Installa react-select (se non l’hai già fatto)
+npm install react-select
+
+# 2) Aggiorna il CompanyModal.tsx
+apply_patch << 'EOF'
+*** Begin Patch
+*** Update File: client/src/components/modals/CompanyModal.tsx
+@@ import React, { useState, useEffect } from 'react';
+-import React, { useState, useEffect } from 'react';
++import React, { useState, useEffect } from 'react';
++import Select from 'react-select';
+ 
+ export default function CompanyModal({ initialData, onSave, onClose }) {
+   const [company, setCompany] = useState(initialData || {});
+@@ Modifica qui il campo relazione
+-  <label>Relazione con me</label>
+-  <select
+-    value={company.relationshipType || 'prospect'}
+-    onChange={e => setCompany(d => ({ ...d, relationshipType: e.target.value }))}
+-  >
+-    <option value="prospect">In fase di valutazione</option>
+-    <option value="clienteAttivo">Cliente attivo</option>
+-    <option value="exCliente">Ex-cliente</option>
+-    <option value="mandante">Mandante</option>
+-    <option value="clienteRitenuto">Cliente retainer</option>
+-    <option value="clienteUnaTantum">Cliente una-tantum</option>
+-    <option value="segnalatore">Segnalatore</option>
+-    <option value="fornitore">Fornitore</option>
+-    <option value="partnerStrategico">Partner strategico</option>
+-    <option value="concorrente">Concorrente</option>
+-    <option value="investitoreCliente">Investitore-cliente</option>
+-  </select>
++  <label>Relazioni con me</label>
++  <Select
++    isMulti
++    options={[
++      { value: 'prospect', label: 'In fase di valutazione' },
++      { value: 'clienteAttivo', label: 'Cliente attivo' },
++      { value: 'exCliente', label: 'Ex-cliente' },
++      { value: 'mandante', label: 'Mandante' },
++      { value: 'clienteRitenuto', label: 'Cliente retainer' },
++      { value: 'clienteUnaTantum', label: 'Cliente una-tantum' },
++      { value: 'segnalatore', label: 'Segnalatore' },
++      { value: 'fornitore', label: 'Fornitore' },
++      { value: 'partnerStrategico', label: 'Partner strategico' },
++      { value: 'concorrente', label: 'Concorrente' },
++      { value: 'investitoreCliente', label: 'Investitore-cliente' }
++    ]}
++    value={
++      (company.relationshipType || []).map(rt => ({
++        value: rt,
++        label: {
++          prospect: 'In fase di valutazione',
++          clienteAttivo: 'Cliente attivo',
++          exCliente: 'Ex-cliente',
++          mandante: 'Mandante',
++          clienteRitenuto: 'Cliente retainer',
++          clienteUnaTantum: 'Cliente una-tantum',
++          segnalatore: 'Segnalatore',
++          fornitore: 'Fornitore',
++          partnerStrategico: 'Partner strategico',
++          concorrente: 'Concorrente',
++          investitoreCliente: 'Investitore-cliente'
++        }[rt]
++      }))
++    }
++    onChange={selected => {
++      const values = selected ? selected.map(opt => opt.value) : [];
++      setCompany(c => ({ ...c, relationshipType: values }));
++    }}
++    placeholder="Seleziona o digita relazioni..."
++  />
+*** End Patch
+EOF
+
+# 3) Aggiorna types.ts per relationshipType come string[]
+apply_patch << 'EOF'
+*** Begin Patch
+*** Update File: client/src/types.ts
+@@ export interface Company {
+-  relationshipType?: 
+-    'prospect' |
+-    'clienteAttivo' |
+-    ... ;
++  /** Relazioni fra te e l’azienda (tag multipli) */
++  relationshipType?: string[];
+*** End Patch
+EOF
+
+# 4) Aggiorna storage e API per accettare array di tipi
+apply_patch << 'EOF'
+*** Begin Patch
+*** Update File: server/postgresStorage.ts
+@@ export async function createCompany(data) {
+-  INSERT INTO companies(name, status, /* ... */, relationship_type)
++  INSERT INTO companies(name, status, /* ... */, relationship_type)
+     VALUES($1,$2,/* ... */,$N)
+     RETURNING id, name, status, /* ... */, relationship_type AS "relationshipType";
+*** End Patch
+EOF
+
+apply_patch << 'EOF'
+*** Begin Patch
+*** Update File: server/postgresStorage.ts
+@@ export async function updateCompany(id, updates) {
+-  if (updates.relationshipType) fields.push(`relationship_type=$${vals.push(updates.relationshipType)}`);
++  if (updates.relationshipType) fields.push(`relationship_type=$${vals.push(updates.relationshipType)}`);
+*** End Patch
+EOF
+
+# 5) Riavvia tutto
+kill $(lsof -t -i:5000) && npm run dev & 
+npm run dev --prefix client
+
+echo "✅ Relazioni trasformate in tag multipli con autocomplete!"
+
+Cosa cambia
+	•	Frontend: usiamo react-select in modalità isMulti per tag+autocomplete, non più dropdown a singola scelta
+	•	Types: relationshipType diventa string[]
+	•	Storage/API: già predisposti per un array (JSONB o testo array), verificate le colonne
+	•	Backend: non cambia la logica CRUD, ma ora gestirà un array di valori
+
+Una volta applicato, potrai digitare o selezionare più tag per ciascuna azienda senza vincoli di selezione fissa. Fammi sapere quando è pronto e procediamo con la validazione dei comportamenti!
