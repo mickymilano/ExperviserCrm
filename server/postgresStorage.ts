@@ -1259,12 +1259,12 @@ export class PostgresStorage implements IStorage {
           id,
           first_name as "firstName",
           last_name as "lastName",
+          company_name as "company",
           email,
           phone,
           source,
           status,
           notes,
-          company,
           role,
           address,
           website,
@@ -1285,30 +1285,6 @@ export class PostgresStorage implements IStorage {
       }
       
       return result.rows[0];
-
-      // Aggiungiamo l'id come ultimo parametro
-      params.push(id);
-
-      const result = await pool.query(
-        `
-        UPDATE leads SET ${updateFields.join(", ")}
-        WHERE id = $${paramCounter}
-        RETURNING 
-          id, 
-          name, 
-          status, 
-          source, 
-          notes, 
-          company_name as "companyName", 
-          job_title as "jobTitle", 
-          lead_owner as "leadOwner", 
-          created_at as "createdAt", 
-          updated_at as "updatedAt"
-      `,
-        params,
-      );
-
-      return result.rows.length > 0 ? result.rows[0] : undefined;
     } catch (error) {
       console.error("Error in updateLead:", error);
       return undefined;
