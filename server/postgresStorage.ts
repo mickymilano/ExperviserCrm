@@ -1115,7 +1115,7 @@ export class PostgresStorage implements IStorage {
       } = lead;
 
       // Usando una query SQL nativa che usa i nomi corretti delle colonne
-      const result = await pool.query(
+      const result = await this.db.query(
         `
         INSERT INTO leads (
           first_name,
@@ -1155,8 +1155,12 @@ export class PostgresStorage implements IStorage {
         [firstName, lastName, company, email, phone, status, source, notes, role, address, website, customFields, assignedToId],
       );
 
-      console.log("Lead creato con successo:", result.rows[0]);
-      return result.rows[0];
+      if (result.rows && result.rows.length > 0) {
+        console.log("Lead creato con successo:", result.rows[0]);
+        return result.rows[0];
+      } else {
+        throw new Error("No rows returned after lead creation");
+      }
     } catch (error) {
       console.error("Error in createLead:", error);
       throw new Error("Failed to create lead");
