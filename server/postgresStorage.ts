@@ -1704,52 +1704,63 @@ export class PostgresStorage implements IStorage {
   }
 
   async getCompany(id: number): Promise<Company | undefined> {
-    // Selezioniamo solo campi specifici che esistono sicuramente nel database
-    const [company] = await db
-      .select({
-        id: companies.id,
-        name: companies.name,
-        status: companies.status,
-        email: companies.email,
-        phone: companies.phone,
-        // DEPRECATED: old address field - Added 2025-05-13 by Lead Architect: unified location
-        address: companies.address,
-        // Added 2025-05-13 by Lead Architect: unified location field
-        fullAddress: companies.fullAddress,
-        website: companies.website,
-        industry: companies.industry,
-        // Rimuoviamo le colonne problematiche (description, logo)
-        tags: companies.tags,
-        notes: companies.notes,
-        customFields: companies.customFields,
-        createdAt: companies.createdAt,
-        updatedAt: companies.updatedAt,
-      })
-      .from(companies)
-      .where(eq(companies.id, id));
+    try {
+      console.log(`PostgresStorage.getCompany: retrieving company with id ${id}`);
 
-    if (!company) {
+      // Utilizziamo SQL nativo per avere un controllo completo sui nomi dei campi
+      const result = await pool.query(
+        `SELECT * FROM companies WHERE id = $1`,
+        [id]
+      );
+
+      if (result.rows.length === 0) {
+        console.log(`getCompany: No company found with id ${id}`);
+        return undefined;
+      }
+
+      // Mappo tutte le proprietà snake_case → camelCase
+      const row = result.rows[0];
+      const company = toCamelCase(row) as Company;
+
+      // Aggiungiamo campi backward compatible che potrebbero essere attesi dal frontend
+      company.city = null;
+      company.region = null;
+      company.country = null;
+      company.postalCode = null;
+      
+      // Aggiungiamo eventuali campi mancanti
+      if (company.description === undefined) company.description = null;
+      if (company.logo === undefined) company.logo = null;
+
+      // Then fetch areas of activity separately
+      try {
+        const areasResult = await pool.query(
+          `SELECT 
+            id, 
+            contact_id as "contactId", 
+            company_id as "companyId", 
+            company_name as "companyName", 
+            role, 
+            job_description as "jobDescription", 
+            is_primary as "isPrimary", 
+            created_at as "createdAt", 
+            updated_at as "updatedAt" 
+          FROM areas_of_activity 
+          WHERE company_id = $1`,
+          [id]
+        );
+        
+        company.areasOfActivity = areasResult.rows as AreaOfActivity[];
+      } catch (areaError) {
+        console.error(`Error fetching areas for company ${id}:`, areaError);
+        company.areasOfActivity = [];
+      }
+
+      return company;
+    } catch (error) {
+      console.error(`Error fetching company ${id}:`, error);
       return undefined;
     }
-
-    // Then fetch areas of activity separately
-    const areas = await db
-      .select()
-      .from(areasOfActivity)
-      .where(eq(areasOfActivity.companyId, id));
-
-    // Return the company with areas attached
-    return {
-      ...company,
-      // Add empty values for fields that might be expected by the frontend
-      city: null,
-      region: null,
-      country: null,
-      postalCode: null,
-      description: null, // Aggiungiamo anche questo campo per evitare errori nel frontend
-      logo: null, // Aggiungiamo anche il logo come null
-      areasOfActivity: areas,
-    };
   }
 
   async createCompany(company: InsertCompany): Promise<Company> {
