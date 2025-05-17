@@ -127,38 +127,38 @@ export const companies = pgTable('companies', {
   
   // Campo unificato per la gestione degli indirizzi (2025-05-13)
   address: text('address'), // Mantenuto solo per retrocompatibilità col frontend
-  fullAddress: text('full_address'),
+  full_address: text('full_address'),
   
   // IMPORTANTE: Questi campi non esistono nel database! (2025-05-16)
   // Commentati per evitare errori ma mantenuti nel tipo TypeScript per retrocompatibilità
   // country: varchar('country', { length: 50 }),
-  // postalCode: varchar('postal_code', { length: 20 }),
+  // RIMOSSO: postalCode (2025-05-17) come richiesto nell'armonizzazione
   website: varchar('website', { length: 255 }),
   industry: varchar('industry', { length: 100 }),
   sector: varchar('sector', { length: 100 }),
   description: text('description'),
-  employeeCount: integer('employee_count'),
-  annualRevenue: decimal('annual_revenue', { precision: 15, scale: 2 }),
-  foundedYear: integer('founded_year'),
+  employee_count: integer('employee_count'),
+  annual_revenue: decimal('annual_revenue', { precision: 15, scale: 2 }),
+  founded_year: integer('founded_year'),
   logo: text('logo'),
   tags: text('tags').array(),
   notes: text('notes'),
-  customFields: jsonb('custom_fields'),
-  parentCompanyId: integer('parent_company_id').references(() => companies.id),
-  linkedinUrl: varchar('linkedin_url', { length: 255 }),
-  locationTypes: text('location_types').array(),
+  custom_fields: jsonb('custom_fields'),
+  parent_company_id: integer('parent_company_id').references(() => companies.id),
+  linkedin_url: varchar('linkedin_url', { length: 255 }),
+  location_types: text('location_types').array(),
   
-  // Campi aggiuntivi presenti nel database ma mancanti nello schema
-  lastContactedAt: timestamp('last_contacted_at'),
-  nextFollowUpAt: timestamp('next_follow_up_at'),
-  isActiveRep: boolean('is_active_rep').default(false),
-  companyType: varchar('company_type', { length: 50 }),
+  // Campi presenti nel database
+  last_contacted_at: timestamp('last_contacted_at'),
+  next_follow_up_at: timestamp('next_follow_up_at'),
+  is_active_rep: boolean('is_active_rep').default(false),
+  company_type: varchar('company_type', { length: 50 }),
   brands: text('brands').array(),
   channels: text('channels').array(),
-  productsOrServicesTags: text('products_or_services_tags').array(),
+  products_or_services_tags: text('products_or_services_tags').array(),
   
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow(),
 });
 
 /**
