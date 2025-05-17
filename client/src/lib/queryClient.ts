@@ -1,14 +1,23 @@
 import { QueryClient } from '@tanstack/react-query';
+import type { QueryFunction } from '@tanstack/react-query';
 
 // Funzione per fare le chiamate API
 export async function apiRequest(
-  url: string, 
-  method: string = 'GET',
+  method: string,
+  endpoint: string,
   data?: any,
   customOptions: RequestInit = {}
 ): Promise<any> {
   // Recupera il token da localStorage
   const token = localStorage.getItem("auth_token");
+
+  // Assicuriamoci che l'endpoint inizi con / se non lo fa già
+  const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  
+  // Costruiamo l'URL completo
+  const url = normalizedEndpoint;
+
+  console.log(`API Request: ${method} ${url}`, data);
 
   // Opzioni predefinite per le richieste
   const defaultOptions: RequestInit = {
@@ -70,10 +79,10 @@ export const defaultMutationOptions = {
 };
 
 // Fetcher predefinito per React Query
-const defaultQueryFn = async ({ queryKey }: { queryKey: unknown[] }) => {
+const defaultQueryFn: QueryFunction = async (context) => {
   // Usiamo il primo elemento della queryKey come URL
-  const url = queryKey[0] as string;
-  return apiRequest(url);
+  const url = context.queryKey[0] as string;
+  return apiRequest("GET", url);
 };
 
 // Crea l'istanza di QueryClient
