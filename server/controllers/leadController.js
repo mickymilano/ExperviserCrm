@@ -75,32 +75,36 @@ export const getLead = async (req, res, next) => {
 
 export const createLead = async (req, res, next) => {
   try {
+    // Estrai tutti i campi rilevanti dal body
     const { 
       firstName, 
       lastName, 
       company, 
       companyEmail,
       privateEmail,
-      email, // Supportiamo sia email generico che campi specifici 
+      email, // Campo generico "email" usato dal frontend
       mobilePhone,
       officePhone, 
       privatePhone,
-      phone, // Supportiamo sia phone generico che campi specifici
+      phone, // Campo generico "phone" usato dal frontend
       status,
       notes
     } = req.body;
     
     console.log('CREATE LEAD - Request body:', req.body);
     
-    // Determiniamo il tipo di email (aziendale o privata)
+    // Determiniamo quali email salvare nel DB (company_email o private_email)
+    // Priorità: 1) campi specifici (companyEmail/privateEmail), 2) campo generico (email)
     let finalCompanyEmail = companyEmail || null;
     let finalPrivateEmail = privateEmail || null;
     
-    // Se è stata fornita una email generica, la gestiamo
+    // Se è stata fornita solo l'email generica, decidiamo dove metterla
     if (email && !finalCompanyEmail && !finalPrivateEmail) {
+      // Se l'email contiene il nome dell'azienda, la consideriamo aziendale
       if (company && email.includes('@' + company.toLowerCase().replace(/\s/g, ''))) {
         finalCompanyEmail = email;
       } else {
+        // Altrimenti la consideriamo privata
         finalPrivateEmail = email;
       }
     }
@@ -113,6 +117,7 @@ export const createLead = async (req, res, next) => {
     // Data di creazione e aggiornamento
     const now = new Date();
     
+    // Query SQL - usiamo solo i nomi di colonna che esistono nel DB
     const queryText = `
       INSERT INTO leads
         (first_name, last_name, company_name, company_email, private_email, 
@@ -154,7 +159,8 @@ export const createLead = async (req, res, next) => {
     
     const { rows } = await pool.query(queryText, queryParams);
     
-    // Mappiamo i campi per compatibilità con il frontend
+    // Mappiamo i campi per la risposta al frontend, aggiungendo i campi virtuali 
+    // "email" e "phone" per compatibilità
     const mappedLead = {
       ...rows[0],
       email: rows[0].companyEmail || rows[0].privateEmail,
