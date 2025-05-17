@@ -26,7 +26,8 @@ import {
 const companySchema = z.object({
   name: z.string().min(1, "Nome azienda obbligatorio"),
   industry: z.string().nullable().optional(),
-  email: z.string().email("Inserisci un'email valida").nullable().optional(),
+  // Reso email completamente facoltativo (può essere vuoto o formato non valido)
+  email: z.union([z.string().email("Inserisci un'email valida"), z.string().length(0), z.null()]).optional(),
   phone: z.string().nullable().optional(),
   website: z.string().nullable().optional(),
   // DEPRECATED: old address field - Added 2025-05-13 by Lead Architect: unified location
