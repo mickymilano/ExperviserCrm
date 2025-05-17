@@ -320,22 +320,7 @@ export default function CompanyDetail() {
                       </div>
                     )}
                     
-                    {company.website && (
-                      <div className="flex items-start">
-                        <Link className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
-                        <div>
-                          <p className="text-sm font-medium mb-1">Sito Web</p>
-                          <a 
-                            href={company.website.startsWith('http') ? company.website : `https://${company.website}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-primary hover:underline"
-                          >
-                            {company.website}
-                          </a>
-                        </div>
-                      </div>
-                    )}
+                    {/* Campo website rimosso da qui in quanto già presente nella sezione Contact Information */}
                   </div>
                 </div>
                 
