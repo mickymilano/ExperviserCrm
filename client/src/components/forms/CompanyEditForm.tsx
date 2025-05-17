@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { PlacesAutocomplete } from "@/components/ui/PlacesAutocomplete";
@@ -59,6 +60,11 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
   // Get custom fields from company if they exist
   const customFields = company.customFields || {};
   
+  // Stato per gestire le relazioni multiple
+  const [relationshipTypes, setRelationshipTypes] = useState<string[]>(
+    Array.isArray(company.relationshipType) ? company.relationshipType : []
+  );
+  
   // Initialize form with company data
   const { 
     register, 
@@ -98,11 +104,25 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
     setValue(field as any, value, { shouldValidate: true });
   };
   
+  // Gestione della selezione/deselezione delle relazioni
+  const handleRelationshipChange = (value: string, checked: boolean) => {
+    setRelationshipTypes(prev => {
+      if (checked) {
+        return [...prev, value];
+      } else {
+        return prev.filter(v => v !== value);
+      }
+    });
+  };
+
   // Update company mutation
   const updateCompany = useMutation({
     mutationFn: async (data: CompanyFormData) => {
       // Prepare data for API
       const companyData = { ...data };
+      
+      // Aggiungiamo le relazioni selezionate
+      companyData.relationshipType = relationshipTypes;
       
       // Convert tags string to array
       if (tagsInput.trim()) {
@@ -415,6 +435,103 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
                   </SelectGroup>
                 </SelectContent>
               </Select>
+            </div>
+          </div>
+        </div>
+        
+        {/* Relazioni Section */}
+        <div className="mb-6">
+          <h3 className="text-lg font-medium mb-4">Relazioni con me</h3>
+          <div className="space-y-2 p-3 border rounded-md bg-gray-50">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="relationship-prospect" 
+                  checked={relationshipTypes.includes('prospect')}
+                  onCheckedChange={(checked) => handleRelationshipChange('prospect', !!checked)}
+                />
+                <Label htmlFor="relationship-prospect" className="text-sm">In fase di valutazione</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="relationship-clienteAttivo" 
+                  checked={relationshipTypes.includes('clienteAttivo')}
+                  onCheckedChange={(checked) => handleRelationshipChange('clienteAttivo', !!checked)}
+                />
+                <Label htmlFor="relationship-clienteAttivo" className="text-sm">Cliente attivo</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="relationship-exCliente" 
+                  checked={relationshipTypes.includes('exCliente')}
+                  onCheckedChange={(checked) => handleRelationshipChange('exCliente', !!checked)}
+                />
+                <Label htmlFor="relationship-exCliente" className="text-sm">Ex-cliente</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="relationship-clienteRetainer" 
+                  checked={relationshipTypes.includes('clienteRetainer')}
+                  onCheckedChange={(checked) => handleRelationshipChange('clienteRetainer', !!checked)}
+                />
+                <Label htmlFor="relationship-clienteRetainer" className="text-sm">Cliente retainer</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="relationship-segnalatore" 
+                  checked={relationshipTypes.includes('segnalatore')}
+                  onCheckedChange={(checked) => handleRelationshipChange('segnalatore', !!checked)}
+                />
+                <Label htmlFor="relationship-segnalatore" className="text-sm">Segnalatore</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="relationship-partnerStrategico" 
+                  checked={relationshipTypes.includes('partnerStrategico')}
+                  onCheckedChange={(checked) => handleRelationshipChange('partnerStrategico', !!checked)}
+                />
+                <Label htmlFor="relationship-partnerStrategico" className="text-sm">Partner strategico</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="relationship-investitoreCliente" 
+                  checked={relationshipTypes.includes('investitoreCliente')}
+                  onCheckedChange={(checked) => handleRelationshipChange('investitoreCliente', !!checked)}
+                />
+                <Label htmlFor="relationship-investitoreCliente" className="text-sm">Investitore-cliente</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="relationship-mandante" 
+                  checked={relationshipTypes.includes('mandante')}
+                  onCheckedChange={(checked) => handleRelationshipChange('mandante', !!checked)}
+                />
+                <Label htmlFor="relationship-mandante" className="text-sm">Mandante</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="relationship-clienteUnaTantum" 
+                  checked={relationshipTypes.includes('clienteUnaTantum')}
+                  onCheckedChange={(checked) => handleRelationshipChange('clienteUnaTantum', !!checked)}
+                />
+                <Label htmlFor="relationship-clienteUnaTantum" className="text-sm">Cliente una-tantum</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="relationship-fornitore" 
+                  checked={relationshipTypes.includes('fornitore')}
+                  onCheckedChange={(checked) => handleRelationshipChange('fornitore', !!checked)}
+                />
+                <Label htmlFor="relationship-fornitore" className="text-sm">Fornitore</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="relationship-concorrente" 
+                  checked={relationshipTypes.includes('concorrente')}
+                  onCheckedChange={(checked) => handleRelationshipChange('concorrente', !!checked)}
+                />
+                <Label htmlFor="relationship-concorrente" className="text-sm">Concorrente</Label>
+              </div>
             </div>
           </div>
         </div>
