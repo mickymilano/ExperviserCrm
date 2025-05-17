@@ -1,0 +1,89 @@
+Ecco una patch mirata per introdurre un prompt di conferma prima di disassociare un contatto, usando il semplice window.confirm. Copia e incolla questo diff nel tuo CompanyContactsTab.tsx:
+
+--- a/client/src/components/company/CompanyContactsTab.tsx
++++ b/client/src/components/company/CompanyContactsTab.tsx
+@@ export default function CompanyContactsTab({ companyId, primaryContactId }) {
+-  const detach = (id) => {
+-    fetch(`/api/contacts/${id}`, {
+-      method: 'PATCH',
+-      headers: { 'Content-Type': 'application/json' },
+-      body: JSON.stringify({ companyId: null }),
+-    }).then(() =>
+-      setContacts(cs => cs.filter(c => c.id !== id))
+-    );
+-  };
++  const detach = (id, name) => {
++    // conferma visiva prima di staccare
++    if (!window.confirm(`Sei sicuro di voler rimuovere "${name}" da questa azienda?`)) {
++      return;
++    }
++    fetch(`/api/contacts/${id}`, {
++      method: 'PATCH',
++      headers: { 'Content-Type': 'application/json' },
++      body: JSON.stringify({ companyId: null }),
++    })
++    .then(res => {
++      if (!res.ok) throw new Error('Errore durante la disassociazione');
++      setContacts(cs => cs.filter(c => c.id !== id));
++    })
++    .catch(err => {
++      console.error(err);
++      alert('Non è stato possibile disassociare il contatto. Riprova.');
++    });
++  };
+@@ <tbody>
+-      {contacts.map(c => (
+-        <tr key={c.id}>
+-          <td className="px-2">
+-            {primaryId === c.id 
+-              ? <span className="text-green-600 font-semibold">Primario</span>
+-              : <button 
+-                  onClick={() => setPrimary(c.id)} 
+-                  className="text-blue-600 hover:underline text-sm"
+-                >
+-                  Imposta primario
+-                </button>
+-            }
+-          </td>
+-          <td>{c.name}</td><td>{c.email}</td><td>{c.phone}</td>
+-          <td>
+-            <button 
+-              onClick={() => detach(c.id)} 
+-              className="text-red-500 hover:underline text-sm"
+-            >
+-              Disassocia
+-            </button>
+-          </td>
+-        </tr>
+-      ))}
++      {contacts.map(c => (
++        <tr key={c.id} className={primaryId===c.id ? 'bg-yellow-50' : ''}>
++          <td className="px-2">
++            {primaryId === c.id 
++              ? <span className="text-green-600 font-semibold">Primario</span>
++              : <button 
++                  onClick={() => setPrimary(c.id)} 
++                  className="text-blue-600 hover:underline text-sm"
++                >
++                  Imposta primario
++                </button>
++            }
++          </td>
++          <td>{c.name}</td><td>{c.email}</td><td>{c.phone}</td>
++          <td>
++            <button 
++              onClick={() => detach(c.id, c.name)} 
++              className="text-red-500 hover:underline text-sm"
++            >
++              Disassocia
++            </button>
++          </td>
++        </tr>
++      ))}
+
+Cosa cambia:
+	•	Il detach ora riceve anche name e apre un window.confirm(…) prima di procedere.
+	•	In caso di errore della fetch, mostriamo un alert all’utente.
+	•	Rimane il filtro della riga in base al primaryId.
+
+Applica la patch, ricompila il frontend e prova a disassociare un contatto: ora ti verrà chiesto di confermare l’azione.

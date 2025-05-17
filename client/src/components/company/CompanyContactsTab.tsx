@@ -251,7 +251,12 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
     }
   };
   
-  const disassociateContact = async (contactId: number) => {
+  const disassociateContact = async (contactId: number, contactName: string) => {
+    // Chiediamo conferma all'utente prima di procedere
+    if (!window.confirm(`Sei sicuro di voler rimuovere "${contactName}" da ${companyName}?`)) {
+      return; // L'utente ha annullato l'operazione
+    }
+    
     try {
       // Se stiamo disassociando il contatto primario, dobbiamo prima rimuoverlo come primario
       if (contactId === primaryContactId) {
@@ -450,7 +455,7 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
                           variant="outline" 
                           size="sm" 
                           className="text-destructive border-destructive hover:bg-destructive/10"
-                          onClick={() => disassociateContact(contact.id)}
+                          onClick={() => disassociateContact(contact.id, `${contact.firstName} ${contact.lastName}`)}
                         >
                           Disassocia
                         </Button>
