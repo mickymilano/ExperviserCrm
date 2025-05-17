@@ -438,11 +438,9 @@ export default function NewDealModal({ open, onOpenChange, initialData }: DealMo
   const saveDeal = useMutation({
     mutationFn: async (data: DealFormData) => {
       // Prepara i dati per l'invio in modo compatibile con lo schema del backend
-      // Omettiamo il campo branchId che non esiste nello schema del backend
-      const { branchId, ...restData } = data;
-      
+      // Ora includiamo anche branchId poiché esiste nello schema
       const payload = {
-        ...restData,
+        ...data,
         // Convertiamo in numeri interi prima dell'invio
         value: Math.floor(data.value),
         expectedRevenue: data.expectedRevenue ? Math.floor(data.expectedRevenue) : undefined,
