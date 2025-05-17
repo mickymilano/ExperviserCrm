@@ -1143,8 +1143,8 @@ export class PostgresStorage implements IStorage {
       // nella tabella leads abbiamo first_name, last_name, etc.
       const {
         firstName, lastName, status, email, phone, 
-        source, notes, company, // nel frontend è company ma nella tabella è company_name
-        role, address, website,
+        company, // nel frontend è company ma nella tabella è company_name
+        source, notes, role, address, website,
         customFields, assignedToId
       } = lead;
 
@@ -1154,12 +1154,12 @@ export class PostgresStorage implements IStorage {
         INSERT INTO leads (
           first_name,
           last_name, 
-          status, 
+          company_name, 
           email,
           phone,
+          status,
           source, 
           notes,
-          company_name, 
           role,
           address,
           website,
@@ -1172,12 +1172,12 @@ export class PostgresStorage implements IStorage {
           id, 
           first_name as "firstName",
           last_name as "lastName", 
-          status, 
+          company_name as "company",
           email,
           phone,
+          status, 
           source, 
           notes,
-          company_name as "company", 
           role,
           address,
           website,
@@ -1186,7 +1186,7 @@ export class PostgresStorage implements IStorage {
           created_at as "createdAt", 
           updated_at as "updatedAt"
       `,
-        [firstName, lastName, status, email, phone, source, notes, company, role, address, website, customFields, assignedToId],
+        [firstName, lastName, company, email, phone, status, source, notes, role, address, website, customFields, assignedToId],
       );
 
       console.log("Lead creato con successo:", result.rows[0]);
