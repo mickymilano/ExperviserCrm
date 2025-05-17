@@ -72,14 +72,27 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
   // Fetch companies
   const { data: companies = [] } = useQuery({
     queryKey: ["/api/companies"],
-    enabled: open,
+    enabled: open
   });
+
+  useEffect(() => {
+    if (companies && companies.length > 0) {
+      console.log("Companies loaded:", companies.length, companies);
+      setFilteredCompanies(companies);
+    }
+  }, [companies]);
 
   // Fetch contacts
   const { data: contacts = [] } = useQuery({
     queryKey: ["/api/contacts?includeAreas=true"],
-    enabled: open,
+    enabled: open
   });
+
+  useEffect(() => {
+    if (contacts && contacts.length > 0) {
+      console.log("Contacts loaded:", contacts.length, contacts);
+    }
+  }, [contacts]);
 
   // Query per recuperare le sinergie esistenti quando siamo in modalità di modifica
   const { data: dealSynergies = [] } = useQuery({
@@ -213,7 +226,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       return;
     }
     
-    console.log("Filtering contacts for company ID:", companyId);
+    console.log("Filtering contacts for company ID:", companyId, "Available contacts:", contacts.length);
     
     if (!companyId) {
       // Se non c'è un'azienda selezionata, mostra lista vuota
@@ -222,6 +235,12 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       return;
     }
     
+    // Per il momento, mostriamo tutti i contatti per diagnosticare il problema
+    setFilteredContacts(contacts);
+    console.log("DEBUG: Using all contacts:", contacts.length);
+    
+    // COMMENTATO PER DEBUG - Da riattivare dopo aver risolto il problema
+    /* 
     // Only show contacts associated with selected company
     const filteredContactsList = contacts.filter(contact => {
       // Check if the contact has areasOfActivity data
@@ -240,6 +259,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       
       return isAssociated;
     });
+    */
     
     console.log(`Filtered contacts for company ID ${companyId}: found ${filteredContactsList.length} contacts`);
     setFilteredContacts(filteredContactsList);
