@@ -480,8 +480,16 @@ export default function NewDealModal({ open, onOpenChange, initialData }: DealMo
         });
         
         if (!response.ok) {
-          const errorData = await response.json().catch(() => null);
+          const errorData = await response.json().catch(() => ({ message: 'Errore sconosciuto' }));
           console.error("Errore dal server:", errorData);
+          
+          // Mostra un toast con il messaggio di errore
+          toast({
+            title: "Errore nella creazione del deal",
+            description: errorData.message || "Si è verificato un errore durante la creazione del deal",
+            variant: "destructive"
+          });
+          
           throw new Error('Failed to create deal');
         }
         
