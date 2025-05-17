@@ -886,8 +886,8 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
-                        {Array.isArray(filteredContacts) && filteredContacts.length > 0 ? (
-                          filteredContacts.map((contact) => (
+                        {Array.isArray(synergyContacts) && synergyContacts.length > 0 ? (
+                          synergyContacts.map((contact) => (
                             <SelectItem key={contact.id} value={contact.id.toString()}>
                               <div className="flex items-center gap-2">
                                 <Check
