@@ -39,12 +39,18 @@ export const getLead = async (req, res, next) => {
     const { rows } = await pool.query(`
       SELECT
         id,
-        first_name  AS "firstName",
-        last_name   AS "lastName",
-        company_name AS company,
-        email,
-        phone,
-        status
+        first_name     AS "firstName",
+        last_name      AS "lastName",
+        company_name   AS company,
+        company_email  AS "companyEmail",
+        private_email  AS "privateEmail",
+        mobile_phone   AS "mobilePhone",
+        office_phone   AS "officePhone",
+        private_phone  AS "privatePhone",
+        status,
+        notes,
+        created_at     AS "createdAt",
+        updated_at     AS "updatedAt"
       FROM leads
       WHERE id = $1
     `, [req.params.id]);
@@ -53,7 +59,14 @@ export const getLead = async (req, res, next) => {
       return res.status(404).json({ message: 'Lead non trovato' });
     }
     
-    res.json(rows[0]);
+    // Mappiamo i campi per compatibilità con il frontend
+    const mappedLead = {
+      ...rows[0],
+      email: rows[0].companyEmail || rows[0].privateEmail,
+      phone: rows[0].mobilePhone || rows[0].officePhone || rows[0].privatePhone
+    };
+    
+    res.json(mappedLead);
   } catch (error) {
     console.error('Error fetching lead:', error);
     res.status(500).json({ message: 'Errore durante il recupero del lead' });
@@ -62,23 +75,84 @@ export const getLead = async (req, res, next) => {
 
 export const createLead = async (req, res, next) => {
   try {
-    const { firstName, lastName, company, email, phone, status } = req.body;
+    const { 
+      firstName, 
+      lastName, 
+      company, 
+      companyEmail,
+      privateEmail,
+      email, // Supportiamo sia email generico che campi specifici 
+      mobilePhone,
+      officePhone, 
+      privatePhone,
+      phone, // Supportiamo sia phone generico che campi specifici
+      status,
+      notes
+    } = req.body;
+    
+    // Determiniamo il tipo di email (aziendale o privata)
+    let finalCompanyEmail = companyEmail || null;
+    let finalPrivateEmail = privateEmail || null;
+    
+    // Se è stata fornita una email generica, la gestiamo
+    if (email && !finalCompanyEmail && !finalPrivateEmail) {
+      if (company && email.includes('@' + company.toLowerCase().replace(/\s/g, ''))) {
+        finalCompanyEmail = email;
+      } else {
+        finalPrivateEmail = email;
+      }
+    }
+    
+    // Trattiamo il telefono in modo flessibile
+    const finalMobilePhone = mobilePhone || phone || null;
+    const finalOfficePhone = officePhone || null;
+    const finalPrivatePhone = privatePhone || null;
+    
+    // Data di creazione e aggiornamento
+    const now = new Date();
     
     const { rows } = await pool.query(`
       INSERT INTO leads
-        (first_name, last_name, company_name, email, phone, status)
-      VALUES($1, $2, $3, $4, $5, $6)
+        (first_name, last_name, company_name, company_email, private_email, 
+         mobile_phone, office_phone, private_phone, status, notes, created_at, updated_at)
+      VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
       RETURNING
         id,
-        first_name   AS "firstName",
-        last_name    AS "lastName",
-        company_name AS company,
-        email,
-        phone,
-        status
-    `, [firstName, lastName, company, email, phone, status || 'new']);
+        first_name     AS "firstName",
+        last_name      AS "lastName",
+        company_name   AS company,
+        company_email  AS "companyEmail",
+        private_email  AS "privateEmail",
+        mobile_phone   AS "mobilePhone",
+        office_phone   AS "officePhone",
+        private_phone  AS "privatePhone",
+        status,
+        notes,
+        created_at     AS "createdAt",
+        updated_at     AS "updatedAt"
+    `, [
+      firstName, 
+      lastName, 
+      company, 
+      finalCompanyEmail, 
+      finalPrivateEmail, 
+      finalMobilePhone,
+      finalOfficePhone,
+      finalPrivatePhone,
+      status || 'new',
+      notes || null,
+      now,
+      now
+    ]);
     
-    res.status(201).json(rows[0]);
+    // Mappiamo i campi per compatibilità con il frontend
+    const mappedLead = {
+      ...rows[0],
+      email: rows[0].companyEmail || rows[0].privateEmail,
+      phone: rows[0].mobilePhone || rows[0].officePhone || rows[0].privatePhone
+    };
+    
+    res.status(201).json(mappedLead);
   } catch (error) {
     console.error('Error creating lead:', error);
     res.status(500).json({ message: 'Errore durante la creazione del lead' });
@@ -109,13 +183,52 @@ export const updateLead = async (req, res, next) => {
       values.push(updates.company);
     }
     
-    if (updates.email !== undefined) {
-      fields.push(`email=$${paramIndex++}`);
-      values.push(updates.email);
+    // Gestione email (decidiamo se aziendali o private)
+    if (updates.companyEmail !== undefined) {
+      fields.push(`company_email=$${paramIndex++}`);
+      values.push(updates.companyEmail);
     }
     
-    if (updates.phone !== undefined) {
-      fields.push(`phone=$${paramIndex++}`);
+    if (updates.privateEmail !== undefined) {
+      fields.push(`private_email=$${paramIndex++}`);
+      values.push(updates.privateEmail);
+    }
+    
+    // Supporto per email generico (mantenere compatibilità con frontend)
+    if (updates.email !== undefined) {
+      if (updates.company && updates.email.includes('@' + updates.company.toLowerCase().replace(/\s/g, ''))) {
+        fields.push(`company_email=$${paramIndex++}`);
+        values.push(updates.email);
+        fields.push(`private_email=NULL`);
+      } else {
+        fields.push(`private_email=$${paramIndex++}`);
+        values.push(updates.email);
+        fields.push(`company_email=NULL`);
+      }
+    }
+    
+    // Gestione telefono con vari tipi
+    if (updates.mobilePhone !== undefined) {
+      fields.push(`mobile_phone=$${paramIndex++}`);
+      values.push(updates.mobilePhone);
+    }
+    
+    if (updates.officePhone !== undefined) {
+      fields.push(`office_phone=$${paramIndex++}`);
+      values.push(updates.officePhone);
+    }
+    
+    if (updates.privatePhone !== undefined) {
+      fields.push(`private_phone=$${paramIndex++}`);
+      values.push(updates.privatePhone);
+    }
+    
+    // Supporto per phone generico (mantenere compatibilità con frontend)
+    if (updates.phone !== undefined && 
+        updates.mobilePhone === undefined && 
+        updates.officePhone === undefined && 
+        updates.privatePhone === undefined) {
+      fields.push(`mobile_phone=$${paramIndex++}`);
       values.push(updates.phone);
     }
     
@@ -123,6 +236,15 @@ export const updateLead = async (req, res, next) => {
       fields.push(`status=$${paramIndex++}`);
       values.push(updates.status);
     }
+    
+    if (updates.notes !== undefined) {
+      fields.push(`notes=$${paramIndex++}`);
+      values.push(updates.notes);
+    }
+    
+    // Aggiornamento data di modifica
+    fields.push(`updated_at=$${paramIndex++}`);
+    values.push(new Date());
     
     if (fields.length === 0) {
       return res.status(400).json({ message: 'Nessun campo da aggiornare' });
@@ -136,7 +258,38 @@ export const updateLead = async (req, res, next) => {
       WHERE id = $${paramIndex}
     `, values);
     
-    res.sendStatus(204);
+    // Recuperiamo i dati aggiornati per restituirli al frontend
+    const { rows } = await pool.query(`
+      SELECT
+        id,
+        first_name     AS "firstName",
+        last_name      AS "lastName",
+        company_name   AS company,
+        company_email  AS "companyEmail",
+        private_email  AS "privateEmail",
+        mobile_phone   AS "mobilePhone",
+        office_phone   AS "officePhone",
+        private_phone  AS "privatePhone",
+        status,
+        notes,
+        created_at     AS "createdAt",
+        updated_at     AS "updatedAt"
+      FROM leads
+      WHERE id = $1
+    `, [id]);
+    
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'Lead non trovato dopo l\'aggiornamento' });
+    }
+    
+    // Mappiamo i campi per compatibilità con il frontend
+    const mappedLead = {
+      ...rows[0],
+      email: rows[0].companyEmail || rows[0].privateEmail,
+      phone: rows[0].mobilePhone || rows[0].officePhone || rows[0].privatePhone
+    };
+    
+    res.status(200).json(mappedLead);
   } catch (error) {
     console.error('Error updating lead:', error);
     res.status(500).json({ message: 'Errore durante l\'aggiornamento del lead' });
@@ -166,12 +319,16 @@ export const convertLead = async (req, res, next) => {
     const { rows: leadRows } = await pool.query(`
       SELECT
         id,
-        first_name AS "firstName",
-        last_name AS "lastName",
-        company_name AS company,
-        email,
-        phone,
-        status
+        first_name     AS "firstName",
+        last_name      AS "lastName",
+        company_name   AS company,
+        company_email  AS "companyEmail",
+        private_email  AS "privateEmail",
+        mobile_phone   AS "mobilePhone",
+        office_phone   AS "officePhone",
+        private_phone  AS "privatePhone",
+        status,
+        notes
       FROM leads
       WHERE id = $1
     `, [id]);
@@ -181,6 +338,10 @@ export const convertLead = async (req, res, next) => {
     }
     
     const lead = leadRows[0];
+    
+    // Prepariamo email e telefono per la conversione
+    const email = lead.companyEmail || lead.privateEmail || null;
+    const phone = lead.mobilePhone || lead.officePhone || lead.privatePhone || null;
     
     // 2. Create company if needed
     let companyId = null;
@@ -196,10 +357,10 @@ export const convertLead = async (req, res, next) => {
     
     // 3. Create contact
     const { rows: contactRows } = await pool.query(`
-      INSERT INTO contacts (first_name, last_name, email, phone, company_id)
-      VALUES ($1, $2, $3, $4, $5)
+      INSERT INTO contacts (first_name, last_name, email, phone, company_id, notes)
+      VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *
-    `, [lead.firstName, lead.lastName, lead.email, lead.phone, companyId]);
+    `, [lead.firstName, lead.lastName, email, phone, companyId, lead.notes]);
     
     // 4. Update lead status
     await pool.query(`
