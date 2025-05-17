@@ -89,39 +89,39 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
       sector: initialData?.sector || "",
       description: initialData?.description || "",
       
-      // Campi indirizzo
+      // Campi indirizzo (compatibilità con backend)
       address: initialData?.address || "",
-      fullAddress: initialData?.fullAddress || initialData?.full_address || initialData?.address || "",
+      fullAddress: initialData?.fullAddress || "",
       country: initialData?.country || "",
       
       // Campi finanziari e dimensionali
-      employeeCount: initialData?.employeeCount || initialData?.employee_count || null,
-      annualRevenue: initialData?.annualRevenue || initialData?.annual_revenue || null,
-      foundedYear: initialData?.foundedYear || initialData?.founded_year || null,
+      employeeCount: initialData?.employeeCount || null,
+      annualRevenue: initialData?.annualRevenue || null,
+      foundedYear: initialData?.foundedYear || null,
       
       // Campi di relazione
-      parentCompanyId: initialData?.parentCompanyId || initialData?.parent_company_id || null,
+      parentCompanyId: initialData?.parentCompanyId || null,
       
       // Campi di stato e categorizzazione
       status: initialData?.status || "active",
-      isActiveRep: initialData?.isActiveRep || initialData?.is_active_rep || false,
+      isActiveRep: initialData?.isActiveRep || false,
       logoUrl: initialData?.logo || null,
       
       // Array
       tags: initialData?.tags || [],
       brands: initialData?.brands || [],
       channels: initialData?.channels || [],
-      productsOrServicesTags: initialData?.productsOrServicesTags || initialData?.products_or_services_tags || [],
-      locationTypes: initialData?.locationTypes || initialData?.location_types || [],
+      productsOrServicesTags: initialData?.productsOrServicesTags || [],
+      locationTypes: initialData?.locationTypes || [],
       
       // Altri campi
       notes: initialData?.notes || "",
-      customFields: initialData?.customFields || initialData?.custom_fields || null,
-      linkedinUrl: initialData?.linkedinUrl || initialData?.linkedin_url || "",
+      customFields: initialData?.customFields || null,
+      linkedinUrl: initialData?.linkedinUrl || "",
       
       // Date
-      lastContactedAt: initialData?.lastContactedAt || initialData?.last_contacted_at || null,
-      nextFollowUpAt: initialData?.nextFollowUpAt || initialData?.next_follow_up_at || null,
+      lastContactedAt: initialData?.lastContactedAt || null,
+      nextFollowUpAt: initialData?.nextFollowUpAt || null,
     },
     mode: "onSubmit" // Importante: valida solo al submit, non su onChange
   });
