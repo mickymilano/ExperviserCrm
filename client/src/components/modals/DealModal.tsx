@@ -272,22 +272,21 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       // Verifica se il contatto ha delle aree di attività
       if (contact.areasOfActivity && Array.isArray(contact.areasOfActivity)) {
         // Cerca se una delle aree ha l'azienda selezionata
-        return contact.areasOfActivity.some(area => 
-          area.companyId === companyId || 
-          // Aggiungi controllo per companyId come stringa
-          area.companyId === String(companyId));
+        return contact.areasOfActivity.some(area => {
+          // Controlla sia il caso in cui companyId è un numero sia quando è una stringa
+          const areaCompanyId = typeof area.companyId === 'number' ? area.companyId : parseInt(area.companyId as string);
+          return areaCompanyId === companyId;
+        });
       }
       return false;
     });
     
-    if (filteredByAreas.length > 0) {
-      setFilteredContacts(filteredByAreas);
-      console.log(`Trovati ${filteredByAreas.length} contatti con aree di attività nell'azienda ${companyId}`);
-    } else {
-      // Se non troviamo contatti collegati all'azienda, mostriamo tutti i contatti
-      // per garantire che il form continui a funzionare
-      setFilteredContacts(contacts);
-      console.log(`Nessun contatto trovato per l'azienda ${companyId}, mostrando tutti i contatti`);
+    // Mostriamo SOLO i contatti associati all'azienda selezionata
+    setFilteredContacts(filteredByAreas);
+    console.log(`Filtrati ${filteredByAreas.length} contatti associati all'azienda ${companyId}`);
+    
+    if (filteredByAreas.length === 0) {
+      console.log(`Non ci sono contatti associati all'azienda ${companyId}`);
     }
     /*
     // Solo per debug - Verifichiamo quanti contatti hanno areasOfActivity
