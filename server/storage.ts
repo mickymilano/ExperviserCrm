@@ -30,6 +30,7 @@ export interface IStorage {
   getContact(id: number): Promise<Contact | null>;
   getAllContacts(): Promise<Contact[]>;
   getContacts(): Promise<Contact[]>; // Aggiunto per compatibilità
+  getUnassignedContacts(): Promise<Contact[]>; // Contatti non associati a nessuna azienda
   createContact(contactData: InsertContact): Promise<Contact>;
   updateContact(id: number, contactData: Partial<Contact>): Promise<Contact>;
   deleteContact(id: number): Promise<void>;

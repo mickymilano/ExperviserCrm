@@ -464,6 +464,18 @@ export function registerRoutes(app: any) {
   app.get('/api/contacts', authenticate, async (req, res) => {
     try {
       console.log("API /api/contacts: retrieving contacts from storage");
+      
+      // Verifico se è richiesto il filtro per contatti non associati
+      const unassignedOnly = req.query.unassigned === 'true';
+      
+      if (unassignedOnly) {
+        console.log("API /api/contacts: filtering for unassigned contacts only");
+        const unassignedContacts = await storage.getUnassignedContacts();
+        console.log(`API /api/contacts: found ${unassignedContacts.length} unassigned contacts`);
+        return res.json(unassignedContacts);
+      }
+      
+      // Comportamento standard: restituisci tutti i contatti
       const contacts = await storage.getContacts(); // Cambiato getAllContacts con getContacts
       console.log(`API /api/contacts: found ${contacts.length} contacts in storage`);
       res.json(contacts);
