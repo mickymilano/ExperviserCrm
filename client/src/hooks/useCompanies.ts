@@ -1,7 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { queryClient } from "@/lib/queryClient";
-import { apiRequest } from "@/lib/apiRequest";
-import { Company } from "@shared/schema";
+import { queryClient } from "../lib/queryClient";
+import { apiRequest } from "../lib/apiRequest";
+import type { Company } from "@shared/schema";
 
 // Hook per ottenere i dettagli di una singola azienda
 export function useCompany(id: number) {
