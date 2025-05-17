@@ -191,6 +191,7 @@ export const deals = pgTable('deals', {
     .notNull(),
   contactId: integer('contact_id').references(() => contacts.id),
   companyId: integer('company_id').references(() => companies.id),
+  branchId: integer('branch_id').references(() => branches.id),
   value: decimal('value', { precision: 15, scale: 2 }),
   notes: text('notes'),
   tags: text('tags').array(),
