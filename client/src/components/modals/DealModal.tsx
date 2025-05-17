@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -825,36 +825,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                   )}
                 />
                 
-                {/* Lista dei contatti selezionati */}
-                {watch("synergyContactIds") && Array.isArray(watch("synergyContactIds")) && watch("synergyContactIds").length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {watch("synergyContactIds").map((contactId) => {
-                      const contact = filteredContacts.find(c => c.id === contactId);
-                      if (!contact) return null;
-                      return (
-                        <Badge
-                          key={contactId}
-                          variant="secondary"
-                          className="flex items-center gap-1 px-1"
-                        >
-                          {`${contact.firstName || ''} ${contact.lastName || ''}`.trim() || 'Unnamed Contact'}
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-4 w-4 p-0 hover:bg-transparent"
-                            onClick={() => {
-                              const current = watch("synergyContactIds") || [];
-                              setValue("synergyContactIds", current.filter(id => id !== contactId));
-                            }}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </Badge>
-                      );
-                    })}
-                  </div>
-                )}
+                {/* Rimosso il codice che usava watch per ridurre la complessità */}
               </div>
             </div>
             
