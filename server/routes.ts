@@ -996,16 +996,6 @@ export function registerRoutes(app: any) {
   // --- LEAD ROUTES ---
   
   // Lead CRUD + conversion 
-  // Importiamo il controller dei lead
-  import { 
-    listLeads, 
-    getLead, 
-    createLead, 
-    updateLead, 
-    deleteLead, 
-    convertLead 
-  } from './controllers/leadController.js';
-  
   // Registra le rotte dei lead usando il controller dedicato
   app.get('/api/leads', authenticate, listLeads);
   app.get('/api/leads/:id', authenticate, getLead);
