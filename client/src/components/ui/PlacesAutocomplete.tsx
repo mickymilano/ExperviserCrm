@@ -249,7 +249,21 @@ export function PlacesAutocomplete({
               // Il mousedown è cruciale per evitare che i modali si chiudano
               pacContainer.addEventListener('mousedown', (e) => {
                 e.stopPropagation();
-                e.preventDefault();
+              });
+              
+              // Aggiungiamo un handler per garantire che gli item nel dropdown siano cliccabili
+              document.querySelectorAll('.pac-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                  console.log('Click su elemento suggestion:', e);
+                  e.stopPropagation();
+                  // Non usare preventDefault qui perché interferisce con la selezione
+                });
+                
+                item.addEventListener('mousedown', (e) => {
+                  console.log('Mousedown su elemento suggestion:', e);
+                  e.stopPropagation();
+                  // Non usare preventDefault qui perché interferisce con la selezione
+                });
               });
               
               // Aggiungiamo uno stile per garantire che sia visibile sopra i modali
