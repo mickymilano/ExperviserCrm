@@ -6,6 +6,7 @@ import { storage } from './storage';
 import { pool } from './db'; // Importiamo il pool di connessione PostgreSQL
 import { z } from 'zod';
 import { insertUserSchema, insertContactSchema, insertCompanySchema, insertDealSchema, insertPipelineStageSchema, insertLeadSchema, insertAreaOfActivitySchema, insertContactEmailSchema, insertBranchSchema } from '@shared/schema';
+import leadController from './controllers/leadController.js';
 import branchRoutes from './branchRoutes';
 
 // Chiave segreta per JWT
@@ -986,216 +987,25 @@ export function registerRoutes(app: any) {
   });
   
   // --- LEAD ROUTES ---
+  // Lead CRUD + conversion
+  app.get('/api/leads', authenticate, leadController.listLeads);
+  app.get('/api/leads/:id', authenticate, leadController.getLead);
+  app.post('/api/leads', authenticate, leadController.createLead);
+  app.patch('/api/leads/:id', authenticate, leadController.updateLead);
+  app.delete('/api/leads/:id', authenticate, leadController.deleteLead);
+  app.post('/api/leads/:id/convert', authenticate, leadController.convertLead);
   
-  // Ottieni tutti i lead
-  app.get('/api/leads', authenticate, async (req, res) => {
-    try {
-      console.log("API /api/leads: retrieving leads from storage");
-      const leads = await storage.getLeads();
-      console.log(`API /api/leads: found ${leads.length} leads in storage`);
-      res.json(leads);
-    } catch (error) {
-      console.error('Error fetching leads:', error);
-      res.status(500).json({ message: 'Errore durante il recupero dei lead' });
-    }
-  });
+  // Le route per i lead sono ora gestite dal controller
   
-  // Ottieni un singolo lead
-  app.get('/api/leads/:id', authenticate, async (req, res) => {
-    try {
-      const leadId = parseInt(req.params.id);
-      const lead = await storage.getLead(leadId);
-      
-      if (!lead) {
-        return res.status(404).json({ message: 'Lead non trovato' });
-      }
-      
-      res.json(lead);
-    } catch (error) {
-      console.error('Error fetching lead:', error);
-      res.status(500).json({ message: 'Errore durante il recupero del lead' });
-    }
-  });
+  // Tutto il codice per i lead è stato spostato nel controller
   
-  // Crea un nuovo lead
-  app.post('/api/leads', authenticate, async (req, res) => {
-    try {
-      // Validazione dello schema
-      const validatedData = insertLeadSchema.parse(req.body);
-      
-      // Crea il lead
-      const newLead = await storage.createLead(validatedData);
-      
-      res.status(201).json(newLead);
-    } catch (error) {
-      console.error('Error creating lead:', error);
-      if (error instanceof z.ZodError) {
-        res.status(400).json({ message: 'Dati non validi', errors: error.errors });
-      } else {
-        res.status(500).json({ message: 'Errore durante la creazione del lead' });
-      }
-    }
-  });
+  // Codice trasferito al leadController
   
-  // Aggiorna un lead (supporta sia PUT che PATCH)
-  app.put('/api/leads/:id', authenticate, async (req, res) => {
-    try {
-      const leadId = parseInt(req.params.id);
-      
-      // Verifica se il lead esiste
-      const lead = await storage.getLead(leadId);
-      if (!lead) {
-        return res.status(404).json({ message: 'Lead non trovato' });
-      }
-      
-      // Aggiorna il lead
-      const updatedLead = await storage.updateLead(leadId, req.body);
-      
-      res.json(updatedLead);
-    } catch (error) {
-      console.error('Error updating lead:', error);
-      res.status(500).json({ message: 'Errore durante l\'aggiornamento del lead' });
-    }
-  });
+  // PUT/PATCH per leads ora gestito dal controller
   
-  // Endpoint PATCH per aggiornamento parziale dei lead
-  app.patch('/api/leads/:id', authenticate, async (req, res) => {
-    try {
-      const leadId = parseInt(req.params.id);
-      
-      // Verifica se il lead esiste
-      const lead = await storage.getLead(leadId);
-      if (!lead) {
-        return res.status(404).json({ message: 'Lead non trovato' });
-      }
-      
-      // Valida i dati inviati
-      const validatedData = req.body; // Potremmo usare uno schema parziale qui
-      
-      // Aggiorna il lead
-      const updatedLead = await storage.updateLead(leadId, validatedData);
-      
-      res.json(updatedLead);
-    } catch (error) {
-      console.error('Error updating lead with PATCH:', error);
-      if (error instanceof z.ZodError) {
-        res.status(400).json({ message: 'Dati non validi', errors: error.errors });
-      } else {
-        res.status(500).json({ message: 'Errore durante l\'aggiornamento del lead' });
-      }
-    }
-  });
+  // DELETE per leads ora gestito dal controller
   
-  // Elimina un lead
-  app.delete('/api/leads/:id', authenticate, async (req, res) => {
-    try {
-      const leadId = parseInt(req.params.id);
-      
-      // Verifica se il lead esiste
-      const lead = await storage.getLead(leadId);
-      if (!lead) {
-        return res.status(404).json({ message: 'Lead non trovato' });
-      }
-      
-      // Elimina il lead
-      await storage.deleteLead(leadId);
-      
-      res.json({ message: 'Lead eliminato con successo' });
-    } catch (error) {
-      console.error('Error deleting lead:', error);
-      res.status(500).json({ message: 'Errore durante l\'eliminazione del lead' });
-    }
-  });
-  
-  // Converti un lead in contatto
-  app.post('/api/leads/:id/convert', authenticate, async (req, res) => {
-    try {
-      console.log("Richiesta conversione lead in contatto, lead ID:", req.params.id);
-      const leadId = parseInt(req.params.id);
-      
-      // Verifica se il lead esiste
-      const lead = await storage.getLead(leadId);
-      if (!lead) {
-        return res.status(404).json({ message: 'Lead non trovato' });
-      }
-      
-      console.log("Lead trovato:", lead);
-      
-      // Variabile per tenere traccia dell'id dell'azienda creata (se presente)
-      let company = null;
-      
-      // Se il lead ha un'azienda associata, creiamo prima l'azienda
-      // ATTENZIONE: nel DB il campo è "company", non "companyName"
-      if (lead.company && !req.body.skipCompanyCreation) {
-        console.log("Il lead ha un'azienda associata:", lead.company);
-        company = await storage.createCompany({
-          name: lead.company,
-          website: lead.website || "",
-          address: lead.address || "",
-          status: "active",
-          // Altri campi opzionali se disponibili
-        });
-        
-        console.log("Azienda creata con successo:", company);
-      }
-      
-      // Crea il contatto dal lead
-      console.log("Creazione contatto dal lead...");
-      const newContact = await storage.createContact({
-        firstName: lead.firstName,
-        lastName: lead.lastName,
-        mobilePhone: lead.phone || null,
-        companyEmail: lead.email || null,
-        privateEmail: lead.email || null, // duplicato ma utile per sicurezza
-        officePhone: lead.phone || null, // duplicato ma utile per sicurezza
-        address: lead.address || null,
-        notes: lead.notes || null,
-        source: lead.source || null,
-        status: 'active',
-        customFields: lead.customFields || {}
-      });
-      
-      console.log("Contatto creato con successo:", newContact);
-      
-      // Se abbiamo creato un'azienda, collega automaticamente il contatto all'azienda
-      if (company) {
-        console.log("Collegamento contatto all'azienda...");
-        await storage.createAreaOfActivity({
-          contactId: newContact.id,
-          companyId: company.id,
-          companyName: company.name,
-          role: lead.role || null,
-          isPrimary: true // Il primo contatto sarà il contatto primario
-        });
-        console.log("Contatto collegato all'azienda come primario");
-      }
-      
-      // Opzionalmente, crea un deal se richiesto
-      let deal = null;
-      if (req.body.createDeal && req.body.dealName) {
-        deal = await storage.createDeal({
-          name: req.body.dealName,
-          contactId: newContact.id,
-          companyId: company?.id || null,
-          value: req.body.dealValue || null,
-          status: 'active'
-        });
-      }
-      
-      // Elimina il lead
-      await storage.deleteLead(leadId);
-      
-      res.json({
-        message: 'Lead convertito con successo',
-        contact: newContact,
-        company,
-        deal
-      });
-    } catch (error) {
-      console.error('Error converting lead:', error);
-      res.status(500).json({ message: 'Errore durante la conversione del lead' });
-    }
-  });
+  // Conversione dei leads ora gestita dal controller
   
   // --- DEAL ROUTES ---
   
