@@ -55,40 +55,36 @@ export function SynergiesSelect({
           };
 
           return (
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  className={cn(
-                    "w-full justify-between",
-                    !selectedContactIds.length && "text-muted-foreground"
-                  )}
-                >
-                  {selectedContactIds.length > 0
-                    ? `${selectedContactIds.length} contatti selezionati`
-                    : placeholder}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-full p-0" align="start">
-                <Command>
-                  <CommandInput placeholder="Cerca contatto..." />
-                  <CommandEmpty>Nessun contatto trovato.</CommandEmpty>
-                  <CommandGroup className="max-h-64 overflow-y-auto">
-                    {contacts.map((contact) => {
+            <div className="space-y-2">
+              <Select
+                onValueChange={(value) => {
+                  const contactId = parseInt(value, 10);
+                  const isSelected = selectedContactIds.includes(contactId);
+                  
+                  const newSelectedIds = isSelected
+                    ? selectedContactIds.filter((id: number) => id !== contactId)
+                    : [...selectedContactIds, contactId];
+                  
+                  field.onChange(newSelectedIds);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={placeholder}>
+                    {selectedContactIds.length > 0
+                      ? `${selectedContactIds.length} contatti selezionati`
+                      : placeholder}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {contacts.length > 0 ? (
+                    contacts.map((contact) => {
                       const isSelected = selectedContactIds.includes(contact.id);
                       return (
-                        <CommandItem
-                          key={contact.id}
-                          value={String(contact.id)}
-                          onSelect={() => {
-                            const newSelectedIds = isSelected
-                              ? selectedContactIds.filter((id: number) => id !== contact.id)
-                              : [...selectedContactIds, contact.id];
-                            field.onChange(newSelectedIds);
-                          }}
+                        <SelectItem 
+                          key={contact.id} 
+                          value={contact.id.toString()}
                         >
-                          <div className="flex items-center gap-2 w-full">
+                          <div className="flex items-center gap-2">
                             <Check
                               className={cn(
                                 "h-4 w-4",
@@ -97,39 +93,44 @@ export function SynergiesSelect({
                             />
                             <span>{getContactFullName(contact)}</span>
                           </div>
-                        </CommandItem>
+                        </SelectItem>
                       );
-                    })}
-                  </CommandGroup>
-                </Command>
-                {selectedContacts.length > 0 && (
-                  <div className="p-2 flex flex-wrap gap-1 border-t">
-                    {selectedContacts.map((contact: Contact) => (
-                      <Badge
-                        key={contact.id}
-                        variant="secondary"
-                        className="flex items-center gap-1 px-1"
+                    })
+                  ) : (
+                    <SelectItem value="no-contacts" disabled>
+                      Nessun contatto disponibile
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+              
+              {selectedContacts.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {selectedContacts.map((contact: Contact) => (
+                    <Badge
+                      key={contact.id}
+                      variant="secondary"
+                      className="flex items-center gap-1 px-1"
+                    >
+                      {getContactFullName(contact)}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-4 w-4 p-0 hover:bg-transparent"
+                        onClick={() => {
+                          field.onChange(
+                            selectedContactIds.filter((id: number) => id !== contact.id)
+                          );
+                        }}
                       >
-                        {getContactFullName(contact)}
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-4 w-4 p-0 hover:bg-transparent"
-                          onClick={() => {
-                            field.onChange(
-                              selectedContactIds.filter((id: number) => id !== contact.id)
-                            );
-                          }}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-              </PopoverContent>
-            </Popover>
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
           );
         }}
       />
