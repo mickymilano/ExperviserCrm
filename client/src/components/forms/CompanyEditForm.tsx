@@ -146,13 +146,17 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
       // Ensure country is saved as a direct property of the company
       companyData.country = data.country;
       
+      // Save fullAddress as a direct property of the company
+      companyData.fullAddress = data.fullAddress;
+      
       // Remove fields that aren't directly in the company table
       delete companyData.vatNumber;
       delete companyData.registrationNumber;
       delete companyData.size;
       delete companyData.yearFounded;
       delete companyData.revenue;
-      delete companyData.country;
+      // NON rimuoviamo più il campo country, serve per il salvataggio diretto
+      // delete companyData.country;
       delete companyData.city;
       delete companyData.timezone;
       
