@@ -79,7 +79,7 @@ export interface Company {
   locationTypes: string[] | null; // Mappato a location_types nel DB
   
   /** Relazioni fra te e l'azienda (tag multipli) */
-  relationshipType?: string[];
+  relationshipType: string[];
   
   // Stati e configurazioni
   isActiveRep: boolean; // Mappato a is_active_rep nel DB

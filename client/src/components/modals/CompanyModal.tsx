@@ -115,7 +115,7 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
       channels: initialData?.channels || [],
       productsOrServicesTags: initialData?.productsOrServicesTags || [],
       locationTypes: initialData?.locationTypes || [],
-      relationshipType: initialData?.relationshipType || [],
+      relationshipType: Array.isArray(initialData?.relationshipType) ? initialData.relationshipType : [],
       
       // Altri campi
       notes: initialData?.notes || "",
@@ -194,7 +194,7 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
         channels: companyData.channels || [],
         productsOrServicesTags: companyData.productsOrServicesTags || [],
         locationTypes: companyData.locationTypes || [],
-        relationshipType: companyData.relationshipType || [],
+        relationshipType: Array.isArray(companyData.relationshipType) ? companyData.relationshipType : [],
         
         // Altri campi
         notes: companyData.notes || "",
@@ -412,7 +412,7 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
                 ['concorrente', 'Concorrente'],
                 ['investitoreCliente', 'Investitore-cliente']
               ].map(([value, label]) => {
-                const currentValues = watch("relationshipType") || [];
+                const currentValues = Array.isArray(watch("relationshipType")) ? watch("relationshipType") : [];
                 const isSelected = currentValues.includes(value);
                 
                 return (
