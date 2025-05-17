@@ -76,6 +76,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
   const [companySearchQuery, setCompanySearchQuery] = useState("");
   const [filteredCompanies, setFilteredCompanies] = useState<any[]>([]);
   const [filteredContacts, setFilteredContacts] = useState<any[]>([]);
+  const [synergyContacts, setSynergyContacts] = useState<any[]>([]);
   // Rimuoviamo lo stato separato per selectedCompany e usiamo solo i valori del form
   
   // Rimuoviamo anche il ref per l'id dell'azienda
