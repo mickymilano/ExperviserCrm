@@ -379,8 +379,8 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
           ) : contacts && contacts.length > 0 ? (
             <div className="space-y-6">
               {contacts.map((contact: Contact) => (
-                <div key={contact.id} className="flex items-start space-x-4">
-                  <Avatar className="h-10 w-10">
+                <div key={contact.id} className={`flex items-start space-x-4 p-3 rounded-lg ${primaryContactId === contact.id ? 'bg-yellow-50 border border-yellow-200' : ''}`}>
+                  <Avatar className={`h-10 w-10 ${primaryContactId === contact.id ? 'ring-2 ring-yellow-500' : ''}`}>
                     <AvatarFallback>
                       {contact.firstName?.charAt(0)}{contact.lastName?.charAt(0)}
                     </AvatarFallback>
@@ -392,7 +392,8 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
                           <h3 className="font-medium">{contact.firstName} {contact.lastName}</h3>
                           {primaryContactId === contact.id && (
                             <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                              Primario
+                              <Star className="h-3 w-3 mr-1" />
+                              Contatto Primario
                             </span>
                           )}
                         </div>
@@ -405,6 +406,7 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
                           <Button 
                             variant="outline" 
                             size="sm"
+                            className="bg-white hover:bg-yellow-50 text-yellow-600 border-yellow-300 hover:border-yellow-400"
                             disabled={isUpdatingPrimary}
                             onClick={() => setPrimaryContact(contact.id)}
                           >
@@ -424,6 +426,7 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
                           <Button 
                             variant="outline" 
                             size="sm"
+                            className="bg-yellow-50 hover:bg-white text-yellow-700 border-yellow-300"
                             disabled={isUpdatingPrimary}
                             onClick={() => removePrimaryContact()}
                           >

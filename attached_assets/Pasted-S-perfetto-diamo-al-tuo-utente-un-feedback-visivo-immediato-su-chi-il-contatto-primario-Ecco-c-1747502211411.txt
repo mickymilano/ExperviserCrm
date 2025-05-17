@@ -1,0 +1,102 @@
+Sì, perfetto: diamo al tuo utente un feedback visivo immediato su chi è il contatto primario. Ecco come migliorerei il componente CompanyContactsTab:
+
+⸻
+
+1. Carica lo stato iniziale del primario
+
+Assicurati di ricevere dal parent il primaryContactId (già popolato dal GET /api/companies/:id) e di inizializzarlo:
+
+// client/src/components/company/CompanyContactsTab.tsx
+
+-export default function CompanyContactsTab({ companyId }) {
++export default function CompanyContactsTab({ companyId, primaryContactId }) {
+   const [contacts, setContacts] = useState([]);
+-  const [unassigned, setUnassigned] = useState([]);
++  const [unassigned, setUnassigned] = useState([]);
++  const [primaryId, setPrimaryId] = useState(primaryContactId || null);
+
+E nel parent ([id].tsx) passalo così:
+
+<CompanyContactsTab 
+  companyId={companyId} 
+  primaryContactId={company.primaryContactId} 
+/>
+
+
+⸻
+
+2. Evidenziazione e badge “Primario”
+
+Sostituisci la colonna radio button con un badge e un bottone “Imposta primario” solo per gli altri:
+
+--- a/client/src/components/company/CompanyContactsTab.tsx
++++ b/client/src/components/company/CompanyContactsTab.tsx
+@@ <thead>
+-  <tr><th>Primario</th><th>Nome</th><th>Email</th><th>Telefono</th><th></th></tr>
++  <tr><th></th><th>Nome</th><th>Email</th><th>Telefono</th><th>Azioni</th></tr>
+@@ <tbody>
+   {contacts.map(c => (
+-   <tr key={c.id}>
+-     <td>
+-       <input
+-         type="radio"
+-         name="primaryContact"
+-         checked={primaryId === c.id}
+-         onChange={() => setPrimary(c.id)}
+-       />
+-     </td>
++   <tr key={c.id} className={primaryId===c.id ? 'bg-yellow-50' : ''}>
++     <td className="px-2">
++       {primaryId === c.id 
++         ? <span className="text-green-600 font-semibold">Primario</span>
++         : <button 
++             onClick={() => setPrimary(c.id)} 
++             className="text-blue-600 hover:underline text-sm"
++           >
++             Imposta primario
++           </button>
++       }
++     </td>
+     <td>{c.name}</td><td>{c.email}</td><td>{c.phone}</td>
+-    <td>
+-      <button onClick={()=>detach(c.id)}>Disassocia</button>
+-    </td>
++    <td>
++      <button 
++        onClick={() => detach(c.id)} 
++        className="text-red-500 hover:underline text-sm"
++      >
++        Disassocia
++      </button>
++    </td>
+   </tr>
+
+
+⸻
+
+3. Mantieni sincronizzazione
+
+Aggiorna la funzione setPrimary per aggiornare primaryId a risposta avvenuta:
+
+const setPrimary = id => {
+  fetch(`/api/companies/${companyId}/primary-contact`, {
+    method: 'PATCH',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ primaryContactId: id })
+  })
+  .then(res => {
+    if (!res.ok) throw new Error('Impostazione primario fallita');
+    setPrimaryId(id);
+  })
+  .catch(err => console.error(err));
+};
+
+
+⸻
+
+Con queste modifiche:
+	•	Il contatto primario ha una badge verde e la riga è evidenziata
+	•	Tutti gli altri mostrano un link “Imposta primario”
+	•	Non usiamo più i radio button – più leggibile e meno “affollato”
+
+Fammi sapere se va bene o se preferisci un’altra visualizzazione (iconcine, tooltips, ecc.).
