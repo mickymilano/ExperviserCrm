@@ -20,7 +20,7 @@ interface LeadModalProps {
 const leadSchema = z.object({
   firstName: z.string().optional(),
   lastName: z.string().optional(),
-  companyName: z.string().optional(),
+  company: z.string().optional(), // Usiamo company per allinearci allo schema backend
   role: z.string().optional(),
   
   // Essential contact information
@@ -32,10 +32,10 @@ const leadSchema = z.object({
   status: z.string().default("new"),
   notes: z.string().optional(),
 }).refine(
-  (data) => !!data.companyName || (!!data.firstName || !!data.lastName),
+  (data) => !!data.company || (!!data.firstName || !!data.lastName),
   {
     message: "Either company name or contact name (first or last name) is required",
-    path: ["companyName"],
+    path: ["company"],
   }
 );
 
@@ -122,10 +122,10 @@ export default function LeadModal({ open, onOpenChange }: LeadModalProps) {
         
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-2 mb-4">
-            <Label htmlFor="companyName">Company Name</Label>
-            <Input id="companyName" {...register("companyName")} />
-            {errors.companyName && (
-              <p className="text-xs text-destructive">{errors.companyName.message}</p>
+            <Label htmlFor="company">Company Name</Label>
+            <Input id="company" {...register("company")} />
+            {errors.company && (
+              <p className="text-xs text-destructive">{errors.company.message}</p>
             )}
           </div>
           
