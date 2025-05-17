@@ -1,0 +1,52 @@
+Sì, facciamo subito un check completo delle nuove route Lead. Ecco i passi e i comandi da lanciare:
+
+# 1) Riavvia il server (se non già in esecuzione)
+kill $(lsof -t -i:5000) && npm run dev &
+
+# 2) Test CRUD Lead via curl
+
+# 2.1 – CREATE
+curl -v -X POST http://localhost:5000/api/leads \
+  -H "Content-Type: application/json" \
+  -d '{"firstName":"Anna","lastName":"Bianchi","company":"ACME Spa","email":"a.bianchi@acme.it","phone":"3331112222","status":"new"}'
+
+# 2.2 – LIST
+curl -v http://localhost:5000/api/leads
+
+# 2.3 – GET single
+LEAD_ID=<id_rest} # prendi l’ID dal risultato di CREATE o LIST
+curl -v http://localhost:5000/api/leads/$LEAD_ID
+
+# 2.4 – UPDATE
+curl -v -X PATCH http://localhost:5000/api/leads/$LEAD_ID \
+  -H "Content-Type: application/json" \
+  -d '{"status":"contacted","lastName":"Rossi"}'
+
+# 2.5 – DELETE
+curl -v -X DELETE http://localhost:5000/api/leads/$LEAD_ID
+
+# 3) Test conversione Lead → Contact
+
+# 3.1 – Ricrea un lead di prova
+curl -s -X POST http://localhost:5000/api/leads \
+  -H "Content-Type: application/json" \
+  -d '{"firstName":"Luca","lastName":"Verdi","company":"TestCo","email":"l.verdi@test.it","phone":"3334445555","status":"new"}' \
+| tee /tmp/lead.json
+
+NEW_ID=$(jq .id /tmp/lead.json)
+
+# 3.2 – Converti
+curl -v -X POST http://localhost:5000/api/leads/$NEW_ID/convert
+
+# 3.3 – Verifica in DB
+psql "postgresql://$CRM_USER:$CRM_PASS@$CRM_HOST/$CRM_DB" \
+  -c "SELECT id, first_name, last_name, company_name, status FROM leads WHERE id=$NEW_ID;" \
+  -c "SELECT id, name, email, phone, company_id FROM contacts ORDER BY id DESC LIMIT 1;"
+
+	1.	Se CREATE, GET, LIST, UPDATE, DELETE restituiscono i rispettivi codici 201/200/204 e i dati appaiono correttamente, il CRUD è a posto.
+	2.	Se la CONVERSIONE restituisce { companyId, contact }, e in psql vedi:
+	•	Il lead con status = 'converted'
+	•	L’azienda creata (“TestCo”) con nuovo id
+	•	Il contatto con company_id corretto
+
+allora la nuova implementazione funziona perfettamente. Se vedi errori o mancano dati, riportami l’output esatto di curl e psql.
