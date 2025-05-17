@@ -865,11 +865,9 @@ export function registerRoutes(app: any) {
       const { primaryContactId } = req.body;
       
       console.log(`***DIAGNOSTICA CONTATTO PRIMARIO*** Ricevuta richiesta da ${req.ip} di impostazione contatto primario per azienda ${companyId}:`, req.body);
-      console.log(`***DIAGNOSTICA CONTATTO PRIMARIO*** Headers:`, req.headers);
       
       // Verifica se l'azienda esiste
       const company = await storage.getCompany(companyId);
-      console.log(`***DIAGNOSTICA CONTATTO PRIMARIO*** Azienda trovata:`, JSON.stringify(company, null, 2));
       
       if (!company) {
         console.log(`***DIAGNOSTICA CONTATTO PRIMARIO*** Azienda ${companyId} non trovata`);
@@ -882,8 +880,24 @@ export function registerRoutes(app: any) {
       // Se primaryContactId è fornito, verifica che il contatto esista
       if (primaryContactId) {
         console.log(`***DIAGNOSTICA CONTATTO PRIMARIO*** primaryContactId fornito:`, primaryContactId, `tipo:`, typeof primaryContactId);
-        const contactId = parseInt(primaryContactId);
-        console.log(`***DIAGNOSTICA CONTATTO PRIMARIO*** contactId dopo parseInt:`, contactId, `tipo:`, typeof contactId);
+        let contactId;
+        
+        // Gestione esplicita sia di stringhe che di numeri
+        if (typeof primaryContactId === 'string') {
+          contactId = parseInt(primaryContactId, 10);
+        } else if (typeof primaryContactId === 'number') {
+          contactId = primaryContactId;
+        } else {
+          console.log(`***DIAGNOSTICA CONTATTO PRIMARIO*** Formato primaryContactId non valido`);
+          return res.status(400).json({ message: 'Formato ID contatto non valido' });
+        }
+        
+        if (isNaN(contactId)) {
+          console.log(`***DIAGNOSTICA CONTATTO PRIMARIO*** ID contatto non è un numero valido`);
+          return res.status(400).json({ message: 'ID contatto non è un numero valido' });
+        }
+        
+        console.log(`***DIAGNOSTICA CONTATTO PRIMARIO*** contactId dopo conversione:`, contactId, `tipo:`, typeof contactId);
         
         const contact = await storage.getContact(contactId);
         console.log(`***DIAGNOSTICA CONTATTO PRIMARIO*** Dettagli contatto:`, contact ? `ID ${contact.id}, Nome: ${contact.firstName} ${contact.lastName}` : 'Contatto non trovato');
@@ -892,10 +906,9 @@ export function registerRoutes(app: any) {
           console.log(`***DIAGNOSTICA CONTATTO PRIMARIO*** Contatto ${contactId} non trovato`);
           return res.status(404).json({ message: 'Contatto non trovato' });
         }
+        
         primary_contact_id = contactId;
       }
-      
-      console.log(`***DIAGNOSTICA CONTATTO PRIMARIO*** Tentativo di impostazione contatto primario per azienda ${companyId}: primary_contact_id = ${primary_contact_id}`);
       
       console.log(`***DIAGNOSTICA CONTATTO PRIMARIO*** Stato dell'azienda PRIMA dell'aggiornamento:`, {
         id: company.id,
@@ -903,27 +916,40 @@ export function registerRoutes(app: any) {
         primary_contact_id: company.primary_contact_id
       });
       
-      // Aggiorna l'azienda con il nuovo contatto primario
-      const updateData = { primary_contact_id };
-      console.log(`***DIAGNOSTICA CONTATTO PRIMARIO*** Dati di aggiornamento:`, updateData);
-      
-      const updatedCompany = await storage.updateCompany(companyId, updateData);
-      
-      console.log(`***DIAGNOSTICA CONTATTO PRIMARIO*** Azienda aggiornata:`, {
-        id: updatedCompany?.id,
-        name: updatedCompany?.name, 
-        primary_contact_id: updatedCompany?.primary_contact_id
-      });
-      
-      // Verifica immediata dal database
-      const verifiedCompany = await storage.getCompany(companyId);
-      console.log(`***DIAGNOSTICA CONTATTO PRIMARIO*** Verifica dal database dopo l'aggiornamento:`, {
-        id: verifiedCompany?.id,
-        name: verifiedCompany?.name,
-        primary_contact_id: verifiedCompany?.primary_contact_id
-      });
-      
-      res.json(updatedCompany);
+      // Aggiorna l'azienda utilizzando direttamente una query SQL nativa
+      try {
+        const query = `
+          UPDATE companies 
+          SET primary_contact_id = $1, updated_at = NOW() 
+          WHERE id = $2 
+          RETURNING id, name, primary_contact_id
+        `;
+        
+        const result = await pool.query(query, [primary_contact_id, companyId]);
+        
+        if (result.rows.length === 0) {
+          console.error('***DIAGNOSTICA CONTATTO PRIMARIO*** Nessuna riga aggiornata');
+          return res.status(404).json({ message: 'Azienda non trovata o aggiornamento fallito' });
+        }
+        
+        const updatedCompany = result.rows[0];
+        console.log(`***DIAGNOSTICA CONTATTO PRIMARIO*** Risultato diretto della query SQL:`, updatedCompany);
+        
+        // Verifica immediata dal database con una nuova query per confermare la persistenza
+        const verifyQuery = `
+          SELECT id, name, primary_contact_id FROM companies WHERE id = $1
+        `;
+        const verifyResult = await pool.query(verifyQuery, [companyId]);
+        
+        if (verifyResult.rows.length > 0) {
+          console.log(`***DIAGNOSTICA CONTATTO PRIMARIO*** Verifica dal database dopo l'aggiornamento:`, verifyResult.rows[0]);
+        }
+        
+        res.json(updatedCompany);
+      } catch (dbError) {
+        console.error('***DIAGNOSTICA CONTATTO PRIMARIO*** Errore database:', dbError);
+        res.status(500).json({ message: 'Errore database durante l\'aggiornamento' });
+      }
     } catch (error) {
       console.error('***DIAGNOSTICA CONTATTO PRIMARIO*** Error setting primary contact:', error);
       res.status(500).json({ message: 'Errore durante l\'impostazione del contatto primario' });
