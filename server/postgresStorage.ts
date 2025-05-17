@@ -1338,6 +1338,49 @@ export class PostgresStorage implements IStorage {
     // Metodo alias per compatibilità con l'interfaccia
     return this.getContacts();
   }
+  
+  // Ottieni i contatti non associati a nessuna azienda
+  async getUnassignedContacts(): Promise<Contact[]> {
+    try {
+      console.log("PostgresStorage.getUnassignedContacts: recupero contatti senza associazione ad aziende");
+      
+      // Query per ottenere i contatti che non hanno aree di attività con aziende
+      const query = `
+        SELECT c.*
+        FROM contacts c
+        LEFT JOIN areas_of_activity a ON c.id = a.contact_id AND a.company_id IS NOT NULL
+        WHERE a.id IS NULL
+        ORDER BY c.first_name, c.last_name
+      `;
+      
+      const result = await pool.query(query);
+      
+      console.log(`Trovati ${result.rowCount} contatti non associati`);
+      
+      // Convertiamo i risultati in formato camelCase
+      return result.rows.map(row => {
+        return {
+          id: row.id,
+          firstName: row.first_name,
+          lastName: row.last_name,
+          name: `${row.first_name} ${row.last_name}`.trim(),
+          email: row.email,
+          phone: row.phone,
+          companyEmail: row.company_email,
+          privateEmail: row.private_email,
+          mobilePhone: row.mobile_phone,
+          officePhone: row.office_phone,
+          status: row.status,
+          notes: row.notes,
+          createdAt: row.created_at,
+          updatedAt: row.updated_at
+        } as Contact;
+      });
+    } catch (error) {
+      console.error("Error in getUnassignedContacts:", error);
+      return [];
+    }
+  }
 
   async getContactsCount(): Promise<number> {
     const result = await db
