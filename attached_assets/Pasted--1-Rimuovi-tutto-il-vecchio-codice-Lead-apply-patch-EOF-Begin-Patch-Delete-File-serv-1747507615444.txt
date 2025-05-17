@@ -1,0 +1,179 @@
+# 1) Rimuovi tutto il vecchio codice Lead
+apply_patch << 'EOF'
+*** Begin Patch
+*** Delete File: server/controllers/leadController.js
+*** Delete File: server/routes/leads.js
+*** Delete File: server/postgresStorage.ts  # rimuovi solo i metodi getLead, getLeads, createLead, updateLead, deleteLead, convertLead
+*** Delete File: client/src/components/modals/LeadModal.tsx
+*** Delete File: client/src/hooks/useLeads.tsx
+*** Delete File: client/src/pages/leads/index.tsx
+*** Delete File: client/src/pages/leads/[id].tsx
+*** End Patch
+EOF
+
+# 2) Crea nuovo controller Lead (server/controllers/leadController.js)
+apply_patch << 'EOF'
+*** Begin Patch
+*** Add File: server/controllers/leadController.js
++import storage from '../postgresStorage';
++
++export const listLeads = async (req, res, next) => {
++  const leads = await storage.getLeads();
++  res.json(leads);
++};
++
++export const getLead     = async (req, res, next) => {
++  const lead = await storage.getLead(+req.params.id);
++  if (!lead) return res.sendStatus(404);
++  res.json(lead);
++};
++
++export const createLead  = async (req, res, next) => {
++  const lead = await storage.createLead(req.body);
++  res.status(201).json(lead);
++};
++
++export const updateLead  = async (req, res, next) => {
++  await storage.updateLead(+req.params.id, req.body);
++  res.sendStatus(204);
++};
++
++export const deleteLead  = async (req, res, next) => {
++  await storage.deleteLead(+req.params.id);
++  res.sendStatus(204);
++};
++
++export const convertLead = async (req, res, next) => {
++  const result = await storage.convertLead(+req.params.id);
++  res.json(result);
++};
+*** End Patch
+EOF
+
+# 3) Registra le nuove route in server/routes.ts
+apply_patch << 'EOF'
+*** Begin Patch
+*** Update File: server/routes.ts
+@@ // LEAD ROUTES (in fondo al file)
+-// <vecchie route Lead da qui>
++// Lead CRUD + conversion
++import * as leadController from './controllers/leadController';
++
++router.get   ('/api/leads',         leadController.listLeads);
++router.get   ('/api/leads/:id',     leadController.getLead);
++router.post  ('/api/leads',         leadController.createLead);
++router.patch ('/api/leads/:id',     leadController.updateLead);
++router.delete('/api/leads/:id',     leadController.deleteLead);
++router.post  ('/api/leads/:id/convert', leadController.convertLead);
+*** End Patch
+EOF
+
+# 4) Aggiungi i metodi Lead in server/postgresStorage.ts
+apply_patch << 'EOF'
+*** Begin Patch
+*** Update File: server/postgresStorage.ts
+@@ // .. dopo le funzioni esistenti
++// --- Lead methods ---
++export async function getLeads() {
++  const { rows } = await client.query(
++    `SELECT
++       id,
++       first_name  AS "firstName",
++       last_name   AS "lastName",
++       company_name AS company,
++       email,
++       phone,
++       status
++     FROM leads
++     ORDER BY id DESC`
++  );
++  return rows;
++}
++
++export async function getLead(id) {
++  const { rows } = await client.query(
++    `SELECT
++       id,
++       first_name  AS "firstName",
++       last_name   AS "lastName",
++       company_name AS company,
++       email,
++       phone,
++       status
++     FROM leads
++     WHERE id = $1`,
++    [id]
++  );
++  return rows[0];
++}
++
++export async function createLead({ firstName, lastName, company, email, phone, status }) {
++  const { rows } = await client.query(
++    `INSERT INTO leads
++       (first_name, last_name, company_name, email, phone, status)
++     VALUES($1,$2,$3,$4,$5,$6)
++     RETURNING
++       id,
++       first_name   AS "firstName",
++       last_name    AS "lastName",
++       company_name AS company,
++       email,
++       phone,
++       status`,
++    [firstName, lastName, company, email, phone, status]
++  );
++  return rows[0];
++}
++
++export async function updateLead(id, updates) {
++  const fields = [];
++  const vals   = [];
++  if (updates.firstName) fields.push(`first_name=$${vals.push(updates.firstName)}`);
++  if (updates.lastName)  fields.push(`last_name=$${vals.push(updates.lastName)}`);
++  if (updates.company)   fields.push(`company_name=$${vals.push(updates.company)}`);
++  if (updates.email)     fields.push(`email=$${vals.push(updates.email)}`);
++  if (updates.phone)     fields.push(`phone=$${vals.push(updates.phone)}`);
++  if (updates.status)    fields.push(`status=$${vals.push(updates.status)}`);
++  if (!fields.length) return;
++  vals.push(id);
++  await client.query(
++    `UPDATE leads
++       SET ${fields.join(', ')}
++     WHERE id = $${vals.length}`,
++    vals
++  );
++}
++
++export async function deleteLead(id) {
++  await client.query(`DELETE FROM leads WHERE id=$1`, [id]);
++}
++
++export async function convertLead(id) {
++  const lead = await getLead(id);
++  let companyId = null;
++  if (lead.company) {
++    const comp = await client.query(
++      `INSERT INTO companies(name) VALUES($1) RETURNING id`,
++      [lead.company]
++    );
++    companyId = comp.rows[0].id;
++  }
++  const contactRes = await client.query(
++    `INSERT INTO contacts
++       (name,email,phone,company_id)
++     VALUES($1,$2,$3,$4)
++     RETURNING *`,
++    [`${lead.firstName} ${lead.lastName}`, lead.email, lead.phone, companyId]
++  );
++  await updateLead(id, { status: 'converted' });
++  return { companyId, contact: contactRes.rows[0] };
++}
+*** End Patch
+EOF
+
+# 5) Riavvia DB se serve (migrazioni)
+npm run db:migrate && npm run db:seed
+
+# 6) Riavvia server e testa
+kill $(lsof -t -i:5000) && npm run dev &
+echo "Ora esegui i tuoi curl di test per CREATION, LIST, GET, PATCH, DELETE e CONVERT come pianificato."

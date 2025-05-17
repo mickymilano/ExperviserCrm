@@ -1,124 +1,207 @@
-import { storage } from '../postgresStorage.js';
+import { pool } from '../db.js';
 
-export async function listLeads(req, res, next) {
+export const listLeads = async (req, res, next) => {
   try {
-    const leads = await storage.getLeads();
-    res.json(leads);
+    const { rows } = await pool.query(`
+      SELECT
+        id,
+        first_name  AS "firstName",
+        last_name   AS "lastName",
+        company_name AS company,
+        email,
+        phone,
+        status
+      FROM leads
+      ORDER BY id DESC
+    `);
+    res.json(rows);
   } catch (error) {
     console.error('Error fetching leads:', error);
     res.status(500).json({ message: 'Errore durante il recupero dei lead' });
   }
-}
+};
 
-export async function getLead(req, res, next) {
+export const getLead = async (req, res, next) => {
   try {
-    const lead = await storage.getLead(+req.params.id);
-    if (!lead) return res.status(404).json({ message: 'Lead non trovato' });
-    res.json(lead);
+    const { rows } = await pool.query(`
+      SELECT
+        id,
+        first_name  AS "firstName",
+        last_name   AS "lastName",
+        company_name AS company,
+        email,
+        phone,
+        status
+      FROM leads
+      WHERE id = $1
+    `, [req.params.id]);
+    
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'Lead non trovato' });
+    }
+    
+    res.json(rows[0]);
   } catch (error) {
     console.error('Error fetching lead:', error);
     res.status(500).json({ message: 'Errore durante il recupero del lead' });
   }
-}
+};
 
-export async function createLead(req, res, next) {
+export const createLead = async (req, res, next) => {
   try {
-    const lead = await storage.createLead(req.body);
-    res.status(201).json(lead);
+    const { firstName, lastName, company, email, phone, status } = req.body;
+    
+    const { rows } = await pool.query(`
+      INSERT INTO leads
+        (first_name, last_name, company_name, email, phone, status)
+      VALUES($1, $2, $3, $4, $5, $6)
+      RETURNING
+        id,
+        first_name   AS "firstName",
+        last_name    AS "lastName",
+        company_name AS company,
+        email,
+        phone,
+        status
+    `, [firstName, lastName, company, email, phone, status || 'new']);
+    
+    res.status(201).json(rows[0]);
   } catch (error) {
     console.error('Error creating lead:', error);
     res.status(500).json({ message: 'Errore durante la creazione del lead' });
   }
-}
+};
 
-export async function updateLead(req, res, next) {
+export const updateLead = async (req, res, next) => {
   try {
-    const leadId = +req.params.id;
-    const lead = await storage.getLead(leadId);
-    if (!lead) return res.status(404).json({ message: 'Lead non trovato' });
+    const id = req.params.id;
+    const updates = req.body;
     
-    const updatedLead = await storage.updateLead(leadId, req.body);
-    res.json(updatedLead || { id: leadId, ...req.body });
+    const fields = [];
+    const values = [];
+    let paramIndex = 1;
+    
+    if (updates.firstName !== undefined) {
+      fields.push(`first_name=$${paramIndex++}`);
+      values.push(updates.firstName);
+    }
+    
+    if (updates.lastName !== undefined) {
+      fields.push(`last_name=$${paramIndex++}`);
+      values.push(updates.lastName);
+    }
+    
+    if (updates.company !== undefined) {
+      fields.push(`company_name=$${paramIndex++}`);
+      values.push(updates.company);
+    }
+    
+    if (updates.email !== undefined) {
+      fields.push(`email=$${paramIndex++}`);
+      values.push(updates.email);
+    }
+    
+    if (updates.phone !== undefined) {
+      fields.push(`phone=$${paramIndex++}`);
+      values.push(updates.phone);
+    }
+    
+    if (updates.status !== undefined) {
+      fields.push(`status=$${paramIndex++}`);
+      values.push(updates.status);
+    }
+    
+    if (fields.length === 0) {
+      return res.status(400).json({ message: 'Nessun campo da aggiornare' });
+    }
+    
+    values.push(id);
+    
+    await pool.query(`
+      UPDATE leads
+      SET ${fields.join(', ')}
+      WHERE id = $${paramIndex}
+    `, values);
+    
+    res.sendStatus(204);
   } catch (error) {
     console.error('Error updating lead:', error);
     res.status(500).json({ message: 'Errore durante l\'aggiornamento del lead' });
   }
-}
+};
 
-export async function deleteLead(req, res, next) {
+export const deleteLead = async (req, res, next) => {
   try {
-    const leadId = +req.params.id;
-    const lead = await storage.getLead(leadId);
-    if (!lead) return res.status(404).json({ message: 'Lead non trovato' });
+    const result = await pool.query('DELETE FROM leads WHERE id = $1', [req.params.id]);
     
-    await storage.deleteLead(leadId);
-    res.status(200).json({ message: 'Lead eliminato con successo' });
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: 'Lead non trovato' });
+    }
+    
+    res.sendStatus(204);
   } catch (error) {
     console.error('Error deleting lead:', error);
-    res.status(500).json({ message: 'Errore durante l\'eliminazione del lead' });
+    res.status(500).json({ message: 'Errore durante la cancellazione del lead' });
   }
-}
+};
 
-export async function convertLead(req, res, next) {
+export const convertLead = async (req, res, next) => {
   try {
-    const leadId = +req.params.id;
-    const lead = await storage.getLead(leadId);
-    if (!lead) return res.status(404).json({ message: 'Lead non trovato' });
-
+    const id = req.params.id;
+    
+    // 1. Get the lead
+    const { rows: leadRows } = await pool.query(`
+      SELECT
+        id,
+        first_name AS "firstName",
+        last_name AS "lastName",
+        company_name AS company,
+        email,
+        phone,
+        status
+      FROM leads
+      WHERE id = $1
+    `, [id]);
+    
+    if (leadRows.length === 0) {
+      return res.status(404).json({ message: 'Lead non trovato' });
+    }
+    
+    const lead = leadRows[0];
+    
+    // 2. Create company if needed
     let companyId = null;
-    let contact = null;
-
-    // Se il lead ha un'azienda, crearla prima
     if (lead.company) {
-      const company = await storage.createCompany({ 
-        name: lead.company,
-        email: lead.email,
-        phone: lead.phone,
-        address: lead.address,
-        website: lead.website
-      });
-      companyId = company.id;
+      const { rows: companyRows } = await pool.query(`
+        INSERT INTO companies (name)
+        VALUES ($1)
+        RETURNING id
+      `, [lead.company]);
+      
+      companyId = companyRows[0].id;
     }
     
-    // Crea il contatto
-    contact = await storage.createContact({
-      firstName: lead.firstName,
-      lastName: lead.lastName,
-      status: "active", // Il contatto convertito è attivo per default
-      email: lead.email,
-      phone: lead.phone,
-      notes: lead.notes,
-      customFields: lead.customFields
-    });
+    // 3. Create contact
+    const { rows: contactRows } = await pool.query(`
+      INSERT INTO contacts (first_name, last_name, email, phone, company_id)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING *
+    `, [lead.firstName, lead.lastName, lead.email, lead.phone, companyId]);
     
-    // Se abbiamo creato un'azienda, associa il contatto all'azienda
-    if (companyId) {
-      await storage.createAreaOfActivity({
-        contactId: contact.id,
-        companyId: companyId,
-        role: lead.role || "Convertito da lead"
-      });
-    }
+    // 4. Update lead status
+    await pool.query(`
+      UPDATE leads
+      SET status = 'converted'
+      WHERE id = $1
+    `, [id]);
     
-    // Aggiorna lo stato del lead a "converted"
-    await storage.updateLead(leadId, { status: 'converted' });
-    
-    res.status(200).json({ 
-      message: 'Lead convertito con successo', 
-      contact: contact,
-      companyId: companyId
+    // 5. Return result
+    res.json({
+      companyId,
+      contact: contactRows[0]
     });
   } catch (error) {
     console.error('Error converting lead:', error);
     res.status(500).json({ message: 'Errore durante la conversione del lead' });
   }
-}
-
-export default {
-  listLeads,
-  getLead,
-  createLead,
-  updateLead,
-  deleteLead,
-  convertLead
 };
