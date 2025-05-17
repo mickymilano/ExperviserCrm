@@ -1,0 +1,71 @@
+Per tracciare esattamente cosa succede e perché il primary_contact_id si resetta, facciamo in tre passaggi:
+
+⸻
+
+1. Verifica diretta in DB
+	1.	Apri una shell su Replit e connettiti a Postgres:
+
+psql "postgresql://$CRM_USER:$CRM_PASS@$CRM_HOST/$CRM_DB"
+
+
+	2.	Controlla il valore di primary_contact_id per l’azienda in questione (sostituisci <COMPANY_ID>):
+
+SELECT id, name, primary_contact_id
+  FROM companies
+ WHERE id = <COMPANY_ID>;
+
+	•	Dopo aver cliccato “Imposta come primario”, esegui di nuovo questa query e verifica che il valore rimanga settato.
+
+⸻
+
+2. Test dell’endpoint PATCH
+	1.	Usa curl per forzare la chiamata di set primario ed esamina request/response:
+
+curl -i -X PATCH http://localhost:5000/api/companies/<COMPANY_ID>/primary-contact \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"primaryContactId": <CONTACT_ID>}' 
+
+	•	Controlla che risponda 204 No Content o 200.
+	•	Se ricevi un errore o un redirect, annotalo.
+
+	2.	Subito dopo, fai un GET del record:
+
+curl -s http://localhost:5000/api/companies/<COMPANY_ID> \
+  -H "Authorization: Bearer $TOKEN" \
+| jq .primaryContactId
+
+	•	Verifica che il JSON includa il campo primaryContactId con il valore <CONTACT_ID>.
+
+⸻
+
+3. Controllo dei log e del codice
+	1.	Backend: nel file routes/companies.js (o dove è definito il PATCH), aggiungi temporaneamente un console.log(req.body) e un console.log(row) dopo la UPDATE, per vedere cosa riceve e cosa scrive realmente:
+
+console.log('SET PRIMARY CONTACT', req.body, 'FOR COMPANY', id);
+
+Rilancia l’app e ripeti il PATCH per vedere in log se il body è corretto.
+
+	2.	Frontend: apri DevTools → Network → clicca sul radio button “Primario”
+	•	Verifica URL, metodo, header e body
+	•	Controlla risposta e eventuali script JS che al ritorno ricaricano la pagina o resettano lo stato
+
+⸻
+
+Cosa cerchiamo
+	•	Se in DB il valore viene impostato ma poi torna a NULL significa che c’è un altro UPDATE che azzera primary_contact_id (magari un re-render o un effetto collaterale).
+	•	Se il PATCH restituisce un errore ma il frontend lo ignora, il componente locale potrebbe resettare primaryId
+	•	Se il GET non include mai il campo, il mapper o la query sul SELECT potrebbe sovrascriverlo con NULL (es. SELECT c.*, p.* sbagliato)
+
+⸻
+
+Prossimi passi
+	1.	Esegui i comandi psql e curl e annota esattamente cosa vedi.
+	2.	Riporta qui output (query + response) o screenshot dei log.
+
+Con queste informazioni potremo isolare se è un problema di:
+	•	DB (trigger o constraint)
+	•	API (endpoint che azzera)
+	•	Frontend (re-render che resetta lo stato)
+
+Fammi sapere i risultati e procediamo col fix mirato!

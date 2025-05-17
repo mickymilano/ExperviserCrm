@@ -864,11 +864,15 @@ export function registerRoutes(app: any) {
       const companyId = parseInt(req.params.id);
       const { primaryContactId } = req.body;
       
-      console.log(`Ricevuta richiesta di impostazione contatto primario per azienda ${companyId}:`, req.body);
+      console.log(`***DIAGNOSTICA CONTATTO PRIMARIO*** Ricevuta richiesta da ${req.ip} di impostazione contatto primario per azienda ${companyId}:`, req.body);
+      console.log(`***DIAGNOSTICA CONTATTO PRIMARIO*** Headers:`, req.headers);
       
       // Verifica se l'azienda esiste
       const company = await storage.getCompany(companyId);
+      console.log(`***DIAGNOSTICA CONTATTO PRIMARIO*** Azienda trovata:`, JSON.stringify(company, null, 2));
+      
       if (!company) {
+        console.log(`***DIAGNOSTICA CONTATTO PRIMARIO*** Azienda ${companyId} non trovata`);
         return res.status(404).json({ message: 'Azienda non trovata' });
       }
       
@@ -877,26 +881,51 @@ export function registerRoutes(app: any) {
       
       // Se primaryContactId è fornito, verifica che il contatto esista
       if (primaryContactId) {
+        console.log(`***DIAGNOSTICA CONTATTO PRIMARIO*** primaryContactId fornito:`, primaryContactId, `tipo:`, typeof primaryContactId);
         const contactId = parseInt(primaryContactId);
+        console.log(`***DIAGNOSTICA CONTATTO PRIMARIO*** contactId dopo parseInt:`, contactId, `tipo:`, typeof contactId);
+        
         const contact = await storage.getContact(contactId);
+        console.log(`***DIAGNOSTICA CONTATTO PRIMARIO*** Dettagli contatto:`, contact ? `ID ${contact.id}, Nome: ${contact.firstName} ${contact.lastName}` : 'Contatto non trovato');
+        
         if (!contact) {
+          console.log(`***DIAGNOSTICA CONTATTO PRIMARIO*** Contatto ${contactId} non trovato`);
           return res.status(404).json({ message: 'Contatto non trovato' });
         }
         primary_contact_id = contactId;
       }
       
-      console.log(`Impostazione contatto primario per azienda ${companyId}: ${primary_contact_id}`);
+      console.log(`***DIAGNOSTICA CONTATTO PRIMARIO*** Tentativo di impostazione contatto primario per azienda ${companyId}: primary_contact_id = ${primary_contact_id}`);
       
-      // Aggiorna l'azienda con il nuovo contatto primario
-      const updatedCompany = await storage.updateCompany(companyId, {
-        primary_contact_id
+      console.log(`***DIAGNOSTICA CONTATTO PRIMARIO*** Stato dell'azienda PRIMA dell'aggiornamento:`, {
+        id: company.id,
+        name: company.name,
+        primary_contact_id: company.primary_contact_id
       });
       
-      console.log(`Azienda aggiornata:`, updatedCompany);
+      // Aggiorna l'azienda con il nuovo contatto primario
+      const updateData = { primary_contact_id };
+      console.log(`***DIAGNOSTICA CONTATTO PRIMARIO*** Dati di aggiornamento:`, updateData);
+      
+      const updatedCompany = await storage.updateCompany(companyId, updateData);
+      
+      console.log(`***DIAGNOSTICA CONTATTO PRIMARIO*** Azienda aggiornata:`, {
+        id: updatedCompany?.id,
+        name: updatedCompany?.name, 
+        primary_contact_id: updatedCompany?.primary_contact_id
+      });
+      
+      // Verifica immediata dal database
+      const verifiedCompany = await storage.getCompany(companyId);
+      console.log(`***DIAGNOSTICA CONTATTO PRIMARIO*** Verifica dal database dopo l'aggiornamento:`, {
+        id: verifiedCompany?.id,
+        name: verifiedCompany?.name,
+        primary_contact_id: verifiedCompany?.primary_contact_id
+      });
       
       res.json(updatedCompany);
     } catch (error) {
-      console.error('Error setting primary contact:', error);
+      console.error('***DIAGNOSTICA CONTATTO PRIMARIO*** Error setting primary contact:', error);
       res.status(500).json({ message: 'Errore durante l\'impostazione del contatto primario' });
     }
   });
