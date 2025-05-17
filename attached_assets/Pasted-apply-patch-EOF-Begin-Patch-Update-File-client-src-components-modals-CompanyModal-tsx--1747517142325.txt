@@ -1,0 +1,64 @@
+apply_patch << 'EOF'
+*** Begin Patch
+*** Update File: client/src/components/modals/CompanyModal.tsx
+@@
+-import React, { useState } from 'react';
+-import { Company } from '../../types';
+-// import GooglePlacesAutocomplete from 'react-google-places-autocomplete';
++import React, { useState } from 'react';
++import { Company } from '../../types';
++import GooglePlacesAutocomplete from 'react-google-places-autocomplete';
+
+@@ function CompanyModal({ initialData, onSave, onClose }) {
+-  // Campo indirizzo completo (no autocomplete Google per ora)
+-  <label>Indirizzo completo</label>
+-  <input
+-    type="text"
+-    value={company.fullAddress || ''}
+-    onChange={e => setCompany(c => ({ ...c, fullAddress: e.target.value }))}
+-    placeholder="Via, civico, cap, città, provincia, nazione"
+-    style={{ width: '100%', marginBottom: '16px' }}
+-  />
++  {/* RIEVOCA input manuale: ripristiniamo Google Autocomplete sul field Nome Azienda */}
++  <label>Nome Azienda / Indirizzo</label>
++  <GooglePlacesAutocomplete
++    apiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY}
++    selectProps={{
++      placeholder: 'Inizia a digitare nome azienda per indirizzo…',
++      value: company.fullAddress
++        ? { label: company.fullAddress, value: company.fullAddress }
++        : null,
++      onChange: place => {
++        setCompany(c => ({
++          ...c,
++          fullAddress: place.label,
++          name: place.value,  // mantiene anche il campo name
++        }));
++      }
++    }}
++    autocompletionRequest={{ types: ['establishment'] }}
++  />
+*** End Patch
+EOF
+
+apply_patch << 'EOF'
+*** Begin Patch
+*** Update File: server/postgresStorage.ts
+@@ export async function createCompany(data) {
+-  INSERT INTO companies(name, status, full_address /* ... */)
++  INSERT INTO companies(name, status, full_address /* ... */)
+*** End Patch
+EOF
+
+apply_patch << 'EOF'
+*** Begin Patch
+*** Update File: client/.env
+-### REACT_APP_GOOGLE_MAPS_API_KEY disabilitato per ora
++REACT_APP_GOOGLE_MAPS_API_KEY=TUO_GOOGLE_API_KEY   # ripristinato per l’autocomplete
+*** End Patch
+EOF
+
+# Infine: riavvia
+npm run dev --prefix client
+
+echo "✅ Ripristinato il Google-autocomplete su Nome Azienda → Indirizzo completo. Verifica che, anche su aziende già create, il form mostri di nuovo l’integrazione e salvi correttamente fullAddress senza conflitti su city/full_address."

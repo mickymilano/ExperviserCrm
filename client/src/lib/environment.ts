@@ -28,6 +28,14 @@ let cacheTimestamp = 0;
 
 // Function to get Google Maps API key
 export async function getGoogleMapsApiKey(): Promise<string | null> {
+  // Prima controlliamo se la chiave è disponibile direttamente da Vite
+  if (import.meta.env.VITE_GOOGLE_MAPS_API_KEY) {
+    console.log('Using Google Maps API key from Vite environment:',
+      import.meta.env.VITE_GOOGLE_MAPS_API_KEY.substring(0, 6) + '...');
+    return import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  }
+  
+  // Altrimenti, utilizziamo il meccanismo di fallback con il server
   const now = Date.now();
   const cacheLifetime = 30 * 1000; // 30 secondi
 
