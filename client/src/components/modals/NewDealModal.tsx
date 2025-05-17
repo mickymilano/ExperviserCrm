@@ -98,35 +98,13 @@ export default function NewDealModal({ open, onOpenChange, initialData }: DealMo
   const [openCompanyCombobox, setOpenCompanyCombobox] = useState(false);
   const [openContactCombobox, setOpenContactCombobox] = useState(false);
   const [openBranchCombobox, setOpenBranchCombobox] = useState(false);
-  // Stato separato per l'ID dell'azienda selezionata
-  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
-  
-  // Funzione per impostare l'ID dell'azienda selezionata
-  const handleCompanySelect = (companyId: number) => {
-    setSelectedCompanyId(companyId);
-    setValue("companyId", companyId);
-    // Resetta la selezione della filiale quando cambia l'azienda
-    setValue("branchId", null);
-    setOpenCompanyCombobox(false);
-  };
-  
-  // Funzioni per gestire i contatti e filiali
-  const handleContactSelect = (contactId: number) => {
-    setValue("contactId", contactId);
-    setOpenContactCombobox(false);
-  };
-  
-  const handleBranchSelect = (branchId: number) => {
-    setValue("branchId", branchId);
-    setOpenBranchCombobox(false);
-  };
   const [selectedSynergyContacts, setSelectedSynergyContacts] = useState<SynergyContact[]>([]);
   const [openSynergyCombobox, setOpenSynergyCombobox] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const formInitializedRef = useRef(false);
   const isEditMode = initialData && initialData.id !== undefined;
-
+  
   // Hook per la creazione di sinergie  
   const createSynergyMutation = useCreateSynergy();
 
@@ -160,6 +138,25 @@ export default function NewDealModal({ open, onOpenChange, initialData }: DealMo
   // Ottieni valori del form in tempo reale
   const watchCompanyId = watch("companyId");
   const watchSynergyContactIds = watch("synergyContactIds");
+  
+  // Funzione per impostare l'ID dell'azienda selezionata
+  const handleCompanySelect = (companyId: number) => {
+    setValue("companyId", companyId);
+    // Resetta la selezione della filiale quando cambia l'azienda
+    setValue("branchId", null);
+    setOpenCompanyCombobox(false);
+  };
+  
+  // Funzioni per gestire i contatti e filiali
+  const handleContactSelect = (contactId: number) => {
+    setValue("contactId", contactId);
+    setOpenContactCombobox(false);
+  };
+  
+  const handleBranchSelect = (branchId: number) => {
+    setValue("branchId", branchId);
+    setOpenBranchCombobox(false);
+  };
 
   // Fetch pipeline stages
   const { data: stages = [] } = useQuery({
@@ -238,28 +235,38 @@ export default function NewDealModal({ open, onOpenChange, initialData }: DealMo
   };
 
   // Aggiorna le sinergie selezionate quando cambiano i contatti o gli ID selezionati
+  // Usa memoizzazione per evitare calcoli inutili e cicli infiniti
   useEffect(() => {
-    // Evita cicli infiniti controllando se ci sono davvero cambiamenti
-    const newSelectedContacts = watchSynergyContactIds && Array.isArray(watchSynergyContactIds) && contacts && Array.isArray(contacts)
+    if (!contacts || !watchSynergyContactIds) return;
+    
+    // Calcola i nuovi contatti selezionati solo se abbiamo sia i contatti che gli ID
+    const newSelectedContacts = Array.isArray(watchSynergyContactIds) && Array.isArray(contacts)
       ? watchSynergyContactIds
           .map(id => contacts.find(contact => contact.id === id))
-          .filter(contact => contact !== undefined) as SynergyContact[]
+          .filter((contact): contact is SynergyContact => contact !== undefined)
       : [];
     
-    // Confronta per vedere se è effettivamente cambiato qualcosa
+    // Usa un approccio di confronto stabile per evitare aggiornamenti inutili
     const currentIds = selectedSynergyContacts.map(c => c.id).sort().join(',');
     const newIds = newSelectedContacts.map(c => c.id).sort().join(',');
     
     if (currentIds !== newIds) {
       setSelectedSynergyContacts(newSelectedContacts);
     }
-  }, [watchSynergyContactIds, contacts]);
+  }, [watchSynergyContactIds, contacts, selectedSynergyContacts]);
 
-  // Inizializza il form quando siamo in modalità modifica
+  // Inizializza il form quando siamo in modalità modifica o quando cambia lo stato di open
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      // Reset quando la modale si chiude
+      formInitializedRef.current = false;
+      return;
+    }
     
-    if (initialData && !formInitializedRef.current) {
+    // Non ri-inizializzare se è già stato fatto
+    if (formInitializedRef.current) return;
+    
+    if (initialData) {
       // Imposta i valori del form dai dati esistenti
       if (initialData.name) setValue("name", initialData.name);
       if (initialData.value !== undefined) setValue("value", initialData.value);
@@ -269,7 +276,6 @@ export default function NewDealModal({ open, onOpenChange, initialData }: DealMo
       if (initialData.companyId !== undefined) {
         const companyId = initialData.companyId !== null ? initialData.companyId : null;
         setValue("companyId", companyId);
-        setSelectedCompanyId(companyId);
       }
       
       // Gestisci l'ID del contatto
@@ -312,27 +318,28 @@ export default function NewDealModal({ open, onOpenChange, initialData }: DealMo
       if (initialData.notes !== undefined) {
         setValue("notes", initialData.notes || "");
       }
-      
-      formInitializedRef.current = true;
-    } else if (!initialData && !formInitializedRef.current) {
+    } else {
       // Reset per la creazione di un nuovo deal
       reset();
       setTagsInput("");
-      setSelectedCompanyId(null);
       setSelectedSynergyContacts([]);
       
       // Imposta uno stage predefinito se disponibile
       if (Array.isArray(stages) && stages.length > 0 && stages[0]?.id) {
         setValue("stageId", stages[0].id);
       }
-      
-      formInitializedRef.current = true;
     }
+    
+    formInitializedRef.current = true;
   }, [initialData, open, reset, setValue, stages]);
 
   // Carica le sinergie esistenti nel form quando siamo in modalità di modifica
+  // Esegui questo useEffect solo quando dealSynergies cambia e quando è in modalità modifica
   useEffect(() => {
-    if (isEditMode && dealSynergies && Array.isArray(dealSynergies) && dealSynergies.length > 0) {
+    if (!isEditMode || !dealSynergies || !Array.isArray(dealSynergies)) return;
+    
+    // Applica una volta sola quando dealSynergies viene caricato
+    if (dealSynergies.length > 0) {
       const contactIds = dealSynergies.map(synergy => 
         typeof synergy.contactId === 'string' ? parseInt(synergy.contactId) : synergy.contactId
       );
@@ -340,13 +347,6 @@ export default function NewDealModal({ open, onOpenChange, initialData }: DealMo
       setValue("synergyContactIds", contactIds);
     }
   }, [dealSynergies, isEditMode, setValue]);
-
-  // Quando la modale si chiude, resetta il flag di inizializzazione
-  useEffect(() => {
-    if (!open) {
-      formInitializedRef.current = false;
-    }
-  }, [open]);
 
   // Funzione per aggiungere un tag alla lista
   const handleAddTag = () => {
