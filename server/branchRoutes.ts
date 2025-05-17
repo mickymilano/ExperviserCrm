@@ -38,37 +38,8 @@ const authenticateJWT = (req: any, res: any, next: any) => {
 
 const router = Router();
 
-// Ottieni tutte le filiali
-router.get('/', authenticateJWT, async (req: Request, res: Response) => {
-  try {
-    console.log('API /api/branches: retrieving branches from storage');
-    const branches = await storage.getBranches();
-    console.log(`API /api/branches: found ${branches.length} branches in storage`);
-    res.json(branches);
-  } catch (error) {
-    console.error('Error retrieving branches:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// Ottieni una filiale specifica
-router.get('/:id', authenticateJWT, async (req: Request, res: Response) => {
-  const id = parseInt(req.params.id);
-  if (isNaN(id)) {
-    return res.status(400).json({ message: 'ID must be a number' });
-  }
-
-  try {
-    const branch = await storage.getBranch(id);
-    if (!branch) {
-      return res.status(404).json({ message: 'Branch not found' });
-    }
-    res.json(branch);
-  } catch (error) {
-    console.error(`Error retrieving branch ${id}:`, error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
+// IMPORTANTE: Le route più specifiche (/company/:companyId) devono 
+// precedere quelle generiche (/:id) per evitare conflitti
 
 // Ottieni filiali per azienda
 router.get('/company/:companyId', authenticateJWT, async (req: Request, res: Response) => {
@@ -88,6 +59,38 @@ router.get('/company/:companyId', authenticateJWT, async (req: Request, res: Res
     res.json(branches);
   } catch (error) {
     console.error(`Error retrieving branches for company ${companyId}:`, error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Ottieni tutte le filiali
+router.get('/', authenticateJWT, async (req: Request, res: Response) => {
+  try {
+    console.log('API /api/branches: retrieving branches from storage');
+    const branches = await storage.getBranches();
+    console.log(`API /api/branches: found ${branches.length} branches in storage`);
+    res.json(branches);
+  } catch (error) {
+    console.error('Error retrieving branches:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Ottieni una filiale specifica - deve venire DOPO le route più specifiche
+router.get('/:id', authenticateJWT, async (req: Request, res: Response) => {
+  const id = parseInt(req.params.id);
+  if (isNaN(id)) {
+    return res.status(400).json({ message: 'ID must be a number' });
+  }
+
+  try {
+    const branch = await storage.getBranch(id);
+    if (!branch) {
+      return res.status(404).json({ message: 'Branch not found' });
+    }
+    res.json(branch);
+  } catch (error) {
+    console.error(`Error retrieving branch ${id}:`, error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
