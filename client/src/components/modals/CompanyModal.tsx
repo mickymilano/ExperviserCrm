@@ -396,9 +396,9 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
             <Input id="address" {...register("address")} />
           </div>
           
-          <fieldset className="mb-6 border rounded-md p-4">
-            <legend className="px-2 text-sm font-semibold">Relazioni con me</legend>
-            <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-2 mb-4 p-3 border rounded-md bg-gray-50">
+            <h3 className="font-semibold mb-2">Relazioni con me</h3>
+            <div className="grid grid-cols-2 gap-2">
               {[
                 ['prospect', 'In fase di valutazione'],
                 ['clienteAttivo', 'Cliente attivo'],
@@ -416,11 +416,7 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
                 const isSelected = currentValues.includes(value);
                 
                 return (
-                  <label 
-                    key={value}
-                    htmlFor={`relationship-${value}`}
-                    className="flex items-center space-x-2 hover:bg-gray-50 p-1 rounded cursor-pointer"
-                  >
+                  <div key={value} className="flex items-start">
                     <input
                       type="checkbox"
                       id={`relationship-${value}`}
@@ -431,16 +427,20 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
                           : currentValues.filter(v => v !== value);
                         
                         setValue("relationshipType", newValues, { shouldValidate: true });
-                        console.log("Nuovi valori relationshipType:", newValues);
                       }}
-                      className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                      className="h-4 w-4 mt-1 rounded border-gray-300"
                     />
-                    <span className="text-sm font-medium text-gray-700">{label}</span>
-                  </label>
+                    <label 
+                      htmlFor={`relationship-${value}`}
+                      className="ml-2 text-sm text-gray-700 cursor-pointer"
+                    >
+                      {label}
+                    </label>
+                  </div>
                 );
               })}
             </div>
-          </fieldset>
+          </div>
           
           <div className="space-y-2 mb-4">
             <Label htmlFor="tags">Tag</Label>
