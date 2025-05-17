@@ -858,8 +858,8 @@ export function registerRoutes(app: any) {
     }
   });
   
-  // Imposta il contatto primario per un'azienda - TEMPORANEAMENTE SENZA AUTENTICAZIONE PER IL TEST
-  app.patch('/api/companies/:id/primary-contact', async (req, res) => {
+  // Imposta il contatto primario per un'azienda
+  app.patch('/api/companies/:id/primary-contact', authenticate, async (req, res) => {
     try {
       const companyId = parseInt(req.params.id);
       let { primaryContactId } = req.body;
