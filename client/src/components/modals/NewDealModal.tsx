@@ -435,13 +435,7 @@ export default function NewDealModal({ open, onOpenChange, initialData }: DealMo
       // Prepara i dati per l'invio
       const payload = {
         ...data,
-        // Converti i valori numerici in stringhe dove necessario
-        stageId: data.stageId ? data.stageId.toString() : undefined,
-        companyId: data.companyId ? data.companyId.toString() : null,
-        contactId: data.contactId ? data.contactId.toString() : null,
-        branchId: data.branchId ? data.branchId.toString() : null,
-        value: data.value ? data.value.toString() : "0",
-        expectedRevenue: data.expectedRevenue ? data.expectedRevenue.toString() : undefined,
+        // Mantieni i valori numerici come numeri
         startDate: data.startDate ? new Date(data.startDate).toISOString() : undefined,
         expectedCloseDate: data.expectedCloseDate ? new Date(data.expectedCloseDate).toISOString() : undefined
       };
