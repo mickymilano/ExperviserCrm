@@ -305,7 +305,10 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
         
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-2 mb-4">
-            <Label htmlFor="name">Nome Azienda</Label>
+            <Label htmlFor="name" className="flex items-center">
+              <span>Nome Azienda / Indirizzo</span>
+              <span className="ml-2 px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">Google Maps</span>
+            </Label>
             <PlacesAutocomplete 
               id="name"
               value={watch("name") || ""}
@@ -329,7 +332,7 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
                   trigger(["name","address","fullAddress","country"]);
                 }
               }}
-              placeholder="Cerca nome azienda…"
+              placeholder="Inizia a digitare nome azienda..."
               className="w-full"
               types={['establishment']}
             />

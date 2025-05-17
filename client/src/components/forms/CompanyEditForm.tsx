@@ -442,6 +442,7 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
         {/* Relazioni Section */}
         <div className="mb-6">
           <h3 className="text-lg font-medium mb-4">Relazioni con me</h3>
+          <p className="text-sm text-gray-500 mb-2">Seleziona tutti i tipi di relazione che hai con questa azienda. È possibile selezionare più opzioni contemporaneamente.</p>
           <div className="space-y-2 p-3 border rounded-md bg-gray-50">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="flex items-center space-x-2">
