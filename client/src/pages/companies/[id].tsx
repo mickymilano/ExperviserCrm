@@ -306,17 +306,7 @@ export default function CompanyDetail() {
                       </div>
                     )}
                     
-                    {company.country && (
-                      <div className="flex items-start">
-                        <Flag className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
-                        <div>
-                          <p className="text-sm font-medium mb-1">Paese</p>
-                          <Badge variant="outline" className="font-normal mt-1">
-                            {company.country}
-                          </Badge>
-                        </div>
-                      </div>
-                    )}
+                    {/* Campo country rimosso in favore del fullAddress che lo contiene già */}
                   </div>
                   
                   <div className="space-y-4">
