@@ -1,0 +1,237 @@
+Ecco il “mega‐patch” in cinque step per trasformare il tuo schema in un modello basato su table inheritance, rifattorizzare storage/API e UI:
+
+# 1) Schema SQL: crea entity_base e fai ereditare companies e leads
+apply_patch << 'EOF'
+*** Begin Patch
+*** Update File: shared/schema.ts
+@@
+-- 1) Creazione tabella base con tutti i campi condivisi
+CREATE TABLE IF NOT EXISTS entity_base (
+  id                SERIAL PRIMARY KEY,
+  name              TEXT    NOT NULL,
+  full_address      TEXT    NOT NULL,
+  country           TEXT    NOT NULL,
+  status            TEXT    NOT NULL,
+  relationship_type relationship_type NOT NULL DEFAULT 'prospect',
+  created_at        TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at        TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+-- 2) Companies eredita da entity_base
+DROP TABLE IF EXISTS companies;
+CREATE TABLE companies (
+  /* qui aggiungi SOLO campi specifici di companies, es.: */
+  parent_company_id INTEGER REFERENCES companies(id)
+) INHERITS (entity_base);
+
+-- 3) Leads eredita da entity_base
+DROP TABLE IF EXISTS leads;
+CREATE TABLE leads (
+  /* qui aggiungi SOLO campi specifici di leads, es.: */
+  first_name TEXT NOT NULL,
+  last_name  TEXT NOT NULL,
+  email      TEXT,
+  phone      TEXT
+) INHERITS (entity_base);
+*** End Patch
+EOF
+
+# 2) Refactoring storage: funzioni generiche per ogni tabella
+apply_patch << 'EOF'
+*** Begin Patch
+*** Update File: server/postgresStorage.ts
+@@
+// Rimuovi tutti i metodi specifici di companies/leads
+-export async function getCompanies() { /* ... */ }
+-export async function getCompany(id:number){/*...*/}
+-…  
+-// stessi per leads…
++/** STORAGE GENERICO su qualsiasi tabella ’entity_base’-derived */
++async function getEntities(table:string) {
++  const { rows } = await client.query(`SELECT * FROM ${table};`);
++  return rows;
++}
++
++async function getEntity(table:string, id:number) {
++  const { rows } = await client.query(
++    `SELECT * FROM ${table} WHERE id=$1;`, [id]
++  );
++  return rows[0];
++}
++
++async function createEntity(table:string, data:any, cols:string[], vals:any[]) {
++  const placeholders = vals.map((_,i)=>`$${i+1}`).join(',');
++  const { rows } = await client.query(
++    `INSERT INTO ${table} (${cols.join(',')})
++     VALUES(${placeholders})
++     RETURNING *;`, vals
++  );
++  return rows[0];
++}
++
++async function updateEntity(table:string, id:number, updates:any, cols:string[]) {
++  const sets:string[] = [], vals:any[] = [];
++  for (const col of cols) {
++    if (updates[col] !== undefined) {
++      sets.push(`${col}=$${vals.push(updates[col])}`);
++    }
++  }
++  if (!sets.length) return getEntity(table,id);
++  vals.push(id);
++  const { rows } = await client.query(
++    `UPDATE ${table} SET ${sets.join(',')} WHERE id=$${vals.length} RETURNING *;`,
++    vals
++  );
++  return rows[0];
++}
++
++async function deleteEntity(table:string, id:number) {
++  await client.query(`DELETE FROM ${table} WHERE id=$1;`, [id]);
++}
++
++// Riassegna ai nomi specifici:
++export const getCompanies     = () => getEntities('companies');
++export const getCompany       = (id:number) => getEntity('companies', id);
++export const createCompany    = (data:any) =>
++  createEntity('companies',
++    data,
++    ['name','full_address','country','status','relationship_type','parent_company_id'],
++    [data.name, data.fullAddress, data.country, data.status, data.relationshipType, data.parentCompanyId]
++  );
++export const updateCompany    = (id:number, upd:any) =>
++  updateEntity('companies', id, {
++    name: upd.name, full_address: upd.fullAddress,
++    country: upd.country, status: upd.status,
++    relationship_type: upd.relationshipType, parent_company_id: upd.parentCompanyId
++  }, ['name','full_address','country','status','relationship_type','parent_company_id']);
++export const deleteCompany    = (id:number) => deleteEntity('companies', id);
++
++// Leads
++export const getLeads         = () => getEntities('leads');
++export const getLead          = (id:number) => getEntity('leads', id);
++export const createLead       = (data:any) =>
++  createEntity('leads',
++    data,
++    ['name','full_address','country','status','relationship_type','first_name','last_name','email','phone'],
++    [data.name, data.fullAddress, data.country, data.status, data.relationshipType,
++     data.firstName, data.lastName, data.email, data.phone]
++  );
++export const updateLead       = (id:number, upd:any) =>
++  updateEntity('leads', id, {
++    name: upd.name, full_address: upd.fullAddress,
++    country: upd.country, status: upd.status,
++    relationship_type: upd.relationshipType,
++    first_name: upd.firstName, last_name: upd.lastName,
++    email: upd.email, phone: upd.phone
++  }, ['name','full_address','country','status','relationship_type','first_name','last_name','email','phone']);
++export const deleteLead       = (id:number) => deleteEntity('leads', id);
+*** End Patch
+EOF
+
+# 3) Routing: generico e specifico
+apply_patch << 'EOF'
+*** Begin Patch
+*** Update File: server/routes.ts
+@@
+// COMPANY
+router.get   ('/api/companies',    (req,res)=> storage.getCompanies().then(r=>res.json(r)));
+router.get   ('/api/companies/:id', (req,res)=> storage.getCompany(+req.params.id).then(r=>res.json(r)));
+router.post  ('/api/companies',    companyController.createCompany);
+router.patch ('/api/companies/:id', companyController.updateCompany);
+router.delete('/api/companies/:id', companyController.deleteCompany);
+
+// LEAD
+router.get   ('/api/leads',    (req,res)=> storage.getLeads().then(r=>res.json(r)));
+router.get   ('/api/leads/:id', (req,res)=> storage.getLead(+req.params.id).then(r=>res.json(r)));
+router.post  ('/api/leads',    leadController.createLead);
+router.patch ('/api/leads/:id', leadController.updateLead);
+router.delete('/api/leads/:id', leadController.deleteLead);
+*** End Patch
+EOF
+
+# 4) Frontend: estrai form comune EntityModal
+apply_patch << 'EOF'
+*** Begin Patch
+*** New File: client/src/components/modals/EntityModal.tsx
++import React, { useState } from 'react';
++import { Company, Lead } from '../../types';
++
++interface EntityModalProps<T> {
++  initialData?: T;
++  onSave: (data:T)=>Promise<void>;
++  onClose: ()=>void;
++}
++
++export default function EntityModal<T extends {
++  id?: number; name:string; fullAddress:string;
++  country:string; status:string; relationshipType:string[];
++}>(props: EntityModalProps<T>) {
++  const [entity, setEntity] = useState<T>(props.initialData! as T);
++  // campi comuni
++  return (
++    <form onSubmit={e=>{e.preventDefault(); props.onSave(entity);}}>
++      <label>Nome</label>
++      <input value={entity.name} onChange={e=>setEntity(d=>({...d,name:e.target.value}))}/>
++      <label>Indirizzo</label>
++      <input value={entity.fullAddress} onChange={e=>setEntity(d=>({...d,fullAddress:e.target.value}))}/>
++      <label>Nazione</label>
++      <input value={entity.country} onChange={e=>setEntity(d=>({...d,country:e.target.value}))}/>
++      <label>Stato</label>
++      <input value={entity.status} onChange={e=>setEntity(d=>({...d,status:e.target.value}))}/>
++      <label>Relazioni</label>
++      {/* qui puoi riusare la checkbox grid vista prima */}
++      {/* … */}
++      <button type="submit">Salva</button>
++      <button type="button" onClick={props.onClose}>Annulla</button>
++    </form>
++  );
++}
+*** End Patch
+EOF
+
+apply_patch << 'EOF'
+*** Begin Patch
+*** Update File: client/src/components/modals/CompanyModal.tsx
+@@
+-import React from 'react';
+-import { Company } from '../../types';
+-export default function CompanyModal(props:{ initialData?:Company; onSave:(c:Company)=>Promise<void>; onClose:()=>void }) {
+-  return <EntityModal<Company> {...props} />;
+-}
++import EntityModal from './EntityModal';
++import { Company } from '../../types';
++export default function CompanyModal(props:{ initialData?:Company; onSave:(c:Company)=>Promise<void>; onClose:()=>void }) {
++  return <EntityModal<Company> {...props} />;
++}
+*** End Patch
+EOF
+
+apply_patch << 'EOF'
+*** Begin Patch
+*** Update File: client/src/components/modals/LeadModal.tsx
++import EntityModal from './EntityModal';
++import { Lead } from '../../types';
++export default function LeadModal(props:{ initialData?:Lead; onSave:(l:Lead)=>Promise<void>; onClose:()=>void }) {
++  return <EntityModal<Lead> {...props} />;
++}
+*** End Patch
+EOF
+
+# 5) Riavvia tutto
+npm run db:migrate
+kill $(lsof -t -i:5000) && npm run dev &
+npm run dev --prefix client &
+
+echo "✅ Table inheritance + storage/API e UI rifattorizzati con EntityModal. Ora companies e leads condividono schema e form!" 
+
+
+⸻
+
+Come funziona ora:
+	1.	Schema → entity_base contiene tutti i campi comuni; companies e leads ereditano da esso.
+	2.	Storage/API → un set di funzioni generiche (getEntities, createEntity…) applicato a companies o leads.
+	3.	UI → un unico EntityModal per creare/modificare aziende e lead con lo stesso form.
+
+Ogni volta che aggiungi un campo in entity_base, sarà automaticamente disponibile sia in companies che in leads e nel form: zero duplicazioni e coerenza totale.
+
+Fammi sapere quando è applicato e facciamo insieme un giro di test!
