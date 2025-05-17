@@ -1,0 +1,57 @@
+Ciao Replit,
+
+per massimizzare la sicurezza dell’allineamento tra frontend, backend e database, procediamo in due fasi:
+
+---
+
+## FASE 1: DEPRECATION
+
+1. **Marcare come @deprecated** i campi obsoleti `city`, `region` e `postalCode` in:
+   - file di seed (aggiungere commenti `// @deprecated`)
+   - migrations (lasciarli, ma aggiungere `-- @deprecated`)
+   - schema.ts (commentare le definizioni, marcare come deprecated)
+
+2. **Non rimuovere** nulla da DB né codice, ma prevenire l’uso di questi campi:
+   - Nel frontend, rimuovere i field/form che li mostrano e disabilitarli
+   - Nel backend, ignorarli nelle risposte JSON e nelle query
+
+---
+
+## FASE 2: FULL ALIGNMENT
+
+Quando confermato che tutto funziona:
+
+1. **Armonizzazione naming**  
+   - Sostituire camelCase → snake_case in tutti i componenti Azienda:
+     - `fullAddress` → `full_address`  
+     - `companyType` → `company_type`  
+     - `productsOrServicesTags` → `products_or_services_tags`  
+     - `isActiveRep` → `is_active_rep`  
+     - `lastContactedAt` → `last_contacted_at`  
+     - `nextFollowUpAt` → `next_follow_up_at`
+
+2. **Esposizione campi non usati**  
+   - Aggiungere in form/API i campi esistenti in DB:  
+     `description`, `employee_count`, `annual_revenue`, `founded_year`, `logo`, `linkedin_url`, `parent_company_id`
+
+3. **Rimozione definitiva campi deprecati**  
+   - Dopo aver validato che non servono e non compaiono più nei form, eseguire:
+     ```sql
+     ALTER TABLE companies
+       DROP COLUMN IF EXISTS city,
+       DROP COLUMN IF EXISTS region,
+       DROP COLUMN IF EXISTS postal_code;
+     ```
+
+4. **Mapper snake_case↔camelCase**  
+   - Consolidare `shared/mappers.ts` e applicarlo in ogni CompanyModal (e in tutti gli endpoint/form correlati).
+
+5. **Modulo Filiali**  
+   - **Address input**: disabilitare l’ereditarietà dall’azienda e usare un campo manuale con autocomplete Google Places API (indirizzo completo, CAP, provincia, paese).
+
+6. **Test & Verifica**  
+   - Ricompilare frontend e backend  
+   - Eseguire seed “deprecated” e validare i flussi  
+   - Quando tutto OK, passare alla rimozione finale dei campi deprecati  
+
+Grazie e fammi sapere quando completi la **FASE 1** di deprecation prima di procedere con la seconda fase!```

@@ -115,24 +115,48 @@ export const companies = pgTable('companies', {
   email: varchar('email', { length: 100 }),
   phone: varchar('phone', { length: 20 }),
   
-  // IMPORTANTE: I campi address, city e region sono stati rimossi dal database
-  // e sostituiti con fullAddress. Vengono mantenuti nel modello TypeScript
-  // solo per retrocompatibilità con il frontend, ma non esistono più nel database.
-  // NON utilizzare questi campi nelle query o negli insert!
+  // -------------------------------------------------------
+  // CAMPI DEPRECATI: USARE 'full_address' PER QUALSIASI NUOVO SVILUPPO
+  // -------------------------------------------------------
   
-  // DEPRECATED (2025-05-13): Questi campi non esistono più nel database!
-  // address: text('address'),
+  /**
+   * @deprecated Questo campo è mantenuto solo per retrocompatibilità. 
+   * Usare 'full_address' per salvare/leggere indirizzi completi.
+   * Sarà rimosso nella versione 2.0 (prevista 2025-06)
+   */
+  address: text('address'),
+  
+  /**
+   * @deprecated Questo campo NON ESISTE più nel database.
+   * Mantenuto nel tipo per retrocompatibilità frontend.
+   * Sarà rimosso nel codice nella versione 2.0 (prevista 2025-06)
+   */
   // city: varchar('city', { length: 50 }),
+  
+  /**
+   * @deprecated Questo campo NON ESISTE più nel database.
+   * Mantenuto nel tipo per retrocompatibilità frontend.
+   * Sarà rimosso nel codice nella versione 2.0 (prevista 2025-06)
+   */
   // region: varchar('region', { length: 50 }),
   
+  /**
+   * @deprecated Questo campo NON ESISTE più nel database.
+   * Mantenuto nel tipo per retrocompatibilità frontend.
+   * Sarà rimosso nel codice nella versione 2.0 (prevista 2025-06)
+   */
+  // postalCode: varchar('postal_code', { length: 20 }),
+  
   // Campo unificato per la gestione degli indirizzi (2025-05-13)
-  address: text('address'), // Mantenuto solo per retrocompatibilità col frontend
+  // QUESTO È IL CAMPO DA USARE PER TUTTE LE NUOVE IMPLEMENTAZIONI
   full_address: text('full_address'),
   
-  // IMPORTANTE: Questi campi non esistono nel database! (2025-05-16)
-  // Commentati per evitare errori ma mantenuti nel tipo TypeScript per retrocompatibilità
+  /**
+   * @deprecated Questo campo NON ESISTE più nel database.
+   * Mantenuto nel tipo per retrocompatibilità frontend.
+   * Sarà rimosso nel codice nella versione 2.0 (prevista 2025-06)
+   */
   // country: varchar('country', { length: 50 }),
-  // RIMOSSO: postalCode (2025-05-17) come richiesto nell'armonizzazione
   website: varchar('website', { length: 255 }),
   industry: varchar('industry', { length: 100 }),
   sector: varchar('sector', { length: 100 }),
