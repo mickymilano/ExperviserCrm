@@ -1,0 +1,90 @@
+Per gestire centinaia di contatti è meglio non caricarli tutti in un singolo <Select> ma usare una ricerca “type-ahead” con caricamento dinamico. Ti propongo queste due modifiche:
+
+⸻
+
+1. Backend: supporto a ?search=… per i contatti non associati
+
+In server/routes.ts, modifica l’endpoint già esistente per agganciare il parametro search:
+
+--- a/server/routes.ts
++++ b/server/routes.ts
+@@ router.get('/api/contacts', async (req, res, next) => {
+-  const unassigned = req.query.unassigned === 'true';
+-  const rows = await storage.getContacts({ unassigned });
++  const unassigned = req.query.unassigned === 'true';
++  const search     = req.query.search || '';
++  const rows = await storage.getContacts({
++    unassigned,
++    search,        // passa la stringa di ricerca
++  });
+   res.json(rows);
+
+E in PostgresStorage.getContacts, aggiungi lo WHERE name ILIKE '%search%':
+
+--- a/server/postgresStorage.ts
++++ b/server/postgresStorage.ts
+@@ async getContacts({ unassigned, search }) {
+-  let sql = `SELECT * FROM contacts ${unassigned ? 'WHERE company_id IS NULL' : ''}`;
++  let filters = [];
++  if (unassigned) filters.push(`company_id IS NULL`);
++  if (search)     filters.push(`name ILIKE $${filters.length+1}`);
++  let sql = 'SELECT * FROM contacts'
++          + (filters.length ? ' WHERE ' + filters.join(' AND ') : '');
++  const params = search ? [`%${search}%`] : [];
+   const res = await client.query(sql, params);
+   return res.rows;
+}
+
+
+⸻
+
+2. Frontend: sostituisci il dropdown con un AsyncSelect
+
+Nel tuo CompanyContactsTab.tsx, importa e usa AsyncSelect da react-select/async:
+
+--- a/client/src/components/company/CompanyContactsTab.tsx
++++ b/client/src/components/company/CompanyContactsTab.tsx
+@@ import { useState, useEffect } from 'react';
+-import Select from 'react-select';
++import AsyncSelect from 'react-select/async';
+
+ // …
+
+-  {modalOpen && (
+-    <div className="modal">
+-      <h3>Seleziona Contatto</h3>
+-      <Select
+-        options={unassigned.map(c => ({ value: c.id, label: c.name }))}
+-        onChange={setSelected}
+-        noOptionsMessage={() => 'Nessun contatto disponibile'}
+-      />
++  {modalOpen && (
++    <div className="modal">
++      <h3>Seleziona Contatto</h3>
++      <AsyncSelect
++        cacheOptions
++        defaultOptions
++        loadOptions={(inputValue, callback) => {
++          fetch(`/api/contacts?unassigned=true&search=${encodeURIComponent(inputValue)}`)
++            .then(r => r.json())
++            .then(data =>
++              callback(data.map(c => ({ value: c.id, label: c.name })))
++            );
++        }}
++        onChange={setSelected}
++        placeholder="Cerca per nome..."
++        noOptionsMessage={() => 'Nessun contatto trovato'}
++      />
+       <button onClick={attach} disabled={!selected} className="btn-primary mt-4">
+         Associa
+       </button>
+
+
+⸻
+
+Vantaggi di questo approccio
+	•	Performance: non carichi tutti i 300+ contatti, ma solo quelli che matchano la ricerca
+	•	UX: l’utente digita qualche lettera e vede subito le opzioni rilevanti
+	•	Scalabilità: supporta migliaia di record con la stessa logica
+
+Una volta applicati questi cambiamenti, ricompila e verifica nel browser il tab “Contatti”: dovrebbe comparire un campo di ricerca con suggerimenti man mano che digiti.

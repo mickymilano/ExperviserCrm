@@ -1340,22 +1340,37 @@ export class PostgresStorage implements IStorage {
   }
   
   // Ottieni i contatti non associati a nessuna azienda
-  async getUnassignedContacts(): Promise<Contact[]> {
+  async getUnassignedContacts(searchQuery: string = ''): Promise<Contact[]> {
     try {
-      console.log("PostgresStorage.getUnassignedContacts: recupero contatti senza associazione ad aziende");
+      console.log(`PostgresStorage.getUnassignedContacts: recupero contatti senza associazione ad aziende${searchQuery ? ' con ricerca: ' + searchQuery : ''}`);
       
-      // Query per ottenere i contatti che non hanno aree di attività con aziende
-      const query = `
+      let query = `
         SELECT c.*
         FROM contacts c
         LEFT JOIN areas_of_activity a ON c.id = a.contact_id AND a.company_id IS NOT NULL
         WHERE a.id IS NULL
-        ORDER BY c.first_name, c.last_name
       `;
       
-      const result = await pool.query(query);
+      const queryParams = [];
       
-      console.log(`Trovati ${result.rowCount} contatti non associati`);
+      // Aggiungi filtro di ricerca se necessario
+      if (searchQuery && searchQuery.trim() !== '') {
+        queryParams.push(`%${searchQuery.toLowerCase()}%`);
+        query += `
+          AND (
+            LOWER(c.first_name) LIKE $1 OR 
+            LOWER(c.last_name) LIKE $1 OR 
+            LOWER(CONCAT(c.first_name, ' ', c.last_name)) LIKE $1
+          )
+        `;
+      }
+      
+      // Ordina i risultati
+      query += ` ORDER BY c.first_name, c.last_name`;
+      
+      const result = await pool.query(query, queryParams);
+      
+      console.log(`Trovati ${result.rowCount} contatti non associati${searchQuery ? ' per la ricerca: ' + searchQuery : ''}`);
       
       // Convertiamo i risultati in formato camelCase
       return result.rows.map(row => {
@@ -1377,7 +1392,7 @@ export class PostgresStorage implements IStorage {
         } as Contact;
       });
     } catch (error) {
-      console.error("Error in getUnassignedContacts:", error);
+      console.error(`Error in getUnassignedContacts${searchQuery ? ' with search: ' + searchQuery : ''}:`, error);
       return [];
     }
   }

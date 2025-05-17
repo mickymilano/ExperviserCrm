@@ -465,13 +465,16 @@ export function registerRoutes(app: any) {
     try {
       console.log("API /api/contacts: retrieving contacts from storage");
       
-      // Verifico se è richiesto il filtro per contatti non associati
+      // Verifico se è richiesto il filtro per contatti non associati e ricerca
       const unassignedOnly = req.query.unassigned === 'true';
+      const searchQuery = req.query.search ? String(req.query.search) : '';
+      
+      console.log(`API /api/contacts: filtering options - unassigned: ${unassignedOnly}, search: "${searchQuery}"`);
       
       if (unassignedOnly) {
         console.log("API /api/contacts: filtering for unassigned contacts only");
-        const unassignedContacts = await storage.getUnassignedContacts();
-        console.log(`API /api/contacts: found ${unassignedContacts.length} unassigned contacts`);
+        const unassignedContacts = await storage.getUnassignedContacts(searchQuery);
+        console.log(`API /api/contacts: found ${unassignedContacts.length} unassigned contacts for search: "${searchQuery || 'none'}"`);
         return res.json(unassignedContacts);
       }
       

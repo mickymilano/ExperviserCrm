@@ -11,13 +11,7 @@ import {
   DialogDescription,
   DialogFooter
 } from "@/components/ui/dialog";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
+import AsyncSelect from "react-select/async";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Users, Mail, Phone, Plus, X, UserPlus } from "lucide-react";
@@ -48,7 +42,8 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
   const queryClient = useQueryClient();
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
-
+  const [isContactLoading, setIsContactLoading] = useState(false);
+  
   // Fetch contatti associati all'azienda
   const { 
     data: contacts, 
@@ -64,21 +59,26 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
     }
   });
 
-  // Fetch contatti non associati (solo quando il modal è aperto)
-  const { 
-    data: unassignedContacts, 
-    isLoading: isLoadingUnassigned,
-    error: unassignedError,
-    refetch: refetchUnassigned
-  } = useQuery({
-    queryKey: ["/api/contacts", "unassigned"],
-    queryFn: async () => {
-      const res = await fetch("/api/contacts?unassigned=true");
+  // Funzione per caricare i contatti filtrati (usata da AsyncSelect)
+  const loadContactOptions = async (inputValue: string) => {
+    try {
+      const url = `/api/contacts?unassigned=true${inputValue ? `&search=${encodeURIComponent(inputValue)}` : ''}`;
+      console.log(`Fetching contacts with URL: ${url}`);
+      
+      const res = await fetch(url);
       if (!res.ok) throw new Error("Failed to fetch unassigned contacts");
-      return res.json();
-    },
-    enabled: modalOpen, // Esegui solo quando il modal è aperto
-  });
+      
+      const contacts = await res.json();
+      
+      return contacts.map((contact: Contact) => ({
+        value: contact.id.toString(),
+        label: `${contact.firstName} ${contact.lastName}`
+      }));
+    } catch (error) {
+      console.error("Error loading contact options:", error);
+      return [];
+    }
+  };
 
   // Associa un contatto all'azienda
   const associateContact = async () => {
@@ -363,36 +363,53 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
           
           <div className="py-4">
             <Label htmlFor="contactSelect">Seleziona Contatto</Label>
-            <Select 
-              value={selectedContactId || ""} 
-              onValueChange={setSelectedContactId}
-              disabled={isLoadingUnassigned}
-            >
-              <SelectTrigger className="mt-1">
-                <SelectValue placeholder="Seleziona un contatto" />
-              </SelectTrigger>
-              <SelectContent>
-                {unassignedContacts && unassignedContacts.length > 0 ? (
-                  unassignedContacts.map((contact: Contact) => (
-                    <SelectItem key={contact.id} value={contact.id.toString()}>
-                      {contact.firstName} {contact.lastName}
-                    </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem value="none" disabled>
-                    {isLoadingUnassigned 
-                      ? "Caricamento..." 
-                      : "Nessun contatto disponibile"}
-                  </SelectItem>
-                )}
-              </SelectContent>
-            </Select>
-            
-            {unassignedError && (
-              <p className="text-sm text-destructive mt-2">
-                Errore nel caricamento dei contatti.
-              </p>
-            )}
+            <div className="mt-1">
+              <AsyncSelect
+                id="contactSelect"
+                cacheOptions
+                defaultOptions
+                loadOptions={loadContactOptions}
+                onChange={(selected: any) => {
+                  if (selected) {
+                    setSelectedContactId(selected.value);
+                  } else {
+                    setSelectedContactId(null);
+                  }
+                }}
+                placeholder="Cerca contatto per nome..."
+                noOptionsMessage={() => "Nessun contatto trovato"}
+                loadingMessage={() => "Caricamento..."}
+                classNamePrefix="react-select"
+                styles={{
+                  control: (base) => ({
+                    ...base,
+                    borderColor: 'var(--border)',
+                    backgroundColor: 'var(--background)',
+                    minHeight: '40px',
+                  }),
+                  menu: (base) => ({
+                    ...base,
+                    backgroundColor: 'var(--background)',
+                    borderColor: 'var(--border)',
+                    boxShadow: 'var(--shadow)',
+                  }),
+                  option: (base, state) => ({
+                    ...base,
+                    backgroundColor: state.isFocused ? 'var(--accent)' : 'transparent',
+                    color: 'var(--foreground)',
+                    cursor: 'pointer',
+                  }),
+                  singleValue: (base) => ({
+                    ...base,
+                    color: 'var(--foreground)',
+                  }),
+                  input: (base) => ({
+                    ...base,
+                    color: 'var(--foreground)',
+                  }),
+                }}
+              />
+            </div>
           </div>
           
           <DialogFooter className="sm:justify-between">
