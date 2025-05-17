@@ -393,6 +393,19 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
                       <SelectItem value="Europe/Paris">Parigi</SelectItem>
                       <SelectItem value="Europe/Berlin">Berlino</SelectItem>
                     </SelectGroup>
+                    <SelectGroup>
+                      <SelectLabel>Nord America</SelectLabel>
+                      <SelectItem value="America/New_York">New York (ET)</SelectItem>
+                      <SelectItem value="America/Chicago">Chicago (CT)</SelectItem>
+                      <SelectItem value="America/Denver">Denver (MT)</SelectItem>
+                      <SelectItem value="America/Los_Angeles">Los Angeles (PT)</SelectItem>
+                    </SelectGroup>
+                    <SelectGroup>
+                      <SelectLabel>Asia</SelectLabel>
+                      <SelectItem value="Asia/Tokyo">Giappone (JST)</SelectItem>
+                      <SelectItem value="Asia/Shanghai">Cina (CST)</SelectItem>
+                      <SelectItem value="Asia/Kolkata">India (IST)</SelectItem>
+                    </SelectGroup>
                   </SelectContent>
                 </Select>
               </div>
@@ -408,40 +421,6 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
                 id="city"
                 {...register("city")}
               />
-            </div>
-            
-            <div>
-              <Label htmlFor="timezone">Fuso Orario</Label>
-              <Select 
-                onValueChange={(value) => handleSelectChange("timezone", value)}
-                defaultValue={customFields.timezone || ""}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Seleziona fuso orario" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Europa</SelectLabel>
-                    <SelectItem value="Europe/Rome">Roma</SelectItem>
-                    <SelectItem value="Europe/London">Londra</SelectItem>
-                    <SelectItem value="Europe/Paris">Parigi</SelectItem>
-                    <SelectItem value="Europe/Berlin">Berlino</SelectItem>
-                  </SelectGroup>
-                  <SelectGroup>
-                    <SelectLabel>Nord America</SelectLabel>
-                    <SelectItem value="America/New_York">New York (ET)</SelectItem>
-                    <SelectItem value="America/Chicago">Chicago (CT)</SelectItem>
-                    <SelectItem value="America/Denver">Denver (MT)</SelectItem>
-                    <SelectItem value="America/Los_Angeles">Los Angeles (PT)</SelectItem>
-                  </SelectGroup>
-                  <SelectGroup>
-                    <SelectLabel>Asia</SelectLabel>
-                    <SelectItem value="Asia/Tokyo">Giappone (JST)</SelectItem>
-                    <SelectItem value="Asia/Shanghai">Cina (CST)</SelectItem>
-                    <SelectItem value="Asia/Kolkata">India (IST)</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
             </div>
           </div>
         </div>
@@ -478,11 +457,27 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
               </div>
               <div className="flex items-center space-x-2">
                 <Checkbox 
-                  id="relationship-clienteRetainer" 
-                  checked={relationshipTypes.includes('clienteRetainer')}
-                  onCheckedChange={(checked) => handleRelationshipChange('clienteRetainer', !!checked)}
+                  id="relationship-mandante" 
+                  checked={relationshipTypes.includes('mandante')}
+                  onCheckedChange={(checked) => handleRelationshipChange('mandante', !!checked)}
                 />
-                <Label htmlFor="relationship-clienteRetainer" className="text-sm">Cliente retainer</Label>
+                <Label htmlFor="relationship-mandante" className="text-sm">Mandante</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="relationship-clienteRitenuto" 
+                  checked={relationshipTypes.includes('clienteRitenuto')}
+                  onCheckedChange={(checked) => handleRelationshipChange('clienteRitenuto', !!checked)}
+                />
+                <Label htmlFor="relationship-clienteRitenuto" className="text-sm">Cliente retainer</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="relationship-clienteUnaTantum" 
+                  checked={relationshipTypes.includes('clienteUnaTantum')}
+                  onCheckedChange={(checked) => handleRelationshipChange('clienteUnaTantum', !!checked)}
+                />
+                <Label htmlFor="relationship-clienteUnaTantum" className="text-sm">Cliente una tantum</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <Checkbox 
@@ -500,106 +495,24 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
                 />
                 <Label htmlFor="relationship-partnerStrategico" className="text-sm">Partner strategico</Label>
               </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="relationship-investitoreCliente" 
-                  checked={relationshipTypes.includes('investitoreCliente')}
-                  onCheckedChange={(checked) => handleRelationshipChange('investitoreCliente', !!checked)}
-                />
-                <Label htmlFor="relationship-investitoreCliente" className="text-sm">Investitore-cliente</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="relationship-mandante" 
-                  checked={relationshipTypes.includes('mandante')}
-                  onCheckedChange={(checked) => handleRelationshipChange('mandante', !!checked)}
-                />
-                <Label htmlFor="relationship-mandante" className="text-sm">Mandante</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="relationship-clienteUnaTantum" 
-                  checked={relationshipTypes.includes('clienteUnaTantum')}
-                  onCheckedChange={(checked) => handleRelationshipChange('clienteUnaTantum', !!checked)}
-                />
-                <Label htmlFor="relationship-clienteUnaTantum" className="text-sm">Cliente una-tantum</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="relationship-fornitore" 
-                  checked={relationshipTypes.includes('fornitore')}
-                  onCheckedChange={(checked) => handleRelationshipChange('fornitore', !!checked)}
-                />
-                <Label htmlFor="relationship-fornitore" className="text-sm">Fornitore</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="relationship-concorrente" 
-                  checked={relationshipTypes.includes('concorrente')}
-                  onCheckedChange={(checked) => handleRelationshipChange('concorrente', !!checked)}
-                />
-                <Label htmlFor="relationship-concorrente" className="text-sm">Concorrente</Label>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Administrative Details Section */}
-        <div className="mb-6">
-          <h3 className="text-lg font-medium mb-4">Dettagli Amministrativi</h3>
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="vatNumber">Partita IVA / Codice Fiscale</Label>
-                <Input 
-                  id="vatNumber"
-                  {...register("vatNumber")}
-                  className="mt-1"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="registrationNumber">Numero Registro Imprese</Label>
-                <Input 
-                  id="registrationNumber"
-                  {...register("registrationNumber")}
-                  className="mt-1"
-                />
-              </div>
-            </div>
-            
-            <div>
-              <Label htmlFor="tags">Tag (separati da virgola)</Label>
-              <Input 
-                id="tags"
-                value={tagsInput}
-                onChange={(e) => setTagsInput(e.target.value)}
-                className="mt-1"
-                placeholder="retail, enterprise, partner"
-              />
             </div>
           </div>
         </div>
         
         {/* Notes Section */}
-        <div>
-          <Label htmlFor="notes">Note</Label>
-          <Textarea 
+        <div className="mb-6">
+          <h3 className="text-lg font-medium mb-4">Note</h3>
+          <Textarea
             id="notes"
             {...register("notes")}
-            className="mt-1"
-            rows={4}
+            className="min-h-[100px]"
+            placeholder="Inserisci eventuali note sull'azienda..."
           />
-          {errors.notes && (
-            <p className="text-sm text-destructive mt-1">{errors.notes.message}</p>
-          )}
         </div>
       </div>
       
-      <div className="flex justify-end space-x-2">
-        <Button type="button" variant="outline" onClick={onComplete}>
-          Annulla
-        </Button>
+      {/* Submit Button */}
+      <div className="flex justify-end">
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? "Salvataggio..." : "Salva Modifiche"}
         </Button>
