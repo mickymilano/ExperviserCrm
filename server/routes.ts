@@ -6,7 +6,14 @@ import { storage } from './storage';
 import { pool } from './db'; // Importiamo il pool di connessione PostgreSQL
 import { z } from 'zod';
 import { insertUserSchema, insertContactSchema, insertCompanySchema, insertDealSchema, insertPipelineStageSchema, insertLeadSchema, insertAreaOfActivitySchema, insertContactEmailSchema, insertBranchSchema } from '@shared/schema';
-import leadController from './controllers/leadController.js';
+import { 
+  listLeads, 
+  getLead, 
+  createLead, 
+  updateLead, 
+  deleteLead, 
+  convertLead 
+} from './controllers/leadController.js';
 import branchRoutes from './branchRoutes';
 
 // Chiave segreta per JWT
