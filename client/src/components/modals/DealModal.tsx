@@ -294,11 +294,8 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     }
   };
   
-  // Quando i contatti cambiano, aggiorniamo il filtro
-  useEffect(() => {
-    const companyId = getValues("companyId");
-    updateFilteredContacts(companyId);
-  }, [contacts]);
+  // Rimuoviamo l'useEffect che causa cicli infiniti
+  // Ora il filtro verrà aggiornato solo quando viene chiamato setCompanyIdInForm
 
   // Carica le sinergie esistenti nel form quando siamo in modalità di modifica
   useEffect(() => {
@@ -735,14 +732,17 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                   name="contactId"
                   control={control}
                   render={({ field }) => (
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          role="combobox"
-                          className="w-full justify-between"
-                          disabled={!getSelectedCompanyId()}
-                        >
+                    <Select
+                      value={field.value?.toString() || ""}
+                      disabled={!getSelectedCompanyId()}
+                      onValueChange={(value) => {
+                        const contactId = parseInt(value, 10);
+                        console.log("Contact selected:", contactId);
+                        field.onChange(contactId);
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={getSelectedCompanyId() ? "Select contact" : "Select company first"}>
                           {field.value !== undefined && field.value !== null && Array.isArray(contacts)
                             ? (() => {
                                 const foundContact = contacts.find((contact: any) => contact.id === field.value);
@@ -751,40 +751,22 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                                   : "Select contact";
                               })()
                             : getSelectedCompanyId() ? "Select contact" : "Select company first"}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-full p-0">
-                        <Command>
-                          <CommandInput placeholder="Search contact..." />
-                          <CommandEmpty value="no-contacts-found">No contact found.</CommandEmpty>
-                          <CommandGroup className="max-h-64 overflow-y-auto">
-                            {Array.isArray(filteredContacts) && filteredContacts.length > 0 ? (
-                              filteredContacts.map((contact: any) => (
-                                <CommandItem
-                                  key={contact.id}
-                                  value={String(contact.id)}
-                                  onSelect={() => {
-                                    console.log("Contact selection - Setting ID:", contact.id, `${contact.firstName} ${contact.lastName}`);
-                                    field.onChange(contact.id);
-                                  }}
-                                >
-                                  <Check
-                                    className={cn(
-                                      "mr-2 h-4 w-4",
-                                      field.value === contact.id ? "opacity-100" : "opacity-0"
-                                    )}
-                                  />
-                                  {`${contact.firstName} ${contact.lastName}`}
-                                </CommandItem>
-                              ))
-                            ) : (
-                              <CommandItem value="no-contacts" disabled>No contacts for this company</CommandItem>
-                            )}
-                          </CommandGroup>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.isArray(filteredContacts) && filteredContacts.length > 0 ? (
+                          filteredContacts.map((contact) => (
+                            <SelectItem key={contact.id} value={contact.id.toString()}>
+                              {`${contact.firstName || ''} ${contact.lastName || ''}`.trim() || 'Unnamed Contact'}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="no-contacts" disabled>
+                            No contacts for this company
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
                   )}
                 />
               </div>
@@ -795,7 +777,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                   control={control}
                   name="synergyContactIds"
                   label="Contatti Sinergia"
-                  placeholder="Seleziona contatti sinergia"
+                  placeholder={getSelectedCompanyId() ? "Seleziona contatti sinergia" : "Seleziona prima un'azienda"}
                   className="w-full"
                 />
               </div>
