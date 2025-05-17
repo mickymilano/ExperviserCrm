@@ -1037,7 +1037,7 @@ export function registerRoutes(app: any) {
     }
   });
   
-  // Aggiorna un lead
+  // Aggiorna un lead (supporta sia PUT che PATCH)
   app.put('/api/leads/:id', authenticate, async (req, res) => {
     try {
       const leadId = parseInt(req.params.id);

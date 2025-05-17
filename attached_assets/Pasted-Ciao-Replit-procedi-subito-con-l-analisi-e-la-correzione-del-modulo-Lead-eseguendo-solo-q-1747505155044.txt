@@ -1,0 +1,94 @@
+Ciao Replit,
+
+procedi subito con l’analisi e la correzione del modulo **Lead**, eseguendo **solo** questi passi in ordine, senza deviare su altre parti del sistema:
+
+---
+
+## 1) Verifica e correggi gli endpoint CRUD Lead
+
+1. In `server/routes.ts` accertati che esistano e siano allineati a `storage`:
+   - **GET**   `/api/leads`
+   - **GET**   `/api/leads/:id`
+   - **POST**  `/api/leads`
+   - **PATCH** `/api/leads/:id`
+   - **DELETE**`/api/leads/:id`
+
+2. In `server/postgresStorage.ts` (o dove hai i metodi CRUD):
+   - Verifica che `createLead`, `getLead`, `updateLead`, `deleteLead` usino i campi esatti della tabella `leads` (`first_name`, `last_name`, `company_name`, `email`, `phone`, ecc.), non `name` o campi inesistenti.
+   - Adatta ogni `INSERT`/`UPDATE` per usare `snake_case` corretto.
+
+3. Riavvia il server e test rapidi via `curl` (senza UI):
+   ```bash
+   # Prova POST
+   curl -v -X POST http://localhost:5000/api/leads \
+     -H "Content-Type: application/json" \
+     -d '{"firstName":"Mario","lastName":"Rossi","companyName":"TestCo","email":"m.rossi@test.com"}'
+   # GET list
+   curl -v http://localhost:5000/api/leads
+   # PATCH update
+   curl -v -X PATCH http://localhost:5000/api/leads/1 \
+     -H "Content-Type: application/json" \
+     -d '{"lastName":"Verdi"}'
+   # DELETE
+   curl -v -X DELETE http://localhost:5000/api/leads/1
+
+Assicurati che ciascuna restituisca 200/204 e che i record compaiano correttamente in DB.
+
+⸻
+
+2) Implementa il pulsante “Converti” Lead → Contact
+	1.	In server/routes.ts aggiungi (o correggi) questo endpoint POST:
+
+router.post('/api/leads/:id/convert', async (req, res, next) => {
+  const id = parseInt(req.params.id,10);
+  const lead = await storage.getLead(id);
+  if (!lead) return res.sendStatus(404);
+
+  let companyId = null;
+  if (lead.company_name) {
+    const comp = await storage.createCompany({ name: lead.company_name });
+    companyId = comp.id;
+  }
+
+  const contact = await storage.createContact({
+    firstName: lead.first_name,
+    lastName: lead.last_name,
+    email: lead.email,
+    phone: lead.phone,
+    companyId
+  });
+
+  await storage.updateLead(id, { status: 'converted' });
+  res.json({ companyId, contact });
+});
+
+
+	2.	In PostgresStorage assicurati che esistano e funzionino:
+	•	getLead(id)
+	•	createCompany({ name })
+	•	createContact({ firstName, lastName, email, phone, companyId })
+	•	updateLead(id, { status })
+	3.	Test via curl:
+
+# 2a) Lead con company_name
+curl -v -X POST http://localhost:5000/api/leads/2/convert
+# Verifica in DB:
+psql <CONN> -c "SELECT id,name,primary_contact_id FROM companies WHERE name='TestCo';"
+psql <CONN> -c "SELECT * FROM contacts WHERE email='m.rossi@test.com';"
+
+# 2b) Lead senza company_name
+curl -v -X POST http://localhost:5000/api/leads/3/convert
+psql <CONN> -c "SELECT * FROM contacts WHERE email='<lead3_email>';"
+
+
+
+⸻
+
+3) Report finale
+
+Al termine, fornisci un report strutturato:
+	•	PASS/FAIL di ciascun curl (inclusi codici di risposta)
+	•	Query DB con risultati per ogni test
+	•	Eventuali errori o mismatch trovati e patch applicate
+
+Non interrompere finché tutti i passi non sono completati con successo. Grazie!```

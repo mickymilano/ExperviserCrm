@@ -1200,15 +1200,23 @@ export class PostgresStorage implements IStorage {
     leadData: Partial<InsertLead>,
   ): Promise<Lead | undefined> {
     try {
+      console.log("Aggiornamento lead con id", id, "e dati:", leadData);
+      
       // Costruiamo dinamicamente la query di aggiornamento
       let updateFields = [];
       let params = [];
       let paramCounter = 1;
 
       // Aggiungiamo solo i campi che esistono nel leadData
-      if (leadData.name !== undefined) {
-        updateFields.push(`name = $${paramCounter++}`);
-        params.push(leadData.name);
+      // Usiamo i corretti nomi delle colonne in snake_case
+      if (leadData.firstName !== undefined) {
+        updateFields.push(`first_name = $${paramCounter++}`);
+        params.push(leadData.firstName);
+      }
+      
+      if (leadData.lastName !== undefined) {
+        updateFields.push(`last_name = $${paramCounter++}`);
+        params.push(leadData.lastName);
       }
 
       if (leadData.status !== undefined) {
@@ -1225,20 +1233,45 @@ export class PostgresStorage implements IStorage {
         updateFields.push(`notes = $${paramCounter++}`);
         params.push(leadData.notes);
       }
-
-      if (leadData.companyName !== undefined) {
-        updateFields.push(`company_name = $${paramCounter++}`);
-        params.push(leadData.companyName);
+      
+      if (leadData.email !== undefined) {
+        updateFields.push(`email = $${paramCounter++}`);
+        params.push(leadData.email);
+      }
+      
+      if (leadData.phone !== undefined) {
+        updateFields.push(`phone = $${paramCounter++}`);
+        params.push(leadData.phone);
+      }
+      
+      if (leadData.address !== undefined) {
+        updateFields.push(`address = $${paramCounter++}`);
+        params.push(leadData.address);
       }
 
-      if (leadData.jobTitle !== undefined) {
-        updateFields.push(`job_title = $${paramCounter++}`);
-        params.push(leadData.jobTitle);
+      if (leadData.company !== undefined) {
+        updateFields.push(`company = $${paramCounter++}`);
+        params.push(leadData.company);
       }
-
-      if (leadData.leadOwner !== undefined) {
-        updateFields.push(`lead_owner = $${paramCounter++}`);
-        params.push(leadData.leadOwner);
+      
+      if (leadData.role !== undefined) {
+        updateFields.push(`role = $${paramCounter++}`);
+        params.push(leadData.role);
+      }
+      
+      if (leadData.website !== undefined) {
+        updateFields.push(`website = $${paramCounter++}`);
+        params.push(leadData.website);
+      }
+      
+      if (leadData.assignedToId !== undefined) {
+        updateFields.push(`assigned_to_id = $${paramCounter++}`);
+        params.push(leadData.assignedToId);
+      }
+      
+      if (leadData.customFields !== undefined) {
+        updateFields.push(`custom_fields = $${paramCounter++}`);
+        params.push(leadData.customFields);
       }
 
       // Aggiungiamo sempre l'updated_at
@@ -1248,6 +1281,42 @@ export class PostgresStorage implements IStorage {
       if (updateFields.length === 1) {
         return this.getLead(id);
       }
+      
+      // Costruiamo la query di aggiornamento completa
+      const query = `
+        UPDATE leads 
+        SET ${updateFields.join(", ")} 
+        WHERE id = $${paramCounter++} 
+        RETURNING 
+          id,
+          first_name as "firstName",
+          last_name as "lastName",
+          email,
+          phone,
+          source,
+          status,
+          notes,
+          company,
+          role,
+          address,
+          website,
+          custom_fields as "customFields",
+          assigned_to_id as "assignedToId",
+          created_at as "createdAt",
+          updated_at as "updatedAt"
+      `;
+      
+      // Aggiungiamo l'ID alla lista dei parametri
+      params.push(id);
+      
+      // Eseguiamo la query
+      const result = await pool.query(query, params);
+      
+      if (result.rows.length === 0) {
+        return undefined;
+      }
+      
+      return result.rows[0];
 
       // Aggiungiamo l'id come ultimo parametro
       params.push(id);
