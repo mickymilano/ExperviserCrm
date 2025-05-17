@@ -267,17 +267,42 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       return;
     }
     
-    // Filtriamo i contatti usando le aree di attività
+    // Aggiungiamo debug per verificare le strutture dati
+    console.log("DEBUG - Contatti disponibili:", contacts);
+    
+    // Filtriamo i contatti usando le aree di attività o altre associazioni
     const filteredByAreas = contacts.filter(contact => {
-      // Verifica se il contatto ha delle aree di attività
+      // Debug per questo contatto specifico
+      console.log(`DEBUG - Verifico contatto ${contact.id} (${contact.firstName} ${contact.lastName})`);
+      
       if (contact.areasOfActivity && Array.isArray(contact.areasOfActivity)) {
-        // Cerca se una delle aree ha l'azienda selezionata
-        return contact.areasOfActivity.some(area => {
-          // Controlla sia il caso in cui companyId è un numero sia quando è una stringa
-          const areaCompanyId = typeof area.companyId === 'number' ? area.companyId : parseInt(area.companyId as string);
+        console.log(`DEBUG - Contatto ${contact.id} ha ${contact.areasOfActivity.length} aree:`, contact.areasOfActivity);
+        
+        // Verifica le aree di attività
+        const hasMatchingArea = contact.areasOfActivity.some(area => {
+          const areaCompanyId = typeof area.companyId === 'number' ? 
+            area.companyId : 
+            (area.companyId ? parseInt(area.companyId as string) : null);
+          
+          console.log(`DEBUG - Area companyId=${areaCompanyId}, confronto con ${companyId}, match=${areaCompanyId === companyId}`);
           return areaCompanyId === companyId;
         });
+        
+        if (hasMatchingArea) return true;
+      } else {
+        console.log(`DEBUG - Contatto ${contact.id} non ha aree di attività`);
       }
+      
+      // Verifica anche il campo companyId diretto, se presente
+      if (contact.companyId !== undefined) {
+        const contactCompanyId = typeof contact.companyId === 'number' ? 
+          contact.companyId : 
+          (contact.companyId ? parseInt(contact.companyId as string) : null);
+          
+        console.log(`DEBUG - Contatto companyId=${contactCompanyId}, confronto con ${companyId}, match=${contactCompanyId === companyId}`);
+        return contactCompanyId === companyId;
+      }
+      
       return false;
     });
     
