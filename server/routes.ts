@@ -1283,12 +1283,16 @@ export function registerRoutes(app: any) {
       const { rows: leadRows } = await pool.query(`
         SELECT
           id,
-          first_name AS "firstName",
-          last_name AS "lastName",
-          company_name AS company,
-          email,
-          phone,
-          status
+          first_name     AS "firstName",
+          last_name      AS "lastName",
+          company_name   AS company,
+          company_email  AS "companyEmail",
+          private_email  AS "privateEmail",
+          mobile_phone   AS "mobilePhone",
+          office_phone   AS "officePhone",
+          private_phone  AS "privatePhone",
+          status,
+          notes
         FROM leads
         WHERE id = $1
       `, [id]);
@@ -1311,12 +1315,16 @@ export function registerRoutes(app: any) {
         companyId = companyRows[0].id;
       }
       
+      // Mappiamo le email e i telefoni per compatibilità
+      const email = lead.companyEmail || lead.privateEmail || null;
+      const phone = lead.mobilePhone || lead.officePhone || lead.privatePhone || null;
+
       // 3. Create contact
       const { rows: contactRows } = await pool.query(`
         INSERT INTO contacts (first_name, last_name, email, phone, company_id)
         VALUES ($1, $2, $3, $4, $5)
         RETURNING *
-      `, [lead.firstName, lead.lastName, lead.email, lead.phone, companyId]);
+      `, [lead.firstName, lead.lastName, email, phone, companyId]);
       
       // 4. Update lead status
       await pool.query(`

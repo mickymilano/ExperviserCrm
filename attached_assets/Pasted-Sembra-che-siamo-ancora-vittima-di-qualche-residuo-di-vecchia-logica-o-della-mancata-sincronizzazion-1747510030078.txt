@@ -1,0 +1,50 @@
+Sembra che siamo ancora vittima di qualche residuo di vecchia logica o della mancata sincronizzazione tra schema, storage e controller. Ti suggerisco questo piano di azione chirurgico:
+	1.	Verifica schema DB
+
+-- Controlla la struttura effettiva della tabella leads
+SELECT column_name, data_type
+  FROM information_schema.columns
+ WHERE table_name = 'leads';
+
+Assicurati che esistano solo queste colonne:
+id, first_name, last_name, company_name, email, phone, status, …
+Se vedi ancora name o company, bisogna correggere la tabella (o riconciliare il codice).
+
+	2.	Logga la query SQL esatta
+Inserisci un console.log() prima di ogni client.query(...) in createLead e updateLead per stampare la stringa SQL e i parametri passati. Esempio:
+
+console.log('CREATE LEAD SQL:', queryText, values);
+
+Poi riprova il curl di POST: vedrai l’SQL che fallisce e potrai individuare esattamente quale colonna richiede.
+
+	3.	Test interattivo in psql
+Copia la query loggata in psql e prova a eseguirla sostituendo i placeholder con valori reali:
+
+INSERT INTO leads(first_name,last_name,company_name,email,phone,status)
+ VALUES('x','y','z','e','p','new');
+
+Vedrai subito se c’è ancora un riferimento a name o altro.
+
+	4.	Controlla che il file PostgreStorage caricato sia quello corretto
+Aggiungi un console.log('>> using PostgresStorage v2', __filename); in testa al file server/postgresStorage.ts per confermare che il server stia caricando la versione aggiornata e non un file cached.
+	5.	Riavvio pulito
+	•	Arresta ogni processo: killall node
+	•	Cancella la cartella di build/dist se presente
+	•	Ricompila/riavvia con npm run dev
+	6.	Ripeti i test CURL
+Con il logging attivo, esegui:
+
+curl -v -X POST http://localhost:5000/api/leads \
+  -H "Content-Type: application/json" \
+  -d '{"firstName":"Test","lastName":"Lead","company":"XYZ","email":"t@l.com","phone":"123","status":"new"}'
+
+Controlla il log e il rollback della query per individuare il residuo di “name”.
+
+⸻
+
+Per favore prova questi passi uno alla volta e riportami esattamente:
+	•	L’output del console.log con SQL e valori
+	•	Il risultato del test diretto in psql
+	•	Qualsiasi riga di log che ancora menzioni la colonna name
+
+Così potremo isolare definitivamente il punto in cui il vecchio modulo Lead rimane attivo e cancellarlo una volta per tutte.
