@@ -3365,4 +3365,17 @@ export class PostgresStorage implements IStorage {
       throw err;
     }
   }
+  
+  async getBranchesCount(): Promise<number> {
+    console.log('PostgresStorage.getBranchesCount: counting branches');
+    try {
+      const result = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(branches);
+      return result[0].count;
+    } catch (err) {
+      console.error('Error counting branches:', err);
+      throw err;
+    }
+  }
 }

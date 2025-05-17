@@ -1697,6 +1697,8 @@ export function registerRoutes(app: any) {
       const leadsCount = await storage.getLeadsCount();
       // Aggiunto conteggio delle sinergie
       const synergiesCount = await storage.getSynergiesCount();
+      // Aggiunto conteggio delle filiali
+      const branchesCount = await storage.getBranchesCount();
       
       // Per le email manteniamo l'approccio originale per ora
       const emails = await storage.getEmails();
@@ -1707,6 +1709,7 @@ export function registerRoutes(app: any) {
         deals: dealsCount,
         leads: leadsCount,
         synergies: synergiesCount,
+        branches: branchesCount,
         emails: emails.length,
         unreadEmails: emails.filter(email => !email.read).length
       });
