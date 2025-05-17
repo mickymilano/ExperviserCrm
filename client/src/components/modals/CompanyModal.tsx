@@ -296,7 +296,7 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="overflow-visible">
+      <DialogContent className="overflow-y-auto max-h-[80vh]">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">
             {isEditMode ? 'Modifica Azienda' : 'Aggiungi Nuova Azienda'}
