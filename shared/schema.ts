@@ -689,9 +689,18 @@ export type InsertSecurityLog = z.infer<typeof insertSecurityLogSchema>;
 /**
  * Relations
  */
-// Contact to ContactEmails (one-to-many)
-export const contactsRelations = relations(contacts, ({ many }) => ({
+// Contact to ContactEmails (one-to-many) e Company (many-to-one)
+export const contactsRelations = relations(contacts, ({ many, one }) => ({
   emails: many(contactEmails),
+  company: one(companies, {
+    fields: [contacts.companyId],
+    references: [companies.id]
+  }),
+}));
+
+// Company to Contacts (one-to-many)
+export const companiesRelations = relations(companies, ({ many }) => ({
+  contacts: many(contacts),
 }));
 
 // ContactEmails to Contact (many-to-one)

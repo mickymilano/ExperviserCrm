@@ -1379,27 +1379,86 @@ export class PostgresStorage implements IStorage {
       return [];
     }
   }
-
+  
   async getContactsByCompany(companyId: number): Promise<Contact[]> {
     try {
       console.log(
-        `PostgresStorage.getContactsByCompany: retrieving contacts for company ${companyId}`,
+        "PostgresStorage.getContactsByCompany: retrieving contacts for company", companyId
       );
-      // Simplified query without relational features - find contacts by areas of activity
-      const contactIds = await db
-        .select({
-          contactId: areasOfActivity.contactId,
-        })
-        .from(areasOfActivity)
-        .where(eq(areasOfActivity.companyId, companyId));
-
-      console.log(
-        `Found ${contactIds.length} contact IDs for company ${companyId}`,
+      
+      // Ottieni gli ID dei contatti associati a questa azienda
+      const contactIdsResult = await pool.query(
+        `SELECT id FROM contacts WHERE company_id = $1`,
+        [companyId]
       );
-
-      // If no contacts found, return empty array
+      
+      const contactIds = contactIdsResult.rows.map(row => row.id);
+      console.log(`Found ${contactIds.length} contact IDs for company ${companyId}`);
+      
       if (contactIds.length === 0) {
         return [];
+      }
+      
+      // Ottieni i dettagli dei contatti
+      const contactsResult = await pool.query(
+        `SELECT 
+          id, 
+          first_name as "firstName", 
+          last_name as "lastName",
+          CONCAT(first_name, ' ', last_name) as "fullName",
+          company_id as "companyId",
+          status, 
+          company_email as "companyEmail", 
+          private_email as "privateEmail", 
+          mobile_phone as "mobilePhone", 
+          office_phone as "officePhone",
+          private_phone as "privatePhone",
+          created_at as "createdAt", 
+          updated_at as "updatedAt" 
+        FROM contacts 
+        WHERE id = ANY($1)
+        ORDER BY first_name, last_name`,
+        [contactIds]
+      );
+      
+      return contactsResult.rows as Contact[];
+    } catch (error) {
+      console.error("Error in getContactsByCompany:", error);
+      return [];
+    }
+  }
+  
+  async getUnassignedContacts(): Promise<Contact[]> {
+    try {
+      console.log(
+        "PostgresStorage.getUnassignedContacts: retrieving contacts without company"
+      );
+      
+      const result = await pool.query(
+        `SELECT 
+          id, 
+          first_name as "firstName", 
+          last_name as "lastName",
+          CONCAT(first_name, ' ', last_name) as "fullName",
+          status, 
+          company_email as "companyEmail", 
+          private_email as "privateEmail", 
+          mobile_phone as "mobilePhone", 
+          office_phone as "officePhone",
+          private_phone as "privatePhone",
+          created_at as "createdAt", 
+          updated_at as "updatedAt" 
+        FROM contacts 
+        WHERE company_id IS NULL
+        ORDER BY first_name, last_name`
+      );
+      
+      return result.rows as Contact[];
+    } catch (error) {
+      console.error("Error in getUnassignedContacts:", error);
+      return [];
+    }
+  }
       }
 
       // Get all contacts with these IDs usando SQL nativo
