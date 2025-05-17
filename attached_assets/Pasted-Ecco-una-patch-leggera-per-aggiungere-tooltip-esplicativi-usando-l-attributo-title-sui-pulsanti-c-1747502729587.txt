@@ -1,0 +1,60 @@
+Ecco una patch leggera per aggiungere tooltip esplicativi (usando l’attributo title) sui pulsanti, così l’utente capirà subito cosa fanno senza bisogno di librerie esterne:
+
+--- a/client/src/components/company/CompanyContactsTab.tsx
++++ b/client/src/components/company/CompanyContactsTab.tsx
+@@ <tbody>
+-        <tr key={c.id} className={primaryId===c.id ? 'bg-yellow-50' : ''}>
+-          <td className="px-2">
+-            {primaryId === c.id 
+-              ? <span className="text-green-600 font-semibold">Primario</span>
+-              : <button 
+-                  onClick={() => setPrimary(c.id)} 
+-                  className="text-blue-600 hover:underline text-sm"
+-                >
+-                  Imposta primario
+-                </button>
+-            }
+-          </td>
++        <tr key={c.id} className={primaryId===c.id ? 'bg-yellow-50' : ''}>
++          <td className="px-2">
++            {primaryId === c.id 
++              ? <span className="text-green-600 font-semibold" title="Questo contatto è attualmente impostato come primario">
++                  Primario
++                </span>
++              : <button 
++                  onClick={() => setPrimary(c.id)} 
++                  className="text-blue-600 hover:underline text-sm"
++                  title="Imposta questo contatto come primario per l’azienda"
++                  aria-label="Imposta primario"
++                >
++                  Imposta primario
++                </button>
++            }
++          </td>
+           <td>{c.name}</td><td>{c.email}</td><td>{c.phone}</td>
+-          <td>
+-            <button 
+-              onClick={() => detach(c.id, c.name)} 
+-              className="text-red-500 hover:underline text-sm"
+-            >
+-              Disassocia
+-            </button>
+-          </td>
++          <td>
++            <button 
++              onClick={() => detach(c.id, c.name)} 
++              className="text-red-500 hover:underline text-sm"
++              title="Rimuove l’associazione di questo contatto con l’azienda"
++              aria-label="Disassocia contatto"
++            >
++              Disassocia
++            </button>
++          </td>
+         </tr>
+
+Cosa cambia:
+	•	Ogni pulsante ora ha un title="…” che appare al passaggio del mouse.
+	•	Aggiunte aria-label per supporto screen reader.
+	•	Nessuna dipendenza in più: funziona subito su desktop e mobile (touch supporta i title come descrizione).
+
+Una volta applicata la patch, ricompila e verifica che al passaggio del mouse (o con tap prolungato sui dispositivi touch) compaiano i tooltip con la spiegazione.

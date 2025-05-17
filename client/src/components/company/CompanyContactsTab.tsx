@@ -396,7 +396,10 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
                         <div className="flex items-center">
                           <h3 className="font-medium">{contact.firstName} {contact.lastName}</h3>
                           {primaryContactId === contact.id && (
-                            <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <span 
+                              className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
+                              title="Questo contatto è il riferimento principale per l'azienda"
+                            >
                               <Star className="h-3 w-3 mr-1" />
                               Contatto Primario
                             </span>
@@ -414,6 +417,8 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
                             className="bg-white hover:bg-yellow-50 text-yellow-600 border-yellow-300 hover:border-yellow-400"
                             disabled={isUpdatingPrimary}
                             onClick={() => setPrimaryContact(contact.id)}
+                            title="Imposta questo contatto come riferimento principale per l'azienda"
+                            aria-label="Imposta come contatto primario"
                           >
                             {isUpdatingPrimary ? (
                               <>
@@ -434,6 +439,8 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
                             className="bg-yellow-50 hover:bg-white text-yellow-700 border-yellow-300"
                             disabled={isUpdatingPrimary}
                             onClick={() => removePrimaryContact()}
+                            title="Rimuovi lo stato di contatto primario"
+                            aria-label="Rimuovi contatto primario"
                           >
                             {isUpdatingPrimary ? (
                               <>
@@ -448,7 +455,13 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
                             )}
                           </Button>
                         )}
-                        <Button variant="ghost" size="sm" onClick={() => navigate(`/contacts/${contact.id}`)}>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => navigate(`/contacts/${contact.id}`)}
+                          title="Visualizza la scheda completa del contatto"
+                          aria-label="Visualizza profilo contatto"
+                        >
                           Visualizza Profilo
                         </Button>
                         <Button 
@@ -456,6 +469,8 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
                           size="sm" 
                           className="text-destructive border-destructive hover:bg-destructive/10"
                           onClick={() => disassociateContact(contact.id, `${contact.firstName} ${contact.lastName}`)}
+                          title="Rimuovi questo contatto dall'azienda corrente"
+                          aria-label="Disassocia contatto"
                         >
                           Disassocia
                         </Button>
