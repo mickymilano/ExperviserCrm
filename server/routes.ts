@@ -7,6 +7,7 @@ import { pool } from './db'; // Importiamo il pool di connessione PostgreSQL
 import { z } from 'zod';
 import { insertUserSchema, insertContactSchema, insertCompanySchema, insertDealSchema, insertPipelineStageSchema, insertLeadSchema, insertAreaOfActivitySchema, insertContactEmailSchema, insertBranchSchema } from '@shared/schema';
 import branchRoutes from './branchRoutes';
+import { getContactsByCompany, getUnassignedContacts, updateContactCompany } from './contacts-companies-methods';
 
 // Chiave segreta per JWT
 const JWT_SECRET = process.env.JWT_SECRET || 'experviser-dev-secret';
@@ -1334,6 +1335,61 @@ export function registerRoutes(app: any) {
   });
   
   // --- SYNERGY ROUTES ---
+  
+  // Ottieni tutti i contatti di un'azienda
+  app.get('/api/companies/:companyId/contacts', authenticateJWT, async (req: Request, res: Response) => {
+    try {
+      const companyId = parseInt(req.params.companyId);
+      if (isNaN(companyId)) {
+        return res.status(400).json({ message: 'ID azienda non valido' });
+      }
+      
+      const contacts = await getContactsByCompany(companyId);
+      res.json(contacts);
+    } catch (error) {
+      console.error('Error fetching company contacts:', error);
+      res.status(500).json({ message: 'Errore durante il recupero dei contatti dell\'azienda' });
+    }
+  });
+  
+  // Ottieni tutti i contatti non assegnati ad alcuna azienda
+  app.get('/api/contacts/unassigned', authenticateJWT, async (req: Request, res: Response) => {
+    try {
+      const contacts = await getUnassignedContacts();
+      res.json(contacts);
+    } catch (error) {
+      console.error('Error fetching unassigned contacts:', error);
+      res.status(500).json({ message: 'Errore durante il recupero dei contatti non assegnati' });
+    }
+  });
+  
+  // Aggiorna l'azienda di un contatto
+  app.patch('/api/contacts/:contactId/company', authenticateJWT, async (req: Request, res: Response) => {
+    try {
+      const contactId = parseInt(req.params.contactId);
+      if (isNaN(contactId)) {
+        return res.status(400).json({ message: 'ID contatto non valido' });
+      }
+      
+      const { companyId } = req.body;
+      // companyId può essere null per rimuovere l'associazione
+      if (companyId !== null && companyId !== undefined && isNaN(parseInt(companyId))) {
+        return res.status(400).json({ message: 'ID azienda non valido' });
+      }
+      
+      const companyIdValue = companyId === null ? null : parseInt(companyId);
+      const success = await updateContactCompany(contactId, companyIdValue);
+      
+      if (success) {
+        res.json({ message: 'Associazione contatto-azienda aggiornata con successo' });
+      } else {
+        res.status(404).json({ message: 'Contatto non trovato' });
+      }
+    } catch (error) {
+      console.error('Error updating contact company:', error);
+      res.status(500).json({ message: 'Errore durante l\'aggiornamento dell\'azienda del contatto' });
+    }
+  });
   
   // Ottieni tutte le sinergie
   app.get('/api/synergies', authenticateJWT, async (req: Request, res: Response) => {
