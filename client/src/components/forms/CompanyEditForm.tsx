@@ -321,29 +321,11 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
         <div className="mb-6">
           <h3 className="text-lg font-medium mb-4">Sede</h3>
           <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="country">Paese</Label>
-                <Input 
-                  id="country"
-                  {...register("country")}
-                  className="mt-1"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="city">Città</Label>
-                <Input 
-                  id="city"
-                  {...register("city")}
-                  className="mt-1"
-                  placeholder="Inserisci la città"
-                />
-              </div>
-            </div>
-            
             <div>
-              <Label htmlFor="fullAddress">Indirizzo</Label>
+              <Label htmlFor="fullAddress" className="flex items-center">
+                <span>Indirizzo Completo</span>
+                <span className="ml-2 px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">Google Maps</span>
+              </Label>
               <PlacesAutocomplete 
                 id="fullAddress"
                 value={watch("fullAddress") || ""}
@@ -369,17 +351,6 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
                       console.log("Country found:", countryComponent.long_name);
                       setValue("country", countryComponent.long_name, { shouldValidate: true });
                     }
-                    
-                    // Estrae la città
-                    const cityComponent = placeDetails.address_components.find(component => 
-                      component.types.includes('locality') || 
-                      component.types.includes('administrative_area_level_3')
-                    );
-                    
-                    if (cityComponent) {
-                      console.log("City found:", cityComponent.long_name);
-                      setValue("city", cityComponent.long_name, { shouldValidate: true });
-                    }
                   } else {
                     console.warn("No place details available in PlacesAutocomplete onChange");
                   }
@@ -394,12 +365,48 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
                 <p className="text-sm text-destructive mt-1">{errors.fullAddress.message}</p>
               )}
             </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="country">Paese</Label>
+                <Input 
+                  id="country"
+                  {...register("country")}
+                  className="mt-1"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="timezone">Fuso Orario</Label>
+                <Select 
+                  onValueChange={(value) => handleSelectChange("timezone", value)}
+                  defaultValue={customFields.timezone || ""}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Seleziona fuso orario" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Europa</SelectLabel>
+                      <SelectItem value="Europe/Rome">Roma</SelectItem>
+                      <SelectItem value="Europe/London">Londra</SelectItem>
+                      <SelectItem value="Europe/Paris">Parigi</SelectItem>
+                      <SelectItem value="Europe/Berlin">Berlino</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
               
             {/* DEPRECATED: Hidden field for backward compatibility */}
             <div className="hidden">
               <Input 
                 id="address"
                 {...register("address")}
+              />
+              <Input 
+                id="city"
+                {...register("city")}
               />
             </div>
             
