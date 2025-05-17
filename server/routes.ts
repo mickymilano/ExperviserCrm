@@ -994,16 +994,29 @@ export function registerRoutes(app: any) {
       const { rows } = await pool.query(`
         SELECT
           id,
-          first_name  AS "firstName",
-          last_name   AS "lastName",
-          company_name AS company,
-          email,
-          phone,
-          status
+          first_name      AS "firstName",
+          last_name       AS "lastName",
+          company_name    AS company,
+          company_email   AS "companyEmail",
+          private_email   AS "privateEmail",
+          mobile_phone    AS "mobilePhone",
+          office_phone    AS "officePhone",
+          private_phone   AS "privatePhone",
+          status,
+          created_at      AS "createdAt",
+          updated_at      AS "updatedAt"
         FROM leads
         ORDER BY id DESC
       `);
-      res.json(rows);
+      
+      // Mappiamo la risposta per mantenere la compatibilità con il frontend
+      const mappedRows = rows.map(row => ({
+        ...row,
+        email: row.companyEmail || row.privateEmail,
+        phone: row.mobilePhone || row.officePhone || row.privatePhone
+      }));
+      
+      res.json(mappedRows);
     } catch (error) {
       console.error('Error fetching leads:', error);
       res.status(500).json({ message: 'Errore durante il recupero dei lead' });
@@ -1015,12 +1028,20 @@ export function registerRoutes(app: any) {
       const { rows } = await pool.query(`
         SELECT
           id,
-          first_name  AS "firstName",
-          last_name   AS "lastName",
-          company_name AS company,
-          email,
-          phone,
-          status
+          first_name      AS "firstName",
+          last_name       AS "lastName",
+          company_name    AS company,
+          company_email   AS "companyEmail",
+          private_email   AS "privateEmail",
+          mobile_phone    AS "mobilePhone",
+          office_phone    AS "officePhone",
+          private_phone   AS "privatePhone",
+          role,
+          source,
+          notes,
+          status,
+          created_at      AS "createdAt",
+          updated_at      AS "updatedAt"
         FROM leads
         WHERE id = $1
       `, [req.params.id]);
@@ -1029,7 +1050,14 @@ export function registerRoutes(app: any) {
         return res.status(404).json({ message: 'Lead non trovato' });
       }
       
-      res.json(rows[0]);
+      // Mappiamo la risposta per mantenere la compatibilità con il frontend
+      const mappedResponse = {
+        ...rows[0],
+        email: rows[0].companyEmail || rows[0].privateEmail,
+        phone: rows[0].mobilePhone || rows[0].officePhone || rows[0].privatePhone
+      };
+      
+      res.json(mappedResponse);
     } catch (error) {
       console.error('Error fetching lead:', error);
       res.status(500).json({ message: 'Errore durante il recupero del lead' });
@@ -1038,23 +1066,63 @@ export function registerRoutes(app: any) {
   
   app.post('/api/leads', authenticate, async (req, res) => {
     try {
-      const { firstName, lastName, company, email, phone, status } = req.body;
+      const { firstName, lastName, company, email, phone, status, notes } = req.body;
+      
+      // Determiniamo se l'email è aziendale o privata
+      let companyEmail = null;
+      let privateEmail = null;
+      if (email) {
+        if (company && email.includes('@' + company.toLowerCase().replace(/\s/g, ''))) {
+          companyEmail = email;
+        } else {
+          privateEmail = email;
+        }
+      }
+      
+      // Trattiamo il telefono come mobile_phone
+      const mobilePhone = phone;
+      
+      // Data di creazione e aggiornamento
+      const now = new Date();
       
       const { rows } = await pool.query(`
         INSERT INTO leads
-          (first_name, last_name, company_name, email, phone, status)
-        VALUES($1, $2, $3, $4, $5, $6)
+          (first_name, last_name, company_name, company_email, private_email, mobile_phone, 
+           status, notes, created_at, updated_at)
+        VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING
           id,
-          first_name   AS "firstName",
-          last_name    AS "lastName",
-          company_name AS company,
-          email,
-          phone,
-          status
-      `, [firstName, lastName, company, email, phone, status || 'new']);
+          first_name     AS "firstName",
+          last_name      AS "lastName",
+          company_name   AS company,
+          company_email  AS "companyEmail",
+          private_email  AS "privateEmail",
+          mobile_phone   AS "mobilePhone",
+          status,
+          notes,
+          created_at     AS "createdAt",
+          updated_at     AS "updatedAt"
+      `, [
+        firstName, 
+        lastName, 
+        company, 
+        companyEmail, 
+        privateEmail, 
+        mobilePhone, 
+        status || 'new', 
+        notes || null,
+        now,
+        now
+      ]);
       
-      res.status(201).json(rows[0]);
+      // Mappiamo la risposta per mantenere la compatibilità con il frontend
+      const mappedResponse = {
+        ...rows[0],
+        email: rows[0].companyEmail || rows[0].privateEmail,
+        phone: rows[0].mobilePhone
+      };
+      
+      res.status(201).json(mappedResponse);
     } catch (error) {
       console.error('Error creating lead:', error);
       res.status(500).json({ message: 'Errore durante la creazione del lead' });
@@ -1085,14 +1153,63 @@ export function registerRoutes(app: any) {
         values.push(updates.company);
       }
       
+      // Gestione email (decidiamo se aziendali o private)
       if (updates.email !== undefined) {
-        fields.push(`email=$${paramIndex++}`);
-        values.push(updates.email);
+        if (updates.company && updates.email.includes('@' + updates.company.toLowerCase().replace(/\s/g, ''))) {
+          fields.push(`company_email=$${paramIndex++}`);
+          values.push(updates.email);
+          fields.push(`private_email=NULL`);
+        } else {
+          fields.push(`private_email=$${paramIndex++}`);
+          values.push(updates.email);
+          fields.push(`company_email=NULL`);
+        }
       }
       
+      // Gestione telefoni
       if (updates.phone !== undefined) {
-        fields.push(`phone=$${paramIndex++}`);
+        fields.push(`mobile_phone=$${paramIndex++}`);
         values.push(updates.phone);
+      }
+      
+      if (updates.companyEmail !== undefined) {
+        fields.push(`company_email=$${paramIndex++}`);
+        values.push(updates.companyEmail);
+      }
+      
+      if (updates.privateEmail !== undefined) {
+        fields.push(`private_email=$${paramIndex++}`);
+        values.push(updates.privateEmail);
+      }
+      
+      if (updates.mobilePhone !== undefined) {
+        fields.push(`mobile_phone=$${paramIndex++}`);
+        values.push(updates.mobilePhone);
+      }
+      
+      if (updates.officePhone !== undefined) {
+        fields.push(`office_phone=$${paramIndex++}`);
+        values.push(updates.officePhone);
+      }
+      
+      if (updates.privatePhone !== undefined) {
+        fields.push(`private_phone=$${paramIndex++}`);
+        values.push(updates.privatePhone);
+      }
+      
+      if (updates.role !== undefined) {
+        fields.push(`role=$${paramIndex++}`);
+        values.push(updates.role);
+      }
+      
+      if (updates.source !== undefined) {
+        fields.push(`source=$${paramIndex++}`);
+        values.push(updates.source);
+      }
+      
+      if (updates.notes !== undefined) {
+        fields.push(`notes=$${paramIndex++}`);
+        values.push(updates.notes);
       }
       
       if (updates.status !== undefined) {
@@ -1100,9 +1217,18 @@ export function registerRoutes(app: any) {
         values.push(updates.status);
       }
       
+      if (updates.tags !== undefined) {
+        fields.push(`tags=$${paramIndex++}::text[]`);
+        values.push(updates.tags);
+      }
+      
       if (fields.length === 0) {
         return res.status(400).json({ message: 'Nessun campo da aggiornare' });
       }
+      
+      // Aggiungiamo sempre l'updated_at
+      fields.push(`updated_at=$${paramIndex++}`);
+      values.push(new Date());
       
       values.push(id);
       
