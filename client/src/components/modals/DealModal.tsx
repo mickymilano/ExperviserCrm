@@ -77,9 +77,8 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
   const [filteredCompanies, setFilteredCompanies] = useState<any[]>([]);
   const [filteredContacts, setFilteredContacts] = useState<any[]>([]);
   const [synergyContacts, setSynergyContacts] = useState<any[]>([]);
-  // Rimuoviamo lo stato separato per selectedCompany e usiamo solo i valori del form
-  
-  // Rimuoviamo anche il ref per l'id dell'azienda
+  // Stato locale per l'ID dell'azienda selezionata
+  const [companyId, setCompanyId] = useState<number | null>(initialData?.companyId || null);
   const formInitializedRef = useRef(false);
   
   // Form reference for alert dialog submission
@@ -129,6 +128,36 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     enabled: open && isEditMode && initialData?.id !== undefined,
     staleTime: Infinity
   });
+  
+  // Aggiorniamo i contatti sinergici quando cambia companyId
+  useEffect(() => {
+    if (!contacts || !Array.isArray(contacts)) return;
+    
+    // Se non c'è un'azienda selezionata, non filtrare
+    if (!companyId) {
+      setSynergyContacts([]);
+      return;
+    }
+    
+    // Filtriamo per ottenere solo i contatti che NON appartengono all'azienda selezionata
+    const filtered = contacts.filter(contact => {
+      if (!contact.areasOfActivity || !Array.isArray(contact.areasOfActivity)) {
+        return true; // Se non ha aree di attività, includi
+      }
+      
+      // Includi solo se NON appartiene all'azienda selezionata
+      return !contact.areasOfActivity.some(area => {
+        const areaCompanyId = typeof area.companyId === 'number' ? 
+          area.companyId : 
+          parseInt(String(area.companyId || 0));
+        
+        return areaCompanyId === companyId;
+      });
+    });
+    
+    setSynergyContacts(filtered);
+    console.log(`Filtrati ${filtered.length} contatti sinergici (non associati all'azienda ${companyId})`);
+  }, [companyId, contacts]);
 
   const { register, handleSubmit, reset, setValue, getValues, control, formState: { errors } } = useForm<DealFormData>({
     resolver: zodResolver(dealSchema),
