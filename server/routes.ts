@@ -989,162 +989,23 @@ export function registerRoutes(app: any) {
   // --- LEAD ROUTES ---
   
   // Lead CRUD + conversion 
-  app.get('/api/leads', authenticate, async (req, res) => {
-    try {
-      const { rows } = await pool.query(`
-        SELECT
-          id,
-          first_name      AS "firstName",
-          last_name       AS "lastName",
-          company_name    AS company,
-          company_email   AS "companyEmail",
-          private_email   AS "privateEmail",
-          mobile_phone    AS "mobilePhone",
-          office_phone    AS "officePhone",
-          private_phone   AS "privatePhone",
-          status,
-          created_at      AS "createdAt",
-          updated_at      AS "updatedAt"
-        FROM leads
-        ORDER BY id DESC
-      `);
-      
-      // Mappiamo la risposta per mantenere la compatibilità con il frontend
-      const mappedRows = rows.map(row => ({
-        ...row,
-        email: row.companyEmail || row.privateEmail,
-        phone: row.mobilePhone || row.officePhone || row.privatePhone
-      }));
-      
-      res.json(mappedRows);
-    } catch (error) {
-      console.error('Error fetching leads:', error);
-      res.status(500).json({ message: 'Errore durante il recupero dei lead' });
-    }
-  });
+  // Importiamo il controller dei lead
+  import { 
+    listLeads, 
+    getLead, 
+    createLead, 
+    updateLead, 
+    deleteLead, 
+    convertLead 
+  } from './controllers/leadController.js';
   
-  app.get('/api/leads/:id', authenticate, async (req, res) => {
-    try {
-      const { rows } = await pool.query(`
-        SELECT
-          id,
-          first_name      AS "firstName",
-          last_name       AS "lastName",
-          company_name    AS company,
-          company_email   AS "companyEmail",
-          private_email   AS "privateEmail",
-          mobile_phone    AS "mobilePhone",
-          office_phone    AS "officePhone",
-          private_phone   AS "privatePhone",
-          role,
-          source,
-          notes,
-          status,
-          created_at      AS "createdAt",
-          updated_at      AS "updatedAt"
-        FROM leads
-        WHERE id = $1
-      `, [req.params.id]);
-      
-      if (rows.length === 0) {
-        return res.status(404).json({ message: 'Lead non trovato' });
-      }
-      
-      // Mappiamo la risposta per mantenere la compatibilità con il frontend
-      const mappedResponse = {
-        ...rows[0],
-        email: rows[0].companyEmail || rows[0].privateEmail,
-        phone: rows[0].mobilePhone || rows[0].officePhone || rows[0].privatePhone
-      };
-      
-      res.json(mappedResponse);
-    } catch (error) {
-      console.error('Error fetching lead:', error);
-      res.status(500).json({ message: 'Errore durante il recupero del lead' });
-    }
-  });
+  app.get('/api/leads', authenticate, listLeads);
   
-  app.post('/api/leads', authenticate, async (req, res) => {
-    try {
-      const { 
-        firstName, 
-        lastName, 
-        company,
-        email, // Supportiamo sia email generico che campi specifici
-        companyEmail: companyEmailDirect, 
-        privateEmail: privateEmailDirect, 
-        phone, 
-        mobilePhone: mobilePhoneDirect,
-        officePhone: officePhoneDirect,
-        privatePhone: privatePhoneDirect,
-        status, 
-        notes 
-      } = req.body;
-      
-      // Determiniamo se l'email è aziendale o privata
-      let companyEmail = companyEmailDirect || null;
-      let privateEmail = privateEmailDirect || null;
-      
-      // Se è stata fornita una email generica, la gestiamo
-      if (email && !companyEmail && !privateEmail) {
-        if (company && email.includes('@' + company.toLowerCase().replace(/\s/g, ''))) {
-          companyEmail = email;
-        } else {
-          privateEmail = email;
-        }
-      }
-      
-      // Trattiamo il telefono in modo flessibile
-      const mobilePhone = mobilePhoneDirect || phone || null;
-      
-      // Data di creazione e aggiornamento
-      const now = new Date();
-      
-      const { rows } = await pool.query(`
-        INSERT INTO leads
-          (first_name, last_name, company_name, company_email, private_email, mobile_phone, 
-           status, notes, created_at, updated_at)
-        VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-        RETURNING
-          id,
-          first_name     AS "firstName",
-          last_name      AS "lastName",
-          company_name   AS company,
-          company_email  AS "companyEmail",
-          private_email  AS "privateEmail",
-          mobile_phone   AS "mobilePhone",
-          status,
-          notes,
-          created_at     AS "createdAt",
-          updated_at     AS "updatedAt"
-      `, [
-        firstName, 
-        lastName, 
-        company, 
-        companyEmail, 
-        privateEmail, 
-        mobilePhone, 
-        status || 'new', 
-        notes || null,
-        now,
-        now
-      ]);
-      
-      // Mappiamo la risposta per mantenere la compatibilità con il frontend
-      const mappedResponse = {
-        ...rows[0],
-        email: rows[0].companyEmail || rows[0].privateEmail,
-        phone: rows[0].mobilePhone
-      };
-      
-      res.status(201).json(mappedResponse);
-    } catch (error) {
-      console.error('Error creating lead:', error);
-      res.status(500).json({ message: 'Errore durante la creazione del lead' });
-    }
-  });
+  app.get('/api/leads/:id', authenticate, getLead);
   
-  app.patch('/api/leads/:id', authenticate, async (req, res) => {
+  app.post('/api/leads', authenticate, createLead);
+  
+  app.patch('/api/leads/:id', authenticate, updateLead);
     try {
       const id = req.params.id;
       const updates = req.body;
