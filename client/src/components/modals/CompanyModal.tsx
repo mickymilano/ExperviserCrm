@@ -204,10 +204,7 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
         lastContactedAt: companyData.lastContactedAt,
         nextFollowUpAt: companyData.nextFollowUpAt,
         
-        status: companyData.status || "active",
-        annualRevenue: companyData.annualRevenue || null,
-        foundedYear: companyData.foundedYear || null,
-        customFields: companyData.customFields || null
+        status: companyData.status || "active"
       };
       
       // Convertiamo i dati da camelCase a snake_case prima dell'invio al server
