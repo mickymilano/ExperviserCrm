@@ -1082,6 +1082,7 @@ export function registerRoutes(app: any) {
   // Converti un lead in contatto
   app.post('/api/leads/:id/convert', authenticate, async (req, res) => {
     try {
+      console.log("Richiesta conversione lead in contatto, lead ID:", req.params.id);
       const leadId = parseInt(req.params.id);
       
       // Verifica se il lead esiste
@@ -1090,41 +1091,55 @@ export function registerRoutes(app: any) {
         return res.status(404).json({ message: 'Lead non trovato' });
       }
       
+      console.log("Lead trovato:", lead);
+      
+      // Variabile per tenere traccia dell'id dell'azienda creata (se presente)
+      let company = null;
+      
+      // Se il lead ha un'azienda associata, creiamo prima l'azienda
+      // ATTENZIONE: nel DB il campo è "company", non "companyName"
+      if (lead.company && !req.body.skipCompanyCreation) {
+        console.log("Il lead ha un'azienda associata:", lead.company);
+        company = await storage.createCompany({
+          name: lead.company,
+          website: lead.website || "",
+          address: lead.address || "",
+          status: "active",
+          // Altri campi opzionali se disponibili
+        });
+        
+        console.log("Azienda creata con successo:", company);
+      }
+      
       // Crea il contatto dal lead
+      console.log("Creazione contatto dal lead...");
       const newContact = await storage.createContact({
         firstName: lead.firstName,
         lastName: lead.lastName,
-        email: lead.email,
-        phone: lead.phone,
-        address: lead.address,
-        city: lead.city,
-        region: lead.region,
-        country: lead.country,
-        postalCode: lead.postalCode,
-        notes: lead.notes,
-        source: lead.source,
+        mobilePhone: lead.phone || null,
+        companyEmail: lead.email || null,
+        privateEmail: lead.email || null, // duplicato ma utile per sicurezza
+        officePhone: lead.phone || null, // duplicato ma utile per sicurezza
+        address: lead.address || null,
+        notes: lead.notes || null,
+        source: lead.source || null,
         status: 'active',
-        customFields: lead.customFields
+        customFields: lead.customFields || {}
       });
       
-      // Opzionalmente, crea un'azienda se richiesto
-      let company = null;
-      if (req.body.createCompany && req.body.companyName) {
-        company = await storage.createCompany({
-          name: req.body.companyName,
-          status: 'active'
+      console.log("Contatto creato con successo:", newContact);
+      
+      // Se abbiamo creato un'azienda, collega automaticamente il contatto all'azienda
+      if (company) {
+        console.log("Collegamento contatto all'azienda...");
+        await storage.createAreaOfActivity({
+          contactId: newContact.id,
+          companyId: company.id,
+          companyName: company.name,
+          role: lead.role || null,
+          isPrimary: true // Il primo contatto sarà il contatto primario
         });
-        
-        // Collega il contatto all'azienda
-        if (company) {
-          await storage.createAreaOfActivity({
-            contactId: newContact.id,
-            companyId: company.id,
-            companyName: company.name,
-            role: req.body.role || null,
-            isPrimary: true
-          });
-        }
+        console.log("Contatto collegato all'azienda come primario");
       }
       
       // Opzionalmente, crea un deal se richiesto
