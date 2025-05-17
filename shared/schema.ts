@@ -260,7 +260,7 @@ export const leads = pgTable('leads', {
   region: varchar('region', { length: 50 }),
   country: varchar('country', { length: 50 }),
   postalCode: varchar('postal_code', { length: 20 }),
-  company: varchar('company', { length: 100 }),
+  company: varchar('company_name', { length: 100 }), // Mappa 'company' frontend a 'company_name' database
   website: varchar('website', { length: 255 }),
   source: varchar('source', { length: 100 }),
   notes: text('notes'),

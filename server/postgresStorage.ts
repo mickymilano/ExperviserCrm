@@ -1177,7 +1177,7 @@ export class PostgresStorage implements IStorage {
           phone,
           source, 
           notes,
-          company_name, 
+          company_name as "company", 
           role,
           address,
           website,
