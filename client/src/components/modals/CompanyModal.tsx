@@ -57,7 +57,7 @@ const companySchema = z.object({
   channels: z.array(z.string()).optional().nullable(),
   productsOrServicesTags: z.array(z.string()).optional().nullable(),
   locationTypes: z.array(z.string()).optional().nullable(),
-  relationshipType: z.array(z.string()).optional().nullable(),
+  relationshipType: z.array(z.string()).default([]),
   
   // Altri campi
   notes: z.string().optional().nullable(),
