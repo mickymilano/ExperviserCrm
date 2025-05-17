@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import { useForm, Controller, useWatch } from "react-hook-form";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -146,13 +146,13 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
   });
 
   // Helper function che aggiorna l'azienda e inoltre aggiorna i contatti filtrati
-  const setCompanyIdInForm = (id: number | null) => {
+  const setCompanyIdInForm = useCallback((id: number | null) => {
     console.log("Setting company ID in form:", id);
     setValue("companyId", id);
     // Aggiorna i contatti filtrati quando cambia l'azienda
     updateFilteredContacts(id);
     updateSynergyContacts(id);
-  };
+  }, [setValue, updateFilteredContacts, updateSynergyContacts]);
   
   // Filtra i contatti per le sinergie (solo quelli NON dell'azienda selezionata)
   const updateSynergyContacts = (companyId: number | null) => {
