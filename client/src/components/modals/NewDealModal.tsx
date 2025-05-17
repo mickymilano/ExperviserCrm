@@ -435,9 +435,18 @@ export default function NewDealModal({ open, onOpenChange, initialData }: DealMo
       // Prepara i dati per l'invio
       const payload = {
         ...data,
+        // Converti i valori numerici in stringhe dove necessario
+        stageId: data.stageId ? data.stageId.toString() : undefined,
+        companyId: data.companyId ? data.companyId.toString() : null,
+        contactId: data.contactId ? data.contactId.toString() : null,
+        branchId: data.branchId ? data.branchId.toString() : null,
+        value: data.value ? data.value.toString() : "0",
+        expectedRevenue: data.expectedRevenue ? data.expectedRevenue.toString() : undefined,
         startDate: data.startDate ? new Date(data.startDate).toISOString() : undefined,
         expectedCloseDate: data.expectedCloseDate ? new Date(data.expectedCloseDate).toISOString() : undefined
       };
+      
+      console.log("Payload inviato al server:", payload);
       
       if (isEditMode && initialData?.id) {
         // Aggiorna un deal esistente
@@ -448,6 +457,8 @@ export default function NewDealModal({ open, onOpenChange, initialData }: DealMo
         });
         
         if (!response.ok) {
+          const errorData = await response.json().catch(() => null);
+          console.error("Errore dal server:", errorData);
           throw new Error('Failed to update deal');
         }
         
@@ -468,6 +479,8 @@ export default function NewDealModal({ open, onOpenChange, initialData }: DealMo
         });
         
         if (!response.ok) {
+          const errorData = await response.json().catch(() => null);
+          console.error("Errore dal server:", errorData);
           throw new Error('Failed to create deal');
         }
         
