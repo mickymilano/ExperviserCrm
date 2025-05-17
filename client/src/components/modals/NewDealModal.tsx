@@ -107,6 +107,17 @@ export default function NewDealModal({ open, onOpenChange, initialData }: DealMo
     setValue("branchId", null);
     setOpenCompanyCombobox(false);
   };
+  
+  // Funzioni per gestire i contatti e filiali
+  const handleContactSelect = (contactId: number) => {
+    setValue("contactId", contactId);
+    setOpenContactCombobox(false);
+  };
+  
+  const handleBranchSelect = (branchId: number) => {
+    setValue("branchId", branchId);
+    setOpenBranchCombobox(false);
+  };
   const [selectedSynergyContacts, setSelectedSynergyContacts] = useState<SynergyContact[]>([]);
   const [openSynergyCombobox, setOpenSynergyCombobox] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -537,14 +548,7 @@ export default function NewDealModal({ open, onOpenChange, initialData }: DealMo
                             <CommandItem
                               key={company.id}
                               value={company.name}
-                              onSelect={() => {
-                                setValue("companyId", company.id);
-                                setSelectedCompanyId(company.id);
-                                setOpenCompanyCombobox(false);
-                                
-                                // Resetta la selezione della filiale quando cambia l'azienda
-                                setValue("branchId", null);
-                              }}
+                              onSelect={() => handleCompanySelect(company.id)}
                             >
                               <Check
                                 className={cn(
