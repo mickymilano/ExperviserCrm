@@ -1299,7 +1299,8 @@ export class PostgresStorage implements IStorage {
       // Per ogni contatto, recupera le sue aree di attività
       for (const contact of contacts) {
         try {
-          const areasResult = await db.execute(
+          // Utilizziamo pool.query invece di db.execute per i parametri
+          const areasResult = await pool.query(
             `SELECT 
               id, 
               contact_id as "contactId", 
@@ -1318,6 +1319,7 @@ export class PostgresStorage implements IStorage {
           // Assegna le aree recuperate al contatto
           if (areasResult.rows.length > 0) {
             contact.areasOfActivity = areasResult.rows as AreaOfActivity[];
+            console.log(`Trovate ${areasResult.rows.length} aree di attività per il contatto ${contact.id}`);
           }
         } catch (areaError) {
           console.error(`Error fetching areas for contact ${contact.id}:`, areaError);
