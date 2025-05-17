@@ -440,9 +440,9 @@ export default function NewDealModal({ open, onOpenChange, initialData }: DealMo
       // Prepara i dati per l'invio
       const payload = {
         ...data,
-        // Alcuni campi come value devono essere convertiti in stringa
-        value: data.value.toString(),
-        expectedRevenue: data.expectedRevenue ? data.expectedRevenue.toString() : undefined,
+        // Convertiamo valori numerici con decimali in interi
+        value: Math.floor(data.value),
+        expectedRevenue: data.expectedRevenue ? Math.floor(data.expectedRevenue) : undefined,
         startDate: data.startDate ? new Date(data.startDate).toISOString() : undefined,
         expectedCloseDate: data.expectedCloseDate ? new Date(data.expectedCloseDate).toISOString() : undefined
       };
