@@ -64,23 +64,28 @@ export default function LeadsPage() {
               <Card key={lead.id}>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-base font-medium">
-                    {lead.companyName || `${lead.firstName} ${lead.lastName}`}
+                    {`${lead.firstName || ''} ${lead.lastName || ''}`}
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">
                     {lead.source || 'No source'} · {lead.status || 'New'}
                   </p>
                 </CardHeader>
                 <CardContent className="pb-2">
-                  {lead.email && (
+                  {/* Mostro sempre l'azienda come prima informazione */}
+                  <div className="flex items-center text-sm mb-1 font-medium">
+                    <span>{lead.company || 'Nessuna azienda'}</span>
+                  </div>
+                  
+                  {(lead.email || lead.companyEmail || lead.privateEmail) && (
                     <div className="flex items-center text-sm mb-1">
                       <Mail className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
-                      <span>{lead.email}</span>
+                      <span>{lead.email || lead.companyEmail || lead.privateEmail}</span>
                     </div>
                   )}
-                  {lead.phone && (
+                  {(lead.phone || lead.mobilePhone || lead.officePhone) && (
                     <div className="flex items-center text-sm mb-1">
                       <Phone className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
-                      <span>{lead.phone}</span>
+                      <span>{lead.phone || lead.mobilePhone || lead.officePhone}</span>
                     </div>
                   )}
                   {lead.tags && lead.tags.length > 0 && (
