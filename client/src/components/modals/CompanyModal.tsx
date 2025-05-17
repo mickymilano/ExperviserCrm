@@ -375,15 +375,12 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
             </div>
           </div>
           
-          {/* Country field */}
-          <div className="space-y-2 mb-4">
-            <Label htmlFor="country">Paese</Label>
-            <Input 
-              id="country" 
-              {...register("country")} 
-              placeholder="Inserisci il paese" 
-            />
-          </div>
+          {/* Il campo country è ora nascosto e gestito automaticamente */}
+          <input 
+            type="hidden" 
+            id="country" 
+            {...register("country")} 
+          />
 
           {/* Full Address Field (con autocomplete Google Maps) */}
           <div className="space-y-2 mb-4">
@@ -401,12 +398,23 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
                 setValue("address", value, { shouldValidate: true });
                 
                 if (placeDetails && placeDetails.address_components) {
-                  // Estrae il paese
+                  // Estrae il paese dall'indirizzo per il campo nascosto country
                   const countryComponent = placeDetails.address_components.find(c => 
                     c.types.includes('country')
                   );
                   if (countryComponent) {
+                    console.log("Paese estratto automaticamente:", countryComponent.long_name);
                     setValue("country", countryComponent.long_name, { shouldValidate: true });
+                  } else {
+                    // Tentativo di estrazione del paese dall'indirizzo completo
+                    const addressParts = value.split(',');
+                    if (addressParts.length > 0) {
+                      const lastPart = addressParts[addressParts.length - 1].trim();
+                      if (lastPart && lastPart.length > 1) {
+                        console.log("Paese estratto da indirizzo completo:", lastPart);
+                        setValue("country", lastPart, { shouldValidate: true });
+                      }
+                    }
                   }
                 }
                 
