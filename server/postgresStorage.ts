@@ -1175,7 +1175,7 @@ export class PostgresStorage implements IStorage {
           phone,
           source, 
           notes,
-          company, 
+          company_name, 
           role,
           address,
           website,
@@ -1242,6 +1242,11 @@ export class PostgresStorage implements IStorage {
       if (leadData.phone !== undefined) {
         updateFields.push(`phone = $${paramCounter++}`);
         params.push(leadData.phone);
+      }
+      
+      if (leadData.company !== undefined) {
+        updateFields.push(`company_name = $${paramCounter++}`);
+        params.push(leadData.company);
       }
       
       if (leadData.address !== undefined) {
