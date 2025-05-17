@@ -347,14 +347,24 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
                   if (placeDetails && placeDetails.address_components) {
                     console.log("Place details received:", placeDetails);
                     
-                    // Estrae il paese
+                    // Estrae il paese dall'indirizzo per il campo nascosto country
                     const countryComponent = placeDetails.address_components.find(
                       component => component.types.includes('country')
                     );
                     
                     if (countryComponent) {
-                      console.log("Paese estratto:", countryComponent.long_name);
+                      console.log("Paese estratto automaticamente:", countryComponent.long_name);
                       setValue("country", countryComponent.long_name, { shouldValidate: true });
+                    } else {
+                      // Tentativo di estrazione del paese dall'indirizzo completo
+                      const addressParts = value.split(',');
+                      if (addressParts.length > 0) {
+                        const lastPart = addressParts[addressParts.length - 1].trim();
+                        if (lastPart && lastPart.length > 1) {
+                          console.log("Paese estratto da indirizzo completo:", lastPart);
+                          setValue("country", lastPart, { shouldValidate: true });
+                        }
+                      }
                     }
                     
                     // Estrae anche la città se necessario
