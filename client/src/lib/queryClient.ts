@@ -1,34 +1,89 @@
-import { QueryClient } from "@tanstack/react-query";
+import { QueryClient } from '@tanstack/react-query';
 
-// Configurazione predefinita per il client delle query
+// Funzione per fare le chiamate API
+export async function apiRequest(
+  url: string, 
+  method: string = 'GET',
+  data?: any,
+  customOptions: RequestInit = {}
+): Promise<any> {
+  // Recupera il token da localStorage
+  const token = localStorage.getItem("auth_token");
+
+  // Opzioni predefinite per le richieste
+  const defaultOptions: RequestInit = {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      // Include il token di autenticazione se presente
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    },
+    credentials: 'include', // Per inviare/ricevere cookies
+    ...(data ? { body: JSON.stringify(data) } : {})
+  };
+  
+  // Merge delle opzioni
+  const fetchOptions = {
+    ...defaultOptions,
+    ...customOptions,
+    headers: {
+      ...defaultOptions.headers,
+      ...(customOptions.headers || {}),
+    },
+  };
+  
+  try {
+    const response = await fetch(url, fetchOptions);
+    
+    // Se la risposta non è ok, lanciamo un errore
+    if (!response.ok) {
+      // Proviamo a leggere l'errore come JSON
+      try {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Errore API ${response.status}`);
+      } catch (e) {
+        // Se non possiamo analizzare la risposta come JSON, lanciamo un errore generico
+        throw new Error(`Errore API ${response.status}`);
+      }
+    }
+    
+    // Controlliamo se la risposta contiene dati JSON
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      return await response.json();
+    }
+    
+    // Restituisci la risposta come testo in caso contrario
+    return await response.text();
+  } catch (error) {
+    console.error('API request error:', error);
+    throw error;
+  }
+}
+
+// Opzioni predefinite per le mutazioni
+export const defaultMutationOptions = {
+  onError: (error: Error) => {
+    console.error('Mutation error:', error);
+    // Qui potremmo mostrare una notifica/toast di errore
+  }
+};
+
+// Fetcher predefinito per React Query
+const defaultQueryFn = async ({ queryKey }: { queryKey: unknown[] }) => {
+  // Usiamo il primo elemento della queryKey come URL
+  const url = queryKey[0] as string;
+  return apiRequest(url);
+};
+
+// Crea l'istanza di QueryClient
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Configurazione standard per tutte le query
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
+      queryFn: defaultQueryFn,
       retry: 1,
-      staleTime: 60 * 1000, // 1 minuto
-      queryFn: async ({ queryKey }) => {
-        // Supporta i queryKey di tipo array
-        const url = Array.isArray(queryKey) ? queryKey[0] : queryKey;
-        
-        if (typeof url !== 'string') {
-          throw new Error(`Query key must be a string or an array with a string as the first element, got: ${queryKey}`);
-        }
-        
-        const response = await fetch(url, {
-          credentials: 'include', // Includi i cookie per l'autenticazione
-        });
-        
-        if (!response.ok) {
-          throw new Error(`API error: ${response.status}`);
-        }
-        
-        // Handle empty responses
-        const text = await response.text();
-        return text ? JSON.parse(text) : undefined;
-      },
+      refetchOnWindowFocus: false,
+      staleTime: 5 * 60 * 1000, // 5 minuti
     },
   },
 });

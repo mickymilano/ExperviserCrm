@@ -24,7 +24,6 @@ import TaskList from "@/components/tasks/TaskList";
 import ContactModal from "@/components/modals/ContactModal";
 import { SynergiesList } from "@/components/synergies/SynergiesList";
 import CompanyBranchesList from "@/components/branches/CompanyBranchesList";
-import CompanyContactsTab from "@/components/tabs/CompanyContactsTab";
 
 export default function CompanyDetail() {
   const params = useParams();
@@ -475,7 +474,134 @@ export default function CompanyDetail() {
         
         {/* Contacts Tab */}
         <TabsContent value="contacts" className="space-y-4">
-          <CompanyContactsTab companyId={companyId} companyName={company.name} />
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center">
+                  <Users className="h-5 w-5 mr-2" />
+                  Contacts ({contacts?.length || 0})
+                </CardTitle>
+                <CardDescription>
+                  People associated with {company.name}
+                </CardDescription>
+              </div>
+              <div className="flex space-x-2">
+                <LinkContactButton 
+                  companyId={companyId} 
+                  onSuccess={() => {
+                    // Refresh the company data
+                    window.location.reload();
+                  }}
+                />
+                <Button 
+                  onClick={() => setIsContactModalOpen(true)} 
+                  size="sm"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Contact
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {isLoadingContacts ? (
+                <div className="space-y-4">
+                  {Array.from({ length: 3 }).map((_, index) => (
+                    <div key={index} className="flex items-start space-x-4">
+                      <Skeleton className="h-10 w-10 rounded-full" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-5 w-40" />
+                        <Skeleton className="h-4 w-24" />
+                        <div className="grid grid-cols-2 gap-2 mt-2">
+                          <Skeleton className="h-4 w-32" />
+                          <Skeleton className="h-4 w-24" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : contacts && contacts.length > 0 ? (
+                <div className="space-y-6">
+                  {contacts.map((contact) => (
+                    <div key={contact.id} className="flex items-start space-x-4">
+                      <Avatar className="h-10 w-10">
+                        <AvatarFallback>
+                          {contact.firstName?.charAt(0)}{contact.lastName?.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="font-medium">{contact.firstName} {contact.lastName}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              {/* Using simple role - new API doesn't return areasOfActivity */}
+                              {contact.role || "No role specified"}
+                            </p>
+                          </div>
+                          <Button variant="ghost" size="sm" onClick={() => navigate(`/contacts/${contact.id}`)}>
+                            View Profile
+                          </Button>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-2 mt-2">
+                          {contact.companyEmail && (
+                            <div className="flex items-center">
+                              <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
+                              <a href={`mailto:${contact.companyEmail}`} className="text-sm hover:underline">
+                                {contact.companyEmail}
+                              </a>
+                            </div>
+                          )}
+                          
+                          {contact.privateEmail && (
+                            <div className="flex items-center">
+                              <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
+                              <a href={`mailto:${contact.privateEmail}`} className="text-sm hover:underline">
+                                {contact.privateEmail}
+                              </a>
+                            </div>
+                          )}
+                          
+                          {contact.mobilePhone && (
+                            <div className="flex items-center">
+                              <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                              <span className="text-sm">{formatPhoneNumber(contact.mobilePhone)}</span>
+                            </div>
+                          )}
+                          
+                          {contact.officePhone && (
+                            <div className="flex items-center">
+                              <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                              <span className="text-sm">{formatPhoneNumber(contact.officePhone)}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <h3 className="text-lg font-medium mb-2">No Contacts Found</h3>
+                  <p className="text-muted-foreground mb-4">
+                    There are no contacts associated with this company yet.
+                  </p>
+                  <div className="flex flex-col space-y-2 items-center justify-center">
+                    <Button onClick={() => navigate("/contacts/new?companyId=" + company.id)}>
+                      Add New Contact
+                    </Button>
+                    <LinkContactButton 
+                      companyId={companyId} 
+                      onSuccess={() => {
+                        // Refresh the company data
+                        window.location.reload();
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
         
         {/* Deals Tab */}
