@@ -437,9 +437,12 @@ export default function NewDealModal({ open, onOpenChange, initialData }: DealMo
   // Mutation per salvare il deal
   const saveDeal = useMutation({
     mutationFn: async (data: DealFormData) => {
-      // Prepara i dati per l'invio - manteniamo i valori numerici come numeri
+      // Prepara i dati per l'invio in modo compatibile con lo schema del backend
+      // Omettiamo il campo branchId che non esiste nello schema del backend
+      const { branchId, ...restData } = data;
+      
       const payload = {
-        ...data,
+        ...restData,
         // Convertiamo in numeri interi prima dell'invio
         value: Math.floor(data.value),
         expectedRevenue: data.expectedRevenue ? Math.floor(data.expectedRevenue) : undefined,
