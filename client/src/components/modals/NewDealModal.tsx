@@ -239,14 +239,19 @@ export default function NewDealModal({ open, onOpenChange, initialData }: DealMo
 
   // Aggiorna le sinergie selezionate quando cambiano i contatti o gli ID selezionati
   useEffect(() => {
-    if (watchSynergyContactIds && Array.isArray(watchSynergyContactIds) && contacts && Array.isArray(contacts)) {
-      const selectedContacts = watchSynergyContactIds.map(id => 
-        contacts.find(contact => contact.id === id)
-      ).filter(contact => contact !== undefined) as SynergyContact[];
-      
-      setSelectedSynergyContacts(selectedContacts);
-    } else {
-      setSelectedSynergyContacts([]);
+    // Evita cicli infiniti controllando se ci sono davvero cambiamenti
+    const newSelectedContacts = watchSynergyContactIds && Array.isArray(watchSynergyContactIds) && contacts && Array.isArray(contacts)
+      ? watchSynergyContactIds
+          .map(id => contacts.find(contact => contact.id === id))
+          .filter(contact => contact !== undefined) as SynergyContact[]
+      : [];
+    
+    // Confronta per vedere se è effettivamente cambiato qualcosa
+    const currentIds = selectedSynergyContacts.map(c => c.id).sort().join(',');
+    const newIds = newSelectedContacts.map(c => c.id).sort().join(',');
+    
+    if (currentIds !== newIds) {
+      setSelectedSynergyContacts(newSelectedContacts);
     }
   }, [watchSynergyContactIds, contacts]);
 
