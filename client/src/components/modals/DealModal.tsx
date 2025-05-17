@@ -267,12 +267,24 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       return;
     }
     
-    // Per il momento, mostriamo tutti i contatti per diagnosticare il problema
-    setFilteredContacts(contacts);
-    console.log(`DEBUG: Using all contacts (${contacts.length}) for company ${companyId}`);
+    // Filtriamo i contatti per mostrare solo quelli associati all'azienda selezionata
+    const filteredByCompany = contacts.filter(contact => contact.companyId === companyId);
     
-    // Disabilitiamo il filtraggio dei contatti per area di attività
-    // In un secondo momento potremmo riattivarlo
+    // Se troviamo contatti associati all'azienda, utilizziamo quelli
+    if (filteredByCompany.length > 0) {
+      setFilteredContacts(filteredByCompany);
+      console.log(`Filtrati ${filteredByCompany.length} contatti per l'azienda ${companyId}`);
+    } else {
+      // Altrimenti controlliamo se il contatto ha aree di attività che includono questa azienda
+      const filteredByAreas = contacts.filter(contact => 
+        contact.areasOfActivity && 
+        Array.isArray(contact.areasOfActivity) && 
+        contact.areasOfActivity.some(area => area.companyId === companyId)
+      );
+      
+      setFilteredContacts(filteredByAreas);
+      console.log(`Filtrati ${filteredByAreas.length} contatti per area di attività dell'azienda ${companyId}`);
+    }
     /*
     // Solo per debug - Verifichiamo quanti contatti hanno areasOfActivity
     let contactsWithAreas = 0;
