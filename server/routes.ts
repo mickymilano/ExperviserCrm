@@ -1066,12 +1066,27 @@ export function registerRoutes(app: any) {
   
   app.post('/api/leads', authenticate, async (req, res) => {
     try {
-      const { firstName, lastName, company, email, phone, status, notes } = req.body;
+      const { 
+        firstName, 
+        lastName, 
+        company,
+        email, // Supportiamo sia email generico che campi specifici
+        companyEmail: companyEmailDirect, 
+        privateEmail: privateEmailDirect, 
+        phone, 
+        mobilePhone: mobilePhoneDirect,
+        officePhone: officePhoneDirect,
+        privatePhone: privatePhoneDirect,
+        status, 
+        notes 
+      } = req.body;
       
       // Determiniamo se l'email è aziendale o privata
-      let companyEmail = null;
-      let privateEmail = null;
-      if (email) {
+      let companyEmail = companyEmailDirect || null;
+      let privateEmail = privateEmailDirect || null;
+      
+      // Se è stata fornita una email generica, la gestiamo
+      if (email && !companyEmail && !privateEmail) {
         if (company && email.includes('@' + company.toLowerCase().replace(/\s/g, ''))) {
           companyEmail = email;
         } else {
@@ -1079,8 +1094,8 @@ export function registerRoutes(app: any) {
         }
       }
       
-      // Trattiamo il telefono come mobile_phone
-      const mobilePhone = phone;
+      // Trattiamo il telefono in modo flessibile
+      const mobilePhone = mobilePhoneDirect || phone || null;
       
       // Data di creazione e aggiornamento
       const now = new Date();

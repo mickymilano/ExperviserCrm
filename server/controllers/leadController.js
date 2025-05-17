@@ -5,16 +5,29 @@ export const listLeads = async (req, res, next) => {
     const { rows } = await pool.query(`
       SELECT
         id,
-        first_name  AS "firstName",
-        last_name   AS "lastName",
-        company_name AS company,
-        email,
-        phone,
-        status
+        first_name     AS "firstName",
+        last_name      AS "lastName",
+        company_name   AS company,
+        company_email  AS "companyEmail",
+        private_email  AS "privateEmail",
+        mobile_phone   AS "mobilePhone",
+        office_phone   AS "officePhone",
+        private_phone  AS "privatePhone",
+        status,
+        created_at     AS "createdAt",
+        updated_at     AS "updatedAt"
       FROM leads
       ORDER BY id DESC
     `);
-    res.json(rows);
+    
+    // Mappiamo i campi per compatibilità con il frontend
+    const mappedRows = rows.map(row => ({
+      ...row,
+      email: row.companyEmail || row.privateEmail,
+      phone: row.mobilePhone || row.officePhone || row.privatePhone
+    }));
+    
+    res.json(mappedRows);
   } catch (error) {
     console.error('Error fetching leads:', error);
     res.status(500).json({ message: 'Errore durante il recupero dei lead' });
