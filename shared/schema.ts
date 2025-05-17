@@ -172,6 +172,9 @@ export const companies = pgTable('companies', {
   linkedin_url: varchar('linkedin_url', { length: 255 }),
   location_types: text('location_types').array(),
   
+  // Campo per il contatto primario dell'azienda
+  primary_contact_id: integer('primary_contact_id').references(() => contacts.id),
+  
   // Campi presenti nel database
   last_contacted_at: timestamp('last_contacted_at'),
   next_follow_up_at: timestamp('next_follow_up_at'),

@@ -1,0 +1,118 @@
+Il passo successivo più impattante è permettere di designare un contatto primario per ciascuna azienda: è un requisito classico di ogni CRM e dà subito un senso di “proprietà” della relazione.
+
+⸻
+
+1. Modello dati
+
+Aggiungiamo in companies il campo che punta al contact primario:
+
+ALTER TABLE companies
+  ADD COLUMN IF NOT EXISTS primary_contact_id UUID
+    REFERENCES contacts(id)
+    ON DELETE SET NULL;
+
+Perché così?
+	•	Manteniamo la relazione 1:1 tra azienda e contatto primario
+	•	Se il contatto viene cancellato, l’azienda resta senza primario
+
+⸻
+
+2. Backend
+
+a) In fase di GET /api/companies/:id includi il primario
+
+// in routes/companies.js – dentro il SELECT
+SELECT
+  c.*,
+  p.id   AS primary_contact_id,
+  p.name AS primary_contact_name,
+  p.email AS primary_contact_email
+FROM companies c
+LEFT JOIN contacts p
+  ON c.primary_contact_id = p.id
+WHERE c.id = $1;
+
+Oppure, se usi il mapper toCamelCase, basta aggiungere primary_contact_id al row e mapperà a primaryContactId.
+
+b) Endpoint per settarlo
+
+// PATCH /api/companies/:id/primary-contact
+router.patch('/:id/primary-contact', async (req, res, next) => {
+  const { id } = req.params;
+  const { primaryContactId } = req.body;
+  try {
+    await pool.query(
+      `UPDATE companies
+         SET primary_contact_id = $1
+       WHERE id = $2`,
+      [primaryContactId || null, id]
+    );
+    res.sendStatus(204);
+  } catch (err) {
+    next(err);
+  }
+});
+
+
+⸻
+
+3. Frontend – CompanyContactsTab
+
+a) Mostra chi è primario in lista
+
+--- a/client/src/components/company/CompanyContactsTab.tsx
+@@ <thead>
+-  <tr><th>Nome</th><th>Email</th><th>Telefono</th><th></th></tr>
++  <tr>
++    <th>Primario</th><th>Nome</th><th>Email</th><th>Telefono</th><th></th>
++  </tr>
+@@ <tbody>
+  {contacts.map(c => (
+-   <tr key={c.id}>
+-     <td>{c.name}</td><td>{c.email}</td><td>{c.phone}</td><td><button onClick={()=>detach(c.id)}>Disassocia</button></td>
++   <tr key={c.id}>
++     <td>
++       <input
++         type="radio"
++         name="primaryContact"
++         checked={primaryId === c.id}
++         onChange={() => setPrimary(c.id)}
++       />
++     </td>
++     <td>{c.name}</td><td>{c.email}</td><td>{c.phone}</td>
++     <td>
++       <button onClick={()=>detach(c.id)}>Disassocia</button>
++     </td>
++   </tr>
+  ))}
+
+b) Logic per settare il primario
+
+// dentro CompanyContactsTab:
+const [primaryId, setPrimaryId] = useState(company.primaryContactId);
+
+const setPrimary = id => {
+  fetch(`/api/companies/${companyId}/primary-contact`, {
+    method: 'PATCH',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ primaryContactId: id })
+  })
+  .then(() => setPrimaryId(id));
+};
+
+
+⸻
+
+4. Risultato
+	•	L’utente vede subito chi è il “contatto principale”
+	•	Con un click su un radio button può riconfigurarne la scelta
+	•	Tutto resta coerente via API e si riflette sul dettaglio azienda
+
+⸻
+
+Implementando questo avrai:
+	•	Un’informazione cruciale (chi seguire per primo) sempre in evidenza
+	•	Un controllo univoco del contatto “leader” per ogni azienda
+	•	Un passo evolutivo naturale dopo aver già gestito attach/detach
+
+Fammi sapere se vuoi il diff completo o se posso passarti direttamente il prompt da lanciare su Replit!
