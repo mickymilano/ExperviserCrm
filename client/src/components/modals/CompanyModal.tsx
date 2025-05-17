@@ -12,6 +12,7 @@ import { PlacesAutocomplete } from "@/components/ui/PlacesAutocomplete";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { logError, withErrorHandling } from "@/lib/errorTracking";
+import { toSnakeCase } from "@/../../shared/mappers";
 
 interface CompanyModalProps {
   open: boolean;
@@ -90,37 +91,37 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
       
       // Campi indirizzo
       address: initialData?.address || "",
-      fullAddress: initialData?.fullAddress || initialData?.address || "",
+      fullAddress: initialData?.fullAddress || initialData?.full_address || initialData?.address || "",
       country: initialData?.country || "",
       
       // Campi finanziari e dimensionali
-      employeeCount: initialData?.employeeCount || null,
-      annualRevenue: initialData?.annualRevenue || null,
-      foundedYear: initialData?.foundedYear || null,
+      employeeCount: initialData?.employeeCount || initialData?.employee_count || null,
+      annualRevenue: initialData?.annualRevenue || initialData?.annual_revenue || null,
+      foundedYear: initialData?.foundedYear || initialData?.founded_year || null,
       
       // Campi di relazione
-      parentCompanyId: initialData?.parentCompanyId || null,
+      parentCompanyId: initialData?.parentCompanyId || initialData?.parent_company_id || null,
       
       // Campi di stato e categorizzazione
       status: initialData?.status || "active",
-      isActiveRep: initialData?.isActiveRep || false,
+      isActiveRep: initialData?.isActiveRep || initialData?.is_active_rep || false,
       logoUrl: initialData?.logo || null,
       
       // Array
       tags: initialData?.tags || [],
       brands: initialData?.brands || [],
       channels: initialData?.channels || [],
-      productsOrServicesTags: initialData?.productsOrServicesTags || [],
-      locationTypes: initialData?.locationTypes || [],
+      productsOrServicesTags: initialData?.productsOrServicesTags || initialData?.products_or_services_tags || [],
+      locationTypes: initialData?.locationTypes || initialData?.location_types || [],
       
       // Altri campi
       notes: initialData?.notes || "",
-      customFields: initialData?.customFields || null,
-      linkedinUrl: initialData?.linkedinUrl || "",
+      customFields: initialData?.customFields || initialData?.custom_fields || null,
+      linkedinUrl: initialData?.linkedinUrl || initialData?.linkedin_url || "",
       
       // Date
-      lastContactedAt: initialData?.lastContactedAt || null,
-      nextFollowUpAt: initialData?.nextFollowUpAt || null,
+      lastContactedAt: initialData?.lastContactedAt || initialData?.last_contacted_at || null,
+      nextFollowUpAt: initialData?.nextFollowUpAt || initialData?.next_follow_up_at || null,
     },
     mode: "onSubmit" // Importante: valida solo al submit, non su onChange
   });
@@ -162,26 +163,48 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
         method = "PUT"; // Modificato da PATCH a PUT per adattarsi all'API del server
       }
       
-      // Adattiamo il fetch body con solo i campi verificati
-      const requestData = {
+      // Adattiamo il fetch body con solo i campi verificati e utilizziamo i nomi in snake_case per il database
+      const requestData = toSnakeCase({
         name: companyData.name,
         address: companyData.address,
-        fullAddress: companyData.full_address, // Corretta mappatura del campo 
+        fullAddress: companyData.full_address, // Mappatura del campo tra frontend e backend
         email: companyData.email || "",
         phone: companyData.phone || "",
         website: companyData.website || "",
         industry: companyData.industry || "",
-        country: companyData.country || "",
-        tags: companyData.tags || [],
-        notes: companyData.notes || "",
-        status: companyData.status || "active",
-        // Aggiungiamo tutti i campi necessari
-        linkedinUrl: companyData.linkedinUrl || "",
         sector: companyData.sector || "",
         description: companyData.description || "",
-        parentCompanyId: companyData.parentCompanyId || null,
+        country: companyData.country || "",
+        
+        // Campi finanziari e dimensionali
+        employeeCount: companyData.employeeCount,
+        annualRevenue: companyData.annualRevenue,
+        foundedYear: companyData.foundedYear,
+        
+        // Campi di categorizzazione
+        tags: companyData.tags || [],
+        companyType: companyData.companyType || "",
         isActiveRep: companyData.isActiveRep || false,
-        employeeCount: companyData.employeeCount || null,
+        
+        // Array
+        brands: companyData.brands || [],
+        channels: companyData.channels || [],
+        productsOrServicesTags: companyData.productsOrServicesTags || [],
+        locationTypes: companyData.locationTypes || [],
+        
+        // Altri campi
+        notes: companyData.notes || "",
+        customFields: companyData.customFields || {},
+        linkedinUrl: companyData.linkedinUrl || "",
+        
+        // Relazioni
+        parentCompanyId: companyData.parentCompanyId,
+        
+        // Date
+        lastContactedAt: companyData.lastContactedAt,
+        nextFollowUpAt: companyData.nextFollowUpAt,
+        
+        status: companyData.status || "active",
         annualRevenue: companyData.annualRevenue || null,
         foundedYear: companyData.foundedYear || null,
         customFields: companyData.customFields || null

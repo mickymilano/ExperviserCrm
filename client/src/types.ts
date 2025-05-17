@@ -46,29 +46,67 @@ export interface Company {
   status: string;
   email: string | null;
   phone: string | null;
-  address: string | null;
-  fullAddress: string | null;
+  
+  // Campi indirizzo (unificati)
+  address: string | null; // Mantenuto per retrocompatibilità
+  full_address: string | null; // Campo DB
+  fullAddress: string | null; // Alias frontend di full_address
+  country: string | null;
+  
+  // Campi azienda
   website: string | null;
   industry: string | null;
-  numberOfEmployees: number | null;
-  annualRevenue: string | null;
-  type: string | null;
-  foundedYear: number | null;
+  sector: string | null;
   description: string | null;
+  
+  // Informazioni dimensionali
+  employee_count: number | null; // Campo DB
+  employeeCount: number | null; // Alias frontend
+  annual_revenue: number | null; // Campo DB
+  annualRevenue: number | null; // Alias frontend
+  founded_year: number | null; // Campo DB
+  foundedYear: number | null; // Alias frontend
+  
+  // Media e URL
   logo: string | null;
-  owner: number | null;
-  source: string | null;
-  stage: string | null;
-  rating: number | null;
+  linkedin_url: string | null; // Campo DB
+  linkedinUrl: string | null; // Alias frontend
+  
+  // Relazioni
+  parent_company_id: number | null; // Campo DB
+  parentCompanyId: number | null; // Alias frontend
+  
+  // Categorizzazione
   tags: string[] | null;
-  facebook: string | null;
-  twitter: string | null;
-  linkedin: string | null;
-  instagram: string | null;
-  createdAt: Date | null;
-  updatedAt: Date | null;
-  locationId?: string | null;
-  customFields?: Record<string, any> | null;
+  company_type: string | null; // Campo DB
+  companyType: string | null; // Alias frontend
+  brands: string[] | null;
+  channels: string[] | null;
+  products_or_services_tags: string[] | null; // Campo DB
+  productsOrServicesTags: string[] | null; // Alias frontend
+  location_types: string[] | null; // Campo DB
+  locationTypes: string[] | null; // Alias frontend
+  
+  // Stati e configurazioni
+  is_active_rep: boolean; // Campo DB
+  isActiveRep: boolean; // Alias frontend
+  
+  // Date di follow-up
+  last_contacted_at: Date | null; // Campo DB
+  lastContactedAt: Date | null; // Alias frontend
+  next_follow_up_at: Date | null; // Campo DB
+  nextFollowUpAt: Date | null; // Alias frontend
+  
+  // Campi vari
+  notes: string | null;
+  custom_fields: Record<string, any> | null; // Campo DB
+  customFields: Record<string, any> | null; // Alias frontend
+  
+  // Metadati
+  created_at: Date | null; // Campo DB
+  createdAt: Date | null; // Alias frontend
+  updated_at: Date | null; // Campo DB
+  updatedAt: Date | null; // Alias frontend
 }
 
 export interface AreaOfActivity {
