@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Plus, Search, Filter, ChevronRight, TrendingUp, Calendar, DollarSign } from "lucide-react";
-import DealModal from "@/components/modals/DealModal";
+import NewDealModal from "@/components/modals/NewDealModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatCurrency } from "@/lib/utils";
@@ -202,7 +202,7 @@ export default function Deals() {
         </Card>
       )}
 
-      <DealModal
+      <NewDealModal
         open={showModal}
         onOpenChange={setShowModal}
         initialData={selectedDeal}
