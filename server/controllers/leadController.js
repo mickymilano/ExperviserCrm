@@ -90,6 +90,8 @@ export const createLead = async (req, res, next) => {
       notes
     } = req.body;
     
+    console.log('CREATE LEAD - Request body:', req.body);
+    
     // Determiniamo il tipo di email (aziendale o privata)
     let finalCompanyEmail = companyEmail || null;
     let finalPrivateEmail = privateEmail || null;
@@ -111,7 +113,7 @@ export const createLead = async (req, res, next) => {
     // Data di creazione e aggiornamento
     const now = new Date();
     
-    const { rows } = await pool.query(`
+    const queryText = `
       INSERT INTO leads
         (first_name, last_name, company_name, company_email, private_email, 
          mobile_phone, office_phone, private_phone, status, notes, created_at, updated_at)
@@ -130,7 +132,9 @@ export const createLead = async (req, res, next) => {
         notes,
         created_at     AS "createdAt",
         updated_at     AS "updatedAt"
-    `, [
+    `;
+    
+    const queryParams = [
       firstName, 
       lastName, 
       company, 
@@ -143,7 +147,12 @@ export const createLead = async (req, res, next) => {
       notes || null,
       now,
       now
-    ]);
+    ];
+    
+    console.log('CREATE LEAD SQL:', queryText);
+    console.log('CREATE LEAD PARAMS:', queryParams);
+    
+    const { rows } = await pool.query(queryText, queryParams);
     
     // Mappiamo i campi per compatibilità con il frontend
     const mappedLead = {
