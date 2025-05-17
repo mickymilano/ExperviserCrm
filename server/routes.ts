@@ -1795,6 +1795,124 @@ export function registerRoutes(app: any) {
   });
   
   // =====================================
+  // TASK ROUTES
+  // =====================================
+  
+  // Ottieni tutti i task
+  app.get('/api/tasks', authenticate, async (req: Request, res: Response) => {
+    try {
+      console.log('GET /api/tasks - Recupero di tutti i task');
+      
+      // Ottieni i task con eventuali filtri
+      let tasks = await storage.getTasks();
+      
+      // Filtra in base ai parametri di query
+      const { contactId, companyId, dealId, leadId } = req.query;
+      
+      if (contactId) {
+        tasks = tasks.filter(task => task.contactId === parseInt(contactId as string));
+      }
+      
+      if (companyId) {
+        tasks = tasks.filter(task => task.companyId === parseInt(companyId as string));
+      }
+      
+      if (dealId) {
+        tasks = tasks.filter(task => task.dealId === parseInt(dealId as string));
+      }
+      
+      if (leadId) {
+        tasks = tasks.filter(task => task.leadId === parseInt(leadId as string));
+      }
+      
+      console.log(`GET /api/tasks - Trovati ${tasks.length} task`);
+      res.json(tasks);
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+      res.status(500).json({ message: 'Errore durante il recupero dei task' });
+    }
+  });
+  
+  // Ottieni un task specifico
+  app.get('/api/tasks/:id', authenticate, async (req: Request, res: Response) => {
+    try {
+      const taskId = parseInt(req.params.id);
+      
+      // Cerca il task
+      const tasks = await storage.getTasks();
+      const task = tasks.find(t => t.id === taskId);
+      
+      if (!task) {
+        return res.status(404).json({ message: 'Task non trovato' });
+      }
+      
+      res.json(task);
+    } catch (error) {
+      console.error('Error fetching task:', error);
+      res.status(500).json({ message: 'Errore durante il recupero del task' });
+    }
+  });
+  
+  // Crea un nuovo task
+  app.post('/api/tasks', authenticate, async (req: Request, res: Response) => {
+    try {
+      console.log('POST /api/tasks - Creazione di un nuovo task', req.body);
+      
+      // Crea il task
+      const newTask = await storage.createTask(req.body);
+      
+      res.status(201).json(newTask);
+    } catch (error) {
+      console.error('Error creating task:', error);
+      res.status(500).json({ message: 'Errore durante la creazione del task' });
+    }
+  });
+  
+  // Aggiorna un task esistente
+  app.patch('/api/tasks/:id', authenticate, async (req: Request, res: Response) => {
+    try {
+      const taskId = parseInt(req.params.id);
+      console.log(`PATCH /api/tasks/${taskId} - Aggiornamento task`, req.body);
+      
+      // Verifica che il task esista
+      const tasks = await storage.getTasks();
+      const task = tasks.find(t => t.id === taskId);
+      
+      if (!task) {
+        return res.status(404).json({ message: 'Task non trovato' });
+      }
+      
+      // Aggiorna il task
+      const updatedTask = await storage.updateTask(taskId, req.body);
+      
+      res.json(updatedTask);
+    } catch (error) {
+      console.error('Error updating task:', error);
+      res.status(500).json({ message: 'Errore durante l\'aggiornamento del task' });
+    }
+  });
+  
+  // Elimina un task
+  app.delete('/api/tasks/:id', authenticate, async (req: Request, res: Response) => {
+    try {
+      const taskId = parseInt(req.params.id);
+      console.log(`DELETE /api/tasks/${taskId} - Eliminazione task`);
+      
+      // Elimina il task
+      const success = await storage.deleteTask(taskId);
+      
+      if (!success) {
+        return res.status(404).json({ message: 'Task non trovato' });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      res.status(500).json({ message: 'Errore durante l\'eliminazione del task' });
+    }
+  });
+  
+  // =====================================
   // EMAIL ROUTES
   // =====================================
   app.get('/api/emails', authenticate, async (req, res) => {
