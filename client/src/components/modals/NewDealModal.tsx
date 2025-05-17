@@ -60,8 +60,8 @@ interface Branch {
 
 interface SynergyContact {
   id: number;
-  firstName: string;
-  lastName: string;
+  firstName?: string;
+  lastName?: string;
   [key: string]: any;
 }
 
@@ -147,25 +147,25 @@ export default function NewDealModal({ open, onOpenChange, initialData }: DealMo
   // Fetch companies
   const { data: companies = [] } = useQuery<Company[]>({
     queryKey: ["/api/companies"],
-    enabled: open
+    enabled: !!open
   });
 
   // Fetch contacts
   const { data: contacts = [] } = useQuery<Contact[]>({
     queryKey: ["/api/contacts?includeAreas=true"],
-    enabled: open
+    enabled: !!open
   });
 
   // Fetch branches condizionato dalla selezione dell'azienda
   const { data: branches = [] } = useQuery<Branch[]>({
     queryKey: ["/api/branches", watchCompanyId],
-    enabled: open && watchCompanyId !== undefined && watchCompanyId !== null,
+    enabled: !!(open && watchCompanyId !== undefined && watchCompanyId !== null),
   });
 
   // Fetch synergies per i deal esistenti
   const { data: dealSynergies = [] } = useQuery({
     queryKey: [`/api/deals/${initialData?.id}/synergies`],
-    enabled: open && isEditMode && initialData?.id !== undefined,
+    enabled: !!(open && isEditMode && initialData?.id !== undefined),
   });
 
   // Funzione che filtra i contatti in base all'azienda selezionata

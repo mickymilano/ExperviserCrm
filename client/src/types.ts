@@ -88,22 +88,43 @@ export interface Deal {
   name: string;
   companyId: number | null;
   company?: Company;
+  contactId?: number | null;
+  contact?: Contact;
+  branchId?: number | null;
+  branch?: Branch;
   status: string;
   stage?: PipelineStage;
   stageId?: number | null;
   value: string | null;
   expectedCloseDate: string | null;
-  actualCloseDate: string | null;
-  probability: number | null;
+  startDate?: string | null;
+  expectedRevenue?: number | null;
   tags: string[] | null;
   notes: string | null;
-  description: string | null;
-  contacts?: Contact[];
+  files?: any[] | null;
   lastContactedAt: Date | null;
   nextFollowUpAt: Date | null;
   createdAt: Date | null;
   updatedAt: Date | null;
   synergies?: Synergy[];
+}
+
+// Struttura per i form di creazione/modifica deal
+export interface DealInfo {
+  id?: number;
+  name: string;
+  companyId?: number | null;
+  contactId?: number | null;
+  branchId?: number | null;
+  stageId?: number;
+  value: number;
+  expectedCloseDate?: string | Date;
+  startDate?: string | Date;
+  expectedRevenue?: number;
+  tags?: string[] | null;
+  notes?: string | null;
+  status?: string;
+  files?: any[] | null;
 }
 
 export interface PipelineStage {
