@@ -129,35 +129,35 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     staleTime: Infinity
   });
   
-  // Aggiorniamo i contatti sinergici quando cambia companyId
+  // Aggiorniamo i contatti sinergici quando cambia l'azienda selezionata
   useEffect(() => {
-    if (!contacts || !Array.isArray(contacts)) return;
-    
-    // Se non c'è un'azienda selezionata, non filtrare
-    if (!companyId) {
+    // Filtriamo i contatti per mostrare solo quelli che NON appartengono all'azienda selezionata
+    if (!companyId || !contacts || !Array.isArray(contacts)) {
       setSynergyContacts([]);
       return;
     }
     
-    // Filtriamo per ottenere solo i contatti che NON appartengono all'azienda selezionata
-    const filtered = contacts.filter(contact => {
-      if (!contact.areasOfActivity || !Array.isArray(contact.areasOfActivity)) {
-        return true; // Se non ha aree di attività, includi
+    const filteredContacts = contacts.filter(contact => {
+      // Se il contatto ha aree di attività, verifichiamo che NON sia associato all'azienda selezionata
+      if (contact.areasOfActivity && Array.isArray(contact.areasOfActivity)) {
+        // Controlliamo se il contatto ha l'azienda selezionata tra le sue aree
+        return !contact.areasOfActivity.some(area => {
+          // Normalizziamo companyId
+          const areaCompanyId = typeof area.companyId === 'number' ? 
+            area.companyId : 
+            area.companyId ? parseInt(String(area.companyId)) : null;
+          
+          return areaCompanyId === companyId;
+        });
       }
       
-      // Includi solo se NON appartiene all'azienda selezionata
-      return !contact.areasOfActivity.some(area => {
-        const areaCompanyId = typeof area.companyId === 'number' ? 
-          area.companyId : 
-          parseInt(String(area.companyId || 0));
-        
-        return areaCompanyId === companyId;
-      });
+      // Se non ha aree di attività, lo includiamo nei contatti sinergici
+      return true;
     });
     
-    setSynergyContacts(filtered);
-    console.log(`Filtrati ${filtered.length} contatti sinergici (non associati all'azienda ${companyId})`);
-  }, [companyId, contacts]);
+    setSynergyContacts(filteredContacts);
+    console.log(`Filtrati ${filteredContacts.length} contatti sinergici (esclusi quelli dell'azienda ${companyId})`);
+  }, [companyId, contacts, setSynergyContacts]);
 
   const { register, handleSubmit, reset, setValue, getValues, control, formState: { errors } } = useForm<DealFormData>({
     resolver: zodResolver(dealSchema),
@@ -231,13 +231,6 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     updateFilteredContacts(id);
   };
   
-  // Helper function che utilizza direttamente i valori del form
-  // Aggiungiamo controlli più rigorosi
-  const getSelectedCompanyId = () => {
-    const value = getValues("companyId");
-    return typeof value === 'number' && !isNaN(value) ? value : null;
-  };
-
   // Initialize form when in edit mode or reset for create mode
   useEffect(() => {
     if (!open) return;
