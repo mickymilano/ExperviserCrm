@@ -19,6 +19,8 @@ import { CalendarIcon, Check } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { useCreateSynergy } from "@/hooks/useSynergies";
+import { ContactCombobox } from "@/components/ui/ContactCombobox";
+import { SynergiesSelect } from "@/components/ui/SynergiesSelect";
 
 interface DealInfo {
   id?: number;
@@ -47,7 +49,7 @@ interface Contact {
   id: number;
   firstName?: string;
   lastName?: string;
-  areasOfActivity?: Array<{ companyId: number }>;
+  areasOfActivity?: Array<{ companyId: number; isPrimary?: boolean }>;
   [key: string]: any;
 }
 
@@ -480,32 +482,32 @@ export default function NewDealModal({ open, onOpenChange, initialData }: DealMo
       }
     },
     onSuccess: () => {
-      // Invalida le query per aggiornare i dati
-      queryClient.invalidateQueries({ queryKey: ['/api/deals'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/synergies'] });
+      // Invalida le query per aggiornare l'UI
+      queryClient.invalidateQueries({ queryKey: ["/api/deals"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/synergies"] });
       
-      // Mostra toast di successo
+      // Mostra un messaggio di successo
       toast({
         title: isEditMode ? "Deal aggiornato" : "Deal creato",
-        description: isEditMode ? "Deal aggiornato con successo" : "Nuovo deal creato con successo",
+        description: isEditMode ? "Il deal è stato aggiornato con successo" : "Il deal è stato creato con successo",
+        variant: "default",
       });
       
-      // Chiudi la modale
+      // Chiudi la modale e resetta il form
       onOpenChange(false);
     },
     onError: (error) => {
       console.error("Error saving deal:", error);
       toast({
         title: "Errore",
-        description: `Si è verificato un errore durante il salvataggio del deal: ${error.message}`,
+        description: "Si è verificato un errore durante il salvataggio del deal",
         variant: "destructive",
       });
     }
   });
 
-  // Handler per il submit del form
+  // Handler del submit del form
   const onSubmit = (data: DealFormData) => {
-    console.log("Form data submitted:", data);
     saveDeal.mutate(data);
   };
 
@@ -513,7 +515,9 @@ export default function NewDealModal({ open, onOpenChange, initialData }: DealMo
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEditMode ? "Modifica Deal" : "Nuovo Deal"}</DialogTitle>
+          <DialogTitle>
+            {isEditMode ? "Modifica Deal" : "Crea Nuovo Deal"}
+          </DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -523,46 +527,28 @@ export default function NewDealModal({ open, onOpenChange, initialData }: DealMo
             <div className="space-y-2">
               <Label htmlFor="companyId">Azienda (facoltativa)</Label>
               <Controller
-                name="companyId"
                 control={control}
+                name="companyId"
                 render={({ field }) => (
-                  <Popover open={openCompanyCombobox} onOpenChange={setOpenCompanyCombobox}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={openCompanyCombobox}
-                        className="w-full justify-between"
-                      >
-                        {field.value && companies ? 
-                          companies.find((company) => company.id === field.value)?.name ?? "Seleziona azienda" 
-                          : "Seleziona azienda"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-full p-0">
-                      <Command>
-                        <CommandInput placeholder="Cerca azienda..." />
-                        <CommandEmpty>Nessuna azienda trovata.</CommandEmpty>
-                        <CommandGroup className="max-h-60 overflow-y-auto">
-                          {companies && companies.map((company) => (
-                            <CommandItem
-                              key={company.id}
-                              value={company.name}
-                              onSelect={() => handleCompanySelect(company.id)}
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  field.value === company.id ? "opacity-100" : "opacity-0"
-                                )}
-                              />
-                              {company.name}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
+                  <Select
+                    value={field.value ? field.value.toString() : ""}
+                    onValueChange={(value) => {
+                      const companyId = parseInt(value);
+                      field.onChange(companyId);
+                      handleCompanySelect(companyId);
+                    }}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Seleziona azienda" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {companies && companies.map((company) => (
+                        <SelectItem key={company.id} value={company.id.toString()}>
+                          {company.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 )}
               />
               {errors.companyId && (
@@ -577,74 +563,27 @@ export default function NewDealModal({ open, onOpenChange, initialData }: DealMo
                 name="contactId"
                 control={control}
                 render={({ field }) => (
-                  <Popover open={openContactCombobox} onOpenChange={setOpenContactCombobox}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={openContactCombobox}
-                        className={cn(
-                          "w-full justify-between",
-                          errors.contactId && "border-red-500"
-                        )}
-                      >
-                        {field.value && contacts ? 
-                          (() => {
-                            const contact = contacts.find((c) => c.id === field.value);
-                            return contact 
-                              ? `${contact.firstName || ''} ${contact.lastName || ''}`.trim() 
-                              : "Seleziona contatto";
-                          })() 
-                          : "Seleziona contatto"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-full p-0">
-                      <Command>
-                        <CommandInput placeholder="Cerca contatto..." />
-                        <CommandEmpty>Nessun contatto trovato.</CommandEmpty>
-                        <CommandGroup className="max-h-60 overflow-y-auto">
-                          {/* Se c'è un'azienda selezionata, mostra solo i contatti di quell'azienda */}
-                          {watchCompanyId
-                            ? getCompanyContacts().map((contact) => (
-                                <CommandItem
-                                  key={contact.id}
-                                  value={`${contact.firstName || ''} ${contact.lastName || ''}`}
-                                  onSelect={() => {
-                                    setValue("contactId", contact.id);
-                                    setOpenContactCombobox(false);
-                                  }}
-                                >
-                                  <Check
-                                    className={cn(
-                                      "mr-2 h-4 w-4",
-                                      field.value === contact.id ? "opacity-100" : "opacity-0"
-                                    )}
-                                  />
-                                  {`${contact.firstName || ''} ${contact.lastName || ''}`.trim() || 'Senza nome'}
-                                </CommandItem>
-                              ))
-                            : contacts.map((contact) => (
-                                <CommandItem
-                                  key={contact.id}
-                                  value={`${contact.firstName || ''} ${contact.lastName || ''}`}
-                                  onSelect={() => {
-                                    setValue("contactId", contact.id);
-                                    setOpenContactCombobox(false);
-                                  }}
-                                >
-                                  <Check
-                                    className={cn(
-                                      "mr-2 h-4 w-4",
-                                      field.value === contact.id ? "opacity-100" : "opacity-0"
-                                    )}
-                                  />
-                                  {`${contact.firstName || ''} ${contact.lastName || ''}`.trim() || 'Senza nome'}
-                                </CommandItem>
-                              ))}
-                        </CommandGroup>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
+                  <ContactCombobox
+                    contacts={watchCompanyId ? getCompanyContacts() : contacts}
+                    value={field.value ? field.value.toString() : ""}
+                    onChange={(value) => {
+                      const contactId = parseInt(value);
+                      field.onChange(contactId);
+                      // Se selezioniamo un contatto che ha un'azienda primaria e non abbiamo già selezionato un'azienda
+                      if (!watchCompanyId) {
+                        const selectedContact = contacts.find(c => c.id === contactId);
+                        if (selectedContact && selectedContact.areasOfActivity) {
+                          const primaryCompany = selectedContact.areasOfActivity.find(area => area.isPrimary);
+                          if (primaryCompany && primaryCompany.companyId) {
+                            setValue("companyId", primaryCompany.companyId);
+                            handleCompanySelect(primaryCompany.companyId);
+                          }
+                        }
+                      }
+                    }}
+                    placeholder="Seleziona persona"
+                    emptyMessage={watchCompanyId ? "Nessun contatto trovato per questa azienda" : "Nessun contatto trovato"}
+                  />
                 )}
               />
               {errors.contactId && (
@@ -653,197 +592,59 @@ export default function NewDealModal({ open, onOpenChange, initialData }: DealMo
             </div>
           </div>
           
-          {/* Seconda riga: Filiale (solo se è selezionata un'azienda) */}
-          {watchCompanyId && (
+          {/* Seconda riga: Filiale (dipende dall'azienda), Pipeline Stage e Deal Name */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Filiale (visibile solo se è selezionata un'azienda) */}
             <div className="space-y-2">
               <Label htmlFor="branchId">Filiale</Label>
               <Controller
                 name="branchId"
                 control={control}
                 render={({ field }) => (
-                  <Popover open={openBranchCombobox} onOpenChange={setOpenBranchCombobox}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={openBranchCombobox}
-                        className="w-full justify-between"
-                      >
-                        {field.value && branches ? 
-                          branches.find((branch) => branch.id === field.value)?.name ?? "Seleziona filiale" 
-                          : "Seleziona filiale"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-full p-0">
-                      <Command>
-                        <CommandInput placeholder="Cerca filiale..." />
-                        <CommandEmpty>Nessuna filiale trovata per questa azienda.</CommandEmpty>
-                        <CommandGroup className="max-h-60 overflow-y-auto">
-                          {branches && branches.map((branch) => (
-                            <CommandItem
-                              key={branch.id}
-                              value={branch.name}
-                              onSelect={() => {
-                                setValue("branchId", branch.id);
-                                setOpenBranchCombobox(false);
-                              }}
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  field.value === branch.id ? "opacity-100" : "opacity-0"
-                                )}
-                              />
-                              {branch.name}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                )}
-              />
-            </div>
-          )}
-          
-          {/* Terza riga: Contatti Sinergia */}
-          <div className="space-y-2">
-            <Label>Contatti Sinergia (max 10)</Label>
-            <Popover open={openSynergyCombobox} onOpenChange={setOpenSynergyCombobox}>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full justify-between">
-                  Seleziona contatti sinergia
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-full p-0">
-                <Command>
-                  <CommandInput placeholder="Cerca contatti..." />
-                  <CommandEmpty>Nessun contatto trovato.</CommandEmpty>
-                  <CommandGroup className="max-h-60 overflow-y-auto">
-                    {getSynergyContacts().map((contact) => (
-                      <CommandItem
-                        key={contact.id}
-                        value={`${contact.firstName || ''} ${contact.lastName || ''}`}
-                        onSelect={() => toggleSynergyContact(contact)}
-                      >
-                        <div className="flex items-center w-full">
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              watchSynergyContactIds?.includes(contact.id) ? "opacity-100" : "opacity-0"
-                            )}
-                          />
-                          <span>
-                            {`${contact.firstName || ''} ${contact.lastName || ''}`.trim() || 'Senza nome'}
-                          </span>
-                        </div>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </Command>
-              </PopoverContent>
-            </Popover>
-            
-            {/* Mostra i contatti sinergia selezionati */}
-            {selectedSynergyContacts.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {selectedSynergyContacts.map((contact) => (
-                  <Badge key={contact.id} variant="secondary" className="flex items-center gap-1">
-                    {`${contact.firstName || ''} ${contact.lastName || ''}`.trim() || 'Senza nome'}
-                    <X 
-                      className="h-3 w-3 cursor-pointer" 
-                      onClick={() => removeSynergyContact(contact.id)} 
-                    />
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </div>
-          
-          {/* Quarta riga: Date e Stage */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Data di inizio */}
-            <div className="space-y-2">
-              <Label htmlFor="startDate">Data di inizio</Label>
-              <Controller
-                name="startDate"
-                control={control}
-                render={({ field }) => (
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {field.value ? format(field.value, "dd/MM/yyyy") : <span>Seleziona data</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <Select
+                    value={field.value ? field.value.toString() : ""}
+                    onValueChange={(value) => {
+                      field.onChange(parseInt(value));
+                    }}
+                    disabled={!watchCompanyId}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder={watchCompanyId ? "Seleziona filiale" : "Prima seleziona un'azienda"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {branches && branches.length > 0 ? (
+                        branches.map((branch) => (
+                          <SelectItem key={branch.id} value={branch.id.toString()}>
+                            {branch.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="no-branches" disabled>
+                          {watchCompanyId ? "Nessuna filiale disponibile" : "Prima seleziona un'azienda"}
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
                 )}
               />
             </div>
             
-            {/* Data di conclusione prevista */}
+            {/* Pipeline Stage */}
             <div className="space-y-2">
-              <Label htmlFor="expectedCloseDate">Data conclusione prevista</Label>
-              <Controller
-                name="expectedCloseDate"
-                control={control}
-                render={({ field }) => (
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {field.value ? format(field.value, "dd/MM/yyyy") : <span>Seleziona data</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                )}
-              />
-            </div>
-            
-            {/* Stage del Deal */}
-            <div className="space-y-2">
-              <Label htmlFor="stageId">Fase pipeline</Label>
+              <Label htmlFor="stageId">Stage <span className="text-red-500">*</span></Label>
               <Controller
                 name="stageId"
                 control={control}
                 render={({ field }) => (
                   <Select
-                    value={field.value?.toString() || ""}
-                    onValueChange={(value) => field.onChange(parseInt(value, 10))}
+                    value={field.value ? field.value.toString() : ""}
+                    onValueChange={(value) => field.onChange(parseInt(value))}
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleziona fase" />
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Seleziona stage" />
                     </SelectTrigger>
                     <SelectContent>
-                      {Array.isArray(stages) && stages.map((stage) => (
+                      {stages && stages.map((stage) => (
                         <SelectItem key={stage.id} value={stage.id.toString()}>
                           {stage.name}
                         </SelectItem>
@@ -852,11 +653,11 @@ export default function NewDealModal({ open, onOpenChange, initialData }: DealMo
                   </Select>
                 )}
               />
+              {errors.stageId && (
+                <p className="text-xs text-red-500">{errors.stageId.message}</p>
+              )}
             </div>
-          </div>
-          
-          {/* Quinta riga: Nome del Deal, importo e revenue prevista */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            
             {/* Nome Deal */}
             <div className="space-y-2">
               <Label htmlFor="name">Nome Deal <span className="text-red-500">*</span></Label>
@@ -869,13 +670,18 @@ export default function NewDealModal({ open, onOpenChange, initialData }: DealMo
                 <p className="text-xs text-red-500">{errors.name.message}</p>
               )}
             </div>
-            
-            {/* Importo Deal */}
+          </div>
+          
+          {/* Terza riga: Valore, Data Inizio, e Data Chiusura Prevista */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Valore */}
             <div className="space-y-2">
-              <Label htmlFor="value">Importo Deal</Label>
+              <Label htmlFor="value">Valore (€) <span className="text-red-500">*</span></Label>
               <Input
                 id="value"
                 type="number"
+                step="0.01"
+                min="0"
                 {...register("value")}
                 className={cn(errors.value && "border-red-500")}
               />
@@ -884,12 +690,91 @@ export default function NewDealModal({ open, onOpenChange, initialData }: DealMo
               )}
             </div>
             
-            {/* Revenue prevista */}
+            {/* Data Inizio */}
             <div className="space-y-2">
-              <Label htmlFor="expectedRevenue">Revenue prevista</Label>
+              <Label htmlFor="startDate">Data Inizio</Label>
+              <Controller
+                name="startDate"
+                control={control}
+                render={({ field }) => (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full pl-3 text-left font-normal",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        {field.value ? (
+                          format(field.value, "PPP")
+                        ) : (
+                          <span>Seleziona data</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                )}
+              />
+            </div>
+            
+            {/* Data Chiusura Prevista */}
+            <div className="space-y-2">
+              <Label htmlFor="expectedCloseDate">Data Chiusura Prevista</Label>
+              <Controller
+                name="expectedCloseDate"
+                control={control}
+                render={({ field }) => (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full pl-3 text-left font-normal",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        {field.value ? (
+                          format(field.value, "PPP")
+                        ) : (
+                          <span>Seleziona data</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                )}
+              />
+            </div>
+          </div>
+          
+          {/* Quarta riga: Revenue Attesa, Tags */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Revenue Attesa */}
+            <div className="space-y-2">
+              <Label htmlFor="expectedRevenue">Revenue Attesa (€)</Label>
               <Input
                 id="expectedRevenue"
                 type="number"
+                step="0.01"
+                min="0"
                 {...register("expectedRevenue")}
                 className={cn(errors.expectedRevenue && "border-red-500")}
               />
@@ -897,76 +782,122 @@ export default function NewDealModal({ open, onOpenChange, initialData }: DealMo
                 <p className="text-xs text-red-500">{errors.expectedRevenue.message}</p>
               )}
             </div>
-          </div>
-          
-          {/* Sesta riga: Tags */}
-          <div className="space-y-2">
-            <Label htmlFor="tags">Tag</Label>
-            <div className="flex items-center gap-2">
-              <Input
-                id="tags"
-                value={tagsInput}
-                onChange={(e) => setTagsInput(e.target.value)}
-                placeholder="Inserisci tag separati da virgole"
-                onBlur={handleAddTag}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddTag();
-                  }
-                }}
-              />
-            </div>
-            {watch("tags") && watch("tags")!.length > 0 && (
-              <div className="flex flex-wrap gap-1 mt-1">
-                {watch("tags")!.map((tag, i) => (
-                  <Badge key={i} variant="secondary" className="text-xs">
-                    {tag}
-                  </Badge>
-                ))}
+            
+            {/* Tags */}
+            <div className="space-y-2">
+              <Label htmlFor="tags">Tags (separati da virgola)</Label>
+              <div className="flex space-x-2">
+                <Input
+                  id="tags-input"
+                  value={tagsInput}
+                  onChange={(e) => setTagsInput(e.target.value)}
+                  onBlur={handleAddTag}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddTag();
+                    }
+                  }}
+                  placeholder="Aggiungi tags..."
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={handleAddTag}
+                >
+                  Aggiungi
+                </Button>
               </div>
-            )}
+              
+              {/* Visualizza i tag selezionati */}
+              {watch("tags") && watch("tags")!.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {watch("tags")!.map((tag, index) => (
+                    <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                      {tag}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="h-5 w-5 p-0 hover:bg-transparent"
+                        onClick={() => {
+                          const newTags = [...watch("tags") as string[]];
+                          newTags.splice(index, 1);
+                          setValue("tags", newTags);
+                          setTagsInput(newTags.join(", "));
+                        }}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
           
-          {/* Settima riga: Note */}
+          {/* Campo per le sinergie */}
+          <SynergiesSelect
+            contacts={getSynergyContacts()}
+            control={control}
+            name="synergyContactIds"
+            label="Sinergie (max 10 contatti)"
+            placeholder="Seleziona contatti sinergia..."
+            className="space-y-2"
+          />
+          
+          {/* Note */}
           <div className="space-y-2">
             <Label htmlFor="notes">Note</Label>
             <Textarea
               id="notes"
               {...register("notes")}
-              rows={3}
-              placeholder="Note aggiuntive sul deal..."
+              rows={4}
+              placeholder="Aggiungi dettagli o note sul deal..."
             />
           </div>
           
-          {/* Ottava riga: Upload file */}
+          {/* Allegati (da implementare con il backend) */}
           <div className="space-y-2">
             <Label>Allegati</Label>
-            <div className="border border-dashed rounded-md p-6 text-center cursor-pointer" onClick={handleFileButtonClick}>
+            <div className="border border-gray-200 rounded-md p-4">
               <input
                 type="file"
                 ref={fileInputRef}
                 onChange={handleFileChange}
-                className="hidden"
+                style={{ display: 'none' }}
               />
-              <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-              <p className="text-sm text-gray-500">
-                {selectedFile ? selectedFile.name : "Trascina qui i file o clicca per caricare"}
-              </p>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleFileButtonClick}
+                className="w-full h-32 flex flex-col items-center justify-center"
+              >
+                <Upload className="h-8 w-8 mb-2" />
+                <span>Fai click per caricare file</span>
+                <span className="text-xs text-muted-foreground mt-1">
+                  (o trascina e rilascia)
+                </span>
+              </Button>
+              
+              {/* Visualizza il file selezionato */}
+              {selectedFile && (
+                <div className="mt-3">
+                  <Badge variant="outline" className="flex items-center gap-2">
+                    {selectedFile.name}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="h-5 w-5 p-0 hover:bg-transparent"
+                      onClick={() => setSelectedFile(null)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </Badge>
+                </div>
+              )}
             </div>
           </div>
           
-          {/* Nona riga: Email associate (placeholder per funzionalità futura) */}
-          <div className="space-y-2">
-            <Label>Email Associate</Label>
-            <div className="border rounded-md p-4 bg-gray-50">
-              <p className="text-sm text-gray-500 text-center">
-                Le email associate a questo deal appariranno qui (funzionalità in arrivo)
-              </p>
-            </div>
-          </div>
-          
-          {/* Footer con pulsanti */}
           <DialogFooter>
             <Button
               type="button"
@@ -975,10 +906,7 @@ export default function NewDealModal({ open, onOpenChange, initialData }: DealMo
             >
               Annulla
             </Button>
-            <Button 
-              type="submit" 
-              disabled={isSubmitting}
-            >
+            <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Salvataggio..." : isEditMode ? "Aggiorna Deal" : "Crea Deal"}
             </Button>
           </DialogFooter>
