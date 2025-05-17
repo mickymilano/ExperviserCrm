@@ -1141,7 +1141,7 @@ export class PostgresStorage implements IStorage {
       // nella tabella leads abbiamo first_name, last_name, etc.
       const {
         firstName, lastName, status, email, phone, 
-        source, notes, company, // company è lo stesso di companyName nel frontend
+        source, notes, company, // nel frontend è company ma nella tabella è company_name
         role, address, website,
         customFields, assignedToId
       } = lead;
@@ -1157,7 +1157,7 @@ export class PostgresStorage implements IStorage {
           phone,
           source, 
           notes,
-          company, 
+          company_name, 
           role,
           address,
           website,

@@ -4,7 +4,7 @@
 # Necessita di autenticazione JWT
 
 # Impostazioni
-API_BASE="http://localhost:3000"
+API_BASE="http://localhost:5000"
 TIMESTAMP=$(date +%s)
 # Token di autenticazione (generato con node generate_token.js)
 AUTH_TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJkZWJ1ZyIsInJvbGUiOiJzdXBlcl9hZG1pbiIsImlhdCI6MTc0NzUwNTMwOCwiZXhwIjoxNzQ3NTkxNzA4fQ.Uo37JZIV6tQoL0XPBsmFeR6TFOSQaGEEoLey1ModJLg"
