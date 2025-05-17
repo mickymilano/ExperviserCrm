@@ -564,6 +564,31 @@ export function registerRoutes(app: any) {
     }
   });
   
+  // Aggiorna un contatto (supporto PATCH)
+  app.patch('/api/contacts/:id', authenticate, async (req, res) => {
+    try {
+      console.log('PATCH /api/contacts/:id - Richiesta aggiornamento contatto', req.params.id);
+      const contactId = parseInt(req.params.id);
+      
+      // Verifica se il contatto esiste
+      const contact = await storage.getContact(contactId);
+      if (!contact) {
+        return res.status(404).json({ message: 'Contatto non trovato' });
+      }
+      
+      console.log('PATCH /api/contacts/:id - Dati ricevuti:', req.body);
+      
+      // Aggiorna il contatto
+      const updatedContact = await storage.updateContact(contactId, req.body);
+      
+      console.log('PATCH /api/contacts/:id - Contatto aggiornato con successo');
+      res.json(updatedContact);
+    } catch (error) {
+      console.error('Error updating contact (PATCH):', error);
+      res.status(500).json({ message: 'Errore durante l\'aggiornamento del contatto' });
+    }
+  });
+  
   // Elimina un contatto
   app.delete('/api/contacts/:id', authenticate, async (req, res) => {
     try {
