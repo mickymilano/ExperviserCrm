@@ -826,7 +826,7 @@ export function registerRoutes(app: any) {
     }
   });
   
-  // Aggiorna un'azienda
+  // Aggiorna un'azienda (metodo PUT)
   app.put('/api/companies/:id', authenticate, async (req, res) => {
     try {
       const companyId = parseInt(req.params.id);
@@ -843,6 +843,33 @@ export function registerRoutes(app: any) {
       res.json(updatedCompany);
     } catch (error) {
       console.error('Error updating company:', error);
+      res.status(500).json({ message: 'Errore durante l\'aggiornamento dell\'azienda' });
+    }
+  });
+  
+  // Aggiorna parzialmente un'azienda (metodo PATCH, più indicato per aggiornamenti parziali)
+  app.patch('/api/companies/:id', authenticate, async (req, res) => {
+    try {
+      const companyId = parseInt(req.params.id);
+      
+      // Log diagnostico per problemi di aggiornamento
+      console.log("PATCH companies: aggiornamento azienda richiesto con ID", companyId);
+      console.log("PATCH companies: dati ricevuti per l'aggiornamento:", req.body);
+      
+      // Verifica se l'azienda esiste
+      const company = await storage.getCompany(companyId);
+      if (!company) {
+        console.log("PATCH companies: azienda non trovata con ID", companyId);
+        return res.status(404).json({ message: 'Azienda non trovata' });
+      }
+      
+      // Aggiorna l'azienda
+      const updatedCompany = await storage.updateCompany(companyId, req.body);
+      
+      console.log("PATCH companies: azienda aggiornata con successo, nuovi dati:", updatedCompany);
+      res.json(updatedCompany);
+    } catch (error) {
+      console.error('PATCH companies: errore durante aggiornamento azienda:', error);
       res.status(500).json({ message: 'Errore durante l\'aggiornamento dell\'azienda' });
     }
   });
