@@ -1,0 +1,66 @@
+# 1) DROP columns city & region a livello DB
+psql -c "ALTER TABLE public.companies DROP COLUMN IF EXISTS city; ALTER TABLE public.companies DROP COLUMN IF EXISTS region;"
+
+# 2) Rimuovi city/region dai tipi TS
+apply_patch << 'EOF'
+*** Begin Patch
+*** Update File: client/src/types.ts
+@@ interface Company {
+-  /** Città (DEPRECATO) */
+-  city?: string;
+-  /** Regione (DEPRECATO) */
+-  region?: string;
++  /** Indirizzo completo: via, civico, CAP, città, provincia, nazione */
++  fullAddress: string;
+*** End Patch
+EOF
+
+# 3) Pulisci CompanyModal.tsx: solo GooglePlacesAutocomplete su name → fullAddress
+apply_patch << 'EOF'
+*** Begin Patch
+*** Update File: client/src/components/modals/CompanyModal.tsx
+@@ import React, { useState } from 'react';
+-import GooglePlacesAutocomplete from 'react-google-places-autocomplete';
++import GooglePlacesAutocomplete from 'react-google-places-autocomplete';
+
+@@ function CompanyModal({ initialData, onSave, onClose }) {
+-      {/* Campo manuale obsoleto */}
+-      <label>Città</label>
+-      <input type="text" value={company.city||''} readOnly style={{ opacity:0.6 }}/>
+-      <label>Indirizzo</label>
+-      <input type="text" value={company.fullAddress||''} readOnly style={{ opacity:0.6 }}/>
++      {/* RIPRISTINO: Google Autocomplete solo su “Nome Azienda” */}
++      <label>Nome Azienda</label>
++      <GooglePlacesAutocomplete
++        apiKey={process.env.VITE_GOOGLE_MAPS_API_KEY}
++        autocompletionRequest={{ types: ['establishment'] }}
++        selectProps={{
++          placeholder: 'Cerca azienda per indirizzo…',
++          value: company.name ? { label: company.fullAddress, value: company.name } : null,
++          onChange: sel => setCompany(c => ({
++            ...c,
++            name: sel.value,
++            fullAddress: sel.label
++          }))
++        }}
++      />
+*** End Patch
+EOF
+
+# 4) Assicurati che la chiave Google sia in env
+apply_patch << 'EOF'
+*** Begin Patch
+*** Update File: client/.env
+-VITE_GOOGLE_MAPS_API_KEY=
++VITE_GOOGLE_MAPS_API_KEY=TUO_GOOGLE_API_KEY
+*** End Patch
+EOF
+
+# 5) Ricompila e riavvia tutto
+kill $(lsof -t -i:5000) || true
+npm install
+npm run db:migrate
+npm run dev --prefix server &
+npm run dev --prefix client &
+
+echo "✅ Hard reset modulo Aziende completato: 'city' e 'region' rimossi, Google Autocomplete su 'name' che popola 'fullAddress'. Verifica ora."
