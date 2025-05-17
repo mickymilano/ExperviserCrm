@@ -151,6 +151,50 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     setValue("companyId", id);
     // Aggiorna i contatti filtrati quando cambia l'azienda
     updateFilteredContacts(id);
+    updateSynergyContacts(id);
+  };
+  
+  // Filtra i contatti per le sinergie (solo quelli NON dell'azienda selezionata)
+  const updateSynergyContacts = (companyId: number | null) => {
+    if (!contacts || !Array.isArray(contacts)) {
+      console.warn("Synergy contacts data is not available or not an array");
+      setSynergyContacts([]);
+      return;
+    }
+    
+    console.log("Filtering synergy contacts for company ID:", companyId, "Available contacts:", contacts.length);
+    
+    if (!companyId) {
+      // Se non c'è un'azienda selezionata, mostra lista vuota
+      setSynergyContacts([]);
+      console.log("No company selected, clearing synergy contacts selection");
+      return;
+    }
+    
+    // Filtriamo i contatti che NON appartengono all'azienda selezionata
+    const filteredForSynergies = contacts.filter(contact => {
+      // Per i contatti sinergici, includiamo SOLO quelli che NON appartengono all'azienda selezionata
+      if (contact.areasOfActivity && Array.isArray(contact.areasOfActivity)) {
+        // Verifichiamo se il contatto ha almeno un'area di attività con l'azienda selezionata
+        const hasMatchingArea = contact.areasOfActivity.some(area => {
+          const areaCompanyId = typeof area.companyId === 'number' ? 
+            area.companyId : 
+            (area.companyId ? parseInt(area.companyId as string) : null);
+          
+          return areaCompanyId === companyId;
+        });
+        
+        // Includiamo solo contatti che NON hanno aree di attività con l'azienda selezionata
+        return !hasMatchingArea;
+      }
+      
+      // Se il contatto non ha aree di attività, lo includiamo comunque
+      return true;
+    });
+    
+    // Mostriamo SOLO i contatti NON associati all'azienda selezionata
+    setSynergyContacts(filteredForSynergies);
+    console.log(`Filtrati ${filteredForSynergies.length} contatti sinergici (non associati all'azienda ${companyId})`);
   };
   
   // Helper function che utilizza direttamente i valori del form
