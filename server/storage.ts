@@ -108,6 +108,7 @@ export interface IStorage {
   createBranch(branchData: InsertBranch): Promise<Branch>;
   updateBranch(id: number, branchData: Partial<Branch>): Promise<Branch>;
   deleteBranch(id: number): Promise<void>;
+  getBranchesCount(): Promise<number>;
 }
 
 /**
