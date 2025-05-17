@@ -1064,34 +1064,26 @@ export class PostgresStorage implements IStorage {
 
   async getLead(id: number): Promise<Lead | undefined> {
     try {
-      // Utilizziamo SQL nativo per evitare problemi con l'ORM
+      // Utilizziamo SQL nativo con mappatura diretta camelCase come specificato nella patch
       const result = await pool.query(
         `
         SELECT 
-          id, 
-          first_name,
-          middle_name,
-          last_name,
-          company_name, 
+          id,
+          first_name AS "firstName",
+          last_name AS "lastName",
+          company_name AS company,
+          email,
+          phone,
+          status,
+          source,
+          notes,
           role,
-          mobile_phone,
-          company_email,
-          private_email,
-          office_phone,
-          private_phone,
-          linkedin,
-          facebook,
-          instagram,
-          tiktok,
+          address,
           website,
-          source, 
-          status, 
-          tags,
-          notes, 
-          assigned_to_id,
-          custom_fields,
-          created_at, 
-          updated_at
+          custom_fields AS "customFields",
+          assigned_to_id AS "assignedToId",
+          created_at AS "createdAt",
+          updated_at AS "updatedAt"
         FROM leads 
         WHERE id = $1
       `,
@@ -1102,33 +1094,7 @@ export class PostgresStorage implements IStorage {
         return undefined;
       }
 
-      const lead = result.rows[0];
-      const phone =
-        lead.mobile_phone || lead.office_phone || lead.private_phone || "";
-      const email = lead.company_email || lead.private_email || "";
-
-      // Adaptiamo il formato per essere compatibile con il frontend
-      return {
-        id: lead.id,
-        firstName: lead.first_name || "",
-        lastName: lead.last_name || "",
-        name: `${lead.first_name || ""} ${lead.last_name || ""}`.trim(),
-        email: email,
-        phone: phone,
-        companyName: lead.company_name || "",
-        company: lead.company_name || "", // Aggiungiamo company per compatibilità con il frontend
-        companyEmail: lead.company_email || "",
-        privateEmail: lead.private_email || "",
-        mobilePhone: lead.mobile_phone || "",
-        officePhone: lead.office_phone || "",
-        privatePhone: lead.private_phone || "",
-        status: lead.status || "new",
-        source: lead.source || "",
-        notes: lead.notes || "",
-        tags: lead.tags || [],
-        createdAt: lead.created_at,
-        updatedAt: lead.updated_at,
-      };
+      return result.rows[0] as Lead;
     } catch (error) {
       console.error(`Error in getLead(${id}):`, error);
       return undefined;
@@ -1254,11 +1220,6 @@ export class PostgresStorage implements IStorage {
       if (leadData.address !== undefined) {
         updateFields.push(`address = $${paramCounter++}`);
         params.push(leadData.address);
-      }
-
-      if (leadData.company !== undefined) {
-        updateFields.push(`company = $${paramCounter++}`);
-        params.push(leadData.company);
       }
       
       if (leadData.role !== undefined) {
