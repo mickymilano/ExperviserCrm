@@ -1,0 +1,88 @@
+Ecco una patch definitiva che elimina tutti i riferimenti alla colonna inesistente name nella tabella leads e riallinea createLead, updateLead e getLead allo schema reale (first_name, last_name, company_name):
+
+apply_patch << 'EOF'
+*** Begin Patch
+*** Update File: server/postgresStorage.ts
+@@ async createLead(leadData) {
+-  const res = await client.query(
+-    `INSERT INTO leads(name, company, email, phone, status)
+-     VALUES($1,$2,$3,$4,$5)
+-     RETURNING *`,
+-    [leadData.name, leadData.company, leadData.email, leadData.phone, leadData.status]
+-  );
++  const res = await client.query(
++    `INSERT INTO leads(first_name, last_name, company_name, email, phone, status)
++     VALUES($1,$2,$3,$4,$5,$6)
++     RETURNING 
++       id,
++       first_name   AS firstName,
++       last_name    AS lastName,
++       company_name AS company,
++       email,
++       phone,
++       status`,
++    [
++      leadData.firstName,
++      leadData.lastName,
++      leadData.company,
++      leadData.email,
++      leadData.phone,
++      leadData.status
++    ]
++  );
+
+@@ async updateLead(id, updates) {
+-  // eventuale codice precedente che usava `name=...`
++  // mappatura corretta snake_case ← camelCase
+   if (updates.firstName) fields.push(`first_name=$${values.push(updates.firstName)}`);
+   if (updates.lastName)  fields.push(`last_name=$${values.push(updates.lastName)}`);
+   if (updates.company)   fields.push(`company_name=$${values.push(updates.company)}`);
+   if (updates.email)     fields.push(`email=$${values.push(updates.email)}`);
+   if (updates.phone)     fields.push(`phone=$${values.push(updates.phone)}`);
+   if (updates.status)    fields.push(`status=$${values.push(updates.status)}`);
+@@ async getLead(id) {
+-  const res = await client.query(`SELECT * FROM leads WHERE id=$1`, [id]);
+-  return res.rows[0];
++  const res = await client.query(
++    `SELECT 
++       id,
++       first_name   AS "firstName",
++       last_name    AS "lastName",
++       company_name AS company,
++       email,
++       phone,
++       status
++     FROM leads
++     WHERE id=$1`,
++    [id]
++  );
++  return res.rows[0];
+*** End Patch
+EOF
+
+# 2) Riavviare il server
+kill $(lsof -t -i:5000) && npm run dev &
+
+# 3) Verifica rapida via curl
+TOKEN=<il_tuo_token_valido>
+curl -v -X POST http://localhost:5000/api/leads \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"firstName":"Mario","lastName":"Rossi","company":"TestCo","email":"m.rossi@test.com","phone":"1234567890","status":"new"}'
+curl -v -X GET    http://localhost:5000/api/leads -H "Authorization: Bearer $TOKEN"
+curl -v -X PATCH  http://localhost:5000/api/leads/1 \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"lastName":"Verdi"}'
+curl -v -X DELETE http://localhost:5000/api/leads/1 -H "Authorization: Bearer $TOKEN"
+
+# 4) Controllo in DB
+psql "postgresql://$CRM_USER:$CRM_PASS@$CRM_HOST/$CRM_DB" \
+  -c "SELECT id, first_name, last_name, company_name, email, phone, status FROM leads ORDER BY id DESC LIMIT 5;"
+
+Con questa patch:
+	•	Eliminiamo ogni tentativo di usare name su leads.
+	•	Usiamo i campi reali first_name, last_name, company_name.
+	•	Ritorniamo al frontend un oggetto con proprietà camelCase (firstName, lastName, company).
+
+Dopo il riavvio, esegui i curl di test e verifica direttamente in psql per confermare che i lead vengano creati, letti, aggiornati e cancellati correttamente.
