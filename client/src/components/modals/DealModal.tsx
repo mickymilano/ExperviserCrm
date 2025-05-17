@@ -843,10 +843,11 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                     <Select
                       value={field.value?.toString() || ""}
                       onValueChange={(value) => {
-                        const companyId = parseInt(value, 10);
-                        console.log("Company selected:", companyId);
-                        field.onChange(companyId);
-                        setCompanyIdInForm(companyId);
+                        const newCompanyId = parseInt(value, 10);
+                        console.log("Company selected:", newCompanyId);
+                        field.onChange(newCompanyId);
+                        // Aggiorniamo lo stato locale dell'ID azienda
+                        setCompanyId(newCompanyId);
                       }}
                     >
                       <SelectTrigger>
