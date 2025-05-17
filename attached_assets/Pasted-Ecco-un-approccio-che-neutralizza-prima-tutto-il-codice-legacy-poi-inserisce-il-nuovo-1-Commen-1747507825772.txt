@@ -1,0 +1,215 @@
+Ecco un approccio che neutralizza prima tutto il codice legacy, poi inserisce il nuovo:
+
+# 1) Commenta/intercetta ogni vecchia implementazione Lead
+
+apply_patch << 'EOF'
+*** Begin Patch
+*** Update File: server/routes.ts
+@@
+// >>> Inizio blocco Lead da neutralizzare
+- router.get('/api/leads'...
+- router.get('/api/leads/:id'...
+- router.post('/api/leads'...
+- router.patch('/api/leads/:id'...
+- router.delete('/api/leads/:id'...
+- router.post('/api/leads/:id/convert'...
++ // --- Lead routes neutralizzate (legacy) ---
++ // router.get('/api/leads', ...);
++ // router.get('/api/leads/:id', ...);
++ // router.post('/api/leads', ...);
++ // router.patch('/api/leads/:id', ...);
++ // router.delete('/api/leads/:id', ...);
++ // router.post('/api/leads/:id/convert', ...);
+*** End Patch
+EOF
+
+apply_patch << 'EOF'
+*** Begin Patch
+*** Update File: server/postgresStorage.ts
+@@
+// >>> Inizio blocco Lead da neutralizzare
+- export async function getLeads() { ... }
+- export async function getLead(id) { ... }
+- export async function createLead(data) { ... }
+- export async function updateLead(id, data) { ... }
+- export async function deleteLead(id) { ... }
+- export async function convertLead(id) { ... }
++ // --- Lead storage legacy neutralizzato ---
++ // export async function getLeads() { /* legacy stubbed out */ }
++ // export async function getLead(id) { /* legacy stubbed out */ }
++ // export async function createLead(data) { /* legacy stubbed out */ }
++ // export async function updateLead(id,data) { /* legacy stubbed out */ }
++ // export async function deleteLead(id) { /* legacy stubbed out */ }
++ // export async function convertLead(id) { /* legacy stubbed out */ }
+*** End Patch
+EOF
+
+apply_patch << 'EOF'
+*** Begin Patch
+*** Update File: client/src/components/modals/LeadModal.tsx
+@@
+// >>> Inizio blocco LeadModal legacy
+- import ... 
+- export default function LeadModal(...) { ... }
++ // --- LeadModal legacy neutralizzato ---
++ // import ... 
++ // export default function LeadModal(...) { /* legacy stubbed out */ }
+*** End Patch
+EOF
+EOF
+
+# 2) Ora inserisci il codice “da zero” per il modulo Lead:
+
+apply_patch << 'EOF'
+*** Begin Patch
+*** Update File: server/routes.ts
+@@
+// --- Lead routes neutralizzate (legacy) ---
++ // --- Nuove Lead routes ---
++ import * as leadController from './controllers/leadController';
++ router.get   ('/api/leads',         leadController.listLeads);
++ router.get   ('/api/leads/:id',     leadController.getLead);
++ router.post  ('/api/leads',         leadController.createLead);
++ router.patch ('/api/leads/:id',     leadController.updateLead);
++ router.delete('/api/leads/:id',     leadController.deleteLead);
++ router.post  ('/api/leads/:id/convert', leadController.convertLead);
+*** End Patch
+EOF
+
+apply_patch << 'EOF'
+*** Begin Patch
+*** Update File: server/postgresStorage.ts
+@@
+// --- Lead storage legacy neutralizzato ---
++ // --- Nuovo Lead storage ---
++ export async function getLeads() {
++   const { rows } = await client.query(
++     `SELECT id, first_name AS "firstName", last_name AS "lastName",
++             company_name AS company, email, phone, status
++        FROM leads ORDER BY id DESC`
++   );
++   return rows;
++ }
++
++ export async function getLead(id) {
++   const { rows } = await client.query(
++     `SELECT id, first_name AS "firstName", last_name AS "lastName",
++             company_name AS company, email, phone, status
++        FROM leads WHERE id=$1`, [id]
++   );
++   return rows[0];
++ }
++
++ export async function createLead({ firstName, lastName, company, email, phone, status }) {
++   const { rows } = await client.query(
++     `INSERT INTO leads(first_name,last_name,company_name,email,phone,status)
++       VALUES($1,$2,$3,$4,$5,$6)
++       RETURNING id, first_name AS "firstName", last_name AS "lastName",
++                 company_name AS company, email, phone, status`,
++     [firstName, lastName, company, email, phone, status]
++   );
++   return rows[0];
++ }
++
++ export async function updateLead(id, updates) {
++   const fields = [], vals = [];
++   if (updates.firstName) fields.push(`first_name=$${vals.push(updates.firstName)}`);
++   if (updates.lastName)  fields.push(`last_name=$${vals.push(updates.lastName)}`);
++   if (updates.company)   fields.push(`company_name=$${vals.push(updates.company)}`);
++   if (updates.email)     fields.push(`email=$${vals.push(updates.email)}`);
++   if (updates.phone)     fields.push(`phone=$${vals.push(updates.phone)}`);
++   if (updates.status)    fields.push(`status=$${vals.push(updates.status)}`);
++   if (!fields.length) return;
++   vals.push(id);
++   await client.query(
++     `UPDATE leads SET ${fields.join(', ')} WHERE id=$${vals.length}`, vals
++   );
++ }
++
++ export async function deleteLead(id) {
++   await client.query(`DELETE FROM leads WHERE id=$1`, [id]);
++ }
++
++ export async function convertLead(id) {
++   const lead = await getLead(id);
++   let companyId = null;
++   if (lead.company) {
++     const comp = await client.query(
++       `INSERT INTO companies(name) VALUES($1) RETURNING id`, [lead.company]
++     );
++     companyId = comp.rows[0].id;
++   }
++   const contactRes = await client.query(
++     `INSERT INTO contacts(name,email,phone,company_id)
++       VALUES($1,$2,$3,$4) RETURNING *`,
++     [`${lead.firstName} ${lead.lastName}`, lead.email, lead.phone, companyId]
++   );
++   await updateLead(id, { status: 'converted' });
++   return { companyId, contact: contactRes.rows[0] };
++ }
+*** End Patch
+EOF
+
+apply_patch << 'EOF'
+*** Begin Patch
+*** Update File: client/src/components/modals/LeadModal.tsx
+@@
+// --- LeadModal legacy neutralizzato ---
++ // --- Nuovo LeadModal ---
++ import React, { useState, useEffect } from 'react';
++ export default function LeadModal({ leadId, onClose, onSaved }) {
++   const [data, setData] = useState({ firstName:'', lastName:'', company:'', email:'', phone:'', status:'new' });
++   useEffect(() => {
++     if (leadId) {
++       fetch(`/api/leads/${leadId}`)
++         .then(r=>r.json())
++         .then(lead=>setData(lead));
++     }
++   }, [leadId]);
++
++   const save = () => {
++     const method = leadId ? 'PATCH' : 'POST';
++     const url = leadId ? `/api/leads/${leadId}` : '/api/leads';
++     fetch(url, {
++       method,
++       headers:{ 'Content-Type':'application/json' },
++       body: JSON.stringify(data)
++     }).then(r=>{
++       if (r.ok) return r.json();
++       throw new Error('Errore salvataggio');
++     }).then(saved=>{
++       onSaved(saved);
++       onClose();
++     }).catch(console.error);
++   };
++
++   return (
++     <div className="modal">
++       <h2>{leadId ? 'Modifica Lead' : 'Nuovo Lead'}</h2>
++       <input value={data.firstName} onChange={e=>setData(d=>({...d, firstName:e.target.value}))} placeholder="Nome" />
++       <input value={data.lastName } onChange={e=>setData(d=>({...d, lastName :e.target.value}))} placeholder="Cognome" />
++       <input value={data.company  } onChange={e=>setData(d=>({...d, company  :e.target.value}))} placeholder="Azienda" />
++       <input value={data.email    } onChange={e=>setData(d=>({...d, email    :e.target.value}))} placeholder="Email" />
++       <input value={data.phone    } onChange={e=>setData(d=>({...d, phone    :e.target.value}))} placeholder="Telefono" />
++       <select value={data.status} onChange={e=>setData(d=>({...d, status:e.target.value}))}>
++         <option value="new">New</option>
++         <option value="contacted">Contacted</option>
++         <option value="converted">Converted</option>
++       </select>
++       <button onClick={save}>{leadId ? 'Aggiorna' : 'Crea'}</button>
++       <button onClick={onClose}>Annulla</button>
++     </div>
++   );
+*** End Patch
+EOF
+
+# 7) Riavvia server & frontend
+kill $(lsof -t -i:5000) && npm run dev &  
+npm run dev --prefix client  
+
+echo "Modulo Lead completamente ricostruito. Ora esegui i test CRUD e di conversione come pianificato."
+
+Cosa fa questo script
+	1.	Commenta tutto il vecchio codice Lead (routes, storage, UI) senza cancellare file.
+	2.	Aggiunge le nuove route, i nuovi metodi di storage e il nuovo componente LeadModal.
+	3.	Riavvia backend e frontend, pronti per i test CRUD e conversione.
