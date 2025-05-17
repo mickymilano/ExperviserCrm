@@ -199,16 +199,31 @@ export function PlacesAutocomplete({
             }
             
             // Formatta il valore da mostrare (nome e/o indirizzo)
-            const displayValue = place.name 
-              ? `${place.name}${place.formatted_address ? `, ${place.formatted_address}` : ''}`
-              : (place.formatted_address || internalValue);
+            // Per indirizzi, mostriamo SEMPRE l'indirizzo formattato completo
+            const displayValue = types.includes('address') 
+              ? (place.formatted_address || internalValue) 
+              : (place.name 
+                  ? `${place.name}${place.formatted_address ? `, ${place.formatted_address}` : ''}`
+                  : (place.formatted_address || internalValue));
+            
+            debugContext.logInfo('Formatting address value', {
+              types,
+              hasFormattedAddress: !!place.formatted_address,
+              formatted_address: place.formatted_address,
+              displayValue
+            }, { component: 'PlacesAutocomplete' });
             
             // Imposta il valore interno
             setInternalValue(displayValue);
             
             // Chiama il callback onChange con il valore e i dettagli del luogo
             if (onChangeRef.current) {
-              onChangeRef.current(place.name || displayValue, place);
+              // Per indirizzi, usa sempre l'indirizzo formattato completo quando disponibile
+              const valueToReturn = types.includes('address') && place.formatted_address 
+                ? place.formatted_address 
+                : (place.name || displayValue);
+              
+              onChangeRef.current(valueToReturn, place);
             }
             
             // Gestisce il callback per il paese se richiesto
