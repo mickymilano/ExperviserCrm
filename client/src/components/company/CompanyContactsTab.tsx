@@ -169,11 +169,13 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
     try {
       setIsUpdatingPrimary(true);
       
+      console.log(`Impostazione contatto primario ${contactId} per azienda ${companyId}`);
+      
       const res = await fetch(`/api/companies/${companyId}/primary-contact`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          primaryContactId: contactId
+          primaryContactId: contactId.toString() // Assicura che sia una stringa
         }),
       });
       
@@ -181,11 +183,16 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
         throw new Error("Impossibile impostare il contatto primario");
       }
       
+      const updatedCompany = await res.json();
+      console.log("Risposta dal server dopo l'impostazione del contatto primario:", updatedCompany);
+      
       // Aggiorna lo stato locale
       setPrimaryContactId(contactId);
       
+      // Invalidazione esplicita di tutte le queries correlate all'azienda
       // Invalida la query dell'azienda per aggiornare i dati
       queryClient.invalidateQueries({ queryKey: ["/api/companies", companyId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/companies", companyId, "contacts"] });
       
       toast({
         title: "Contatto primario impostato",

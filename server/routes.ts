@@ -864,11 +864,16 @@ export function registerRoutes(app: any) {
       const companyId = parseInt(req.params.id);
       const { primaryContactId } = req.body;
       
+      console.log(`Ricevuta richiesta di impostazione contatto primario per azienda ${companyId}:`, req.body);
+      
       // Verifica se l'azienda esiste
       const company = await storage.getCompany(companyId);
       if (!company) {
         return res.status(404).json({ message: 'Azienda non trovata' });
       }
+      
+      // Preparazione del valore di primary_contact_id
+      let primary_contact_id = null;
       
       // Se primaryContactId è fornito, verifica che il contatto esista
       if (primaryContactId) {
@@ -877,12 +882,17 @@ export function registerRoutes(app: any) {
         if (!contact) {
           return res.status(404).json({ message: 'Contatto non trovato' });
         }
+        primary_contact_id = contactId;
       }
+      
+      console.log(`Impostazione contatto primario per azienda ${companyId}: ${primary_contact_id}`);
       
       // Aggiorna l'azienda con il nuovo contatto primario
       const updatedCompany = await storage.updateCompany(companyId, {
-        primary_contact_id: primaryContactId ? parseInt(primaryContactId) : null
+        primary_contact_id
       });
+      
+      console.log(`Azienda aggiornata:`, updatedCompany);
       
       res.json(updatedCompany);
     } catch (error) {
