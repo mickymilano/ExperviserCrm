@@ -230,7 +230,7 @@ export default function DashboardPage() {
       </div>
       
       {/* Statistiche */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
         <StatCard
           title="Contatti"
           value={stats && typeof stats === 'object' && stats.contacts && typeof stats.contacts === 'object' ? stats.contacts.count || 0 : 0}
@@ -244,6 +244,13 @@ export default function DashboardPage() {
           percentChange={stats && typeof stats === 'object' && stats.companies && typeof stats.companies === 'object' ? stats.companies.percentChange || 0 : 0}
           icon={<Building2 className="h-5 w-5 text-violet-500" />}
           color="bg-violet-100 dark:bg-violet-900/20"
+        />
+        <StatCard
+          title="Filiali"
+          value={stats && typeof stats === 'object' && stats.branches ? stats.branches : 0}
+          percentChange={3.5} {/* Percentuale simulata */}
+          icon={<Building2 className="h-5 w-5 text-cyan-500" />}
+          color="bg-cyan-100 dark:bg-cyan-900/20"
         />
         <StatCard
           title="Opportunità"
