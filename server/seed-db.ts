@@ -52,10 +52,8 @@ async function seedDatabase() {
       email: "info@franchisingplus.it",
       phone: "+39 02 1234567",
       address: "Via Roma 123, Milano",
-      city: "Milano",
-      region: "Lombardia",
+      full_address: "Via Roma 123, 20121 Milano, Italia",
       country: "Italia",
-      postalCode: "20121",
       tags: ["franchising", "retail"],
       notes: "Azienda di franchising attiva nel settore retail",
       status: "active"
@@ -68,10 +66,8 @@ async function seedDatabase() {
       email: "info@ristorantiitaliani.it",
       phone: "+39 06 7654321",
       address: "Via Veneto 456, Roma",
-      city: "Roma",
-      region: "Lazio",
+      full_address: "Via Veneto 456, 00187 Roma, Italia",
       country: "Italia",
-      postalCode: "00187",
       tags: ["ristorazione", "food"],
       notes: "Catena di ristoranti italiani",
       status: "active"
