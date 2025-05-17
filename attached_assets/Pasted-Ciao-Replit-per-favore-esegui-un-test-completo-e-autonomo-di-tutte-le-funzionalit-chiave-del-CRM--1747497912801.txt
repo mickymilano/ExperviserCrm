@@ -1,0 +1,45 @@
+Ciao Replit,
+
+per favore esegui un test completo e autonomo di tutte le funzionalità chiave del CRM, simulando un utilizzo “umano” senza bisogno di interventi da parte mia:
+
+1. **Ambiente pulito**  
+   - Ripristina lo stato attuale post-rollback e assicurati di partire da una base stabile.
+
+2. **Creazione aziende**  
+   - Crea 20 aziende diverse via API o interfaccia web, compilando tutti i campi richiesti (inclusi custom_fields, mandante, ecc.).
+
+3. **Creazione contatti**  
+   - Per le prime 10 aziende, crea almeno un contatto ciascuna (totale 20 contatti), includendo dati completi (nome, email, telefono, ruolo).
+
+4. **Creazione lead**  
+   - Genera 10 lead collegati ad aziende e contatti esistenti, con descrizioni e date di follow-up.
+
+5. **Creazione deal**  
+   - Crea 10 deal collegati a lead, aziende e contatti, impostando importoPotenziale, probabilità e data di chiusura.
+
+6. **Aggiunta sinergie**  
+   - Per 5 dei deal creati, associa uno o più segnalatori (contatti esterni) con percentuali di commissione.
+
+7. **Verifica liste e dettagli**  
+   - Per ogni modulo (Aziende, Contatti, Lead, Deal, Sinergie), apri le liste, i filtri e i dettagli, confermando che appaiano correttamente gli item creati.
+
+8. **Report errori**  
+   - Non fermarti al primo errore: continua il flusso di test anche in presenza di problemi.  
+   - Per ogni step fallito, documenta:
+     - Operazione tentata (endpoint o UI passo)
+     - Payload inviato o dati inseriti
+     - Messaggio di errore restituito
+     - Stack trace o log del server, se disponibili
+
+9. **Ricerca e soluzioni**  
+   - Per ciascun errore, cerca attivamente soluzioni in documentazione ufficiale, forum, GitHub issues ecc.  
+   - Applica le patch o le correzioni più consolidate punto per punto.
+
+10. **Resoconto finale**  
+    - Fornisci un report strutturato (per step) con:
+      - Esito (OK/KO) di ciascuna operazione  
+      - Descrizione degli errori riscontrati  
+      - Link alle risorse consultate  
+      - Codice delle patch applicate per ciascun fix  
+
+Esegui questo test in modo esaustivo e indipendente, e fammi avere il report dettagliato di tutti gli errori e delle soluzioni applicate. Grazie!```

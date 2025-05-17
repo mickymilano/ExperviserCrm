@@ -1,0 +1,83 @@
+Ho scelto un approccio ibrido con naming generico e automazione via API, più una verifica UI manuale a valle. Ecco lo script da copiare ed eseguire nella shell di Replit:
+
+# Test completo CRM: crea dati, continua sui fallimenti, logga tutto
+set +e
+LOGFILE=crm_full_test.log
+echo "=== CRM FULL-STACK TEST START $(date) ===" > $LOGFILE
+
+BASE="http://localhost:5000/api"
+
+# 1) 20 AZIENDE
+echo ">> Creazione 20 aziende" >> $LOGFILE
+for i in $(seq 1 20); do
+  curl -s -X POST "$BASE/companies" \
+    -H "Content-Type: application/json" \
+    -d "{\"name\":\"Test Company $i\",\"email\":\"company${i}@example.com\",\"phone\":\"+3912345678${i}\",\"fullAddress\":\"Via Test $i, Città\",\"status\":\"active\"}" \
+    >> $LOGFILE 2>&1 \
+    || echo "ERROR crea company $i" >> $LOGFILE
+done
+
+# 2) 20 CONTATTI (1 per azienda)
+echo ">> Creazione 20 contatti" >> $LOGFILE
+for i in $(seq 1 20); do
+  curl -s -X POST "$BASE/contacts" \
+    -H "Content-Type: application/json" \
+    -d "{\"name\":\"Test Contact $i\",\"email\":\"contact${i}@example.com\",\"phone\":\"+3912345679${i}\",\"companyId\":$i}" \
+    >> $LOGFILE 2>&1 \
+    || echo "ERROR crea contact $i" >> $LOGFILE
+done
+
+# 3) 10 LEAD
+echo ">> Creazione 10 lead" >> $LOGFILE
+for i in $(seq 1 10); do
+  cid=$(( (i-1) % 20 + 1 ))
+  curl -s -X POST "$BASE/leads" \
+    -H "Content-Type: application/json" \
+    -d "{\"companyId\":$cid,\"contactId\":$cid,\"description\":\"Test Lead $i\"}" \
+    >> $LOGFILE 2>&1 \
+    || echo "ERROR crea lead $i" >> $LOGFILE
+done
+
+# 4) 10 DEAL
+echo ">> Creazione 10 deal" >> $LOGFILE
+for i in $(seq 1 10); do
+  cid=$(( (i-1) % 20 + 1 ))
+  lid=$i
+  curl -s -X POST "$BASE/deals" \
+    -H "Content-Type: application/json" \
+    -d "{\"name\":\"Test Deal $i\",\"companyId\":$cid,\"leadId\":$lid,\"importoPotenziale\":10000,\"probabilita\":0.5}" \
+    >> $LOGFILE 2>&1 \
+    || echo "ERROR crea deal $i" >> $LOGFILE
+done
+
+# 5) 5 SINERGIE
+echo ">> Creazione 5 sinergie" >> $LOGFILE
+for i in $(seq 1 5); do
+  did=$i
+  cid=$(( (i-1) % 20 + 1 ))
+  curl -s -X POST "$BASE/sinergie" \
+    -H "Content-Type: application/json" \
+    -d "{\"dealId\":$did,\"contattoId\":$cid,\"percentuale\":5}" \
+    >> $LOGFILE 2>&1 \
+    || echo "ERROR crea sinergia $i" >> $LOGFILE
+done
+
+echo "=== TEST COMPLETO FINITO $(date) ===" >> $LOGFILE
+echo "Log disponibile in $LOGFILE"
+
+Cosa fa:
+	1.	Crea 20 aziende “Test Company 1…20”
+	2.	Crea 20 contatti, uno per ciascuna azienda
+	3.	Genera 10 lead collegati ciclicamente ad aziende e contatti
+	4.	Genera 10 deal associati a lead/aziende
+	5.	Aggiunge 5 sinergie (commissioni) su deal 1–5
+	6.	Non si ferma al primo errore, logga ogni esito in crm_full_test.log
+
+⸻
+
+Passi successivi:
+	•	Esegui bash crm_full_test.log nella shell di Replit.
+	•	Dopo il run completo, apri crm_full_test.log e copia qui il report (OK/ERROR per ogni operazione + eventuali stack trace).
+	•	Poi procediamo con la verifica manuale UI dei flussi critici (creazione, associazioni, liste, dettaglio).
+
+In questo modo avremo un report esaustivo di tutti gli errori riscontrati e potremo intervenire punto per punto.
