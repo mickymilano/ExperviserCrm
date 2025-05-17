@@ -152,67 +152,6 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     return typeof value === 'number' && !isNaN(value) ? value : null;
   };
     if (!contacts || !Array.isArray(contacts)) {
-      console.warn("Contacts data is not available or not an array");
-      setFilteredContacts([]);
-      return;
-    }
-    
-    console.log("Filtering contacts for company ID:", companyId, "Available contacts:", contacts.length);
-    
-    if (!companyId) {
-      // Se non c'è un'azienda selezionata, mostra lista vuota
-      setFilteredContacts([]);
-      console.log("No company selected, clearing contacts selection");
-      return;
-    }
-    
-    // Aggiungiamo debug per verificare le strutture dati
-    console.log("DEBUG - Contatti disponibili:", contacts);
-    
-    // Filtriamo i contatti usando le aree di attività o altre associazioni
-    const filteredByAreas = contacts.filter(contact => {
-      // Debug per questo contatto specifico
-      console.log(`DEBUG - Verifico contatto ${contact.id} (${contact.firstName} ${contact.lastName})`);
-      
-      if (contact.areasOfActivity && Array.isArray(contact.areasOfActivity)) {
-        console.log(`DEBUG - Contatto ${contact.id} ha ${contact.areasOfActivity.length} aree:`, contact.areasOfActivity);
-        
-        // Verifica le aree di attività
-        const hasMatchingArea = contact.areasOfActivity.some(area => {
-          const areaCompanyId = typeof area.companyId === 'number' ? 
-            area.companyId : 
-            (area.companyId ? parseInt(area.companyId as string) : null);
-          
-          console.log(`DEBUG - Area companyId=${areaCompanyId}, confronto con ${companyId}, match=${areaCompanyId === companyId}`);
-          return areaCompanyId === companyId;
-        });
-        
-        if (hasMatchingArea) return true;
-      } else {
-        console.log(`DEBUG - Contatto ${contact.id} non ha aree di attività`);
-      }
-      
-      // Verifica anche il campo companyId diretto, se presente
-      if (contact.companyId !== undefined) {
-        const contactCompanyId = typeof contact.companyId === 'number' ? 
-          contact.companyId : 
-          (contact.companyId ? parseInt(contact.companyId as string) : null);
-          
-        console.log(`DEBUG - Contatto companyId=${contactCompanyId}, confronto con ${companyId}, match=${contactCompanyId === companyId}`);
-        return contactCompanyId === companyId;
-      }
-      
-      return false;
-    });
-    
-    // Mostriamo SOLO i contatti associati all'azienda selezionata
-    setFilteredContacts(filteredByAreas);
-    console.log(`Filtrati ${filteredByAreas.length} contatti associati all'azienda ${companyId}`);
-  }, [contacts, setFilteredContacts]);
-  
-  // Filtra i contatti per le sinergie (solo quelli NON dell'azienda selezionata)
-  const updateSynergyContacts = useCallback((companyId: number | null) => {
-    if (!contacts || !Array.isArray(contacts)) {
       console.warn("Synergy contacts data is not available or not an array");
       setSynergyContacts([]);
       return;
@@ -946,19 +885,25 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                           contacts
                             // Filtra per mostrare solo i contatti NON dell'azienda selezionata
                             .filter(contact => {
-                              // Prendiamo l'ID dell'azienda dal form
+                              // Otteniamo l'ID dell'azienda direttamente dai valori del form
                               const companyId = getValues("companyId");
-                              if (!companyId) return true; // Se non c'è azienda, mostra tutti
-                                
-                              // Verifichiamo se il contatto ha aree di attività con l'azienda selezionata
+                              
+                              // Se non c'è un'azienda selezionata, mostriamo tutti i contatti
+                              if (!companyId) return true;
+                              
+                              // Se il contatto ha aree di attività, lo escludiamo se appartiene all'azienda selezionata
                               if (contact.areasOfActivity && Array.isArray(contact.areasOfActivity)) {
                                 return !contact.areasOfActivity.some(area => {
+                                  // Assicuriamoci che companyId sia correttamente interpretato come numero
                                   const areaCompanyId = typeof area.companyId === 'number' ? 
-                                    area.companyId : (area.companyId ? parseInt(area.companyId as string) : null);
+                                    area.companyId : 
+                                    (area.companyId ? parseInt(area.companyId.toString()) : null);
+                                  
                                   return areaCompanyId === companyId;
                                 });
                               }
-                              // Se non ha aree di attività, lo includiamo
+                              
+                              // Se non ha aree di attività, lo includiamo nei risultati
                               return true;
                             })
                             .map((contact) => (
