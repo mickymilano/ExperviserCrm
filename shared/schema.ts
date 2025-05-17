@@ -77,6 +77,8 @@ export const contacts = pgTable('contacts', {
     .$type<typeof entityStatusEnum[number]>()
     .default('active')
     .notNull(),
+  // Relazione con companies (senza riferimento circolare)
+  companyId: integer('company_id'),
   // Nuovi campi allineati alla struttura reale
   mobilePhone: text('mobile_phone'),
   companyEmail: text('company_email'),
