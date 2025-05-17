@@ -1058,6 +1058,34 @@ export function registerRoutes(app: any) {
     }
   });
   
+  // Endpoint PATCH per aggiornamento parziale dei lead
+  app.patch('/api/leads/:id', authenticate, async (req, res) => {
+    try {
+      const leadId = parseInt(req.params.id);
+      
+      // Verifica se il lead esiste
+      const lead = await storage.getLead(leadId);
+      if (!lead) {
+        return res.status(404).json({ message: 'Lead non trovato' });
+      }
+      
+      // Valida i dati inviati
+      const validatedData = req.body; // Potremmo usare uno schema parziale qui
+      
+      // Aggiorna il lead
+      const updatedLead = await storage.updateLead(leadId, validatedData);
+      
+      res.json(updatedLead);
+    } catch (error) {
+      console.error('Error updating lead with PATCH:', error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: 'Dati non validi', errors: error.errors });
+      } else {
+        res.status(500).json({ message: 'Errore durante l\'aggiornamento del lead' });
+      }
+    }
+  });
+  
   // Elimina un lead
   app.delete('/api/leads/:id', authenticate, async (req, res) => {
     try {
