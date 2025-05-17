@@ -8,11 +8,11 @@ export const useBranches = (companyId?: number) => {
   // Query per ottenere tutte le filiali o quelle di una specifica azienda
   const { data: branches, isLoading, error } = useQuery({
     queryKey: companyId ? ['/api/branches/company', companyId] : ['/api/branches'],
-    queryFn: async ({ queryKey }) => {
+    queryFn: async () => {
       if (companyId) {
-        return await apiRequest(`/api/branches/company/${companyId}`, "GET");
+        return await apiRequest(`/api/branches/company/${companyId}`, { method: "GET" });
       } else {
-        return await apiRequest('/api/branches', "GET");
+        return await apiRequest('/api/branches', { method: "GET" });
       }
     },
     retry: false,
@@ -21,7 +21,7 @@ export const useBranches = (companyId?: number) => {
   // Mutation per eliminare una filiale
   const deleteBranch = useMutation({
     mutationFn: async (branchId: number) => {
-      return await apiRequest(`/api/branches/${branchId}`, "DELETE");
+      return await apiRequest(`/api/branches/${branchId}`, { method: "DELETE" });
     },
     onSuccess: () => {
       // Invalida la query esistente per aggiornare l'elenco delle filiali
