@@ -1,0 +1,169 @@
+Visto che abbiamo stabilito un’API solida e un mapping stabile, il passo più efficace e immediato per i tuoi utenti è completare l’interfaccia di associazione dei contatti direttamente nella scheda Azienda.
+
+⸻
+
+2. Implementazione Tab “Contatti” in CompanyDetail
+
+1) Backend (se non già fatto)
+	1.	GET /api/companies/:companyId/contacts
+
+// routes/companies.js
+router.get('/:companyId/contacts', async (req, res, next) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT id, name, email, phone 
+         FROM contacts 
+        WHERE company_id = $1 
+        ORDER BY name`,
+      [req.params.companyId]
+    );
+    res.json(rows);
+  } catch (err) {
+    next(err);
+  }
+});
+
+
+	2.	PATCH /api/contacts/:contactId per aggiornare company_id
+
+// routes/contacts.js
+router.patch('/:id', async (req, res, next) => {
+  const { companyId } = req.body;
+  try {
+    await pool.query(
+      `UPDATE contacts SET company_id = $1 WHERE id = $2`,
+      [companyId || null, req.params.id]
+    );
+    res.sendStatus(204);
+  } catch (err) {
+    next(err);
+  }
+});
+
+
+
+2) Frontend
+
+a) CompanyDetail.tsx – aggiungi il tab “Contatti”
+
+--- a/client/src/pages/companies/[id].tsx
++++ b/client/src/pages/companies/[id].tsx
+@@ import statements
++ import CompanyContactsTab from '../../components/CompanyContactsTab';
+
+ // nella definizione dei tab:
+ <TabsContent value="contacts">
+-  {/* vecchio contenuto */}
++  <CompanyContactsTab companyId={companyId} />
+ </TabsContent>
+
+b) Nuovo componente CompanyContactsTab.tsx
+
+// client/src/components/CompanyContactsTab.tsx
+import { useEffect, useState } from 'react';
+import Select from 'react-select';
+
+export default function CompanyContactsTab({ companyId }) {
+  const [contacts, setContacts] = useState([]);
+  const [unassigned, setUnassigned] = useState([]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selected, setSelected] = useState(null);
+
+  // 1. Fetch contatti associati
+  useEffect(() => {
+    fetch(`/api/companies/${companyId}/contacts`)
+      .then(r => r.json())
+      .then(setContacts);
+  }, [companyId]);
+
+  // 2. Fetch contatti non associati (per il modal)
+  useEffect(() => {
+    if (!modalOpen) return;
+    fetch(`/api/contacts?unassigned=true`)
+      .then(r => r.json())
+      .then(setUnassigned);
+  }, [modalOpen]);
+
+  // 3. Associa contatto
+  const attach = () => {
+    fetch(`/api/contacts/${selected.value}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ companyId }),
+    }).then(() => {
+      setModalOpen(false);
+      // ricarica lista
+      fetch(`/api/companies/${companyId}/contacts`)
+        .then(r => r.json())
+        .then(setContacts);
+    });
+  };
+
+  // 4. Disassocia contatto
+  const detach = (id) => {
+    fetch(`/api/contacts/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ companyId: null }),
+    }).then(() =>
+      setContacts(cs => cs.filter(c => c.id !== id))
+    );
+  };
+
+  return (
+    <div className="p-4">
+      <button onClick={() => setModalOpen(true)} className="btn-sm mb-4">
+        Associa nuovo contatto
+      </button>
+
+      <table className="min-w-full table-auto">
+        <thead>
+          <tr>
+            <th>Nome</th><th>Email</th><th>Telefono</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {contacts.map(c => (
+            <tr key={c.id}>
+              <td>{c.name}</td>
+              <td>{c.email}</td>
+              <td>{c.phone}</td>
+              <td>
+                <button onClick={() => detach(c.id)} className="text-red-500">
+                  Disassocia
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {modalOpen && (
+        <div className="modal">
+          <h3>Seleziona Contatto</h3>
+          <Select
+            options={unassigned.map(c => ({ value: c.id, label: c.name }))}
+            onChange={setSelected}
+            noOptionsMessage={() => 'Nessun contatto disponibile'}
+          />
+          <button onClick={attach} disabled={!selected} className="btn-primary mt-4">
+            Associa
+          </button>
+          <button onClick={() => setModalOpen(false)} className="btn-sm mt-2">
+            Annulla
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+⸻
+
+Con questo avrai:
+	•	Un tab dedicato ai Contatti per ogni azienda
+	•	Funzionalità di attach/detach via UI
+	•	Chiamate API già testate in precedenza
+
+Questo completamento è il modo più rapido per rendere realmente utilizzabile il CRM, garantendo che l’utente possa finalmente associare contatti alle aziende in maniera semplice e intuitiva. Fammi sapere se ti serve il prompt da inviare a Replit o se vuoi che aggiunga dettagli!
