@@ -343,6 +343,38 @@ export default function CompanyDetail() {
                   </div>
                 </div>
                 
+                {/* Relazioni Section */}
+                <h3 className="text-md font-medium mb-4 flex items-center">
+                  <Handshake className="h-4 w-4 mr-2 text-muted-foreground" />
+                  Relazioni con me
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <div className="space-y-2">
+                    {Array.isArray(company.relationshipType) && company.relationshipType.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {company.relationshipType.map((type, index) => (
+                          <Badge key={index} variant="secondary" className="font-normal">
+                            {type === 'prospect' && 'In fase di valutazione'}
+                            {type === 'clienteAttivo' && 'Cliente attivo'}
+                            {type === 'exCliente' && 'Ex-cliente'}
+                            {type === 'clienteRetainer' && 'Cliente retainer'}
+                            {type === 'segnalatore' && 'Segnalatore'}
+                            {type === 'partnerStrategico' && 'Partner strategico'}
+                            {type === 'investitoreCliente' && 'Investitore-cliente'}
+                            {type === 'mandante' && 'Mandante'}
+                            {type === 'clienteUnaTantum' && 'Cliente una-tantum'}
+                            {type === 'fornitore' && 'Fornitore'}
+                            {type === 'concorrente' && 'Concorrente'}
+                            {type}
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">Nessuna relazione specificata</p>
+                    )}
+                  </div>
+                </div>
+                
                 {/* Administrative Details Section */}
                 <h3 className="text-md font-medium mb-4 flex items-center">
                   <FileText className="h-4 w-4 mr-2 text-muted-foreground" />
