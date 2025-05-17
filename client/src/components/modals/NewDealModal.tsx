@@ -437,12 +437,12 @@ export default function NewDealModal({ open, onOpenChange, initialData }: DealMo
   // Mutation per salvare il deal
   const saveDeal = useMutation({
     mutationFn: async (data: DealFormData) => {
-      // Prepara i dati per l'invio
+      // Prepara i dati per l'invio - manteniamo i valori numerici come numeri
       const payload = {
         ...data,
-        // Prima convertiamo in interi, poi in stringhe come richiesto dal backend
-        value: Math.floor(data.value).toString(),
-        expectedRevenue: data.expectedRevenue ? Math.floor(data.expectedRevenue).toString() : undefined,
+        // Convertiamo in numeri interi prima dell'invio
+        value: Math.floor(data.value),
+        expectedRevenue: data.expectedRevenue ? Math.floor(data.expectedRevenue) : undefined,
         startDate: data.startDate ? new Date(data.startDate).toISOString() : undefined,
         expectedCloseDate: data.expectedCloseDate ? new Date(data.expectedCloseDate).toISOString() : undefined
       };
