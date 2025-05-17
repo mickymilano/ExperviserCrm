@@ -384,18 +384,36 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
             />
           </div>
 
-          {/* Full Address Field (campo normale senza autocomplete) */}
+          {/* Full Address Field (con autocomplete Google Maps) */}
           <div className="space-y-2 mb-4">
-            <Label htmlFor="fullAddress">Indirizzo</Label>
-            <Input 
+            <Label htmlFor="fullAddress" className="flex items-center">
+              <span>Indirizzo Completo</span>
+              <span className="ml-2 px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">Google Maps</span>
+            </Label>
+            <PlacesAutocomplete
               id="fullAddress"
-              {...register("fullAddress")}
-              onChange={(e) => {
+              value={watch("fullAddress") || ""}
+              onChange={(value, placeDetails) => {
+                // Imposta l'indirizzo completo
+                setValue("fullAddress", value, { shouldValidate: true });
                 // Aggiorna anche il campo address per retrocompatibilità
-                setValue("address", e.target.value, { shouldValidate: true });
+                setValue("address", value, { shouldValidate: true });
+                
+                if (placeDetails && placeDetails.address_components) {
+                  // Estrae il paese
+                  const countryComponent = placeDetails.address_components.find(c => 
+                    c.types.includes('country')
+                  );
+                  if (countryComponent) {
+                    setValue("country", countryComponent.long_name, { shouldValidate: true });
+                  }
+                }
+                
+                trigger(["fullAddress", "address", "country"]);
               }}
-              placeholder="Inserisci l'indirizzo completo" 
               className="w-full"
+              types={['address']} // Limita la ricerca solo a indirizzi geografici
+              placeholder="Cerca o inserisci l'indirizzo completo (via, CAP, città, provincia, paese)"
             />
           </div>
           

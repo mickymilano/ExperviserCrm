@@ -359,7 +359,8 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
                   trigger(["fullAddress", "country"]);
                 }}
                 className="mt-1"
-                placeholder="Cerca o inserisci l'indirizzo completo"
+                types={['address']} // Limita la ricerca solo a indirizzi geografici
+                placeholder="Cerca o inserisci l'indirizzo completo (via, CAP, città, provincia, paese)"
               />
               {errors.fullAddress && (
                 <p className="text-sm text-destructive mt-1">{errors.fullAddress.message}</p>
