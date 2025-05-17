@@ -10,7 +10,35 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { DealInfo } from "@/types";
+// Definizione dei tipi per gestire i dati nel componente
+interface DealInfo {
+  id?: number;
+  name: string;
+  value: number;
+  stageId?: number;
+  companyId?: number | null;
+  contactId?: number | null;
+  expectedCloseDate?: string;
+  tags?: string[] | null;
+  notes?: string | null;
+  status?: string;
+  createdAt?: Date | null;
+  updatedAt?: Date | null;
+}
+
+interface Company {
+  id: number;
+  name: string;
+  [key: string]: any;
+}
+
+interface Contact {
+  id: number;
+  firstName?: string;
+  lastName?: string;
+  areasOfActivity?: Array<{companyId: number}>;
+  [key: string]: any;
+}
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Check, ChevronsUpDown, X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -70,27 +98,27 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
   });
 
   // Fetch companies
-  const { data: companies = [] } = useQuery({
+  const { data: companies = [] } = useQuery<Company[]>({
     queryKey: ["/api/companies"],
     enabled: open
   });
 
   useEffect(() => {
-    if (companies && companies.length > 0) {
-      console.log("Companies loaded:", companies.length, companies);
+    if (Array.isArray(companies) && companies.length > 0) {
+      console.log("Companies loaded:", companies.length);
       setFilteredCompanies(companies);
     }
   }, [companies]);
 
   // Fetch contacts
-  const { data: contacts = [] } = useQuery({
+  const { data: contacts = [] } = useQuery<Contact[]>({
     queryKey: ["/api/contacts?includeAreas=true"],
     enabled: open
   });
 
   useEffect(() => {
-    if (contacts && contacts.length > 0) {
-      console.log("Contacts loaded:", contacts.length, contacts);
+    if (Array.isArray(contacts) && contacts.length > 0) {
+      console.log("Contacts loaded:", contacts.length);
     }
   }, [contacts]);
 
@@ -237,38 +265,26 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     
     // Per il momento, mostriamo tutti i contatti per diagnosticare il problema
     setFilteredContacts(contacts);
-    console.log("DEBUG: Using all contacts:", contacts.length);
+    console.log(`DEBUG: Using all contacts (${contacts.length}) for company ${companyId}`);
     
-    // COMMENTATO PER DEBUG - Da riattivare dopo aver risolto il problema
-    /* 
-    // Only show contacts associated with selected company
-    const filteredContactsList = contacts.filter(contact => {
-      // Check if the contact has areasOfActivity data
-      if (!contact.areasOfActivity || !Array.isArray(contact.areasOfActivity)) {
-        return false;
+    // Disabilitiamo il filtraggio dei contatti per area di attività
+    // In un secondo momento potremmo riattivarlo
+    /*
+    // Solo per debug - Verifichiamo quanti contatti hanno areasOfActivity
+    let contactsWithAreas = 0;
+    contacts.forEach(contact => {
+      if (contact.areasOfActivity && Array.isArray(contact.areasOfActivity) && contact.areasOfActivity.length > 0) {
+        contactsWithAreas++;
+        console.log(`Contact ${contact.id} has ${contact.areasOfActivity.length} areas:`, contact.areasOfActivity);
       }
-      
-      // Check if any area links the contact to the selected company
-      const isAssociated = contact.areasOfActivity.some((area: { companyId: number }) => 
-        area.companyId === Number(companyId)
-      );
-      
-      if (isAssociated) {
-        console.log(`Contact ${contact.id} (${contact.firstName} ${contact.lastName}) is associated with company ${companyId}`);
-      }
-      
-      return isAssociated;
     });
+    console.log(`${contactsWithAreas} / ${contacts.length} contacts have areasOfActivity data`);
     */
-    
-    console.log(`Filtered contacts for company ID ${companyId}: found ${filteredContactsList.length} contacts`);
-    setFilteredContacts(filteredContactsList);
-    
     // If there's only one contact for this company, auto-select it
-    if (filteredContactsList.length === 1) {
-      console.log(`Auto-selecting the only contact: ${filteredContactsList[0].id}`);
-      setValue("contactId", filteredContactsList[0].id);
-    } else if (filteredContactsList.length === 0) {
+    if (contacts.length === 1) {
+      console.log(`Auto-selecting the only contact: ${contacts[0].id}`);
+      setValue("contactId", contacts[0].id);
+    } else if (contacts.length === 0) {
       // Clear contact selection if no contacts available
       setValue("contactId", null);
     }
