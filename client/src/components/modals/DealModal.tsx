@@ -397,12 +397,13 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     console.log(`${contactsWithAreas} / ${contacts.length} contacts have areasOfActivity data`);
     */
     // If there's only one contact for this company, auto-select it
-    if (contacts.length === 1) {
-      console.log(`Auto-selecting the only contact: ${contacts[0].id}`);
-      setValue("contactId", contacts[0].id);
-    } else if (contacts.length === 0) {
+    if (filteredByAreas.length === 1) {
+      console.log(`Auto-selecting the only contact: ${filteredByAreas[0].id}`);
+      setValue("contactId", filteredByAreas[0].id);
+    } else if (filteredByAreas.length === 0) {
       // Clear contact selection if no contacts available
       setValue("contactId", null);
+      console.log("Nessun contatto trovato per questa azienda, svuoto la selezione");
     }
   };
   
