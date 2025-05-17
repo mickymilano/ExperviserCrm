@@ -85,6 +85,8 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
     if (!selectedContactId) return;
     
     try {
+      setIsContactLoading(true);
+      
       // Creiamo una nuova area di attività
       const res = await fetch(`/api/contacts/${selectedContactId}/areas-of-activity`, {
         method: "POST",
@@ -135,6 +137,8 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
         description: "Impossibile associare il contatto all'azienda",
         variant: "destructive",
       });
+    } finally {
+      setIsContactLoading(false);
     }
   };
 
@@ -424,9 +428,9 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
             </Button>
             <Button
               onClick={associateContact}
-              disabled={!selectedContactId || isLoadingUnassigned}
+              disabled={!selectedContactId || isContactLoading}
             >
-              Associa Contatto
+              {isContactLoading ? "Associazione in corso..." : "Associa Contatto"}
             </Button>
           </DialogFooter>
         </DialogContent>
