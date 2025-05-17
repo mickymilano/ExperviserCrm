@@ -772,14 +772,89 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
               </div>
               
               <div className="space-y-2">
-                <SynergiesSelect
-                  contacts={filteredContacts || []}
-                  control={control}
+                <Label htmlFor="synergyContactIds">Contatti Sinergia</Label>
+                <Controller
                   name="synergyContactIds"
-                  label="Contatti Sinergia"
-                  placeholder={getSelectedCompanyId() ? "Seleziona contatti sinergia" : "Seleziona prima un'azienda"}
-                  className="w-full"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      value={field.value?.length > 0 ? "selected" : ""}
+                      onValueChange={(value) => {
+                        if (value === "no-value") return;
+                        const contactId = parseInt(value, 10);
+                        
+                        // Se il contactId è già selezionato, lo rimuoviamo
+                        const current = field.value || [];
+                        if (current.includes(contactId)) {
+                          field.onChange(current.filter(id => id !== contactId));
+                        } else {
+                          // Altrimenti lo aggiungiamo
+                          field.onChange([...current, contactId]);
+                        }
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={getSelectedCompanyId() ? "Seleziona contatti sinergia" : "Seleziona prima un'azienda"}>
+                          {field.value && Array.isArray(field.value) && field.value.length > 0 
+                            ? `${field.value.length} contatti selezionati` 
+                            : (getSelectedCompanyId() ? "Seleziona contatti sinergia" : "Seleziona prima un'azienda")}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.isArray(filteredContacts) && filteredContacts.length > 0 ? (
+                          filteredContacts.map((contact) => (
+                            <SelectItem key={contact.id} value={contact.id.toString()}>
+                              <div className="flex items-center gap-2">
+                                <Check
+                                  className={cn(
+                                    "h-4 w-4",
+                                    field.value && Array.isArray(field.value) && field.value.includes(contact.id) ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                <span>{`${contact.firstName || ''} ${contact.lastName || ''}`.trim() || 'Unnamed Contact'}</span>
+                              </div>
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="no-value" disabled>
+                            Nessun contatto disponibile
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  )}
                 />
+                
+                {/* Lista dei contatti selezionati */}
+                {watch("synergyContactIds") && Array.isArray(watch("synergyContactIds")) && watch("synergyContactIds").length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {watch("synergyContactIds").map((contactId) => {
+                      const contact = filteredContacts.find(c => c.id === contactId);
+                      if (!contact) return null;
+                      return (
+                        <Badge
+                          key={contactId}
+                          variant="secondary"
+                          className="flex items-center gap-1 px-1"
+                        >
+                          {`${contact.firstName || ''} ${contact.lastName || ''}`.trim() || 'Unnamed Contact'}
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-4 w-4 p-0 hover:bg-transparent"
+                            onClick={() => {
+                              const current = watch("synergyContactIds") || [];
+                              setValue("synergyContactIds", current.filter(id => id !== contactId));
+                            }}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
             
