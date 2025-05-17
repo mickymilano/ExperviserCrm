@@ -1,4 +1,5 @@
 import { pool } from '../db';
+import { storage } from '../storage';
 
 export const listLeads = async (req, res, next) => {
   try {
@@ -176,135 +177,16 @@ export const createLead = async (req, res, next) => {
 
 export const updateLead = async (req, res, next) => {
   try {
-    const id = req.params.id;
-    const updates = req.body;
+    console.log('UPDATE LEAD:', req.params.id, req.body);
     
-    const fields = [];
-    const values = [];
-    let paramIndex = 1;
+    // Usiamo il metodo updateLead dallo storage
+    const updatedLead = await storage.updateLead(+req.params.id, req.body);
     
-    if (updates.firstName !== undefined) {
-      fields.push(`first_name=$${paramIndex++}`);
-      values.push(updates.firstName);
+    if (!updatedLead) {
+      return res.status(404).json({ message: 'Lead non trovato' });
     }
     
-    if (updates.lastName !== undefined) {
-      fields.push(`last_name=$${paramIndex++}`);
-      values.push(updates.lastName);
-    }
-    
-    if (updates.company !== undefined) {
-      fields.push(`company_name=$${paramIndex++}`);
-      values.push(updates.company);
-    }
-    
-    // Gestione email (decidiamo se aziendali o private)
-    if (updates.companyEmail !== undefined) {
-      fields.push(`company_email=$${paramIndex++}`);
-      values.push(updates.companyEmail);
-    }
-    
-    if (updates.privateEmail !== undefined) {
-      fields.push(`private_email=$${paramIndex++}`);
-      values.push(updates.privateEmail);
-    }
-    
-    // Supporto per email generico (mantenere compatibilità con frontend)
-    if (updates.email !== undefined) {
-      if (updates.company && updates.email.includes('@' + updates.company.toLowerCase().replace(/\s/g, ''))) {
-        fields.push(`company_email=$${paramIndex++}`);
-        values.push(updates.email);
-        fields.push(`private_email=NULL`);
-      } else {
-        fields.push(`private_email=$${paramIndex++}`);
-        values.push(updates.email);
-        fields.push(`company_email=NULL`);
-      }
-    }
-    
-    // Gestione telefono con vari tipi
-    if (updates.mobilePhone !== undefined) {
-      fields.push(`mobile_phone=$${paramIndex++}`);
-      values.push(updates.mobilePhone);
-    }
-    
-    if (updates.officePhone !== undefined) {
-      fields.push(`office_phone=$${paramIndex++}`);
-      values.push(updates.officePhone);
-    }
-    
-    if (updates.privatePhone !== undefined) {
-      fields.push(`private_phone=$${paramIndex++}`);
-      values.push(updates.privatePhone);
-    }
-    
-    // Supporto per phone generico (mantenere compatibilità con frontend)
-    if (updates.phone !== undefined && 
-        updates.mobilePhone === undefined && 
-        updates.officePhone === undefined && 
-        updates.privatePhone === undefined) {
-      fields.push(`mobile_phone=$${paramIndex++}`);
-      values.push(updates.phone);
-    }
-    
-    if (updates.status !== undefined) {
-      fields.push(`status=$${paramIndex++}`);
-      values.push(updates.status);
-    }
-    
-    if (updates.notes !== undefined) {
-      fields.push(`notes=$${paramIndex++}`);
-      values.push(updates.notes);
-    }
-    
-    // Aggiornamento data di modifica
-    fields.push(`updated_at=$${paramIndex++}`);
-    values.push(new Date());
-    
-    if (fields.length === 0) {
-      return res.status(400).json({ message: 'Nessun campo da aggiornare' });
-    }
-    
-    values.push(id);
-    
-    await pool.query(`
-      UPDATE leads
-      SET ${fields.join(', ')}
-      WHERE id = $${paramIndex}
-    `, values);
-    
-    // Recuperiamo i dati aggiornati per restituirli al frontend
-    const { rows } = await pool.query(`
-      SELECT
-        id,
-        first_name     AS "firstName",
-        last_name      AS "lastName",
-        company_name   AS company,
-        company_email  AS "companyEmail",
-        private_email  AS "privateEmail",
-        mobile_phone   AS "mobilePhone",
-        office_phone   AS "officePhone",
-        private_phone  AS "privatePhone",
-        status,
-        notes,
-        created_at     AS "createdAt",
-        updated_at     AS "updatedAt"
-      FROM leads
-      WHERE id = $1
-    `, [id]);
-    
-    if (rows.length === 0) {
-      return res.status(404).json({ message: 'Lead non trovato dopo l\'aggiornamento' });
-    }
-    
-    // Mappiamo i campi per compatibilità con il frontend
-    const mappedLead = {
-      ...rows[0],
-      email: rows[0].companyEmail || rows[0].privateEmail,
-      phone: rows[0].mobilePhone || rows[0].officePhone || rows[0].privatePhone
-    };
-    
-    res.status(200).json(mappedLead);
+    res.status(200).json(updatedLead);
   } catch (error) {
     console.error('Error updating lead:', error);
     res.status(500).json({ message: 'Errore durante l\'aggiornamento del lead' });

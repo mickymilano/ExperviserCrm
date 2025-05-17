@@ -1,0 +1,83 @@
+Ciao Replit,
+
+il CREATE ora funziona, ma il PATCH sui Lead non applica le modifiche. Procedi **solo** con questi passi per abilitare correttamente l’update:
+
+1. **Verifica e registra il PATCH endpoint**  
+   - In `server/routes.ts` assicurati che ci sia:
+     ```js
+     router.patch('/api/leads/:id', leadController.updateLead);
+     ```
+   - Se manca, aggiungilo subito.
+
+2. **Log di debug in updateLead**  
+   - In `server/controllers/leadController.js`, modifica `updateLead` così da loggare l’ID e il body:
+     ```diff
+     export const updateLead = async (req, res, next) => {
++      console.log('UPDATE LEAD:', req.params.id, req.body);
+       await storage.updateLead(+req.params.id, req.body);
+       res.sendStatus(204);
+     };
+     ```
+   - Riavvia il server e fai un PATCH via curl per vedere i log.
+
+3. **Correzione `updateLead` in storage**  
+   - In `server/postgresStorage.ts`, sostituisci il metodo `updateLead` con questa versione definitiva:
+     ```diff
+     export async function updateLead(id, updates) {
+-      const fields = [], vals = [];
+-      if (updates.firstName) fields.push(`first_name=$${vals.push(updates.firstName)}`);
+-      if (updates.lastName)  fields.push(`last_name=$${vals.push(updates.lastName)}`);
+-      if (updates.company)   fields.push(`company_name=$${vals.push(updates.company)}`);
+-      if (updates.email)     fields.push(`email=$${vals.push(updates.email)}`);
+-      if (updates.phone)     fields.push(`phone=$${vals.push(updates.phone)}`);
+-      if (updates.status)    fields.push(`status=$${vals.push(updates.status)}`);
+-      if (!fields.length) return;
+-      vals.push(id);
+-      await client.query(
+-        `UPDATE leads SET ${fields.join(', ')} WHERE id=$${vals.length}`, vals
+-      );
++      // costruiamo dinamicamente i SET
++      const sets = [];
++      const vals = [];
++      const mapping = {
++        firstName: 'first_name',
++        lastName:  'last_name',
++        company:   'company_name',
++        email:     'email',
++        phone:     'phone',
++        status:    'status'
++      };
++      Object.entries(updates).forEach(([key, value], i) => {
++        if (mapping[key]) {
++          sets.push(`${mapping[key]}=$${i+1}`);
++          vals.push(value);
++        }
++      });
++      if (sets.length === 0) return;
++      // aggiungiamo l'id come ultimo parametro
++      vals.push(id);
++      const sql = `UPDATE leads SET ${sets.join(', ')} WHERE id=$${vals.length}`;
++      console.log('SQL UPDATE LEAD:', sql, vals);
++      await client.query(sql, vals);
+     }
+     ```
+
+4. **Test via curl**  
+   ```bash
+   curl -v -X PATCH http://localhost:5000/api/leads/1 \
+     -H "Content-Type: application/json" \
+     -H "Authorization: Bearer $TOKEN" \
+     -d '{"lastName":"Verdi","status":"contacted"}'
+
+	5.	Verifica in DB
+
+SELECT id, first_name, last_name, status FROM leads WHERE id=1;
+
+
+
+Al termine, conferma che:
+	•	Il server stampa i log UPDATE LEAD: e SQL UPDATE LEAD:,
+	•	Il curl PATCH restituisce 204 No Content,
+	•	La riga in leads si aggiorna correttamente.
+
+Non procedere oltre finché questo update non funziona al 100%. Grazie!```
