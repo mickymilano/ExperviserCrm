@@ -230,32 +230,6 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     }
     updateFilteredContacts(id);
   };
-    
-    // Filtriamo i contatti che NON appartengono all'azienda selezionata
-    const filteredForSynergies = contacts.filter(contact => {
-      // Per i contatti sinergici, includiamo SOLO quelli che NON appartengono all'azienda selezionata
-      if (contact.areasOfActivity && Array.isArray(contact.areasOfActivity)) {
-        // Verifichiamo se il contatto ha almeno un'area di attività con l'azienda selezionata
-        const hasMatchingArea = contact.areasOfActivity.some(area => {
-          const areaCompanyId = typeof area.companyId === 'number' ? 
-            area.companyId : 
-            (area.companyId ? parseInt(area.companyId as string) : null);
-          
-          return areaCompanyId === companyId;
-        });
-        
-        // Includiamo solo contatti che NON hanno aree di attività con l'azienda selezionata
-        return !hasMatchingArea;
-      }
-      
-      // Se il contatto non ha aree di attività, lo includiamo comunque
-      return true;
-    });
-    
-    // Mostriamo SOLO i contatti NON associati all'azienda selezionata
-    setSynergyContacts(filteredForSynergies);
-    console.log(`Filtrati ${filteredForSynergies.length} contatti sinergici (non associati all'azienda ${companyId})`);
-  }, [contacts, setSynergyContacts]);
   
   // Helper function che utilizza direttamente i valori del form
   // Aggiungiamo controlli più rigorosi
