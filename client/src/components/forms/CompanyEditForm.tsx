@@ -382,16 +382,7 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
               )}
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="country">Paese</Label>
-                <Input 
-                  id="country"
-                  {...register("country")}
-                  className="mt-1"
-                />
-              </div>
-              
+            <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
               <div>
                 <Label htmlFor="timezone">Fuso Orario</Label>
                 <Select 
@@ -427,7 +418,7 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
               </div>
             </div>
               
-            {/* DEPRECATED: Hidden field for backward compatibility */}
+            {/* DEPRECATED: Hidden fields for backward compatibility */}
             <div className="hidden">
               <Input 
                 id="address"
@@ -436,6 +427,10 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
               <Input 
                 id="city"
                 {...register("city")}
+              />
+              <Input 
+                id="country"
+                {...register("country")}
               />
             </div>
           </div>
