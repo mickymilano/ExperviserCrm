@@ -1,0 +1,93 @@
+Ciao Replit,
+
+il modulo **Lead** presenta due problemi critici:
+
+1. **Salvataggio Lead**: il `POST /api/leads` fallisce, impedendo la creazione di nuovi lead.  
+2. **Conversione Lead → Contact**: il pulsante “Converti” oggi crea solo un contatto, ma deve:
+   - **Se** il lead ha `companyName` → **1)** creare prima l’azienda, **2)** creare il contatto con `companyId` collegato  
+   - **Altrimenti** (solo persona) → creare il contatto “libero” (`companyId = null`)  
+
+Per favore esegui **solo** i seguenti passi, in shell e nel codice, senza modificare manualmente altri moduli:
+
+---
+
+### 1) Endpoint CRUD Lead
+1. In `server/routes.ts` e `PostgresStorage`:
+   - Verifica e aggiungi (se mancanti) gli endpoint:
+     - `GET    /api/leads`
+     - `GET    /api/leads/:id`
+     - `POST   /api/leads`
+     - `PATCH  /api/leads/:id`
+     - `DELETE /api/leads/:id`
+   - Allinea i campi del body (camelCase ↔ snake_case) con la tabella `leads`.
+
+2. Test rapidi via `curl -v`:
+   ```bash
+   curl -v -X POST   http://localhost:5000/api/leads \
+     -H "Content-Type: application/json" \
+     -d '{"companyName":"TestCo","contactName":"Mario Rossi","email":"m.rossi@example.com"}'
+   curl -v -X GET    http://localhost:5000/api/leads
+   curl -v -X PATCH  http://localhost:5000/api/leads/1 \
+     -H "Content-Type: application/json" \
+     -d '{"contactName":"Luigi Bianchi"}'
+   curl -v -X DELETE http://localhost:5000/api/leads/1
+
+
+⸻
+
+2) Conversione Lead → Contact
+	1.	In server/routes.ts, aggiungi:
+
+router.post('/api/leads/:id/convert', async (req, res, next) => {
+  const id = parseInt(req.params.id,10);
+  const lead = await storage.getLead(id);
+  if (!lead) return res.sendStatus(404);
+  let companyId = null;
+  if (lead.companyName) {
+    const comp = await storage.createCompany({ name: lead.companyName, /* altri campi se presenti */ });
+    companyId = comp.id;
+  }
+  const contact = await storage.createContact({
+    name: lead.contactName,
+    email: lead.email,
+    phone: lead.phone,
+    companyId
+  });
+  // opzionale: marcchiamo il lead come “converted”
+  await storage.updateLead(id, { status: 'converted' });
+  res.json({ companyId, contact });
+});
+
+
+	2.	In PostgresStorage, implementa le funzioni getLead, createCompany, createContact, updateLead se mancanti.
+
+⸻
+
+3) Frontend – Pulsante “Converti”
+	1.	In LeadDetail.tsx o LeadModal.tsx:
+
+const convert = async () => {
+  const res = await fetch(`/api/leads/${lead.id}/convert`, { method: 'POST' });
+  if (!res.ok) throw new Error('Conversione fallita');
+  const { companyId, contact } = await res.json();
+  // naviga o aggiorna UI: 
+  // es. redirect a /companies/:companyId o mostra il contatto
+};
+
+
+	2.	Sostituisci la chiamata attuale con convert() e gestisci il flusso dei dati restituiti.
+
+⸻
+
+4) Test End-to-End
+
+Dopo aver applicato le patch, ripeti tutti i test:
+	•	CRUD Lead via UI e curl
+	•	Conversione Lead nei due casi:
+	1.	Lead con companyName → azienda + contatto
+	2.	Lead senza companyName → solo contatto
+	•	Verifica in DB (SELECT * FROM companies, SELECT * FROM contacts, SELECT * FROM leads WHERE status='converted')
+
+⸻
+
+Non interromperti al primo errore: prosegui fino a esito positivo per tutti i passaggi e forniscimi un report strutturato (step, payload, risposta, patch applicata) al termine. Grazie!```

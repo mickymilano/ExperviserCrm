@@ -1135,39 +1135,59 @@ export class PostgresStorage implements IStorage {
 
   async createLead(lead: InsertLead): Promise<Lead> {
     try {
-      // Estraiamo i campi dal lead object
-      const { name, status, source, notes, companyName, jobTitle, leadOwner } =
-        lead;
+      console.log("Creazione lead con dati:", lead);
 
-      // Usando una query SQL nativa
+      // Per gestire la conversione dobbiamo mappare i campi correttamente
+      // nella tabella leads abbiamo first_name, last_name, etc.
+      const {
+        firstName, lastName, status, email, phone, 
+        source, notes, company, // company è lo stesso di companyName nel frontend
+        role, address, website,
+        customFields, assignedToId
+      } = lead;
+
+      // Usando una query SQL nativa che usa i nomi corretti delle colonne
       const result = await pool.query(
         `
         INSERT INTO leads (
-          name, 
+          first_name,
+          last_name, 
           status, 
+          email,
+          phone,
           source, 
-          notes, 
-          company_name, 
-          job_title, 
-          lead_owner, 
+          notes,
+          company, 
+          role,
+          address,
+          website,
+          custom_fields,
+          assigned_to_id,
           created_at, 
           updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW())
         RETURNING 
           id, 
-          name, 
+          first_name as "firstName",
+          last_name as "lastName", 
           status, 
+          email,
+          phone,
           source, 
-          notes, 
-          company_name as "companyName", 
-          job_title as "jobTitle", 
-          lead_owner as "leadOwner", 
+          notes,
+          company, 
+          role,
+          address,
+          website,
+          custom_fields as "customFields",
+          assigned_to_id as "assignedToId",
           created_at as "createdAt", 
           updated_at as "updatedAt"
       `,
-        [name, status, source, notes, companyName, jobTitle, leadOwner],
+        [firstName, lastName, status, email, phone, source, notes, company, role, address, website, customFields, assignedToId],
       );
 
+      console.log("Lead creato con successo:", result.rows[0]);
       return result.rows[0];
     } catch (error) {
       console.error("Error in createLead:", error);
