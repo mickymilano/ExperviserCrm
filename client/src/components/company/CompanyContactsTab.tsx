@@ -14,7 +14,7 @@ import {
 import AsyncSelect from "react-select/async";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, Mail, Phone, Plus, X, UserPlus } from "lucide-react";
+import { Users, Mail, Phone, Plus, X, UserPlus, Star, StarOff, Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { formatPhoneNumber } from "@/lib/utils";
@@ -67,12 +67,16 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
     queryFn: async () => {
       const res = await fetch(`/api/companies/${companyId}`);
       if (!res.ok) throw new Error("Failed to fetch company details");
-      return res.json();
-    },
-    onSuccess: (data) => {
+      const data = await res.json();
+      
+      // Aggiorna lo stato del contatto primario
       if (data.primary_contact_id) {
         setPrimaryContactId(data.primary_contact_id);
+      } else {
+        setPrimaryContactId(null);
       }
+      
+      return data;
     }
   });
 
@@ -160,8 +164,93 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
   };
 
   // Disassocia un contatto dall'azienda
+  // Imposta un contatto come primario per l'azienda
+  const setPrimaryContact = async (contactId: number) => {
+    try {
+      setIsUpdatingPrimary(true);
+      
+      const res = await fetch(`/api/companies/${companyId}/primary-contact`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          primaryContactId: contactId
+        }),
+      });
+      
+      if (!res.ok) {
+        throw new Error("Impossibile impostare il contatto primario");
+      }
+      
+      // Aggiorna lo stato locale
+      setPrimaryContactId(contactId);
+      
+      // Invalida la query dell'azienda per aggiornare i dati
+      queryClient.invalidateQueries({ queryKey: ["/api/companies", companyId] });
+      
+      toast({
+        title: "Contatto primario impostato",
+        description: "Il contatto primario è stato aggiornato con successo",
+      });
+      
+    } catch (error) {
+      console.error("Errore nell'impostazione del contatto primario:", error);
+      toast({
+        title: "Errore",
+        description: "Impossibile impostare il contatto primario",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdatingPrimary(false);
+    }
+  };
+
+  // Rimuove il contatto primario dell'azienda
+  const removePrimaryContact = async () => {
+    try {
+      setIsUpdatingPrimary(true);
+      
+      const res = await fetch(`/api/companies/${companyId}/primary-contact`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          primaryContactId: null
+        }),
+      });
+      
+      if (!res.ok) {
+        throw new Error("Impossibile rimuovere il contatto primario");
+      }
+      
+      // Aggiorna lo stato locale
+      setPrimaryContactId(null);
+      
+      // Invalida la query dell'azienda per aggiornare i dati
+      queryClient.invalidateQueries({ queryKey: ["/api/companies", companyId] });
+      
+      toast({
+        title: "Contatto primario rimosso",
+        description: "Il contatto primario è stato rimosso con successo",
+      });
+      
+    } catch (error) {
+      console.error("Errore nella rimozione del contatto primario:", error);
+      toast({
+        title: "Errore",
+        description: "Impossibile rimuovere il contatto primario",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdatingPrimary(false);
+    }
+  };
+  
   const disassociateContact = async (contactId: number) => {
     try {
+      // Se stiamo disassociando il contatto primario, dobbiamo prima rimuoverlo come primario
+      if (contactId === primaryContactId) {
+        await removePrimaryContact();
+      }
+      
       // Otteniamo prima le aree di attività del contatto
       const areasRes = await fetch(`/api/contacts/${contactId}/areas-of-activity`);
       if (!areasRes.ok) throw new Error("Impossibile recuperare le aree di attività");
@@ -292,12 +381,58 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="font-medium">{contact.firstName} {contact.lastName}</h3>
+                        <div className="flex items-center">
+                          <h3 className="font-medium">{contact.firstName} {contact.lastName}</h3>
+                          {primaryContactId === contact.id && (
+                            <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              Primario
+                            </span>
+                          )}
+                        </div>
                         <p className="text-sm text-muted-foreground">
                           {contact.role || "Nessun ruolo specificato"}
                         </p>
                       </div>
                       <div className="flex gap-2">
+                        {primaryContactId !== contact.id ? (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            disabled={isUpdatingPrimary}
+                            onClick={() => setPrimaryContact(contact.id)}
+                          >
+                            {isUpdatingPrimary ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Impostazione...
+                              </>
+                            ) : (
+                              <>
+                                <Star className="mr-2 h-4 w-4" />
+                                Imposta come primario
+                              </>
+                            )}
+                          </Button>
+                        ) : (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            disabled={isUpdatingPrimary}
+                            onClick={() => removePrimaryContact()}
+                          >
+                            {isUpdatingPrimary ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Rimozione...
+                              </>
+                            ) : (
+                              <>
+                                <StarOff className="mr-2 h-4 w-4" />
+                                Rimuovi primario
+                              </>
+                            )}
+                          </Button>
+                        )}
                         <Button variant="ghost" size="sm" onClick={() => navigate(`/contacts/${contact.id}`)}>
                           Visualizza Profilo
                         </Button>
