@@ -152,11 +152,11 @@ export const companies = pgTable('companies', {
   full_address: text('full_address'),
   
   /**
-   * @deprecated Questo campo NON ESISTE più nel database.
-   * Mantenuto nel tipo per retrocompatibilità frontend.
-   * Sarà rimosso nel codice nella versione 2.0 (prevista 2025-06)
+   * @deprecated Questo campo ESISTE ancora nel database ma è deprecated.
+   * Usare 'full_address' che include anche il country.
+   * Sarà rimosso nella versione 2.0 (prevista 2025-06)
    */
-  // country: varchar('country', { length: 50 }),
+  country: varchar('country', { length: 50 }),
   website: varchar('website', { length: 255 }),
   industry: varchar('industry', { length: 100 }),
   sector: varchar('sector', { length: 100 }),

@@ -7,22 +7,60 @@
 
 /**
  * Mappa di conversione camelCase -> snake_case per i campi aziende
+ * Mappa completa che include TUTTI i campi presenti nella tabella companies
  */
 export const companyFieldsMap = {
   // Frontend (camelCase) -> Database (snake_case)
+  
+  // Campi base
+  name: 'name',
+  status: 'status',
+  email: 'email',
+  phone: 'phone',
+  
+  // Campi deprecati ma ancora presenti nel DB
+  address: 'address',
+  country: 'country',
+  
+  // Campi correnti
   fullAddress: 'full_address',
+  website: 'website',
+  industry: 'industry',
+  sector: 'sector',
+  description: 'description',
+  
+  // Campi dimensionali
   employeeCount: 'employee_count',
   annualRevenue: 'annual_revenue',
   foundedYear: 'founded_year',
-  customFields: 'custom_fields',
-  parentCompanyId: 'parent_company_id',
+  
+  // Media e URL
+  logo: 'logo',
   linkedinUrl: 'linkedin_url',
+  
+  // Relazioni
+  parentCompanyId: 'parent_company_id',
+  
+  // Categorizzazione
+  tags: 'tags',
+  companyType: 'company_type',
+  brands: 'brands',
+  channels: 'channels',
+  productsOrServicesTags: 'products_or_services_tags',
   locationTypes: 'location_types',
+  
+  // Stati e configurazioni
+  isActiveRep: 'is_active_rep',
+  
+  // Date
   lastContactedAt: 'last_contacted_at',
   nextFollowUpAt: 'next_follow_up_at',
-  isActiveRep: 'is_active_rep',
-  companyType: 'company_type',
-  productsOrServicesTags: 'products_or_services_tags',
+  
+  // Altri campi
+  notes: 'notes',
+  customFields: 'custom_fields',
+  
+  // Metadati
   createdAt: 'created_at',
   updatedAt: 'updated_at'
 };

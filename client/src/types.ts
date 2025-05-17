@@ -48,10 +48,9 @@ export interface Company {
   phone: string | null;
   
   // Campi indirizzo (unificati)
-  address: string | null; // Mantenuto per retrocompatibilità
-  full_address: string | null; // Campo DB
-  fullAddress: string | null; // Alias frontend di full_address
-  country: string | null;
+  address: string | null; // @deprecated - Mantenuto per retrocompatibilità
+  fullAddress: string | null; // Mappato a full_address nel DB
+  country: string | null; // @deprecated - Mantenuto per retrocompatibilità
   
   // Campi azienda
   website: string | null;
@@ -60,53 +59,42 @@ export interface Company {
   description: string | null;
   
   // Informazioni dimensionali
-  employee_count: number | null; // Campo DB
-  employeeCount: number | null; // Alias frontend
-  annual_revenue: number | null; // Campo DB
-  annualRevenue: number | null; // Alias frontend
-  founded_year: number | null; // Campo DB
-  foundedYear: number | null; // Alias frontend
+  employeeCount: number | null; // Mappato a employee_count nel DB
+  annualRevenue: number | null; // Mappato a annual_revenue nel DB
+  foundedYear: number | null; // Mappato a founded_year nel DB
   
   // Media e URL
   logo: string | null;
-  linkedin_url: string | null; // Campo DB
-  linkedinUrl: string | null; // Alias frontend
+  linkedinUrl: string | null; // Mappato a linkedin_url nel DB
   
   // Relazioni
-  parent_company_id: number | null; // Campo DB
-  parentCompanyId: number | null; // Alias frontend
+  parentCompanyId: number | null; // Mappato a parent_company_id nel DB
   
   // Categorizzazione
   tags: string[] | null;
-  company_type: string | null; // Campo DB
-  companyType: string | null; // Alias frontend
+  companyType: string | null; // Mappato a company_type nel DB
   brands: string[] | null;
   channels: string[] | null;
-  products_or_services_tags: string[] | null; // Campo DB
-  productsOrServicesTags: string[] | null; // Alias frontend
-  location_types: string[] | null; // Campo DB
-  locationTypes: string[] | null; // Alias frontend
+  productsOrServicesTags: string[] | null; // Mappato a products_or_services_tags nel DB
+  locationTypes: string[] | null; // Mappato a location_types nel DB
   
   // Stati e configurazioni
-  is_active_rep: boolean; // Campo DB
-  isActiveRep: boolean; // Alias frontend
+  isActiveRep: boolean; // Mappato a is_active_rep nel DB
   
   // Date di follow-up
-  last_contacted_at: Date | null; // Campo DB
-  lastContactedAt: Date | null; // Alias frontend
-  next_follow_up_at: Date | null; // Campo DB
-  nextFollowUpAt: Date | null; // Alias frontend
+  lastContactedAt: Date | null; // Mappato a last_contacted_at nel DB
+  nextFollowUpAt: Date | null; // Mappato a next_follow_up_at nel DB
   
   // Campi vari
   notes: string | null;
-  custom_fields: Record<string, any> | null; // Campo DB
-  customFields: Record<string, any> | null; // Alias frontend
+  customFields: Record<string, any> | null; // Mappato a custom_fields nel DB
   
   // Metadati
-  created_at: Date | null; // Campo DB
-  createdAt: Date | null; // Alias frontend
-  updated_at: Date | null; // Campo DB
-  updatedAt: Date | null; // Alias frontend
+  createdAt: Date | null; // Mappato a created_at nel DB
+  updatedAt: Date | null; // Mappato a updated_at nel DB
+  
+  // Relazioni (per compatibilità con il resto dell'app)
+  areasOfActivity?: AreaOfActivity[];
 }
 
 export interface AreaOfActivity {
