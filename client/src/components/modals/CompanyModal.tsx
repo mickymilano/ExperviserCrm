@@ -398,44 +398,46 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
           
           <div className="space-y-2 mb-4">
             <Label htmlFor="relationshipType">Relazioni con me</Label>
-            <Select
-              isMulti
-              options={[
-                { value: 'prospect', label: 'In fase di valutazione' },
-                { value: 'clienteAttivo', label: 'Cliente attivo' },
-                { value: 'exCliente', label: 'Ex-cliente' },
-                { value: 'mandante', label: 'Mandante' },
-                { value: 'clienteRitenuto', label: 'Cliente retainer' },
-                { value: 'clienteUnaTantum', label: 'Cliente una-tantum' },
-                { value: 'segnalatore', label: 'Segnalatore' },
-                { value: 'fornitore', label: 'Fornitore' },
-                { value: 'partnerStrategico', label: 'Partner strategico' },
-                { value: 'concorrente', label: 'Concorrente' },
-                { value: 'investitoreCliente', label: 'Investitore-cliente' }
-              ]}
-              value={(watch("relationshipType") || []).map(rt => ({
-                value: rt,
-                label: {
-                  prospect: 'In fase di valutazione',
-                  clienteAttivo: 'Cliente attivo',
-                  exCliente: 'Ex-cliente',
-                  mandante: 'Mandante',
-                  clienteRitenuto: 'Cliente retainer',
-                  clienteUnaTantum: 'Cliente una-tantum',
-                  segnalatore: 'Segnalatore',
-                  fornitore: 'Fornitore',
-                  partnerStrategico: 'Partner strategico',
-                  concorrente: 'Concorrente',
-                  investitoreCliente: 'Investitore-cliente'
-                }[rt] || rt
-              }))}
-              onChange={selected => {
-                const values = selected ? selected.map(opt => opt.value) : [];
-                setValue("relationshipType", values, { shouldValidate: true });
-              }}
-              placeholder="Seleziona o digita relazioni..."
-              className="w-full"
-            />
+            <div className="grid grid-cols-2 gap-2 border rounded-md p-3 mb-2">
+              {[
+                { id: 'prospect', label: 'In fase di valutazione' },
+                { id: 'clienteAttivo', label: 'Cliente attivo' },
+                { id: 'exCliente', label: 'Ex-cliente' },
+                { id: 'mandante', label: 'Mandante' },
+                { id: 'clienteRitenuto', label: 'Cliente retainer' },
+                { id: 'clienteUnaTantum', label: 'Cliente una-tantum' },
+                { id: 'segnalatore', label: 'Segnalatore' },
+                { id: 'fornitore', label: 'Fornitore' },
+                { id: 'partnerStrategico', label: 'Partner strategico' },
+                { id: 'concorrente', label: 'Concorrente' },
+                { id: 'investitoreCliente', label: 'Investitore-cliente' }
+              ].map(option => {
+                const currentValues = watch("relationshipType") || [];
+                const isSelected = currentValues.includes(option.id);
+                
+                return (
+                  <div key={option.id} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id={`relationship-${option.id}`}
+                      checked={isSelected}
+                      onChange={e => {
+                        const newValues = e.target.checked 
+                          ? [...currentValues, option.id]
+                          : currentValues.filter(v => v !== option.id);
+                        
+                        setValue("relationshipType", newValues, { shouldValidate: true });
+                        console.log("Nuovi valori relationshipType:", newValues);
+                      }}
+                      className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    />
+                    <label htmlFor={`relationship-${option.id}`} className="text-sm font-medium text-gray-700">
+                      {option.label}
+                    </label>
+                  </div>
+                );
+              })}
+            </div>
           </div>
           
           <div className="space-y-2 mb-4">
