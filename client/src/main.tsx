@@ -48,6 +48,9 @@ Sentry.init({
   },
 });;
 
+// Theme Provider
+import { ThemeProvider } from './components/layouts/ThemeProvider';
+
 // Renderizza l'applicazione nel DOM
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
@@ -58,7 +61,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <button onClick={() => window.location.reload()}>Ricarica ora</button>
       </div>
     }>
-      <App />
+      <ThemeProvider defaultTheme="light" storageKey="experviser-theme">
+        <App />
+      </ThemeProvider>
     </Sentry.ErrorBoundary>
   </React.StrictMode>
 );

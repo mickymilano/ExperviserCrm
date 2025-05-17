@@ -114,6 +114,15 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+    
+    /* Forciamo il tema chiaro */
+    background-color: white !important;
+    color: #333 !important;
+  }
+  
+  /* Forziamo sempre il tema chiaro anziché scuro */
+  :root {
+    color-scheme: light !important;
   }
 }
 
