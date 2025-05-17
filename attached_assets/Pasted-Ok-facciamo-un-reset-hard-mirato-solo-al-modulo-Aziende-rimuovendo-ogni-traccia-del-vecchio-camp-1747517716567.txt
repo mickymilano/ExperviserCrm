@@ -1,0 +1,106 @@
+Ok, facciamo un “reset hard” mirato solo al modulo Aziende, rimuovendo ogni traccia del vecchio campo city e febbricitante a Google Places su “Nome Azienda”. Copia e incolla tutto questo in una singola cella terminale di Replit:
+
+apply_patch << 'EOF'
+*** Begin Patch
+*** Update File: shared/schema.ts
+@@
+-- ALTER TABLE companies DROP COLUMN IF EXISTS city;
+-- ALTER TABLE companies DROP COLUMN IF EXISTS region;
++-- Rimuovo definitivamente city e region dalla tabella companies
++ALTER TABLE companies DROP COLUMN IF EXISTS city;
++ALTER TABLE companies DROP COLUMN IF EXISTS region;
+*** End Patch
+EOF
+
+apply_patch << 'EOF'
+*** Begin Patch
+*** Update File: client/src/types.ts
+@@
+-  /** Città (DEPRECATO) */
+-  city?: string;
+-  /** Regione (DEPRECATO) */
+-  region?: string;
++  /** Indirizzo completo (via, civico, cap, città, provincia, nazione) */
++  fullAddress: string;
+*** End Patch
+EOF
+
+apply_patch << 'EOF'
+*** Begin Patch
+*** Update File: client/src/components/modals/CompanyModal.tsx
+@@
+-import GooglePlacesAutocomplete from 'react-google-places-autocomplete';
++import GooglePlacesAutocomplete from 'react-google-places-autocomplete';
+
+@@ function CompanyModal({ initialData, onSave, onClose }) {
+-  {/* RIEVOCA input manuale: ripristiniamo Google Autocomplete sul field Nome Azienda */}
+-  <label>Nome Azienda / Indirizzo</label>
+-  <GooglePlacesAutocomplete
+-    apiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY}
+-    selectProps={{
+-      placeholder: 'Inizia a digitare nome azienda per indirizzo…',
+-      value: company.fullAddress
+-        ? { label: company.fullAddress, value: company.fullAddress }
+-        : null,
+-      onChange: place => {
+-        setCompany(c => ({
+-          ...c,
+-          fullAddress: place.label,
+-          name: place.value,  // mantiene anche il campo name
+-        }));
+-      }
+-    }}
+-    autocompletionRequest={{ types: ['establishment'] }}
+-  />
++  {/* RIPRISTINO: Google Autocomplete sul campo ‘Nome Azienda’ */}
++  <label>Nome Azienda</label>
++  <GooglePlacesAutocomplete
++    apiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY}
++    autocompletionRequest={{ types: ['establishment'] }}
++    selectProps={{
++      placeholder: 'Cerca azienda…',
++      value: company.name ? { label: company.name, value: company.name } : null,
++      onChange: sel => {
++        setCompany(c => ({
++          ...c,
++          name: sel.value,
++          fullAddress: sel.label
++        }));
++      }
++    }}
++  />
+@@
+-  {/* Manteniamo city solo per i Lead, qui usiamo fullAddress */}
++  {/* Campo “city” rimosso: usiamo solo fullAddress */}
+*** End Patch
+EOF
+
+apply_patch << 'EOF'
+*** Begin Patch
+*** Update File: client/.env
+-REACT_APP_GOOGLE_MAPS_API_KEY=TUO_GOOGLE_API_KEY   # ripristinato per l’autocomplete
++REACT_APP_GOOGLE_MAPS_API_KEY=TUO_GOOGLE_API_KEY   # (mantieni la tua chiave valida qui)
+*** End Patch
+EOF
+
+# Applichiamo migrazione (lo schema ha già rimosso city/region)
+npm run db:migrate
+
+# Riavviamo client e server
+kill $(lsof -t -i:5000) || true && npm run dev &
+npm run dev --prefix client &
+
+echo "✅ Hard reset completato: 'city' e 'region' eliminati da companies; Google Places autocomplete ora su 'name' che popola 'fullAddress'."
+
+Passaggi chiave:
+	1.	DROP COLUMN city e region da companies
+	2.	Elimina le proprietà city|region dai tipi TS
+	3.	Ripristina soltanto il Google Autocomplete sul campo name, salvando l’indirizzo completo in fullAddress
+	4.	Riavvia DB e applicazioni
+
+Dopo l’esecuzione, apri CompanyModal:
+	•	Dovrai cercare l’azienda per nome (autocomplete Google).
+	•	Selezionandola, name e fullAddress si popoleranno.
+	•	Niente più “città” separata.
+
+Fammi sapere se ora il salvataggio azienda torna stabile!

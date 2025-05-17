@@ -49,6 +49,7 @@ export interface Company {
   
   // Campi indirizzo (unificati)
   address: string | null; // @deprecated - Mantenuto per retrocompatibilità
+  /** Indirizzo completo (via, civico, cap, città, provincia, nazione) */
   fullAddress: string | null; // Mappato a full_address nel DB
   country: string | null; // @deprecated - Mantenuto per retrocompatibilità
   

@@ -306,7 +306,7 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-2 mb-4">
             <Label htmlFor="name" className="flex items-center">
-              <span>Nome Azienda / Indirizzo</span>
+              <span>Nome Azienda</span>
               <span className="ml-2 px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">Google Maps</span>
             </Label>
             <PlacesAutocomplete 
@@ -322,17 +322,23 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
                     country: place.address_components?.find(c => c.types.includes('country'))?.long_name
                   });
                   
+                  // Imposta nome azienda
                   setValue("name", place.name || value, { shouldValidate: true });
-                  setValue("address", place.formatted_address || "", { shouldValidate: true });
-                  setValue("fullAddress", place.formatted_address || "", { shouldValidate: true });
                   
+                  // Popola fullAddress con l'indirizzo completo
+                  if (place.formatted_address) {
+                    setValue("fullAddress", place.formatted_address, { shouldValidate: true });
+                    setValue("address", place.formatted_address, { shouldValidate: true });
+                  }
+                  
+                  // Estrai e imposta il paese
                   const country = place.address_components?.find(c => c.types.includes('country'))?.long_name;
                   if (country) setValue("country", country, { shouldValidate: true });
                   
                   trigger(["name","address","fullAddress","country"]);
                 }
               }}
-              placeholder="Inizia a digitare nome azienda..."
+              placeholder="Cerca azienda..."
               className="w-full"
               types={['establishment']}
             />
