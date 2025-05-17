@@ -1816,15 +1816,24 @@ export class PostgresStorage implements IStorage {
       const row = result.rows[0];
       const company = toCamelCase(row) as Company;
 
-      // Aggiungiamo campi backward compatible che potrebbero essere attesi dal frontend
+      // Preserviamo i campi esistenti e impostiamo correttamente i campi di indirizzo
+      // Assicuriamoci che fullAddress sia impostato correttamente dal campo full_address
+      company.fullAddress = row.full_address || row.address || null;
+      
+      // Preserviamo il valore di country se presente nel database
+      company.country = row.country || null;
+      
+      // Aggiungiamo campi backward compatible che potrebbero essere attesi dal frontend ma non esistono più
       company.city = null;
       company.region = null;
-      company.country = null;
       company.postalCode = null;
       
       // Aggiungiamo eventuali campi mancanti
       if (company.description === undefined) company.description = null;
       if (company.logo === undefined) company.logo = null;
+      
+      // Logging per debug
+      console.log(`Company address data: fullAddress=${company.fullAddress}, country=${company.country}`);
 
       // Then fetch areas of activity separately
       try {
