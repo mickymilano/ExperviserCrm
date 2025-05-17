@@ -396,49 +396,51 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
             <Input id="address" {...register("address")} />
           </div>
           
-          <div className="space-y-2 mb-4">
-            <Label htmlFor="relationshipType">Relazioni con me</Label>
-            <div className="grid grid-cols-2 gap-2 border rounded-md p-3 mb-2">
+          <fieldset className="mb-6 border rounded-md p-4">
+            <legend className="px-2 text-sm font-semibold">Relazioni con me</legend>
+            <div className="grid grid-cols-2 gap-3">
               {[
-                { id: 'prospect', label: 'In fase di valutazione' },
-                { id: 'clienteAttivo', label: 'Cliente attivo' },
-                { id: 'exCliente', label: 'Ex-cliente' },
-                { id: 'mandante', label: 'Mandante' },
-                { id: 'clienteRitenuto', label: 'Cliente retainer' },
-                { id: 'clienteUnaTantum', label: 'Cliente una-tantum' },
-                { id: 'segnalatore', label: 'Segnalatore' },
-                { id: 'fornitore', label: 'Fornitore' },
-                { id: 'partnerStrategico', label: 'Partner strategico' },
-                { id: 'concorrente', label: 'Concorrente' },
-                { id: 'investitoreCliente', label: 'Investitore-cliente' }
-              ].map(option => {
+                ['prospect', 'In fase di valutazione'],
+                ['clienteAttivo', 'Cliente attivo'],
+                ['exCliente', 'Ex-cliente'],
+                ['mandante', 'Mandante'],
+                ['clienteRitenuto', 'Cliente retainer'],
+                ['clienteUnaTantum', 'Cliente una-tantum'],
+                ['segnalatore', 'Segnalatore'],
+                ['fornitore', 'Fornitore'],
+                ['partnerStrategico', 'Partner strategico'],
+                ['concorrente', 'Concorrente'],
+                ['investitoreCliente', 'Investitore-cliente']
+              ].map(([value, label]) => {
                 const currentValues = watch("relationshipType") || [];
-                const isSelected = currentValues.includes(option.id);
+                const isSelected = currentValues.includes(value);
                 
                 return (
-                  <div key={option.id} className="flex items-center space-x-2">
+                  <label 
+                    key={value}
+                    htmlFor={`relationship-${value}`}
+                    className="flex items-center space-x-2 hover:bg-gray-50 p-1 rounded cursor-pointer"
+                  >
                     <input
                       type="checkbox"
-                      id={`relationship-${option.id}`}
+                      id={`relationship-${value}`}
                       checked={isSelected}
                       onChange={e => {
                         const newValues = e.target.checked 
-                          ? [...currentValues, option.id]
-                          : currentValues.filter(v => v !== option.id);
+                          ? [...currentValues, value]
+                          : currentValues.filter(v => v !== value);
                         
                         setValue("relationshipType", newValues, { shouldValidate: true });
                         console.log("Nuovi valori relationshipType:", newValues);
                       }}
                       className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                     />
-                    <label htmlFor={`relationship-${option.id}`} className="text-sm font-medium text-gray-700">
-                      {option.label}
-                    </label>
-                  </div>
+                    <span className="text-sm font-medium text-gray-700">{label}</span>
+                  </label>
                 );
               })}
             </div>
-          </div>
+          </fieldset>
           
           <div className="space-y-2 mb-4">
             <Label htmlFor="tags">Tag</Label>

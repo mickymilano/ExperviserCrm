@@ -1,0 +1,86 @@
+Ecco un comando unico, da incollare in Replit, per ripristinare visivamente il campo “Relazioni con me” in modalità checkbox multipli (affinché sia sempre visibile e front-end ↔ back-end 1:1):
+
+apply_patch << 'EOF'
+*** Begin Patch
+*** Update File: client/src/components/modals/CompanyModal.tsx
+@@ function CompanyModal({ initialData, onSave, onClose }) {
+   const [company, setCompany] = useState<Company>(initialData || {} as Company);
+@@
+-  <label>Relazioni con me</label>
+-  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
+-    {[
+-      { value: 'prospect', label: 'In fase di valutazione' },
+-      { value: 'clienteAttivo', label: 'Cliente attivo' },
+-      { value: 'exCliente', label: 'Ex-cliente' },
+-      { value: 'mandante', label: 'Mandante' },
+-      { value: 'clienteRitenuto', label: 'Cliente retainer' },
+-      { value: 'clienteUnaTantum', label: 'Cliente una-tantum' },
+-      { value: 'segnalatore', label: 'Segnalatore' },
+-      { value: 'fornitore', label: 'Fornitore' },
+-      { value: 'partnerStrategico', label: 'Partner strategico' },
+-      { value: 'concorrente', label: 'Concorrente' },
+-      { value: 'investitoreCliente', label: 'Investitore-cliente' }
+-    ].map(opt => (
+-      <label key={opt.value} style={{ display: 'flex', alignItems: 'center' }}>
+-        <input
+-          type="checkbox"
+-          checked={(company.relationshipType || []).includes(opt.value)}
+-          onChange={e => {
+-            const list = new Set(company.relationshipType || []);
+-            if (e.target.checked) list.add(opt.value); else list.delete(opt.value);
+-            setCompany(c => ({ ...c, relationshipType: Array.from(list) }));
+-          }}
+-        />
+-        <span style={{ marginLeft: '4px' }}>{opt.label}</span>
+-      </label>
+-    ))}
+-  </div>
++  <fieldset style={{ marginBottom: '16px', border: '1px solid #ddd', padding: '12px' }}>
++    <legend><strong>Relazioni con me</strong></legend>
++    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
++      {[
++        ['prospect', 'In fase di valutazione'],
++        ['clienteAttivo', 'Cliente attivo'],
++        ['exCliente', 'Ex-cliente'],
++        ['mandante', 'Mandante'],
++        ['clienteRitenuto', 'Cliente retainer'],
++        ['clienteUnaTantum', 'Cliente una-tantum'],
++        ['segnalatore', 'Segnalatore'],
++        ['fornitore', 'Fornitore'],
++        ['partnerStrategico', 'Partner strategico'],
++        ['concorrente', 'Concorrente'],
++        ['investitoreCliente', 'Investitore-cliente']
++      ].map(([value, label]) => {
++        const selected = Array.isArray(company.relationshipType) && company.relationshipType.includes(value);
++        return (
++          <label key={value} style={{ display: 'flex', alignItems: 'center', minWidth: '160px' }}>
++            <input
++              type="checkbox"
++              checked={selected}
++              onChange={e => {
++                const current = new Set(company.relationshipType || []);
++                if (e.target.checked) current.add(value); else current.delete(value);
++                setCompany(c => ({ ...c, relationshipType: Array.from(current) }));
++              }}
++              style={{ marginRight: '6px' }}
++            />
++            {label}
++          </label>
++        );
++      })}
++    </div>
++  </fieldset>
+*** End Patch
+EOF
+
+# Riavvia il client React
+npm run dev --prefix client
+
+echo "✅ Campo 'Relazioni con me' ora renderizzato come checkbox multipli. Prova a modificare un’azienda ed assicurati che il pannello mostri tutte le opzioni selezionabili!"
+
+Cosa fa il patch
+	1.	Inserisce un <fieldset> con <legend> in modo semantico e visibile.
+	2.	Usa una griglia di checkbox per tutte le 11 opzioni, ognuna con etichetta chiara.
+	3.	Mantiene company.relationshipType come string[], aggiungendo o rimuovendo voci dall’array.
+
+Dopo il reload del front-end, apri il CompanyModal di un’azienda: dovresti subito vedere tutte le “Relazioni con me” sotto forma di checkbox, poterne selezionare più di una e salvare correttamente. Fammi sapere!
