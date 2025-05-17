@@ -348,13 +348,23 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
                     console.log("Place details received:", placeDetails);
                     
                     // Estrae il paese
-                    const countryComponent = placeDetails.address_components.find(component => 
-                      component.types.includes('country')
+                    const countryComponent = placeDetails.address_components.find(
+                      component => component.types.includes('country')
                     );
                     
                     if (countryComponent) {
-                      console.log("Country found:", countryComponent.long_name);
+                      console.log("Paese estratto:", countryComponent.long_name);
                       setValue("country", countryComponent.long_name, { shouldValidate: true });
+                    }
+                    
+                    // Estrae anche la città se necessario
+                    const cityComponent = placeDetails.address_components.find(
+                      component => component.types.includes('locality')
+                    );
+                    
+                    if (cityComponent && customFields) {
+                      console.log("Città estratta:", cityComponent.long_name);
+                      setValue("city", cityComponent.long_name, { shouldValidate: true });
                     }
                   } else {
                     console.warn("No place details available in PlacesAutocomplete onChange");
