@@ -153,7 +153,11 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
   };
   
   // Helper function che utilizza direttamente i valori del form
-  const getSelectedCompanyId = () => getValues("companyId");
+  // Aggiungiamo controlli più rigorosi
+  const getSelectedCompanyId = () => {
+    const value = getValues("companyId");
+    return typeof value === 'number' && !isNaN(value) ? value : null;
+  };
 
   // Initialize form when in edit mode or reset for create mode
   useEffect(() => {
