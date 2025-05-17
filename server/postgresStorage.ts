@@ -1026,6 +1026,7 @@ export class PostgresStorage implements IStorage {
           email: email,
           phone: phone,
           companyName: lead.company_name || "",
+          company: lead.company_name || "", // Aggiungiamo company per compatibilità con il frontend
           companyEmail: lead.company_email || "",
           privateEmail: lead.private_email || "",
           mobilePhone: lead.mobile_phone || "",
@@ -1115,6 +1116,7 @@ export class PostgresStorage implements IStorage {
         email: email,
         phone: phone,
         companyName: lead.company_name || "",
+        company: lead.company_name || "", // Aggiungiamo company per compatibilità con il frontend
         companyEmail: lead.company_email || "",
         privateEmail: lead.private_email || "",
         mobilePhone: lead.mobile_phone || "",
