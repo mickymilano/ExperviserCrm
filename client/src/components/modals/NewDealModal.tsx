@@ -96,7 +96,17 @@ export default function NewDealModal({ open, onOpenChange, initialData }: DealMo
   const [openCompanyCombobox, setOpenCompanyCombobox] = useState(false);
   const [openContactCombobox, setOpenContactCombobox] = useState(false);
   const [openBranchCombobox, setOpenBranchCombobox] = useState(false);
+  // Stato separato per l'ID dell'azienda selezionata
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
+  
+  // Funzione per impostare l'ID dell'azienda selezionata
+  const handleCompanySelect = (companyId: number) => {
+    setSelectedCompanyId(companyId);
+    setValue("companyId", companyId);
+    // Resetta la selezione della filiale quando cambia l'azienda
+    setValue("branchId", null);
+    setOpenCompanyCombobox(false);
+  };
   const [selectedSynergyContacts, setSelectedSynergyContacts] = useState<SynergyContact[]>([]);
   const [openSynergyCombobox, setOpenSynergyCombobox] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
