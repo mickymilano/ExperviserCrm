@@ -527,17 +527,14 @@ export default function NewDealModal({ open, onOpenChange, initialData }: DealMo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent 
-        className="max-w-3xl max-h-[90vh] overflow-y-auto"
-        aria-describedby="deal-form-description"
-      >
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {isEditMode ? "Modifica Deal" : "Crea Nuovo Deal"}
           </DialogTitle>
-          <p id="deal-form-description" className="text-sm text-muted-foreground">
+          <DialogDescription>
             Compila i dettagli del deal. I campi con * sono obbligatori.
-          </p>
+          </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
