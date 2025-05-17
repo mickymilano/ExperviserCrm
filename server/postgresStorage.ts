@@ -1276,7 +1276,7 @@ export class PostgresStorage implements IStorage {
     );
     try {
       // Seleziona colonne esattamente come sono definite nel database
-      const result = await db.execute(
+      const contactsResult = await db.execute(
         `SELECT 
           id, 
           first_name as "firstName", 
@@ -1292,7 +1292,39 @@ export class PostgresStorage implements IStorage {
         FROM contacts 
         ORDER BY first_name, last_name`,
       );
-      return result.rows as Contact[];
+      
+      // Recupera i contatti
+      const contacts = contactsResult.rows as Contact[];
+      
+      // Per ogni contatto, recupera le sue aree di attività
+      for (const contact of contacts) {
+        try {
+          const areasResult = await db.execute(
+            `SELECT 
+              id, 
+              contact_id as "contactId", 
+              company_id as "companyId", 
+              company_name as "companyName", 
+              role, 
+              job_description as "jobDescription", 
+              is_primary as "isPrimary", 
+              created_at as "createdAt", 
+              updated_at as "updatedAt" 
+            FROM areas_of_activity 
+            WHERE contact_id = $1`,
+            [contact.id]
+          );
+          
+          // Assegna le aree recuperate al contatto
+          if (areasResult.rows.length > 0) {
+            contact.areasOfActivity = areasResult.rows as AreaOfActivity[];
+          }
+        } catch (areaError) {
+          console.error(`Error fetching areas for contact ${contact.id}:`, areaError);
+        }
+      }
+      
+      return contacts;
     } catch (error) {
       console.error("Error in getContacts:", error);
       return [];
