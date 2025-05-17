@@ -694,54 +694,30 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                   name="companyId"
                   control={control}
                   render={({ field }) => (
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          role="combobox"
-                          className="w-full justify-between"
-                        >
-                          {field.value !== undefined && field.value !== null && Array.isArray(companies)
-                            ? companies.find((company: any) => company.id === field.value)?.name || "Select company"
+                    <Select
+                      value={field.value?.toString() || ""}
+                      onValueChange={(value) => {
+                        const companyId = parseInt(value, 10);
+                        console.log("Company selected:", companyId);
+                        field.onChange(companyId);
+                        setCompanyIdInForm(companyId);
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select company">
+                          {Array.isArray(companies) && field.value 
+                            ? companies.find((company: any) => company.id === field.value)?.name 
                             : "Select company"}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-full p-0">
-                        <Command>
-                          <CommandInput 
-                            placeholder="Search company..." 
-                            onValueChange={setCompanySearchQuery}
-                          />
-                          <CommandEmpty>No company found.</CommandEmpty>
-                          <CommandGroup className="max-h-64 overflow-y-auto">
-                            {Array.isArray(filteredCompanies) && filteredCompanies.map((company: any) => (
-                              <CommandItem
-                                key={company.id}
-                                value={String(company.id)}
-                                onSelect={(currentValue) => {
-                                  console.log("Company selection - Setting ID:", company.id, company.name);
-                                  // Set the company ID using our single setter function
-                                  setCompanyIdInForm(company.id);
-                                  // Direct field update is handled by setCompanyIdInForm
-                                  field.onChange(company.id);
-                                  // Reset contact selection
-                                  setValue("contactId", null);
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    field.value === company.id ? "opacity-100" : "opacity-0"
-                                  )}
-                                />
-                                {company.name}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.isArray(companies) && companies.map((company) => (
+                          <SelectItem key={company.id} value={company.id.toString()}>
+                            {company.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   )}
                 />
                 {errors.companyId && (
