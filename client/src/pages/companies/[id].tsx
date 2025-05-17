@@ -296,24 +296,23 @@ export default function CompanyDetail() {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   <div className="space-y-4">
-                    {/* Mostriamo solo fullAddress che è il campo unificato */}
                     {company.fullAddress && (
                       <div className="flex items-start">
                         <MapPin className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
                         <div>
-                          <p className="text-sm font-medium mb-1">Indirizzo Completo</p>
+                          <p className="text-sm font-medium mb-1">Indirizzo</p>
                           <p className="whitespace-pre-line">{company.fullAddress}</p>
                         </div>
                       </div>
                     )}
                     
-                    {(company.country || company.customFields?.country) && (
+                    {company.country && (
                       <div className="flex items-start">
                         <Flag className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
                         <div>
                           <p className="text-sm font-medium mb-1">Paese</p>
                           <Badge variant="outline" className="font-normal mt-1">
-                            {company.country || company.customFields?.country}
+                            {company.country}
                           </Badge>
                         </div>
                       </div>
@@ -321,22 +320,29 @@ export default function CompanyDetail() {
                   </div>
                   
                   <div className="space-y-4">
-                    {company.customFields?.city && (
-                      <div className="flex items-start">
-                        <MapPin className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
-                        <div>
-                          <p className="text-sm font-medium mb-1">Città</p>
-                          <p>{company.customFields.city}</p>
-                        </div>
-                      </div>
-                    )}
-                    
                     {company.customFields?.timezone && (
                       <div className="flex items-start">
                         <Clock className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
                         <div>
                           <p className="text-sm font-medium mb-1">Fuso Orario</p>
                           <p>{company.customFields.timezone}</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {company.website && (
+                      <div className="flex items-start">
+                        <Link className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium mb-1">Sito Web</p>
+                          <a 
+                            href={company.website.startsWith('http') ? company.website : `https://${company.website}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline"
+                          >
+                            {company.website}
+                          </a>
                         </div>
                       </div>
                     )}
