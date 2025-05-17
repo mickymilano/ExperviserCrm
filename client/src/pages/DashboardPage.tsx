@@ -248,7 +248,7 @@ export default function DashboardPage() {
         <StatCard
           title="Filiali"
           value={stats && typeof stats === 'object' && stats.branches ? stats.branches : 0}
-          percentChange={3.5} {/* Percentuale simulata */}
+          percentChange={3.5}
           icon={<Building2 className="h-5 w-5 text-cyan-500" />}
           color="bg-cyan-100 dark:bg-cyan-900/20"
         />
