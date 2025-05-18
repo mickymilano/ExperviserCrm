@@ -9,13 +9,26 @@ export const useBranches = (companyId?: number) => {
   const { data: branches, isLoading, error } = useQuery({
     queryKey: companyId ? ['/api/branches/company', companyId] : ['/api/branches'],
     queryFn: async () => {
-      if (companyId) {
-        return await apiRequest(`/api/branches/company/${companyId}`, { method: "GET" });
-      } else {
-        return await apiRequest('/api/branches', { method: "GET" });
+      console.log('useBranches: iniziando la richiesta API', companyId ? `per l'azienda ${companyId}` : 'per tutte le filiali');
+      
+      try {
+        let result;
+        if (companyId) {
+          result = await apiRequest(`/api/branches/company/${companyId}`, { method: "GET" });
+        } else {
+          result = await apiRequest('/api/branches', { method: "GET" });
+        }
+        
+        console.log('useBranches: risposta API ricevuta:', result);
+        // Se il risultato è null o undefined, restituiamo un array vuoto
+        return Array.isArray(result) ? result : [];
+      } catch (err) {
+        console.error('useBranches: errore durante la richiesta API:', err);
+        // In caso di errore restituiamo un array vuoto
+        return [];
       }
     },
-    retry: false,
+    retry: 1,
   });
 
   // Mutation per eliminare una filiale
