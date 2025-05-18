@@ -234,7 +234,7 @@ export default function ContactDetail() {
                     <div className="flex items-center">
                       <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
                       <a href={`tel:${contact.phone}`} className="text-sm hover:underline">
-                        {formatPhoneNumber(contact.phone)}
+                        {formatPhoneNumber(contact.phone)} ({t('company.contacts.detail.officePhone')})
                       </a>
                     </div>
                   )}
@@ -243,7 +243,7 @@ export default function ContactDetail() {
                     <div className="flex items-center">
                       <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
                       <a href={`tel:${contact.mobilePhone}`} className="text-sm hover:underline">
-                        {formatPhoneNumber(contact.mobilePhone)} (mobile)
+                        {formatPhoneNumber(contact.mobilePhone)} ({t('company.contacts.detail.mobilePhone')})
                       </a>
                     </div>
                   )}
@@ -252,7 +252,7 @@ export default function ContactDetail() {
                     <div className="flex items-center">
                       <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
                       <a href={`tel:${contact.privatePhone}`} className="text-sm hover:underline">
-                        {formatPhoneNumber(contact.privatePhone)} (personal)
+                        {formatPhoneNumber(contact.privatePhone)} ({t('company.contacts.detail.personalPhone')})
                       </a>
                     </div>
                   )}
@@ -261,7 +261,7 @@ export default function ContactDetail() {
                     <div className="flex items-center">
                       <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
                       <a href={`tel:${contact.officePhone}`} className="text-sm hover:underline">
-                        {formatPhoneNumber(contact.officePhone)} (office)
+                        {formatPhoneNumber(contact.officePhone)} ({t('company.contacts.detail.officePhoneExt')})
                       </a>
                     </div>
                   )}
@@ -338,7 +338,7 @@ export default function ContactDetail() {
                   <CardHeader className="pb-2">
                     <CardTitle className="flex items-center text-lg">
                       <Briefcase className="h-5 w-5 mr-2" />
-                      Job Description
+                      {t('company.contacts.detail.jobDescription')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -352,10 +352,10 @@ export default function ContactDetail() {
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center text-lg">
                     <Briefcase className="h-5 w-5 mr-2" />
-                    Deals
+                    {t('company.contacts.detail.deals')}
                   </CardTitle>
                   <CardDescription>
-                    Deals associated with {contact.firstName} {contact.lastName}
+                    {t('company.contacts.detail.dealsAssociatedWith')} {contact.firstName} {contact.lastName}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
