@@ -1278,19 +1278,24 @@ export function registerRoutes(app: any) {
     }
   });
   
-  // Ottieni un singolo deal - implementazione SQL diretta
-  app.get('/api/deals/:id', authenticate, async (req, res) => {
+  // Ottieni un singolo deal - implementazione debug
+  app.get('/api/deals/:id', async (req, res) => {
+    console.log('=====================================================');
+    console.log(`[DEAL DEBUG] API endpoint /api/deals/${req.params.id} è stato chiamato`);
+    console.log('=====================================================');
+
     try {
       const dealId = parseInt(req.params.id);
       
       if (isNaN(dealId)) {
+        console.log(`[DEAL DEBUG] ID deal non valido: ${req.params.id}`);
         return res.status(400).json({ message: 'ID deal non valido' });
       }
       
       // Importiamo direttamente il pool dal modulo db.ts
       const { pool } = require('./db');
       
-      console.log(`[DIRECT SQL] Fetching deal with id ${dealId}`);
+      console.log(`[DEAL DEBUG] Fetching deal with id ${dealId} using direct SQL`);
       
       // Query per il deal
       const dealResult = await pool.query(`
@@ -1299,11 +1304,11 @@ export function registerRoutes(app: any) {
       `, [dealId]);
       
       if (dealResult.rows.length === 0) {
-        console.log(`[DIRECT SQL] Deal with id ${dealId} not found`);
+        console.log(`[DEAL DEBUG] Deal with id ${dealId} not found in database`);
         return res.status(404).json({ message: 'Deal non trovato' });
       }
       
-      console.log(`[DIRECT SQL] Deal found:`, JSON.stringify(dealResult.rows[0]));
+      console.log(`[DEAL DEBUG] Deal found in database:`, JSON.stringify(dealResult.rows[0]));
       
       const deal = dealResult.rows[0];
       
@@ -1326,8 +1331,6 @@ export function registerRoutes(app: any) {
         branchId: deal.branch_id
       };
       
-      console.log(`[DIRECT SQL] Converting to camelCase:`, JSON.stringify(dealData));
-      
       // Ottieni informazioni di contatto
       let contactData = null;
       if (dealData.contactId) {
@@ -1346,7 +1349,7 @@ export function registerRoutes(app: any) {
             phone: contact.phone,
             status: contact.status
           };
-          console.log(`[DIRECT SQL] Contact data found:`, JSON.stringify(contactData));
+          console.log(`[DEAL DEBUG] Contact data found:`, JSON.stringify(contactData));
         }
       }
       
@@ -1370,7 +1373,7 @@ export function registerRoutes(app: any) {
             phone: company.phone,
             tags: company.tags
           };
-          console.log(`[DIRECT SQL] Company data found:`, JSON.stringify(companyData));
+          console.log(`[DEAL DEBUG] Company data found:`, JSON.stringify(companyData));
         }
       }
       
@@ -1389,7 +1392,7 @@ export function registerRoutes(app: any) {
             name: stage.name,
             order: stage.order
           };
-          console.log(`[DIRECT SQL] Stage data found:`, JSON.stringify(stageData));
+          console.log(`[DEAL DEBUG] Stage data found:`, JSON.stringify(stageData));
         }
       }
       
@@ -1401,13 +1404,15 @@ export function registerRoutes(app: any) {
         stage: stageData
       };
       
-      console.log(`[DIRECT SQL] Sending response:`, JSON.stringify(responseData));
+      console.log(`[DEAL DEBUG] Sending final response:`, JSON.stringify(responseData));
+      console.log('=====================================================');
       
-      res.json(responseData);
+      return res.status(200).json(responseData);
       
     } catch (error) {
-      console.error('[DIRECT SQL] Error fetching deal:', error);
-      res.status(500).json({ message: 'Errore durante il recupero del deal' });
+      console.error('[DEAL DEBUG] Error fetching deal:', error);
+      console.log('=====================================================');
+      return res.status(500).json({ message: 'Errore durante il recupero del deal', error: error.message });
     }
   });
   
