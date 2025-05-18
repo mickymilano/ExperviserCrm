@@ -13,7 +13,8 @@
     "error": "Errore",
     "validationError": "Errore di validazione",
     "saving": "Salvataggio...",
-    "adding": "Aggiunta..."
+    "adding": "Aggiunta...",
+    "success": "Successo"
   },
 
   "button": {
@@ -119,6 +120,8 @@
     "saveChanges": "Salva Modifiche",
     "addCompany": "Aggiungi Azienda",
     "tagsPlaceholder": "Separa i tag con le virgole",
+    "createSuccess": "Azienda creata con successo",
+    "updateSuccess": "Azienda aggiornata con successo",
     "validation": {
       "nameRequired": "Il nome dell'azienda è obbligatorio"
     },

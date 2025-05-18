@@ -238,8 +238,8 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
     },
     onSuccess: () => {
       toast({
-        title: "Successo",
-        description: isEditMode ? "Azienda aggiornata con successo" : "Azienda creata con successo",
+        title: t('common.success'),
+        description: isEditMode ? t('company.updateSuccess') : t('company.createSuccess'),
       });
       
       // Close modal and reset form
@@ -352,7 +352,7 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('company.email')}</Label>
               <Input id="email" type="email" {...register("email")} />
               {errors.email && (
                 <p className="text-xs text-destructive">{errors.email.message}</p>
@@ -360,19 +360,19 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="phone">Telefono</Label>
+              <Label htmlFor="phone">{t('company.phone')}</Label>
               <Input id="phone" {...register("phone")} />
             </div>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div className="space-y-2">
-              <Label htmlFor="website">Sito Web</Label>
+              <Label htmlFor="website">{t('company.website')}</Label>
               <Input id="website" {...register("website")} />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="industry">Settore</Label>
+              <Label htmlFor="industry">{t('company.industry')}</Label>
               <Input id="industry" {...register("industry")} />
             </div>
           </div>
@@ -387,7 +387,7 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
           {/* Full Address Field (con autocomplete Google Maps) */}
           <div className="space-y-2 mb-4">
             <Label htmlFor="fullAddress" className="flex items-center">
-              <span>Indirizzo Completo</span>
+              <span>{t('company.fullAddress')}</span>
               <span className="ml-2 px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">Google Maps</span>
             </Label>
             <PlacesAutocomplete
