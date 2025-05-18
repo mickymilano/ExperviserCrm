@@ -12,6 +12,7 @@ import {
   MapPin
 } from "lucide-react";
 import { format, startOfWeek, endOfWeek, addDays, isSameDay, parseISO } from "date-fns";
+import { it } from "date-fns/locale";
 import { useMeetings } from "@/hooks/useMeetings";
 import { useContacts } from "@/hooks/useContacts";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -179,7 +180,7 @@ export default function Calendar() {
                             <div className="font-medium truncate">{meeting.title}</div>
                             <div className="flex items-center text-xs text-muted-foreground">
                               <CalendarIcon className="h-3 w-3 mr-1" />
-                              {format(new Date(meeting.startTime), "d MMM, H:mm")}
+                              {format(new Date(meeting.startTime), "d MMM, H:mm", { locale: it })}
                             </div>
                           </div>
                         ))}
@@ -233,16 +234,16 @@ export default function Calendar() {
                 </div>
               </div>
               <div className="text-lg font-semibold">
-                {view === "day" && format(selectedDate, "MMMM d, yyyy")}
-                {view === "week" && `${format(startOfWeek(selectedDate, { weekStartsOn: 1 }), "MMM d")} - ${format(endOfWeek(selectedDate, { weekStartsOn: 1 }), "MMM d, yyyy")}`}
-                {view === "month" && format(selectedDate, "MMMM yyyy")}
+                {view === "day" && format(selectedDate, "d MMMM yyyy", { locale: it })}
+                {view === "week" && `${format(startOfWeek(selectedDate, { weekStartsOn: 1 }), "d MMM", { locale: it })} - ${format(endOfWeek(selectedDate, { weekStartsOn: 1 }), "d MMM yyyy", { locale: it })}`}
+                {view === "month" && format(selectedDate, "MMMM yyyy", { locale: it })}
               </div>
             </CardHeader>
             <CardContent>
               {view === "day" ? (
                 <div className="space-y-2">
                   <div className="text-center p-2 bg-muted rounded-md">
-                    <div className="font-medium">{format(selectedDate, "EEEE")}</div>
+                    <div className="font-medium">{format(selectedDate, "EEEE", { locale: it })}</div>
                     <div className="text-2xl font-bold">{format(selectedDate, "d")}</div>
                   </div>
                   {isLoading ? (
@@ -268,7 +269,7 @@ export default function Calendar() {
                             </div>
                             <div className="flex items-center text-sm text-muted-foreground mb-2">
                               <Clock className="h-4 w-4 mr-1" />
-                              {format(new Date(meeting.startTime), "h:mm a")} - {format(new Date(meeting.endTime), "h:mm a")}
+                              {format(new Date(meeting.startTime), "HH:mm", { locale: it })} - {format(new Date(meeting.endTime), "HH:mm", { locale: it })}
                             </div>
                             {meeting.location && (
                               <div className="flex items-center text-sm text-muted-foreground mb-2">
@@ -309,7 +310,7 @@ export default function Calendar() {
                             "p-2 rounded-md",
                             isSameDay(day, new Date()) && "bg-primary text-primary-foreground"
                           )}>
-                            <div className="font-medium">{format(day, "EEE")}</div>
+                            <div className="font-medium">{format(day, "EEE", { locale: it })}</div>
                             <div className="text-xl">{format(day, "d")}</div>
                           </div>
                           <div className="mt-2 space-y-1">
@@ -330,7 +331,7 @@ export default function Calendar() {
                                 >
                                   <div className="font-medium truncate">{meeting.title}</div>
                                   <div className="text-muted-foreground">
-                                    {format(new Date(meeting.startTime), "h:mm a")}
+                                    {format(new Date(meeting.startTime), "HH:mm", { locale: it })}
                                   </div>
                                 </div>
                               ))
