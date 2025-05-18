@@ -224,7 +224,7 @@ export default function CompanyDetail() {
                       </div>
                     </div>
                     
-                    {company.customFields?.size && (
+                    {company.customFields && company.customFields.size && (
                       <div className="flex items-start">
                         <Users className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
                         <div>
@@ -236,7 +236,7 @@ export default function CompanyDetail() {
                   </div>
                   
                   <div className="space-y-4">
-                    {company.customFields?.yearFounded && (
+                    {company.customFields && company.customFields.yearFounded && (
                       <div className="flex items-start">
                         <Calendar className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
                         <div>
@@ -246,7 +246,7 @@ export default function CompanyDetail() {
                       </div>
                     )}
                     
-                    {company.customFields?.revenue && (
+                    {company.customFields && company.customFields.revenue && (
                       <div className="flex items-start">
                         <DollarSign className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
                         <div>
@@ -332,12 +332,22 @@ export default function CompanyDetail() {
                   </div>
                   
                   <div className="space-y-4">
-                    {company.customFields?.timezone && (
+                    {company.customFields && company.customFields.timezone && (
                       <div className="flex items-start">
                         <Clock className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
                         <div>
                           <p className="text-sm font-medium mb-1">{t("company.companyDetail.fields.timezone")}</p>
                           <p>{company.customFields.timezone}</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {company.customFields && company.customFields.city && (
+                      <div className="flex items-start">
+                        <Building2 className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium mb-1">City</p>
+                          <p>{company.customFields.city}</p>
                         </div>
                       </div>
                     )}
@@ -386,12 +396,22 @@ export default function CompanyDetail() {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   <div className="space-y-4">
-                    {company.customFields?.vatNumber && (
+                    {company.customFields && company.customFields.vatNumber && (
                       <div className="flex items-start">
                         <Hash className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
                         <div>
                           <p className="text-sm font-medium mb-1">VAT/Tax Number</p>
                           <p>{company.customFields.vatNumber}</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {company.customFields && company.customFields.size && (
+                      <div className="flex items-start">
+                        <Users className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium mb-1">Company Size</p>
+                          <p>{company.customFields.size}</p>
                         </div>
                       </div>
                     )}
