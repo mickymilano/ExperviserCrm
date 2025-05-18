@@ -1584,36 +1584,79 @@ export function registerRoutes(app: any) {
   // Aggiorna un deal - Endpoint PATCH (implementazione moderna)
   app.patch('/api/deals/:id', authenticate, async (req, res) => {
     try {
-      console.log(`PATCH /api/deals/${req.params.id} - Aggiornamento deal`, req.body);
+      console.log(`PATCH /api/deals/${req.params.id} - Aggiornamento opportunità`, req.body);
       const dealId = parseInt(req.params.id);
       
       if (isNaN(dealId)) {
-        return res.status(400).json({ message: 'ID deal non valido' });
+        return res.status(400).json({ message: 'ID opportunità non valido' });
       }
       
-      // Verifica se il deal esiste
+      // Verifica se l'opportunità esiste
       const deal = await storage.getDeal(dealId);
       if (!deal) {
-        console.log(`Deal con ID ${dealId} non trovato`);
-        return res.status(404).json({ message: 'Deal non trovato' });
+        console.log(`Opportunità con ID ${dealId} non trovata`);
+        return res.status(404).json({ message: 'Opportunità non trovata' });
       }
       
-      // Prepara i dati per l'aggiornamento
-      // Converte il campo value in stringa se necessario
-      const updateData = { ...req.body };
-      if (updateData.value !== undefined && typeof updateData.value !== 'string') {
-        updateData.value = updateData.value.toString();
+      try {
+        // Validazione dei dati con Zod (schema parziale per consentire aggiornamenti parziali)
+        const patchDealSchema = z.object({
+          name: z.string().optional(),
+          value: z.union([z.number(), z.string()]).optional(),
+          stageId: z.number().optional(),
+          companyId: z.number().nullable().optional(),
+          contactId: z.number().nullable().optional(),
+          expectedCloseDate: z.string().optional().nullable(),
+          tags: z.array(z.string()).optional().nullable(),
+          notes: z.string().optional().nullable(),
+          status: z.string().optional()
+        });
+        
+        // Validazione dei dati ricevuti
+        const validatedData = patchDealSchema.parse(req.body);
+        
+        // Prepara i dati per l'aggiornamento
+        const updateData = { ...validatedData };
+        
+        // Converte il campo value in stringa se necessario (formato richiesto dal DB)
+        if (updateData.value !== undefined && typeof updateData.value !== 'string') {
+          updateData.value = updateData.value.toString();
+        }
+        
+        // Aggiorna l'opportunità
+        console.log(`Aggiornamento opportunità ${dealId} con dati:`, updateData);
+        const updatedDeal = await storage.updateDeal(dealId, updateData);
+        
+        if (!updatedDeal) {
+          return res.status(500).json({ 
+            message: 'Impossibile aggiornare l\'opportunità',
+            code: 'UPDATE_FAILED' 
+          });
+        }
+        
+        console.log(`Opportunità ${dealId} aggiornata con successo`);
+        res.json({
+          success: true,
+          data: updatedDeal,
+          message: 'Opportunità aggiornata con successo'
+        });
+      } catch (validationError) {
+        if (validationError instanceof z.ZodError) {
+          console.error('Errore di validazione dati:', validationError.errors);
+          return res.status(400).json({ 
+            message: 'Dati non validi per l\'aggiornamento', 
+            errors: validationError.errors,
+            code: 'VALIDATION_ERROR'
+          });
+        }
+        throw validationError; // rilancia altri errori
       }
-      
-      // Aggiorna il deal
-      console.log(`Aggiornamento deal ${dealId} con dati:`, updateData);
-      const updatedDeal = await storage.updateDeal(dealId, updateData);
-      
-      console.log(`Deal ${dealId} aggiornato con successo`);
-      res.json(updatedDeal);
     } catch (error) {
-      console.error('Error updating deal via PATCH:', error);
-      res.status(500).json({ message: 'Errore durante l\'aggiornamento del deal' });
+      console.error('Errore durante l\'aggiornamento dell\'opportunità via PATCH:', error);
+      res.status(500).json({ 
+        message: 'Errore durante l\'aggiornamento dell\'opportunità',
+        code: 'INTERNAL_ERROR'
+      });
     }
   });
   
