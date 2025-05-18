@@ -61,8 +61,12 @@ export default function ContactModal({ open, onOpenChange, initialData, onSucces
     ? parseInt(location.split("/companies/")[1].split("/")[0]) 
     : undefined;
   
-  // Get company name if we have a company ID
-  const { data: companyData } = useQuery({
+  // Log per debug
+  console.log("hasCompanyContext:", hasCompanyContext);
+  console.log("companyIdFromUrl:", companyIdFromUrl);
+  
+  // Get company name if we have a company ID - chiamata specifica
+  const { data: companyData, isLoading: isLoadingCompany } = useQuery({
     queryKey: ["/api/companies", companyIdFromUrl],
     enabled: !!companyIdFromUrl
   });
@@ -71,7 +75,25 @@ export default function ContactModal({ open, onOpenChange, initialData, onSucces
   console.log("Company data from query:", companyData);
   
   // Verifica la struttura dell'oggetto per accedere al nome
-  const companyName = companyData ? companyData.name || '' : '';
+  const companyName = companyData?.name || '';
+  
+  // Crea un'area di attività precompilata se siamo in contesto azienda
+  useEffect(() => {
+    if (companyData && hasCompanyContext && !areasOfActivity.length) {
+      console.log("Precompilando area di attività con azienda:", companyData.name);
+      
+      // Precompila un'area di attività con l'azienda corrente
+      const prefilledArea = {
+        companyId: companyIdFromUrl,
+        companyName: companyData.name,
+        role: "Employee",
+        jobDescription: `Works at ${companyData.name}`,
+        isPrimary: true
+      };
+      
+      setAreasOfActivity([prefilledArea]);
+    }
+  }, [companyData, hasCompanyContext, companyIdFromUrl]);
   
   // Prepare initial tags if they exist
   const initialTags = initialData?.tags ? initialData.tags.join(", ") : "";
