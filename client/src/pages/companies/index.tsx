@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 import { useCompanies } from "@/hooks/useCompanies";
 import { Company } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatPhoneNumber } from "@/lib/utils";
 
 export default function Companies() {
+  const { t } = useTranslation();
   const [showModal, setShowModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const { companies, isLoading, deleteCompany } = useCompanies();
@@ -49,7 +51,7 @@ export default function Companies() {
 
   // Handle delete company
   const handleDelete = async (id: number) => {
-    if (window.confirm("Sei sicuro di voler eliminare questa azienda?")) {
+    if (window.confirm(t("companyList.deleteConfirmation"))) {
       deleteCompany.mutate(id);
     }
   };

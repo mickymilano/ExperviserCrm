@@ -156,6 +156,22 @@
       "removing": "Rimozione...",
       "removePrimary": "Rimuovi primario",
       "noRoleSpecified": "Nessun ruolo specificato"
+    },
+    "companyList": {
+      "title": "Aziende",
+      "addCompany": "Aggiungi Azienda",
+      "searchPlaceholder": "Cerca aziende...",
+      "filter": "Filtra",
+      "editCompany": "Modifica Azienda",
+      "deleteCompany": "Elimina Azienda",
+      "deleteConfirmation": "Sei sicuro di voler eliminare questa azienda?",
+      "viewDetails": "Vedi Dettagli",
+      "contact": "Contatta",
+      "noCompaniesFound": "Nessuna azienda trovata",
+      "modifySearchTerms": "Prova a modificare i termini di ricerca.",
+      "addFirstCompany": "Inizia aggiungendo la tua prima azienda.",
+      "vatLabel": "VAT: {{number}}",
+      "foundedLabel": "Fondata: {{year}}"
     }
   }
 }
