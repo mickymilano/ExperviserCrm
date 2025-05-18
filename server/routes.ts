@@ -1352,6 +1352,51 @@ export function registerRoutes(app: any) {
     }
   });
   
+  // Crea una nuova area di attività (endpoint generico)
+  app.post('/api/areas-of-activity', authenticate, async (req, res) => {
+    try {
+      console.log('Creazione area di attività con dati:', req.body);
+      
+      // Verifica che ci siano tutti i dati necessari
+      const { contactId, companyId, companyName, role, jobDescription, isPrimary } = req.body;
+      
+      if (!contactId) {
+        console.error('Errore: contactId mancante');
+        return res.status(400).json({ message: 'ID contatto richiesto' });
+      }
+      
+      // Verifica se il contatto esiste
+      const contact = await storage.getContact(contactId);
+      if (!contact) {
+        console.error(`Errore: contatto ${contactId} non trovato`);
+        return res.status(404).json({ message: 'Contatto non trovato' });
+      }
+      
+      // Verifica se l'azienda esiste (se è stato fornito un companyId)
+      if (companyId) {
+        const company = await storage.getCompany(companyId);
+        if (!company) {
+          console.error(`Errore: azienda ${companyId} non trovata`);
+          return res.status(404).json({ message: 'Azienda non trovata' });
+        }
+      }
+      
+      // Se questa è la relazione primaria, resetta tutte le altre a non primarie
+      if (isPrimary) {
+        await storage.resetPrimaryAreasOfActivity(contactId);
+      }
+      
+      // Crea la relazione
+      const areaOfActivity = await storage.createAreaOfActivity(req.body);
+      
+      console.log('Area di attività creata con successo:', areaOfActivity);
+      res.status(201).json(areaOfActivity);
+    } catch (error) {
+      console.error('Error creating area of activity:', error);
+      res.status(500).json({ message: 'Errore durante la creazione dell\'area di attività' });
+    }
+  });
+  
   // --- SYNERGY ROUTES ---
   
   // Ottieni tutte le sinergie

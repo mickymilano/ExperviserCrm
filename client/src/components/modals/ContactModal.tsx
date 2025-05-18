@@ -391,7 +391,7 @@ export default function ContactModal({ open, onOpenChange, initialData, onSucces
             <div className="sm:col-span-2">
               <h3 className="text-lg font-medium mb-2">Companies</h3>
               <AreasOfActivityManager 
-                areas={areasOfActivity} 
+                initialAreas={areasOfActivity} 
                 onChange={setAreasOfActivity} 
               />
             </div>
