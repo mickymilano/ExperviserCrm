@@ -2520,71 +2520,110 @@ export class PostgresStorage implements IStorage {
   }
 
   async getDeal(id: number): Promise<Deal | undefined> {
-    // Using a simpler approach without relational queries
-    const [deal] = await db.select().from(deals).where(eq(deals.id, id));
-
-    if (!deal) return undefined;
-
-    // Manually populate relations
-    // Get contact
-    let contactData = null;
-    if (deal.contactId) {
-      const [contact] = await db
-        .select()
-        .from(contacts)
-        .where(eq(contacts.id, deal.contactId));
-      contactData = contact;
+    try {
+      console.log(`PostgresStorage.getDeal: retrieving deal with id ${id}`);
+      
+      // Utilizziamo SQL diretto per evitare problemi con le librerie ORM
+      const result = await pool.query(`
+        SELECT * FROM deals 
+        WHERE id = $1
+      `, [id]);
+      
+      if (result.rows.length === 0) {
+        console.log(`Deal with id ${id} not found`);
+        return undefined;
+      }
+      
+      // Log dei dati recuperati per debugging
+      console.log(`Deal with id ${id} found:`, JSON.stringify(result.rows[0]));
+      
+      const deal = result.rows[0];
+      
+      // Convertiamo i nomi delle colonne da snake_case a camelCase
+      const dealData = {
+        id: deal.id,
+        name: deal.name,
+        value: deal.value,
+        stageId: deal.stage_id,
+        contactId: deal.contact_id,
+        companyId: deal.company_id,
+        expectedCloseDate: deal.expected_close_date,
+        notes: deal.notes,
+        tags: deal.tags,
+        createdAt: deal.created_at,
+        updatedAt: deal.updated_at,
+        status: deal.status,
+        lastContactedAt: deal.last_contacted_at,
+        nextFollowUpAt: deal.next_follow_up_at,
+        branchId: deal.branch_id
+      };
+      
+      // Ottieni informazioni di contatto
+      let contactData = null;
+      if (dealData.contactId) {
+        const contactResult = await pool.query(`
+          SELECT * FROM contacts WHERE id = $1
+        `, [dealData.contactId]);
+        
+        if (contactResult.rows.length > 0) {
+          const contactData = contactResult.rows[0];
+          // Convertiamo in camelCase per il frontend
+          contactData = {
+            id: contactData.id,
+            firstName: contactData.first_name,
+            lastName: contactData.last_name,
+            // altri campi se necessari
+          };
+        }
+      }
+      
+      // Ottieni informazioni di azienda
+      let companyData = null;
+      if (dealData.companyId) {
+        const companyResult = await pool.query(`
+          SELECT * FROM companies WHERE id = $1
+        `, [dealData.companyId]);
+        
+        if (companyResult.rows.length > 0) {
+          companyData = companyResult.rows[0];
+          // Convertiamo in camelCase per il frontend
+          companyData = {
+            id: companyData.id,
+            name: companyData.name,
+            // altri campi se necessari
+          };
+        }
+      }
+      
+      // Ottieni informazioni di stage
+      let stageData = null;
+      if (dealData.stageId) {
+        const stageResult = await pool.query(`
+          SELECT * FROM pipeline_stages WHERE id = $1
+        `, [dealData.stageId]);
+        
+        if (stageResult.rows.length > 0) {
+          stageData = stageResult.rows[0];
+          // Convertiamo in camelCase per il frontend
+          stageData = {
+            id: stageData.id,
+            name: stageData.name,
+            order: stageData.order
+          };
+        }
+      }
+      
+      // Assembla l'oggetto finale
+      return {
+        ...dealData,
+        contact: contactData,
+        company: companyData,
+        stage: stageData
+      };
+    } catch (error) {
+      console.error(`Error in getDeal(${id}):`, error);
+      return undefined;
     }
-
-    // Get company
-    let companyData = null;
-    if (deal.companyId) {
-      // 🚨 FIX: evita riferimento a colonna inesistente "city"
-      // -- vecchia selezione:
-      // const [company] = await db.select().from(companies).where(eq(companies.id, deal.companyId));
-      const [company] = await db
-        .select({
-          id: companies.id,
-          name: companies.name,
-          status: companies.status,
-          email: companies.email,
-          phone: companies.phone,
-          address: companies.address,
-          website: companies.website,
-          tags: companies.tags,
-          notes: companies.notes,
-          customFields: companies.customFields,
-          lastContactedAt: companies.lastContactedAt,
-          nextFollowUpAt: companies.nextFollowUpAt,
-          isActiveRep: companies.isActiveRep,
-          companyType: companies.companyType,
-          brands: companies.brands,
-          channels: companies.channels,
-          productsOrServicesTags: companies.productsOrServicesTags,
-          createdAt: companies.createdAt,
-          updatedAt: companies.updatedAt,
-        })
-        .from(companies)
-        .where(eq(companies.id, deal.companyId));
-      companyData = company;
-    }
-
-    // Get stage
-    let stageData = null;
-    if (deal.stageId) {
-      const [stage] = await db
-        .select()
-        .from(pipelineStages)
-        .where(eq(pipelineStages.id, deal.stageId));
-      stageData = stage;
-    }
-
-    return {
-      ...deal,
-      contact: contactData,
-      company: companyData,
-      stage: stageData,
-    };
   }
 
   async createDeal(insertDeal: InsertDeal): Promise<Deal> {
