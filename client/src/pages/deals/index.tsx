@@ -14,8 +14,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatCurrency } from "@/lib/utils";
 import { format } from "date-fns";
 import { DealPipelineBoard } from "@/components/deals/DealPipelineBoard";
+import { useTranslation } from "react-i18next";
 
 export default function Deals() {
+  const { t } = useTranslation();
   const [showModal, setShowModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [viewType, setViewType] = useState<"board" | "list">("board");
@@ -68,12 +70,12 @@ export default function Deals() {
   return (
     <div className="max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-        <h1 className="text-2xl font-bold mb-4 sm:mb-0">Opportunità</h1>
+        <h1 className="text-2xl font-bold mb-4 sm:mb-0">{t("deal.title")}</h1>
         <Button onClick={() => {
           setSelectedDeal(null);
           setShowModal(true);
         }}>
-          <Plus className="mr-2 h-4 w-4" /> Aggiungi Opportunità
+          <Plus className="mr-2 h-4 w-4" /> {t("deal.addDeal")}
         </Button>
       </div>
 
@@ -83,21 +85,21 @@ export default function Deals() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Cerca opportunità..."
+                placeholder={t("deal.search")}
                 className="pl-9"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             <Button variant="outline" className="md:w-auto">
-              <Filter className="mr-2 h-4 w-4" /> Filtra
+              <Filter className="mr-2 h-4 w-4" /> {t("deal.filter")}
             </Button>
           </div>
           
           <Tabs value={viewType} onValueChange={(value) => setViewType(value as "board" | "list")} className="w-full">
             <TabsList className="grid w-[200px] grid-cols-2">
-              <TabsTrigger value="board">Bacheca</TabsTrigger>
-              <TabsTrigger value="list">Lista</TabsTrigger>
+              <TabsTrigger value="board">{t("deal.board")}</TabsTrigger>
+              <TabsTrigger value="list">{t("deal.list")}</TabsTrigger>
             </TabsList>
           </Tabs>
         </CardContent>
@@ -125,9 +127,9 @@ export default function Deals() {
           ) : (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
-                <h3 className="text-lg font-medium mb-2">Nessuna fase di pipeline trovata</h3>
+                <h3 className="text-lg font-medium mb-2">{t("deal.notFound")}</h3>
                 <p className="text-muted-foreground text-center mb-4">
-                  Le fasi della pipeline devono essere configurate prima di poter visualizzare le opportunità.
+                  {t("deal.createFirstDeal")}
                 </p>
               </CardContent>
             </Card>
@@ -137,13 +139,13 @@ export default function Deals() {
             <table className="w-full min-w-[800px] border-collapse">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="py-3 px-4 text-left text-sm font-medium text-muted-foreground">Nome Opportunità</th>
-                  <th className="py-3 px-4 text-left text-sm font-medium text-muted-foreground">Fase</th>
-                  <th className="py-3 px-4 text-left text-sm font-medium text-muted-foreground">Valore</th>
-                  <th className="py-3 px-4 text-left text-sm font-medium text-muted-foreground">Azienda</th>
-                  <th className="py-3 px-4 text-left text-sm font-medium text-muted-foreground">Contatto</th>
-                  <th className="py-3 px-4 text-left text-sm font-medium text-muted-foreground">Chiusura Prevista</th>
-                  <th className="py-3 px-4 text-left text-sm font-medium text-muted-foreground">Azioni</th>
+                  <th className="py-3 px-4 text-left text-sm font-medium text-muted-foreground">{t("deal.form.name")}</th>
+                  <th className="py-3 px-4 text-left text-sm font-medium text-muted-foreground">{t("deal.form.stage")}</th>
+                  <th className="py-3 px-4 text-left text-sm font-medium text-muted-foreground">{t("deal.form.value")}</th>
+                  <th className="py-3 px-4 text-left text-sm font-medium text-muted-foreground">{t("deal.form.company")}</th>
+                  <th className="py-3 px-4 text-left text-sm font-medium text-muted-foreground">{t("deal.form.contact")}</th>
+                  <th className="py-3 px-4 text-left text-sm font-medium text-muted-foreground">{t("deal.form.expectedCloseDate")}</th>
+                  <th className="py-3 px-4 text-left text-sm font-medium text-muted-foreground">{t("common.actions")}</th>
                 </tr>
               </thead>
               <tbody>
