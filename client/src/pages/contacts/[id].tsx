@@ -366,9 +366,9 @@ export default function ContactDetail() {
                       {relatedDeals.slice(0, 3).map((deal) => (
                         <div key={deal?.id || 'unknown'} className="flex items-center justify-between p-2 rounded-md hover:bg-muted">
                           <div>
-                            <h4 className="font-medium">{deal?.name || 'Unnamed Deal'}</h4>
+                            <h4 className="font-medium">{deal?.name || t('company.contacts.detail.unnamedDeal')}</h4>
                             <p className="text-sm text-muted-foreground">
-                              Value: ${deal?.value?.toLocaleString() || '0'}
+                              {t('company.contacts.detail.value')}: ${deal?.value?.toLocaleString() || '0'}
                             </p>
                           </div>
                           <Button 
@@ -376,7 +376,7 @@ export default function ContactDetail() {
                             size="sm" 
                             onClick={() => navigate(`/deals/${deal?.id || 0}`)}
                           >
-                            View
+                            {t('company.contacts.detail.view')}
                           </Button>
                         </div>
                       ))}
@@ -384,7 +384,7 @@ export default function ContactDetail() {
                       {Array.isArray(relatedDeals) && relatedDeals.length > 3 && (
                         <div className="text-center pt-2">
                           <Button variant="link" onClick={() => setActiveTab("deals")}>
-                            View all {relatedDeals.length} deals
+                            {t('company.contacts.detail.viewAllDeals', { count: relatedDeals.length })}
                           </Button>
                         </div>
                       )}
@@ -392,9 +392,9 @@ export default function ContactDetail() {
                   ) : (
                     <div className="text-center py-6">
                       <Briefcase className="h-10 w-10 mx-auto mb-2 text-muted-foreground opacity-40" />
-                      <p className="text-muted-foreground mb-4">No deals associated yet</p>
+                      <p className="text-muted-foreground mb-4">{t('company.contacts.detail.noDealsAssociated')}</p>
                       <Button onClick={() => navigate(`/deals/new?contactId=${contactId}`)}>
-                        Create New Deal
+                        {t('company.contacts.detail.createNewDeal')}
                       </Button>
                     </div>
                   )}
@@ -407,7 +407,7 @@ export default function ContactDetail() {
                   <CardHeader className="pb-2">
                     <CardTitle className="flex items-center text-lg">
                       <FileText className="h-5 w-5 mr-2" />
-                      Notes
+                      {t('company.contacts.detail.notes')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
