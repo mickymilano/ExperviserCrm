@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -55,21 +56,20 @@ interface DealModalProps {
   initialData?: DealInfo | Partial<DealInfo> | null;
 }
 
-const dealSchema = z.object({
-  name: z.string().min(1, "Deal name is required"),
-  value: z.coerce.number().min(0, "Value must be a positive number"),
-  stageId: z.coerce.number(),
-  companyId: z.coerce.number().optional().nullable(),
-  contactId: z.coerce.number().optional().nullable(),
-  expectedCloseDate: z.string().optional(),
-  tags: z.array(z.string()).optional().nullable(),
-  notes: z.string().optional().nullable(),
-  synergyContactIds: z.array(z.number()).optional()
-});
-
-type DealFormData = z.infer<typeof dealSchema>;
+type DealFormData = {
+  name: string;
+  value: number;
+  stageId: number;
+  companyId?: number | null;
+  contactId?: number | null;
+  expectedCloseDate?: string;
+  tags?: string[] | null;
+  notes?: string | null;
+  synergyContactIds?: number[];
+};
 
 export default function DealModal({ open, onOpenChange, initialData }: DealModalProps) {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [tagsInput, setTagsInput] = useState("");
@@ -158,6 +158,18 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     setSynergyContacts(filteredContacts);
     console.log(`Filtrati ${filteredContacts.length} contatti sinergici (esclusi quelli dell'azienda ${companyId})`);
   }, [companyId, contacts, setSynergyContacts]);
+
+  const dealSchema = z.object({
+    name: z.string().min(1, t("deal.validation.nameRequired")),
+    value: z.coerce.number().min(0, t("deal.validation.valuePositive")),
+    stageId: z.coerce.number(),
+    companyId: z.coerce.number().optional().nullable(),
+    contactId: z.coerce.number().optional().nullable(),
+    expectedCloseDate: z.string().optional(),
+    tags: z.array(z.string()).optional().nullable(),
+    notes: z.string().optional().nullable(),
+    synergyContactIds: z.array(z.number()).optional()
+  });
 
   const { register, handleSubmit, reset, setValue, getValues, control, formState: { errors } } = useForm<DealFormData>({
     resolver: zodResolver(dealSchema),

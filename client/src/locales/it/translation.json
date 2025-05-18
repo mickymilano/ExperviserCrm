@@ -272,5 +272,76 @@
         "concorrente": "Concorrente"
       }
     }
+  },
+  "deal": {
+    "title": "Opportunità",
+    "addDeal": "Aggiungi Opportunità",
+    "editDeal": "Modifica Opportunità",
+    "board": "Bacheca",
+    "list": "Lista",
+    "search": "Cerca opportunità...",
+    "filter": "Filtra",
+    "dealBoard": "Bacheca Opportunità",
+    "notFound": "Opportunità non trovata",
+    "noDealsFound": "Nessuna opportunità trovata",
+    "recent": "Opportunità recenti",
+    "createFirstDeal": "Crea la tua prima opportunità",
+    "createNew": "Crea nuova opportunità",
+    "openDeals": "Opportunità aperte",
+    "pipeline": "Pipeline Opportunità",
+    "mostRecent": "Più recenti",
+    "oldest": "Più vecchie",
+    "week": "Settimana",
+    "month": "Mese",
+    "validation": {
+      "nameRequired": "Il nome dell'opportunità è obbligatorio",
+      "valuePositive": "Il valore deve essere un numero positivo"
+    },
+    "form": {
+      "name": "Nome opportunità",
+      "value": "Valore",
+      "stage": "Fase",
+      "selectStage": "Seleziona fase",
+      "company": "Azienda",
+      "selectCompany": "Seleziona azienda",
+      "searchCompany": "Cerca azienda...",
+      "noCompanyFound": "Nessuna azienda trovata",
+      "contact": "Contatto",
+      "selectContact": "Seleziona contatto",
+      "noContactFound": "Nessun contatto trovato",
+      "expectedCloseDate": "Data di chiusura prevista",
+      "tags": "Tag",
+      "tagsPlaceholder": "Aggiungi tag separati da virgola",
+      "notes": "Note",
+      "notesPlaceholder": "Aggiungi note o dettagli sull'opportunità",
+      "save": "Salva",
+      "cancel": "Annulla",
+      "synergies": "Contatti di sinergia",
+      "selectSynergies": "Seleziona contatti di sinergia",
+      "noSynergiesFound": "Nessun contatto disponibile per sinergie"
+    },
+    "status": {
+      "active": "Attiva",
+      "won": "Vinta",
+      "lost": "Persa",
+      "onHold": "In attesa"
+    },
+    "alerts": {
+      "noCompany": "Nessuna azienda selezionata",
+      "noCompanyDescription": "Sei sicuro di voler procedere senza selezionare un'azienda?",
+      "noContact": "Nessun contatto selezionato",
+      "noContactDescription": "Sei sicuro di voler procedere senza selezionare un contatto?",
+      "continue": "Continua",
+      "goBack": "Torna indietro"
+    },
+    "messages": {
+      "created": "Opportunità creata con successo",
+      "updated": "Opportunità aggiornata con successo",
+      "deleted": "Opportunità eliminata con successo",
+      "error": "Si è verificato un errore",
+      "creationFailed": "Impossibile creare l'opportunità",
+      "updateFailed": "Impossibile aggiornare l'opportunità",
+      "deleteConfirmation": "Sei sicuro di voler eliminare questa opportunità?"
+    }
   }
 }
