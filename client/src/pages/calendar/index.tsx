@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useTranslation } from "react-i18next";
 
 type ViewType = "month" | "week" | "day";
 
@@ -37,6 +38,7 @@ export default function Calendar() {
   const { contacts } = useContacts();
   const { companies } = useCompanies();
   const [selectedMeeting, setSelectedMeeting] = useState<Meeting | null>(null);
+  const { t } = useTranslation();
 
   // Get contact name from id
   const getContactName = (contactId: number | null): string => {
@@ -114,9 +116,9 @@ export default function Calendar() {
   return (
     <div className="max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-        <h1 className="text-2xl font-bold mb-4 sm:mb-0">Calendario</h1>
+        <h1 className="text-2xl font-bold mb-4 sm:mb-0">{t('calendar.title')}</h1>
         <Button onClick={handleAddMeeting}>
-          <Plus className="mr-2 h-4 w-4" /> Aggiungi Riunione
+          <Plus className="mr-2 h-4 w-4" /> {t('calendar.addMeeting')}
         </Button>
       </div>
 
@@ -125,7 +127,7 @@ export default function Calendar() {
         <div className="col-span-1">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle>Calendario</CardTitle>
+              <CardTitle>{t('calendar.title')}</CardTitle>
             </CardHeader>
             <CardContent>
               <CalendarComponent
@@ -138,17 +140,17 @@ export default function Calendar() {
               <div className="mt-4 space-y-2">
                 <Select value={view} onValueChange={(v) => setView(v as ViewType)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Seleziona vista" />
+                    <SelectValue placeholder={t('calendar.viewSelector')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="month">Mese</SelectItem>
-                    <SelectItem value="week">Settimana</SelectItem>
-                    <SelectItem value="day">Giorno</SelectItem>
+                    <SelectItem value="month">{t('calendar.views.month')}</SelectItem>
+                    <SelectItem value="week">{t('calendar.views.week')}</SelectItem>
+                    <SelectItem value="day">{t('calendar.views.day')}</SelectItem>
                   </SelectContent>
                 </Select>
                 
                 <Button className="w-full" onClick={handleAddMeeting}>
-                  <Plus className="mr-2 h-4 w-4" /> Aggiungi Riunione
+                  <Plus className="mr-2 h-4 w-4" /> {t('calendar.addMeeting')}
                 </Button>
               </div>
               
@@ -160,7 +162,7 @@ export default function Calendar() {
                 </div>
               ) : (
                 <div className="mt-6">
-                  <h3 className="text-sm font-medium mb-2">Prossime Riunioni</h3>
+                  <h3 className="text-sm font-medium mb-2">{t('calendar.upcomingMeetings')}</h3>
                   {Array.isArray(meetings) && meetings.length > 0 ? (
                     <div className="space-y-2">
                       {/* Garantisco che meetings sia sempre un Array */}
@@ -184,7 +186,7 @@ export default function Calendar() {
                     </div>
                   ) : (
                     <div className="text-sm text-muted-foreground">
-                      Nessuna riunione in programma.
+                      {t('calendar.noMeetings')}
                     </div>
                   )}
                 </div>

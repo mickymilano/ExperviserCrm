@@ -145,6 +145,28 @@
     }
   },
   
+  "calendar": {
+    "title": "Calendario",
+    "addMeeting": "Aggiungi Riunione",
+    "viewSelector": "Seleziona vista",
+    "views": {
+      "month": "Mese",
+      "week": "Settimana",
+      "day": "Giorno"
+    },
+    "today": "Oggi",
+    "upcomingMeetings": "Prossime Riunioni",
+    "noMeetings": "Nessuna riunione in programma.",
+    "noMeetingScheduled": "Nessuna riunione programmata per questo giorno.",
+    "noMeetingDay": "Nessuna riunione",
+    "monthViewComingSoon": "La vista mensile sarà disponibile presto. Per favore utilizza la vista Settimana o Giorno.",
+    "meetingTypes": {
+      "call": "Chiamata",
+      "inPerson": "Di Persona",
+      "virtual": "Virtuale"
+    }
+  },
+  
   "modal.addCompany": "Aggiungi Azienda",
   "modal.editCompany": "Modifica Azienda",
   "modal.addContact": "Aggiungi Contatto",
