@@ -6,9 +6,11 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { useTranslation } from 'react-i18next';
 
 export function SynergiesOverview() {
   const [, setLocation] = useLocation();
+  const { t } = useTranslation();
   
   // Ottieni tutte le sinergie per la dashboard
   const { data: synergies = [], isLoading } = useQuery({
@@ -31,17 +33,17 @@ export function SynergiesOverview() {
   // Funzioni di utilità per recuperare i nomi dalle liste
   const getContactName = (contactId: number) => {
     const contact = contacts.find((c: any) => c.id === contactId);
-    return contact ? `${contact.firstName} ${contact.lastName}` : `Contatto #${contactId}`;
+    return contact ? `${contact.firstName} ${contact.lastName}` : t('synergies.contact_fallback', { id: contactId });
   };
   
   const getCompanyName = (companyId: number) => {
     const company = companies.find((c: any) => c.id === companyId);
-    return company ? company.name : `Azienda #${companyId}`;
+    return company ? company.name : t('synergies.company_fallback', { id: companyId });
   };
   
   const getDealName = (dealId: number) => {
     const deal = deals.find((d: any) => d.id === dealId);
-    return deal ? deal.title || `Deal #${dealId}` : `Deal #${dealId}`;
+    return deal ? deal.title || t('synergies.deal_fallback', { id: dealId }) : t('synergies.deal_fallback', { id: dealId });
   };
 
   const getSynergyStatusColor = (status: string) => {

@@ -111,12 +111,12 @@ export function SynergiesList({
     }
     
     // 3. Fallback
-    return `Azienda #${companyId}`;
+    return t('synergies.company_fallback', { id: companyId });
   };
   
   const getDealName = (dealId: number) => {
     const deal = deals.find((d: any) => d.id === dealId);
-    return deal ? deal.name || `Deal #${dealId}` : `Deal #${dealId}`;
+    return deal ? deal.name || t('synergies.deal_fallback', { id: dealId }) : t('synergies.deal_fallback', { id: dealId });
   };
 
   // Genera parametri iniziali per la creazione della sinergia in base al tipo di entità
@@ -221,9 +221,9 @@ export function SynergiesList({
               <CardContent className="p-4">
                 <div className="flex justify-between items-start mb-2">
                   <div className="flex items-center">
-                    <span className="font-medium">{synergy?.type || 'Tipo non specificato'}</span>
+                    <span className="font-medium">{synergy?.type || t('synergies.unspecified_type')}</span>
                     <Badge className={`ml-2 ${getSynergyStatusColor(synergy?.status || '')}`}>
-                      {synergy?.status || 'Sconosciuto'}
+                      {synergy?.status || t('common.unknown')}
                     </Badge>
                   </div>
                   <div className="text-xs text-muted-foreground">
@@ -239,7 +239,7 @@ export function SynergiesList({
                 
                 <div className="flex justify-between items-center mt-2">
                   <div className="text-xs text-muted-foreground">
-                    ID: {synergy?.id || 'N/A'}
+                    {t('common.id')}: {synergy?.id || t('common.not_available')}
                   </div>
                   <Link href={getEntityUrl(synergy) || '#'}>
                     <Button 
