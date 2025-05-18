@@ -549,8 +549,8 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
         } catch (error) {
           console.error("Failed to create synergies:", error);
           toast({
-            title: "Warning",
-            description: "Deal was saved but failed to create synergy relationships",
+            title: t("common.warning", "Attenzione"),
+            description: t("deals.errors.synergy_fail", "L'opportunità è stata salvata ma non è stato possibile creare le relazioni di sinergia"),
             variant: "destructive",
           });
         }
@@ -560,8 +560,8 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
     },
     onSuccess: () => {
       toast({
-        title: "Success",
-        description: isEditMode ? "Deal updated successfully" : "Deal created successfully",
+        title: t("common.success", "Operazione completata"),
+        description: isEditMode ? t("deals.success.updated", "Opportunità aggiornata con successo") : t("deals.success.created", "Opportunità creata con successo"),
       });
 
       // Close modal and reset form
@@ -888,7 +888,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                           ))
                         ) : (
                           <SelectItem value="no-contacts" disabled>
-                            No contacts for this company
+                            {t("deals.form.no_contacts", "Nessun contatto per questa azienda")}
                           </SelectItem>
                         )}
                       </SelectContent>
@@ -960,10 +960,10 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
             
             {/* Notes */}
             <div className="space-y-2 border-t pt-4">
-              <Label htmlFor="notes">Notes</Label>
+              <Label htmlFor="notes">{t("deals.form.notes", "Note")}</Label>
               <Textarea 
                 id="notes" 
-                placeholder="Add deal notes here"
+                placeholder={t("deals.form.notes_placeholder", "Aggiungi note sull'opportunità qui")}
                 {...register("notes")}
               />
             </div>
@@ -971,10 +971,10 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
             {/* Actions */}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("common.cancel", "Annulla")}
               </Button>
               <Button type="submit" disabled={saveDeal.isPending}>
-                {saveDeal.isPending ? "Saving..." : isEditMode ? "Update Deal" : "Create Deal"}
+                {saveDeal.isPending ? t("common.saving", "Salvataggio in corso...") : isEditMode ? t("deals.actions.update_deal", "Aggiorna opportunità") : t("deals.actions.create_deal", "Crea opportunità")}
               </Button>
             </DialogFooter>
           </form>
