@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import { Users, Mail, Phone, Plus, X, UserPlus, Star, StarOff, Loader2 } from "l
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { formatPhoneNumber } from "@/lib/utils";
+import ContactModal from "@/components/modals/ContactModal";
 
 interface Contact {
   id: number;
@@ -45,6 +46,8 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
   const [isContactLoading, setIsContactLoading] = useState(false);
   const [primaryContactId, setPrimaryContactId] = useState<number | null>(null);
   const [isUpdatingPrimary, setIsUpdatingPrimary] = useState(false);
+  const [contactModalOpen, setContactModalOpen] = useState(false);
+  const [contactModalInitialData, setContactModalInitialData] = useState<any>(null);
   
   // Fetch contatti associati all'azienda
   const { 
@@ -344,7 +347,16 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
               Associa Contatto Esistente
             </Button>
             <Button 
-              onClick={() => navigate(`/contacts?newContactForCompany=${companyId}&companyName=${encodeURIComponent(companyName)}`)} 
+              onClick={() => {
+                setContactModalOpen(true);
+                setContactModalInitialData({
+                  companyId,
+                  firstName: '',
+                  lastName: '',
+                  email: '',
+                  phone: '',
+                });
+              }} 
               size="sm"
               className="flex items-center"
             >
