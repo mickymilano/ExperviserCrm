@@ -349,32 +349,20 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
             </Button>
             <Button 
               onClick={() => {
-                // Creazione contatto direttamente con i dati completi dell'azienda
-                const companyNameToUse = company ? company.name : companyName;
-                console.log("Apertura modale creazione contatto con azienda:", 
-                  { id: companyId, name: companyNameToUse });
-                  
-                // Creiamo un evento personalizzato per aprire il modale di creazione contatto
-                const event = new CustomEvent('openContactModal', {
-                  detail: {
-                    initialData: {
-                      firstName: '',
-                      lastName: '',
-                      companyEmail: '',
-                      areasOfActivity: [{
-                        companyId: companyId,
-                        companyName: companyNameToUse,
-                        isPrimary: true,
-                        role: '',
-                        jobDescription: `Works at ${companyNameToUse}`
-                      }]
-                    }
-                  }
+                // Apriamo direttamente il modale interno invece di navigare
+                setContactModalOpen(true);
+                setContactModalInitialData({
+                  firstName: '',
+                  lastName: '',
+                  companyEmail: '',
+                  areasOfActivity: [{
+                    companyId: companyId,
+                    companyName: company?.name || companyName,
+                    isPrimary: true,
+                    role: '',
+                    jobDescription: `Works at ${company?.name || companyName}`
+                  }]
                 });
-                document.dispatchEvent(event);
-                
-                // Navigate serve solo a mantenere la funzionalità precedente
-                navigate(`/contacts/new?companyId=${companyId}&companyName=${encodeURIComponent(companyNameToUse || '')}`);
               }}
               size="sm"
               className="flex items-center"
@@ -553,7 +541,22 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
                 Questa azienda non ha ancora contatti associati.
               </p>
               <div className="flex flex-col space-y-2 items-center justify-center">
-                <Button onClick={() => navigate(`/contacts/new?companyId=${companyId}&companyName=${encodeURIComponent(companyName)}`)}>
+                <Button onClick={() => {
+                  // Apriamo direttamente il modale interno invece di navigare
+                  setContactModalOpen(true);
+                  setContactModalInitialData({
+                    firstName: '',
+                    lastName: '',
+                    companyEmail: '',
+                    areasOfActivity: [{
+                      companyId: companyId,
+                      companyName: company?.name || companyName,
+                      isPrimary: true,
+                      role: '',
+                      jobDescription: `Works at ${company?.name || companyName}`
+                    }]
+                  });
+                }}>
                   Crea Nuovo Contatto
                 </Button>
                 <Button 
