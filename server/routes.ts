@@ -26,6 +26,7 @@ import {
   convertLead 
 } from './controllers/leadController.js';
 import branchRoutes from './branchRoutes';
+import emailRoutes from './emailRoutes';
 import { getSectors, createSector } from './controllers/sectorController';
 import { getSubSectors, createSubSector } from './controllers/subSectorController';
 import { getJobTitles, getJobTitle, createJobTitle, updateJobTitle, deleteJobTitle } from './controllers/jobTitleController';
@@ -2508,6 +2509,9 @@ export function registerRoutes(app: any) {
   
   // Integrazione API filiali/sedi (Branch)
   app.use('/api/branches', branchRoutes);
+  
+  // Integrazione API Email
+  app.use('/api/email', emailRoutes);
   
   // --- ROTTE PER SETTORI, SOTTOSETTORI E JOB TITLES ---
   
