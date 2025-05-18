@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { formatPhoneNumber } from "@/lib/utils";
 import ContactModal from "@/components/modals/ContactModal";
+import BranchContactsSection from "@/components/company/BranchContactsSection";
 
 interface Contact {
   id: number;

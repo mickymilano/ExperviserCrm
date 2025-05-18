@@ -1,307 +1,336 @@
-import React, { useMemo } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
-import { useLocation } from 'wouter';
-import { useToast } from '@/hooks/use-toast';
-import { Contact } from '@/types';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from '@/components/ui/card';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { MapPin, Phone, Mail, Building, ChevronRight, Users, Briefcase } from 'lucide-react';
+import React, { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
+import { useLocation } from "wouter";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Map, Building, Mail, Phone, ChevronRight, Users, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { formatPhoneNumber } from "@/lib/utils";
 
-// Tipo per le filiali (branches)
+interface BranchContact {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email?: string;
+  phone?: string;
+  companyEmail?: string;
+  privateEmail?: string;
+  mobilePhone?: string;
+  officePhone?: string;
+  role?: string;
+  areasOfActivity?: {
+    id: number;
+    companyId: number;
+    companyName: string;
+    contactId: number;
+    role: string;
+    branchId?: number;
+    isPrimary?: boolean;
+  }[];
+}
+
 interface Branch {
   id: number;
   name: string;
+  companyId: number;
   address?: string;
-  city?: string;
-  region?: string;
-  postalCode?: string;
-  country?: string;
-  isHeadquarters: boolean;
-}
-
-// Tipo per i contatti collegati a filiali
-interface BranchWithContacts {
-  branch: Branch;
-  contacts: Contact[];
+  managers?: {
+    id: string;
+    name: string;
+    role: string;
+    contactId?: string;
+  }[];
 }
 
 interface BranchContactsSectionProps {
   companyId: number;
-  companyName: string;
 }
 
-export default function BranchContactsSection({ companyId, companyName }: BranchContactsSectionProps) {
+export default function BranchContactsSection({ companyId }: BranchContactsSectionProps) {
   const { t } = useTranslation();
   const [_, navigate] = useLocation();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-
-  // Recupera l'elenco delle filiali dell'azienda
+  
+  // Fetch branches
   const { 
     data: branches, 
-    isLoading: isLoadingBranches,
+    isLoading: isLoadingBranches, 
     error: branchesError
   } = useQuery({
-    queryKey: ['/api/branches/company', companyId],
+    queryKey: ["/api/branches/company", companyId],
     queryFn: async () => {
       const res = await fetch(`/api/branches/company/${companyId}`);
-      if (!res.ok) throw new Error(t('company.branches.errors.fetchBranches'));
+      if (!res.ok) throw new Error("Failed to fetch branches");
       const data = await res.json();
       console.log(`Retrieved ${data.length} branches for company ${companyId}`);
-      return data;
-    },
-    enabled: !!companyId
-  });
-
-  // Recupera tutti i contatti con le loro aree di attività
-  const { 
-    data: allContacts, 
-    isLoading: isLoadingContacts,
-    error: contactsError 
-  } = useQuery({
-    queryKey: ['/api/contacts'],
-    queryFn: async () => {
-      const res = await fetch(`/api/contacts?includeAreas=true`);
-      if (!res.ok) throw new Error(t('company.contacts.errors.fetchContacts'));
-      const data = await res.json();
-      console.log(`Retrieved ${data.length} total contacts with their areas`);
       return data;
     }
   });
 
-  // Organizziamo i contatti per filiale
-  const branchesWithContacts = useMemo(() => {
-    if (!branches || !allContacts) return [];
+  // Fetch contacts with areas of activity
+  const { 
+    data: allContacts,
+    isLoading: isLoadingContacts,
+    error: contactsError
+  } = useQuery({
+    queryKey: ["/api/contacts"],
+    queryFn: async () => {
+      const res = await fetch(`/api/contacts?includeAreas=true`);
+      if (!res.ok) throw new Error("Failed to fetch contacts");
+      return res.json();
+    },
+    enabled: !!branches && branches.length > 0
+  });
 
-    // Filtra i contatti che hanno aree di attività associate a filiali di questa azienda
-    const branchContactMap: Record<number, Contact[]> = {};
+  // Group contacts by branch
+  const branchContacts = useMemo(() => {
+    if (!branches || !allContacts) return {};
+
+    const contactsByBranch: Record<number, BranchContact[]> = {};
     
-    // Inizializza la mappa con tutte le filiali (anche quelle senza contatti)
+    // Initialize empty arrays for each branch
     branches.forEach(branch => {
-      branchContactMap[branch.id] = [];
+      contactsByBranch[branch.id] = [];
     });
-    
-    // Aggiungi i contatti alle filiali appropriate
-    allContacts.forEach(contact => {
-      if (!contact.areasOfActivity) return;
-      
-      // Per ogni contatto, controlla le aree di attività
-      contact.areasOfActivity.forEach(area => {
-        // Se l'area è associata a una filiale di questa azienda
-        if (area.branchId && branches.some(branch => branch.id === area.branchId)) {
-          // Aggiungi il contatto all'elenco della filiale
-          if (!branchContactMap[area.branchId].some(c => c.id === contact.id)) {
-            branchContactMap[area.branchId].push(contact);
+
+    // Find branch managers from branches data
+    branches.forEach(branch => {
+      if (branch.managers && branch.managers.length > 0) {
+        branch.managers.forEach(manager => {
+          if (manager.contactId) {
+            // Find the contact for this manager
+            const contact = allContacts.find(c => c.id.toString() === manager.contactId);
+            if (contact) {
+              // Add it to the branch contacts with special role
+              const managerContact = {
+                ...contact,
+                role: manager.role || t('branches.detail.manager')
+              };
+              
+              if (!contactsByBranch[branch.id].some(c => c.id === contact.id)) {
+                contactsByBranch[branch.id].push(managerContact);
+              }
+            }
           }
-        }
-      });
+        });
+      }
     });
-    
-    // Converti la mappa in un array di oggetti {branch, contacts}
-    return branches
-      .map(branch => ({
-        branch,
-        contacts: branchContactMap[branch.id] || []
-      }))
-      // Filtra solo le filiali che hanno contatti, a meno che non vogliamo mostrare tutte le filiali
-      .filter(item => item.contacts.length > 0);
-  }, [branches, allContacts]);
 
-  // Calcola il numero totale di contatti nelle filiali
-  const totalBranchContacts = useMemo(() => {
-    // Usare un Set per evitare di contare duplicati (contatti che appartengono a più filiali)
-    const uniqueContactIds = new Set<number>();
-    
-    branchesWithContacts.forEach(item => {
-      item.contacts.forEach(contact => {
-        uniqueContactIds.add(contact.id);
-      });
+    // Add contacts with branch associations through areasOfActivity
+    allContacts.forEach(contact => {
+      if (contact.areasOfActivity && contact.areasOfActivity.length > 0) {
+        contact.areasOfActivity.forEach(area => {
+          if (area.branchId && area.companyId === companyId) {
+            // Check if this contact is already in the branch list (as a manager)
+            if (!contactsByBranch[area.branchId].some(c => c.id === contact.id)) {
+              contactsByBranch[area.branchId].push({
+                ...contact,
+                role: area.role || t('branches.contact.employee')
+              });
+            }
+          }
+        });
+      }
     });
-    
-    return uniqueContactIds.size;
-  }, [branchesWithContacts]);
 
-  // Gestisci stato di caricamento
-  if (isLoadingBranches || isLoadingContacts) {
+    return contactsByBranch;
+  }, [branches, allContacts, companyId, t]);
+
+  // Check if we have any branch with at least one contact
+  const hasAnyBranchContacts = useMemo(() => {
+    if (!branches || !branchContacts) return false;
+    return branches.some(branch => 
+      branchContacts[branch.id] && branchContacts[branch.id].length > 0
+    );
+  }, [branches, branchContacts]);
+
+  // Error and loading states
+  const isLoading = isLoadingBranches || isLoadingContacts;
+  const hasError = branchesError || contactsError;
+
+  // Helper function to get initials
+  const getInitials = (firstName: string, lastName: string) => {
+    return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
+  };
+
+  if (isLoading) {
     return (
-      <Card className="mb-6">
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
             <Building className="h-5 w-5 mr-2" />
-            {t('company.branchContacts.title')}
+            <Skeleton className="h-5 w-40" />
           </CardTitle>
           <CardDescription>
-            {t('company.branchContacts.loading')}
+            <Skeleton className="h-4 w-64" />
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
+            {Array.from({ length: 2 }).map((_, index) => (
+              <div key={index}>
+                <Skeleton className="h-6 w-32 mb-2" />
+                <div className="pl-4 space-y-4">
+                  {Array.from({ length: 2 }).map((_, contactIndex) => (
+                    <div key={contactIndex} className="flex items-start space-x-4">
+                      <Skeleton className="h-10 w-10 rounded-full" />
+                      <div className="space-y-2 flex-1">
+                        <Skeleton className="h-5 w-40" />
+                        <Skeleton className="h-4 w-24" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>
     );
   }
 
-  // Gestisci errori
-  if (branchesError || contactsError) {
+  if (hasError) {
     return (
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center text-red-500">
-            <Building className="h-5 w-5 mr-2" />
-            {t('company.branchContacts.errorTitle')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-red-500">
-            {t('company.branchContacts.errorMessage')}
-          </p>
-          <Button 
-            variant="outline" 
-            className="mt-4"
-            onClick={() => {
-              queryClient.invalidateQueries({ queryKey: ['/api/branches/company', companyId] });
-              queryClient.invalidateQueries({ queryKey: ['/api/contacts'] });
-            }}
-          >
-            {t('common.retry')}
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Se non ci sono filiali con contatti, non mostrare la sezione
-  if (!branchesWithContacts || branchesWithContacts.length === 0) {
-    // Opzionale: restituire null per nascondere completamente la sezione
-    // return null;
-    
-    // Oppure mostrare un messaggio
-    return (
-      <Card className="mb-6">
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
             <Building className="h-5 w-5 mr-2" />
-            Contatti dalle Filiali
+            {t('company.branches.contacts.title')}
           </CardTitle>
-          <CardDescription>
-            Nessun contatto dalle filiali di {companyName}
-          </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground text-center py-4">
-            Non ci sono contatti associati alle filiali di questa azienda.
-          </p>
+          <div className="text-center py-6">
+            <X className="h-12 w-12 mx-auto mb-4 text-destructive" />
+            <h3 className="text-lg font-medium mb-2">{t("company.branches.contacts.errorTitle")}</h3>
+            <p className="text-muted-foreground mb-4">
+              {t("company.branches.contacts.errorDescription")}
+            </p>
+          </div>
         </CardContent>
       </Card>
     );
   }
 
+  if (!branches || branches.length === 0) {
+    return null; // Don't show anything if there are no branches
+  }
+
   return (
-    <Card className="mb-6">
+    <Card className="mt-6">
       <CardHeader>
         <CardTitle className="flex items-center">
           <Building className="h-5 w-5 mr-2" />
-          Contatti dalle Filiali ({totalBranchContacts})
+          {t('company.branches.contacts.title')}
         </CardTitle>
         <CardDescription>
-          Contatti associati alle filiali di {companyName}
+          {t('company.branches.contacts.description')}
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Accordion type="multiple" className="space-y-4">
-          {branchesWithContacts.map((item) => (
-            <AccordionItem key={item.branch.id} value={`branch-${item.branch.id}`} className="border rounded-md">
-              <AccordionTrigger className="px-4 py-2 hover:bg-accent hover:text-accent-foreground group rounded-t-md">
-                <div className="flex items-center justify-between w-full">
-                  <div className="flex items-center">
-                    <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <span className="font-medium">{item.branch.name}</span>
-                    {item.branch.isHeadquarters && (
+        {!hasAnyBranchContacts ? (
+          <div className="text-center py-8">
+            <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-30" />
+            <h3 className="text-lg font-medium mb-2">{t("company.branches.contacts.emptyTitle")}</h3>
+            <p className="text-muted-foreground mb-4">
+              {t("company.branches.contacts.emptyDescription")}
+            </p>
+          </div>
+        ) : (
+          <Accordion type="multiple" defaultValue={branches.map(branch => `branch-${branch.id}`)}>
+            {branches.map(branch => {
+              const contacts = branchContacts[branch.id] || [];
+              if (contacts.length === 0) return null;
+              
+              return (
+                <AccordionItem key={branch.id} value={`branch-${branch.id}`} className="border-b">
+                  <AccordionTrigger className="hover:no-underline py-4">
+                    <div className="flex items-center text-left">
+                      <Map className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <span className="font-medium">{branch.name}</span>
                       <Badge variant="outline" className="ml-2">
-                        Sede Principale
+                        {contacts.length} {contacts.length === 1 
+                          ? t('company.branches.contacts.contact') 
+                          : t('company.branches.contacts.contacts')}
                       </Badge>
-                    )}
-                  </div>
-                  <Badge className="ml-2 group-hover:bg-primary group-hover:text-primary-foreground">
-                    <Users className="h-3 w-3 mr-1" />
-                    {item.contacts.length}
-                  </Badge>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="px-4 py-2 bg-accent/10">
-                <div className="space-y-4 py-2">
-                  {item.contacts.map((contact) => (
-                    <div key={contact.id} className="flex items-start space-x-4 p-3 rounded-lg bg-background">
-                      <Avatar className="h-10 w-10">
-                        <AvatarFallback>
-                          {contact.firstName?.charAt(0)}{contact.lastName?.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h3 className="font-medium">{contact.firstName} {contact.lastName}</h3>
-                            <p className="text-sm text-muted-foreground">
-                              {contact.role || t('company.contacts.noRoleSpecified')}
-                            </p>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="space-y-4 pl-2">
+                      {contacts.map(contact => (
+                        <div key={contact.id} className="flex items-start space-x-4 p-3 rounded-lg hover:bg-muted/50">
+                          <Avatar className="h-10 w-10">
+                            <AvatarFallback>
+                              {getInitials(contact.firstName, contact.lastName)}
+                            </AvatarFallback>
+                          </Avatar>
+                          
+                          <div className="flex-1 space-y-1">
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-medium">
+                                {contact.firstName} {contact.lastName}
+                              </h4>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-8"
+                                onClick={() => navigate(`/contacts/${contact.id}`)}
+                              >
+                                <span className="sr-only">{t('common.view')}</span>
+                                <ChevronRight className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            
+                            {contact.role && (
+                              <p className="text-sm text-muted-foreground">
+                                {contact.role}
+                              </p>
+                            )}
+                            
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                              {(contact.email || contact.companyEmail || contact.privateEmail) && (
+                                <div className="flex items-center text-sm">
+                                  <Mail className="h-3 w-3 mr-2 text-muted-foreground" />
+                                  <a
+                                    href={`mailto:${contact.email || contact.companyEmail || contact.privateEmail}`}
+                                    className="text-primary hover:underline truncate"
+                                  >
+                                    {contact.email || contact.companyEmail || contact.privateEmail}
+                                  </a>
+                                </div>
+                              )}
+                              
+                              {(contact.phone || contact.mobilePhone || contact.officePhone) && (
+                                <div className="flex items-center text-sm">
+                                  <Phone className="h-3 w-3 mr-2 text-muted-foreground" />
+                                  <span>
+                                    {formatPhoneNumber(contact.phone || contact.mobilePhone || contact.officePhone)}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => navigate(`/contacts/${contact.id}`)}
-                            className="ml-2"
-                          >
-                            <ChevronRight className="h-4 w-4" />
-                          </Button>
                         </div>
-                        <div className="flex flex-wrap mt-2 gap-2 text-sm">
-                          {contact.companyEmail && (
-                            <a 
-                              href={`mailto:${contact.companyEmail}`} 
-                              className="flex items-center text-muted-foreground hover:text-foreground"
-                            >
-                              <Mail className="h-3 w-3 mr-1" />
-                              {contact.companyEmail}
-                            </a>
-                          )}
-                          {contact.mobilePhone && (
-                            <a 
-                              href={`tel:${contact.mobilePhone}`} 
-                              className="flex items-center text-muted-foreground hover:text-foreground"
-                            >
-                              <Phone className="h-3.5 w-3.5 mr-1" />
-                              {contact.mobilePhone}
-                            </a>
-                          )}
-                        </div>
+                      ))}
+                      
+                      <div className="pt-2 pb-4 flex justify-end">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => navigate(`/branches/${branch.id}`)}
+                        >
+                          {t('company.branches.contacts.viewBranchDetails')}
+                        </Button>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
+                  </AccordionContent>
+                </AccordionItem>
+              );
+            })}
+          </Accordion>
+        )}
       </CardContent>
     </Card>
   );
