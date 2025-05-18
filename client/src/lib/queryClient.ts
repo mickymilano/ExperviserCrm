@@ -1,5 +1,6 @@
 import { QueryClient } from '@tanstack/react-query';
 import type { QueryFunction } from '@tanstack/react-query';
+import { showSuccessNotification, showErrorNotification } from '@/lib/notification';
 
 // Funzione per fare le chiamate API
 export async function apiRequest(
@@ -41,6 +42,9 @@ export async function apiRequest(
     },
   };
   
+  // Verifica se è una operazione di salvataggio (operazione di scrittura)
+  const isWriteOperation = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
+  
   try {
     const response = await fetch(url, fetchOptions);
     
@@ -49,11 +53,39 @@ export async function apiRequest(
       // Proviamo a leggere l'errore come JSON
       try {
         const errorData = await response.json();
-        throw new Error(errorData.message || `Errore API ${response.status}`);
+        const errorMessage = errorData.message || `Errore API ${response.status}`;
+        
+        // Mostra notifica di errore per operazioni di scrittura
+        if (isWriteOperation) {
+          showErrorNotification(`Errore durante il salvataggio: ${errorMessage}`);
+        }
+        
+        throw new Error(errorMessage);
       } catch (e) {
         // Se non possiamo analizzare la risposta come JSON, lanciamo un errore generico
-        throw new Error(`Errore API ${response.status}`);
+        const errorMessage = `Errore API ${response.status}`;
+        
+        // Mostra notifica di errore per operazioni di scrittura
+        if (isWriteOperation) {
+          showErrorNotification(`Errore durante il salvataggio: ${errorMessage}`);
+        }
+        
+        throw new Error(errorMessage);
       }
+    }
+    
+    // Mostra notifica di successo per operazioni di scrittura
+    if (isWriteOperation) {
+      // Determina il tipo di operazione
+      const operationMessages = {
+        'POST': 'Creazione completata',
+        'PUT': 'Aggiornamento completato',
+        'PATCH': 'Salvataggio completato',
+        'DELETE': 'Eliminazione completata'
+      };
+      
+      const successMessage = operationMessages[method];
+      showSuccessNotification(successMessage);
     }
     
     // Controlliamo se la risposta contiene dati JSON
@@ -66,6 +98,12 @@ export async function apiRequest(
     return await response.text();
   } catch (error) {
     console.error('API request error:', error);
+    
+    // Mostra notifica di errore per operazioni di scrittura (se non catturato sopra)
+    if (isWriteOperation && error instanceof Error) {
+      showErrorNotification(`Errore durante il salvataggio: ${error.message}`);
+    }
+    
     throw error;
   }
 }
@@ -74,7 +112,7 @@ export async function apiRequest(
 export const defaultMutationOptions = {
   onError: (error: Error) => {
     console.error('Mutation error:', error);
-    // Qui potremmo mostrare una notifica/toast di errore
+    // Già gestito nella funzione apiRequest
   }
 };
 

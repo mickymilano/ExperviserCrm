@@ -5,6 +5,7 @@ import { queryClient } from '@/lib/queryClient';
 import AppLayout from '@/components/layout/AppLayout';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import DebugProvider from '@/components/debug/DebugProvider';
+import { Toaster } from '@/components/ui/toaster';
 
 // Lazy loading delle pagine
 const LoginPage = lazy(() => import('@/pages/LoginPage'));
@@ -62,6 +63,9 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <Suspense fallback={<LoadingScreen />}>
         <Switch>
+          {/* Componente per notifiche toast */}
+          <Toaster />
+
           {/* Pagina di login (senza layout AppLayout) */}
           <Route path="/login" component={LoginPage} />
           
