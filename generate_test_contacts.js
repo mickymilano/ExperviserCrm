@@ -115,24 +115,8 @@ async function createTestContacts(count) {
     const hasMiddleName = Math.random() > 0.7;
     const middleName = hasMiddleName ? firstNames[Math.floor(Math.random() * firstNames.length)] : "";
     
-    // Determina quante aziende associare a questo contatto (1-2)
-    const numCompanies = Math.floor(Math.random() * 2) + 1;
+    // Non associamo contatti ad aziende, li associerà manualmente l'utente
     const selectedCompanies = [];
-    
-    // Selezione casuale di aziende uniche
-    const companiesCopy = [...companies];
-    for (let j = 0; j < numCompanies && companiesCopy.length > 0; j++) {
-      const randomIndex = Math.floor(Math.random() * companiesCopy.length);
-      const company = companiesCopy.splice(randomIndex, 1)[0];
-      
-      selectedCompanies.push({
-        companyId: company.id,
-        companyName: company.name,
-        isPrimary: j === 0, // La prima azienda è primaria
-        role: roles[Math.floor(Math.random() * roles.length)],
-        jobDescription: jobDescriptions[Math.floor(Math.random() * jobDescriptions.length)]
-      });
-    }
     
     // Crea un'email personale
     const personalEmailDomain = domainNames[Math.floor(Math.random() * domainNames.length)];
