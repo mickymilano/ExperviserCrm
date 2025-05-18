@@ -361,42 +361,51 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => {
-                  const contactModal = document.getElementById('contact-modal-trigger');
-                  if (contactModal) (contactModal as HTMLButtonElement).click();
-                }}>
-                  Nuovo Contatto
+                <DropdownMenuItem asChild>
+                  <Link href="/contacts" onClick={(e) => {
+                    e.preventDefault();
+                    window.location.href = '/contacts?openNewModal=true';
+                  }}>
+                    Nuovo Contatto
+                  </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => {
-                  const companyModal = document.getElementById('company-modal-trigger');
-                  if (companyModal) (companyModal as HTMLButtonElement).click();
-                }}>
-                  Nuova Azienda
+                <DropdownMenuItem asChild>
+                  <Link href="/companies" onClick={(e) => {
+                    e.preventDefault();
+                    window.location.href = '/companies?openNewModal=true';
+                  }}>
+                    Nuova Azienda
+                  </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => {
-                  const dealModal = document.getElementById('deal-modal-trigger');
-                  if (dealModal) (dealModal as HTMLButtonElement).click();
-                }}>
-                  Nuova Opportunità
+                <DropdownMenuItem asChild>
+                  <Link href="/deals/new">
+                    Nuova Opportunità
+                  </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => {
-                  const leadModal = document.getElementById('lead-modal-trigger');
-                  if (leadModal) (leadModal as HTMLButtonElement).click();
-                }}>
-                  Nuovo Lead
+                <DropdownMenuItem asChild>
+                  <Link href="/leads" onClick={(e) => {
+                    e.preventDefault();
+                    window.location.href = '/leads?openNewModal=true';
+                  }}>
+                    Nuovo Lead
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => {
-                  const meetingModal = document.getElementById('meeting-modal-trigger');
-                  if (meetingModal) (meetingModal as HTMLButtonElement).click();
-                }}>
-                  Nuovo Appuntamento
+                <DropdownMenuItem asChild>
+                  <Link href="/calendar" onClick={(e) => {
+                    e.preventDefault();
+                    window.location.href = '/calendar?openNewModal=true';
+                  }}>
+                    Nuovo Appuntamento
+                  </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => {
-                  const taskModal = document.getElementById('task-modal-trigger');
-                  if (taskModal) (taskModal as HTMLButtonElement).click();
-                }}>
-                  Nuova Attività
+                <DropdownMenuItem asChild>
+                  <Link href="/tasks" onClick={(e) => {
+                    e.preventDefault();
+                    window.location.href = '/tasks?openNewModal=true';
+                  }}>
+                    Nuova Attività
+                  </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
