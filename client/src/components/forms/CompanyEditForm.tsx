@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -457,27 +457,37 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
           <h3 className="text-lg font-medium mb-4">Relazioni con me</h3>
           <p className="text-sm text-gray-500 mb-2">Seleziona tutti i tipi di relazione che hai con questa azienda. È possibile selezionare più opzioni contemporaneamente.</p>
           <div className="p-3 border rounded-md bg-gray-50">
-            <MultiCombobox
-              options={[
-                { value: 'prospect', label: 'In fase di valutazione' },
-                { value: 'clienteAttivo', label: 'Cliente attivo' },
-                { value: 'exCliente', label: 'Ex-cliente' },
-                { value: 'mandante', label: 'Mandante' },
-                { value: 'clienteRitenuto', label: 'Cliente retainer' },
-                { value: 'clienteUnaTantum', label: 'Cliente una tantum' },
-                { value: 'segnalatore', label: 'Segnalatore' },
-                { value: 'partnerStrategico', label: 'Partner strategico' },
-                { value: 'fornitore', label: 'Fornitore' },
-                { value: 'partner', label: 'Partner' },
-                { value: 'consulente', label: 'Consulente' },
-                { value: 'distributore', label: 'Distributore' },
-                { value: 'investitore', label: 'Investitore' },
-                { value: 'altro', label: 'Altro' }
-              ]}
-              values={relationValues}
-              onChange={handleRelationsChange}
-              placeholder="Seleziona le relazioni con l'azienda..."
-              emptyMessage="Nessuna relazione disponibile."
+            <Controller
+              name="relations"
+              control={form.control}
+              defaultValue={relationValues}
+              render={({ field }) => (
+                <MultiCombobox
+                  options={[
+                    { value: 'prospect', label: 'In fase di valutazione' },
+                    { value: 'clienteAttivo', label: 'Cliente attivo' },
+                    { value: 'exCliente', label: 'Ex-cliente' },
+                    { value: 'mandante', label: 'Mandante' },
+                    { value: 'clienteRitenuto', label: 'Cliente retainer' },
+                    { value: 'clienteUnaTantum', label: 'Cliente una tantum' },
+                    { value: 'segnalatore', label: 'Segnalatore' },
+                    { value: 'partnerStrategico', label: 'Partner strategico' },
+                    { value: 'fornitore', label: 'Fornitore' },
+                    { value: 'partner', label: 'Partner' },
+                    { value: 'consulente', label: 'Consulente' },
+                    { value: 'distributore', label: 'Distributore' },
+                    { value: 'investitore', label: 'Investitore' },
+                    { value: 'altro', label: 'Altro' }
+                  ]}
+                  values={field.value || []}
+                  onChange={(values) => {
+                    field.onChange(values);
+                    setRelationValues(values);
+                  }}
+                  placeholder="Seleziona le relazioni con l'azienda..."
+                  emptyMessage="Nessuna relazione disponibile."
+                />
+              )}
             />
           </div>
         </div>
