@@ -26,6 +26,7 @@ import ContactModal from "@/components/modals/ContactModal";
 import { SynergiesList } from "@/components/synergies/SynergiesList";
 import CompanyBranchesList from "@/components/branches/CompanyBranchesList";
 import CompanyContactsTab from "@/components/company/CompanyContactsTab";
+import BranchContactsSection from "@/components/company/BranchContactsSection";
 
 export default function CompanyDetail() {
   const { t } = useTranslation();
@@ -512,6 +513,9 @@ export default function CompanyDetail() {
         {/* Contacts Tab */}
         <TabsContent value="contacts" className="space-y-4">
           <CompanyContactsTab companyId={companyId} companyName={company.name} />
+          
+          {/* Sezione contatti delle filiali */}
+          <BranchContactsSection companyId={companyId} companyName={company.name} />
         </TabsContent>
         
         {/* Deals Tab */}
