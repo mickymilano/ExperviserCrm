@@ -1560,7 +1560,7 @@ export function registerRoutes(app: any) {
     }
   });
   
-  // Aggiorna un deal
+  // Aggiorna un deal - Endpoint PUT (mantenuto per retrocompatibilità)
   app.put('/api/deals/:id', authenticate, async (req, res) => {
     try {
       const dealId = parseInt(req.params.id);
@@ -1577,6 +1577,42 @@ export function registerRoutes(app: any) {
       res.json(updatedDeal);
     } catch (error) {
       console.error('Error updating deal:', error);
+      res.status(500).json({ message: 'Errore durante l\'aggiornamento del deal' });
+    }
+  });
+  
+  // Aggiorna un deal - Endpoint PATCH (implementazione moderna)
+  app.patch('/api/deals/:id', authenticate, async (req, res) => {
+    try {
+      console.log(`PATCH /api/deals/${req.params.id} - Aggiornamento deal`, req.body);
+      const dealId = parseInt(req.params.id);
+      
+      if (isNaN(dealId)) {
+        return res.status(400).json({ message: 'ID deal non valido' });
+      }
+      
+      // Verifica se il deal esiste
+      const deal = await storage.getDeal(dealId);
+      if (!deal) {
+        console.log(`Deal con ID ${dealId} non trovato`);
+        return res.status(404).json({ message: 'Deal non trovato' });
+      }
+      
+      // Prepara i dati per l'aggiornamento
+      // Converte il campo value in stringa se necessario
+      const updateData = { ...req.body };
+      if (updateData.value !== undefined && typeof updateData.value !== 'string') {
+        updateData.value = updateData.value.toString();
+      }
+      
+      // Aggiorna il deal
+      console.log(`Aggiornamento deal ${dealId} con dati:`, updateData);
+      const updatedDeal = await storage.updateDeal(dealId, updateData);
+      
+      console.log(`Deal ${dealId} aggiornato con successo`);
+      res.json(updatedDeal);
+    } catch (error) {
+      console.error('Error updating deal via PATCH:', error);
       res.status(500).json({ message: 'Errore durante l\'aggiornamento del deal' });
     }
   });
