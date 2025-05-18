@@ -48,7 +48,7 @@ export const useBranches = (companyId?: number) => {
   // Mutation per eliminare una filiale
   const deleteBranch = useMutation({
     mutationFn: async (branchId: number) => {
-      return await apiRequest(`/api/branches/${branchId}`, { method: "DELETE" });
+      return await apiRequest("DELETE", `/api/branches/${branchId}`);
     },
     onSuccess: () => {
       // Invalida la query esistente per aggiornare l'elenco delle filiali
