@@ -67,7 +67,7 @@ export function SynergiesOverview() {
     return (
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-md font-medium">Sinergie Recenti</CardTitle>
+          <CardTitle className="text-md font-medium">{t('synergies.recent_synergies')}</CardTitle>
         </CardHeader>
         <CardContent className="pb-2">
           <div className="space-y-3">

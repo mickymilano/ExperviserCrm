@@ -198,7 +198,13 @@
     "view_all_synergies": "Vedi tutte le sinergie",
     "unspecified_type": "Tipo non specificato",
     "selected_contacts_count": "{{count}} contatti selezionati",
-    "no_contacts_available": "Nessun contatto disponibile"
+    "no_contacts_available": "Nessun contatto disponibile",
+    "contact_fallback": "Contatto {{id}}",
+    "company_fallback": "Azienda {{id}}",
+    "deal_fallback": "Affare {{id}}",
+    "unknown_entity": "Entità sconosciuta",
+    "no_deal_synergies": "Questo affare non ha ancora sinergie associate",
+    "deals_only_message": "Le sinergie possono essere create solo all'interno degli affari"
   },
   
   "modal.addCompany": "Aggiungi Azienda",
