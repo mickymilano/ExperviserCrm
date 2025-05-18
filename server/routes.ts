@@ -26,6 +26,9 @@ import {
   convertLead 
 } from './controllers/leadController.js';
 import branchRoutes from './branchRoutes';
+import { getSectors, createSector } from './controllers/sectorController';
+import { getSubSectors, createSubSector } from './controllers/subSectorController';
+import { getJobTitles, createJobTitle } from './controllers/jobTitleController';
 
 // Chiave segreta per JWT
 const JWT_SECRET = process.env.JWT_SECRET || 'experviser-dev-secret';

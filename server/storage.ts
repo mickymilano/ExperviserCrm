@@ -9,6 +9,7 @@ import {
   synergies, Synergy, InsertSynergy,
   contactEmails, ContactEmail, InsertContactEmail,
   branches, Branch, InsertBranch,
+  Sector, SubSector, JobTitle
 } from '@shared/schema';
 import { db } from './db';
 import { eq } from 'drizzle-orm';
@@ -109,6 +110,18 @@ export interface IStorage {
   updateBranch(id: number, branchData: Partial<Branch>): Promise<Branch>;
   deleteBranch(id: number): Promise<void>;
   getBranchesCount(): Promise<number>;
+  
+  // Sector operations
+  getSectors(): Promise<Sector[]>;
+  createSector(data: { name: string }): Promise<Sector>;
+  
+  // SubSector operations
+  getSubSectors(opts: { sectorId: number; search: string }): Promise<SubSector[]>;
+  createSubSector(data: { sectorId: number; name: string }): Promise<SubSector>;
+  
+  // JobTitle operations
+  getJobTitles(opts: { subSectorId: number; search: string }): Promise<JobTitle[]>;
+  createJobTitle(data: { subSectorId: number; name: string }): Promise<JobTitle>;
 }
 
 /**

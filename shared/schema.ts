@@ -440,6 +440,24 @@ export const jobTitleSchema = z.object({
 });
 export type JobTitle = z.infer<typeof jobTitleSchema>;
 
+// Tabelle DB per settori, sottosettori e job titles
+export const sectors = pgTable('sectors', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull().unique(),
+});
+
+export const sub_sectors = pgTable('sub_sectors', {
+  id: serial('id').primaryKey(),
+  sectorId: integer('sector_id').notNull().references(() => sectors.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+});
+
+export const job_titles = pgTable('job_titles', {
+  id: serial('id').primaryKey(),
+  subSectorId: integer('sub_sector_id').notNull().references(() => sub_sectors.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+});
+
 /**
  * BRANCHES
  * Tabella delle filiali/sedi delle aziende
