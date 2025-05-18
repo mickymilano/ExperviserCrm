@@ -260,6 +260,48 @@
         "fetchAreasOfActivity": "Impossibile recuperare le aree di attività",
         "areaNotFound": "Area di attività non trovata",
         "deleteArea": "Impossibile eliminare l'area di attività"
+      },
+      "detail": {
+        "back": "Indietro",
+        "edit": "Modifica",
+        "delete": "Elimina",
+        "contactNotFound": "Contatto Non Trovato",
+        "contactNotFoundDescription": "Il contatto che stai cercando non esiste o non hai accesso.",
+        "returnToContacts": "Torna ai Contatti",
+        "tabs": {
+          "overview": "Panoramica",
+          "companies": "Aziende",
+          "deals": "Opportunità",
+          "activities": "Attività"
+        },
+        "contactDetails": "Dettagli Contatto",
+        "jobDescription": "Descrizione Ruolo",
+        "jobDescriptionAt": "Ruolo presso",
+        "at": "presso",
+        "workEmail": "lavoro",
+        "personalEmail": "personale",
+        "mobilePhone": "cellulare",
+        "personalPhone": "personale",
+        "officePhone": "ufficio",
+        "socialProfiles": "Profili Social",
+        "linkedinProfile": "Profilo LinkedIn",
+        "facebookProfile": "Profilo Facebook",
+        "instagramProfile": "Profilo Instagram",
+        "tags": "Tag",
+        "viewAllDeals": "Visualizza tutte le {{count}} opportunità",
+        "noCompaniesAssociated": "Nessuna Azienda Associata",
+        "noCompaniesDescription": "Questo contatto non è associato a nessuna azienda.",
+        "companiesAndRoles": "Aziende e ruoli associati a {{firstName}} {{lastName}}",
+        "dealsOpportunities": "Opportunità e trattative associate a {{firstName}} {{lastName}}",
+        "noDealsFound": "Nessuna Opportunità Trovata",
+        "noDealsDescription": "Non ci sono opportunità associate a questo contatto.",
+        "dealDetails": {
+          "value": "Valore",
+          "status": "Stato",
+          "stage": "Fase",
+          "expectedCloseDate": "Data di chiusura prevista",
+          "viewDetails": "Vedi dettagli"
+        }
       }
     },
     "branchContacts": {

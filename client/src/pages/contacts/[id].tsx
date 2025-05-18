@@ -22,6 +22,7 @@ import TaskList from "@/components/tasks/TaskList";
 import { SynergiesList } from "@/components/synergies/SynergiesList";
 import { Link } from "wouter";
 import { LinkCompanyButton } from "@/components/forms/LinkCompanyButton";
+import { useTranslation } from "react-i18next";
 
 export default function ContactDetail() {
   const params = useParams();
@@ -29,6 +30,7 @@ export default function ContactDetail() {
   const contactId = parseInt(params.id);
   const [activeTab, setActiveTab] = useState("overview");
   const [showModal, setShowModal] = useState(false);
+  const { t } = useTranslation();
   
   // Fetch contact data
   const { data: contact, isLoading, isError } = useContact(contactId);
@@ -87,7 +89,7 @@ export default function ContactDetail() {
         <div className="flex items-center mb-6">
           <Button variant="ghost" onClick={() => navigate("/contacts")} className="mr-4">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
+            {t('company.contacts.detail.back')}
           </Button>
           <Skeleton className="h-9 w-64" />
         </div>
