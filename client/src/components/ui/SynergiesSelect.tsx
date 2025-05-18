@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Control, Controller } from "react-hook-form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useTranslation } from "react-i18next";
 
 // Tipo per rappresentare un contatto selezionabile nelle sinergie
 interface Contact {
@@ -33,6 +34,7 @@ export function SynergiesSelect({
   placeholder,
   className,
 }: SynergiesSelectProps) {
+  const { t } = useTranslation();
   return (
     <div className={className}>
       <Label htmlFor={name}>{label}</Label>
