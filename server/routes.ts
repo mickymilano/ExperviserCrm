@@ -2136,6 +2136,26 @@ export function registerRoutes(app: any) {
   // Integrazione API filiali/sedi (Branch)
   app.use('/api/branches', branchRoutes);
   
+  // --- ROTTE PER SETTORI, SOTTOSETTORI E JOB TITLES ---
+  
+  // Ottieni tutti i settori
+  app.get('/api/sectors', authenticate, getSectors);
+  
+  // Crea un nuovo settore
+  app.post('/api/sectors', authenticate, isAdmin, createSector);
+  
+  // Ottieni sottosettori per un settore
+  app.get('/api/sectors/:sectorId/subsectors', authenticate, getSubSectors);
+  
+  // Crea un nuovo sottosettore
+  app.post('/api/sectors/:sectorId/subsectors', authenticate, isAdmin, createSubSector);
+  
+  // Ottieni job titles per un sottosettore
+  app.get('/api/subsectors/:subSectorId/jobtitles', authenticate, getJobTitles);
+  
+  // Crea un nuovo job title
+  app.post('/api/subsectors/:subSectorId/jobtitles', authenticate, isAdmin, createJobTitle);
+  
   // Crea il server HTTP
   const httpServer = createServer(app);
   

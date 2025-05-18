@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import { z } from 'zod';
-import { storage } from '../postgresStorage';
+import { storage } from '../storage';
 
 const createSectorSchema = z.object({ name: z.string() });
 export async function getSectors(_req: Request, res: Response) {
