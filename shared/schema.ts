@@ -450,7 +450,7 @@ export const job_titles = pgTable('job_titles', {
 });
 
 // Schema inserimento
-export const insertSectorSchema = createInsertSchema(sectors).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertSectorSchema = createInsertSchema(sectors).omit({ id: true });
 export const insertSubSectorSchema = createInsertSchema(sub_sectors).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertJobTitleSchema = createInsertSchema(job_titles).omit({ id: true, createdAt: true, updatedAt: true });
 

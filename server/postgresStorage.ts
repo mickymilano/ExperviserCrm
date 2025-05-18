@@ -3522,11 +3522,17 @@ export class PostgresStorage implements IStorage {
   async createSector(data: { name: string }): Promise<Sector> {
     console.log(`PostgresStorage.createSector: creating sector "${data.name}"`);
     try {
-      const [newSector] = await db
-        .insert(sectors)
-        .values(data)
-        .returning();
-      return newSector;
+      // Utilizziamo SQL nativo per controllare esattamente quali campi vengono inseriti
+      const result = await pool.query(
+        `INSERT INTO sectors (name) VALUES ($1) RETURNING id, name`,
+        [data.name]
+      );
+      
+      // Adattiamo il risultato al tipo Sector
+      return {
+        id: result.rows[0].id,
+        name: result.rows[0].name
+      };
     } catch (err) {
       console.error('Error creating sector:', err);
       throw err;
