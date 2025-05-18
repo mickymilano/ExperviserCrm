@@ -566,7 +566,11 @@
       "error": "Si è verificato un errore",
       "creationFailed": "Impossibile creare l'opportunità",
       "updateFailed": "Impossibile aggiornare l'opportunità",
-      "deleteConfirmation": "Sei sicuro di voler eliminare questa opportunità?"
+      "deleteConfirmation": "Sei sicuro di voler eliminare questa opportunità?",
+      "patchSuccess": "Modifiche all'opportunità salvate con successo",
+      "patchFailed": "Impossibile salvare le modifiche all'opportunità",
+      "valueConversionError": "Errore nella conversione del valore. Assicurati che sia un numero valido",
+      "invalidData": "Dati non validi. Controlla tutti i campi obbligatori"
     }
   }
 }
