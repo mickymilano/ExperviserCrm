@@ -773,7 +773,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="expectedCloseDate">Expected Close Date</Label>
+                  <Label htmlFor="expectedCloseDate">{t("deals.form.expected_close_date", "Data di chiusura prevista")}</Label>
                   <Input 
                     id="expectedCloseDate" 
                     type="date"
@@ -783,11 +783,11 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="tags">Tags</Label>
+                <Label htmlFor="tags">{t("deals.form.tags", "Etichette")}</Label>
                 <div className="flex items-center space-x-2">
                   <Input 
                     id="tags" 
-                    placeholder="Enter comma-separated tags"
+                    placeholder={t("deals.form.tags_placeholder", "Inserisci etichette separate da virgole")}
                     value={tagsInput}
                     onChange={(e) => setTagsInput(e.target.value)}
                   />
@@ -868,22 +868,22 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                       }}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder={getSelectedCompanyId() ? "Select contact" : "Select company first"}>
+                        <SelectValue placeholder={getSelectedCompanyId() ? t("deals.form.select_contact", "Seleziona contatto") : t("deals.form.select_company_first", "Seleziona prima l'azienda")}>
                           {field.value !== undefined && field.value !== null && Array.isArray(contacts)
                             ? (() => {
                                 const foundContact = contacts.find((contact: any) => contact.id === field.value);
                                 return foundContact 
-                                  ? `${foundContact.firstName || ''} ${foundContact.lastName || ''}`.trim() || "No name"
-                                  : "Select contact";
+                                  ? `${foundContact.firstName || ''} ${foundContact.lastName || ''}`.trim() || t("deals.form.no_name", "Senza nome")
+                                  : t("deals.form.select_contact", "Seleziona contatto");
                               })()
-                            : getSelectedCompanyId() ? "Select contact" : "Select company first"}
+                            : getSelectedCompanyId() ? t("deals.form.select_contact", "Seleziona contatto") : t("deals.form.select_company_first", "Seleziona prima l'azienda")}
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         {Array.isArray(filteredContacts) && filteredContacts.length > 0 ? (
                           filteredContacts.map((contact) => (
                             <SelectItem key={contact.id} value={contact.id.toString()}>
-                              {`${contact.firstName || ''} ${contact.lastName || ''}`.trim() || 'Unnamed Contact'}
+                              {`${contact.firstName || ''} ${contact.lastName || ''}`.trim() || t("deals.form.unnamed_contact", "Contatto senza nome")}
                             </SelectItem>
                           ))
                         ) : (
