@@ -2599,12 +2599,12 @@ export class PostgresStorage implements IStorage {
         `, [dealData.contactId]);
         
         if (contactResult.rows.length > 0) {
-          const contactData = contactResult.rows[0];
+          const contactRow = contactResult.rows[0];
           // Convertiamo in camelCase per il frontend
           contactData = {
-            id: contactData.id,
-            firstName: contactData.first_name,
-            lastName: contactData.last_name,
+            id: contactRow.id,
+            firstName: contactRow.first_name,
+            lastName: contactRow.last_name,
             // altri campi se necessari
           };
         }
@@ -2618,11 +2618,11 @@ export class PostgresStorage implements IStorage {
         `, [dealData.companyId]);
         
         if (companyResult.rows.length > 0) {
-          companyData = companyResult.rows[0];
+          const companyRow = companyResult.rows[0];
           // Convertiamo in camelCase per il frontend
           companyData = {
-            id: companyData.id,
-            name: companyData.name,
+            id: companyRow.id,
+            name: companyRow.name,
             // altri campi se necessari
           };
         }
@@ -2636,12 +2636,12 @@ export class PostgresStorage implements IStorage {
         `, [dealData.stageId]);
         
         if (stageResult.rows.length > 0) {
-          stageData = stageResult.rows[0];
+          const stageRow = stageResult.rows[0];
           // Convertiamo in camelCase per il frontend
           stageData = {
-            id: stageData.id,
-            name: stageData.name,
-            order: stageData.order
+            id: stageRow.id,
+            name: stageRow.name,
+            order: stageRow.order
           };
         }
       }
