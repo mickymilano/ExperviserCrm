@@ -209,7 +209,7 @@ export default function BranchContactsSection({ companyId, companyName }: Branch
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground text-center py-4">
-            {t('company.branchContacts.noContacts')}
+            Non ci sono contatti associati alle filiali di questa azienda.
           </p>
         </CardContent>
       </Card>
@@ -221,10 +221,10 @@ export default function BranchContactsSection({ companyId, companyName }: Branch
       <CardHeader>
         <CardTitle className="flex items-center">
           <Building className="h-5 w-5 mr-2" />
-          {t('company.branchContacts.title')} ({totalBranchContacts})
+          Contatti dalle Filiali ({totalBranchContacts})
         </CardTitle>
         <CardDescription>
-          {t('company.branchContacts.description', { companyName })}
+          Contatti associati alle filiali di {companyName}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -238,7 +238,7 @@ export default function BranchContactsSection({ companyId, companyName }: Branch
                     <span className="font-medium">{item.branch.name}</span>
                     {item.branch.isHeadquarters && (
                       <Badge variant="outline" className="ml-2">
-                        {t('company.branches.headquarters')}
+                        Sede Principale
                       </Badge>
                     )}
                   </div>
