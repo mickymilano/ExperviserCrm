@@ -94,6 +94,10 @@
   "navigation.synergies": "Sinergie",
   "navigation.email": "Email",
   
+  "contacts": {
+    "unnamed_contact": "Contatto senza nome"
+  },
+  
   "tasks": {
     "new": "Nuovo",
     "due_date": "Scadenza",
