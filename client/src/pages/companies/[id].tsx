@@ -108,6 +108,10 @@ export default function CompanyDetail() {
         open={isContactModalOpen} 
         onOpenChange={setIsContactModalOpen} 
         initialData={{
+          // Campi obbligatori del contatto
+          firstName: "",
+          lastName: "",
+          companyEmail: "",
           // Predisponiamo automaticamente l'area di attività per collegarla all'azienda corrente
           areasOfActivity: [{
             companyId: company?.id,
