@@ -1056,7 +1056,62 @@ export function registerRoutes(app: any) {
     }
   });
   
-  // Versione più semplice e robusta dell'endpoint per ricevere i contatti di un'azienda
+  // Endpoint standardizzato per ricevere i contatti di un'azienda
+  app.get('/api/companies/:id/contacts', authenticate, async (req, res) => {
+    try {
+      const companyId = parseInt(req.params.id);
+      console.log(`API: Fetching contacts for company ${companyId}`);
+      
+      // Usa l'approccio più semplice e diretto:
+      // 1. Prima ottiene tutti gli ID dei contatti associati all'azienda tramite aree di attività
+      const queryAreas = {
+        text: "SELECT contact_id FROM areas_of_activity WHERE company_id = $1",
+        values: [companyId]
+      };
+      
+      const areasResult = await pool.query(queryAreas);
+      console.log(`Found ${areasResult.rows.length} areas for company ${companyId}`);
+      
+      if (areasResult.rows.length === 0) {
+        return res.json([]);
+      }
+      
+      // Estrae gli ID dei contatti
+      const contactIds = areasResult.rows.map(row => row.contact_id);
+      console.log(`Contact IDs for company ${companyId}:`, contactIds);
+      
+      // 2. Poi recupera i dettagli di quei contatti in una sola query
+      const contactsQuery = {
+        text: `
+          SELECT 
+            id, 
+            first_name AS "firstName", 
+            last_name AS "lastName", 
+            status, 
+            company_email AS "companyEmail", 
+            private_email AS "privateEmail", 
+            mobile_phone AS "mobilePhone",
+            office_phone AS "officePhone",
+            linkedin,
+            tags,
+            notes
+          FROM contacts 
+          WHERE id = ANY($1)
+        `,
+        values: [contactIds]
+      };
+      
+      const contactsResult = await pool.query(contactsQuery);
+      console.log(`Retrieved ${contactsResult.rows.length} contacts for company ${companyId}`);
+      
+      res.json(contactsResult.rows);
+    } catch (error) {
+      console.error(`Error fetching contacts for company:`, error);
+      res.status(500).json({ message: 'Errore durante il recupero dei contatti dell\'azienda' });
+    }
+  });
+  
+  // Manteniamo anche la versione v2 per retrocompatibilità
   app.get('/api/v2/companies/:id/contacts', authenticate, async (req, res) => {
     try {
       const companyId = parseInt(req.params.id);
