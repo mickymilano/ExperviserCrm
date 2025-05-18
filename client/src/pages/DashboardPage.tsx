@@ -10,6 +10,7 @@ import {
   Calendar
 } from 'lucide-react';
 import { SynergiesOverview } from '@/components/dashboard/SynergiesOverview';
+import { useTranslation } from 'react-i18next';
 
 // Componente per mostrare lo stato di caricamento
 function DashboardSkeleton() {
@@ -197,6 +198,8 @@ function DealItem({ id, title, value, company, stage }: DealItemProps) {
 }
 
 export default function DashboardPage() {
+  const { t } = useTranslation();
+  
   // Dati statistiche dashboard
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['/api/stats/overview'],
@@ -225,8 +228,8 @@ export default function DashboardPage() {
   return (
     <div className="p-6 space-y-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground">Panoramica delle attività recenti e delle performance</p>
+        <h1 className="text-2xl font-bold">{t('dashboard.title', 'Dashboard')}</h1>
+        <p className="text-muted-foreground">{t('dashboard.subtitle', 'Panoramica delle attività recenti e delle performance')}</p>
       </div>
       
       {/* Statistiche */}
@@ -273,21 +276,21 @@ export default function DashboardPage() {
         {/* Attività recenti */}
         <div className="bg-card border border-border rounded-lg shadow-sm">
           <div className="p-4 border-b border-border">
-            <h2 className="text-lg font-medium">Attività recenti</h2>
+            <h2 className="text-lg font-medium">{t('dashboard.recent_activities', 'Attività recenti')}</h2>
           </div>
           <div className="p-4">
             {Array.isArray(activities) && activities.length > 0 ? (
               activities.map((activity: any) => (
                 <ActivityItem
                   key={activity.id}
-                  title={activity.title || "Attività"}
-                  description={activity.description || "Nessuna descrizione"}
+                  title={activity.title || t('dashboard.activity_default', 'Attività')}
+                  description={activity.description || t('dashboard.no_description', 'Nessuna descrizione')}
                   type={activity.type || "note"}
                   createdAt={new Date(activity.createdAt || new Date())}
                 />
               ))
             ) : (
-              <p className="text-center text-muted-foreground py-4">Nessuna attività recente</p>
+              <p className="text-center text-muted-foreground py-4">{t('dashboard.no_recent_activities', 'Nessuna attività recente')}</p>
             )}
           </div>
         </div>
@@ -295,7 +298,7 @@ export default function DashboardPage() {
         {/* Contatti recenti */}
         <div className="bg-card border border-border rounded-lg shadow-sm">
           <div className="p-4 border-b border-border">
-            <h2 className="text-lg font-medium">Contatti recenti</h2>
+            <h2 className="text-lg font-medium">{t('dashboard.recent_contacts', 'Contatti recenti')}</h2>
           </div>
           <div className="p-4">
             {Array.isArray(contacts) && contacts.length > 0 ? (
@@ -309,7 +312,7 @@ export default function DashboardPage() {
                 />
               ))
             ) : (
-              <p className="text-center text-muted-foreground py-4">Nessun contatto recente</p>
+              <p className="text-center text-muted-foreground py-4">{t('dashboard.no_recent_contacts', 'Nessun contatto recente')}</p>
             )}
           </div>
         </div>
@@ -317,7 +320,7 @@ export default function DashboardPage() {
         {/* Opportunità recenti */}
         <div className="bg-card border border-border rounded-lg shadow-sm">
           <div className="p-4 border-b border-border">
-            <h2 className="text-lg font-medium">Opportunità recenti</h2>
+            <h2 className="text-lg font-medium">{t('dashboard.recent_deals', 'Opportunità recenti')}</h2>
           </div>
           <div className="p-4">
             {Array.isArray(deals) && deals.length > 0 ? (
@@ -325,14 +328,14 @@ export default function DashboardPage() {
                 <DealItem
                   key={deal.id}
                   id={deal.id || 0}
-                  title={deal.title || "Opportunità senza titolo"}
+                  title={deal.title || t('dashboard.unnamed_deal', 'Opportunità senza titolo')}
                   value={deal.value || 0}
                   company={deal.companyName}
-                  stage={deal.stageName || "Fase non specificata"}
+                  stage={deal.stageName || t('dashboard.unspecified_stage', 'Fase non specificata')}
                 />
               ))
             ) : (
-              <p className="text-center text-muted-foreground py-4">Nessuna opportunità recente</p>
+              <p className="text-center text-muted-foreground py-4">{t('dashboard.no_recent_deals', 'Nessuna opportunità recente')}</p>
             )}
           </div>
         </div>
