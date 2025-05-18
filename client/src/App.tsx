@@ -61,11 +61,11 @@ function LayoutPage({ component: Component }: { component: React.ComponentType }
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      {/* Componente per notifiche toast */}
+      <Toaster />
+      
       <Suspense fallback={<LoadingScreen />}>
         <Switch>
-          {/* Componente per notifiche toast */}
-          <Toaster />
-
           {/* Pagina di login (senza layout AppLayout) */}
           <Route path="/login" component={LoginPage} />
           
