@@ -325,17 +325,13 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       .then(companyContacts => {
         console.log(`Found ${companyContacts.length} contacts via API for company ${companyId}`);
         
-        // Converto i contatti ottenuti dall'API e li filtro per assicurarmi che esistano anche nel nostro elenco contacts
-        const filteredByAPI = companyContacts
-          .filter(apiContact => {
-            // Cerchiamo il contatto corrispondente nel nostro elenco
-            return contacts.some(contact => contact.id === apiContact.id);
-          })
-          .map(apiContact => {
-            // Troviamo il contatto completo dal nostro elenco per avere tutti i dati
-            const fullContact = contacts.find(contact => contact.id === apiContact.id);
-            return fullContact || apiContact; // Usiamo i dati completi se disponibili, altrimenti quelli dall'API
-          });
+        // Usa direttamente i contatti dell'API senza filtrare, dato che l'API è già affidabile
+        // Questo risolve il problema dove i contatti restituiti dall'API non vengono visualizzati
+        const filteredByAPI = companyContacts.map(apiContact => {
+          // Troviamo il contatto completo dal nostro elenco per avere tutti i dati
+          const fullContact = contacts.find(contact => contact.id === apiContact.id);
+          return fullContact || apiContact; // Usiamo i dati completi se disponibili, altrimenti quelli dall'API
+        });
         
         // Backup: se l'API non restituisce contatti, proviamo il metodo con le aree di attività
         if (filteredByAPI.length === 0) {
