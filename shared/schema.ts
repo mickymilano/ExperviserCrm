@@ -724,6 +724,48 @@ export type SecurityLog = typeof securityLogs.$inferSelect;
 export type InsertSecurityLog = z.infer<typeof insertSecurityLogSchema>;
 
 /**
+ * SECTOR HIERARCHY
+ * Tabelle per la struttura gerarchica settori/sottosettori/job titles
+ */
+export const sectors = pgTable('sectors', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 100 }).notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const sub_sectors = pgTable('sub_sectors', {
+  id: serial('id').primaryKey(),
+  sectorId: integer('sector_id').notNull().references(() => sectors.id),
+  name: varchar('name', { length: 100 }).notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const job_titles = pgTable('job_titles', {
+  id: serial('id').primaryKey(),
+  subSectorId: integer('sub_sector_id').notNull().references(() => sub_sectors.id),
+  name: varchar('name', { length: 100 }).notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// Schema inserimento
+export const insertSectorSchema = createInsertSchema(sectors).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertSubSectorSchema = createInsertSchema(sub_sectors).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertJobTitleSchema = createInsertSchema(job_titles).omit({ id: true, createdAt: true, updatedAt: true });
+
+// Tipi
+export type Sector = typeof sectors.$inferSelect;
+export type InsertSector = z.infer<typeof insertSectorSchema>;
+
+export type SubSector = typeof sub_sectors.$inferSelect;
+export type InsertSubSector = z.infer<typeof insertSubSectorSchema>;
+
+export type JobTitle = typeof job_titles.$inferSelect;
+export type InsertJobTitle = z.infer<typeof insertJobTitleSchema>;
+
+/**
  * Relations
  */
 // Contact to ContactEmails (one-to-many)
@@ -736,5 +778,25 @@ export const contactEmailsRelations = relations(contactEmails, ({ one }) => ({
   contact: one(contacts, {
     fields: [contactEmails.contactId],
     references: [contacts.id],
+  }),
+}));
+
+// Relazioni per settori/sottosettori/job titles
+export const sectorsRelations = relations(sectors, ({ many }) => ({
+  subSectors: many(sub_sectors),
+}));
+
+export const subSectorsRelations = relations(sub_sectors, ({ one, many }) => ({
+  sector: one(sectors, {
+    fields: [sub_sectors.sectorId],
+    references: [sectors.id],
+  }),
+  jobTitles: many(job_titles),
+}));
+
+export const jobTitlesRelations = relations(job_titles, ({ one }) => ({
+  subSector: one(sub_sectors, {
+    fields: [job_titles.subSectorId],
+    references: [sub_sectors.id],
   }),
 }));

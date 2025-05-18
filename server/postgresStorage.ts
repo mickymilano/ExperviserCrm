@@ -12,6 +12,9 @@ import {
   synergies,
   contactEmails,
   branches,
+  sectors,
+  sub_sectors,
+  job_titles,
   type User,
   type InsertUser,
   type UserSession,
@@ -48,6 +51,12 @@ import {
   type InsertContactEmail,
   type Branch,
   type InsertBranch,
+  type Sector,
+  type InsertSector,
+  type SubSector,
+  type InsertSubSector,
+  type JobTitle,
+  type InsertJobTitle,
 } from "@shared/schema";
 import {
   eq,
