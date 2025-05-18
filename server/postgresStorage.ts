@@ -3573,11 +3573,18 @@ export class PostgresStorage implements IStorage {
         throw new Error(`Sector with id ${data.sectorId} not found`);
       }
       
-      const [newSubSector] = await db
-        .insert(sub_sectors)
-        .values(data)
-        .returning();
-      return newSubSector;
+      // Utilizziamo SQL nativo per controllare esattamente quali campi vengono inseriti
+      const result = await pool.query(
+        `INSERT INTO sub_sectors (sector_id, name) VALUES ($1, $2) RETURNING id, sector_id, name`,
+        [data.sectorId, data.name]
+      );
+      
+      // Adattiamo il risultato al tipo SubSector
+      return {
+        id: result.rows[0].id,
+        sectorId: result.rows[0].sector_id,
+        name: result.rows[0].name
+      };
     } catch (err) {
       console.error('Error creating subsector:', err);
       throw err;
