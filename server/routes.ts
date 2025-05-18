@@ -534,11 +534,47 @@ export function registerRoutes(app: any) {
       // Validazione dello schema
       const validatedData = insertContactSchema.parse(req.body);
       
+      console.log('POST /api/contacts - Dati validati:', validatedData);
+      
       // Crea il contatto
       const newContact = await storage.createContact({
         ...validatedData,
         status: validatedData.status || 'active'
       });
+      
+      console.log(`Contatto creato con ID: ${newContact.id}`);
+      
+      // Se è stato fornito un companyId, crea anche un'area di attività
+      if (req.body.companyId) {
+        const companyId = req.body.companyId;
+        console.log(`Creazione area di attività per contatto ${newContact.id} e azienda ${companyId}`);
+        
+        try {
+          // Controlla se esiste l'azienda
+          const company = await storage.getCompany(companyId);
+          if (!company) {
+            console.error(`Azienda ${companyId} non trovata`);
+          } else {
+            // Crea l'area di attività
+            const area = await storage.createAreaOfActivity({
+              contactId: newContact.id,
+              companyId: companyId,
+              companyName: company.name,
+              isPrimary: true,
+              role: req.body.role || '',
+              jobDescription: req.body.jobDescription || ''
+            });
+            
+            console.log(`Area di attività creata con ID: ${area.id}`);
+            
+            // Aggiungi l'area al contatto restituito
+            newContact.areasOfActivity = [area];
+          }
+        } catch (areaError) {
+          console.error(`Errore creazione area di attività: ${areaError}`);
+          // Non interrompiamo la creazione del contatto se l'area fallisce
+        }
+      }
       
       res.status(201).json(newContact);
     } catch (error) {

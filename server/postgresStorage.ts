@@ -1479,59 +1479,42 @@ export class PostgresStorage implements IStorage {
       console.log(
         `PostgresStorage.getContactsByCompany: retrieving contacts for company ${companyId}`,
       );
-      // Simplified query without relational features - find contacts by areas of activity
-      const contactIds = await db
-        .select({
-          contactId: areasOfActivity.contactId,
-        })
-        .from(areasOfActivity)
-        .where(eq(areasOfActivity.companyId, companyId));
-
-      console.log(
-        `Found ${contactIds.length} contact IDs for company ${companyId}`,
-      );
-
-      // If no contacts found, return empty array
-      if (contactIds.length === 0) {
-        return [];
-      }
-
-      // Get all contacts with these IDs using SQL with parameters
-      const contactIdsArray = contactIds.map(c => c.contactId);
       
-      // Gestione caso speciale: se non ci sono contatti, evita errori SQL
-      if (contactIdsArray.length === 0) {
-        console.log(`No contacts found for company ${companyId}, returning empty array`);
-        return [];
-      }
-      
-      // Use SQL builder with safe parameterization
-      const placeholders = contactIdsArray.map((_, i) => `$${i + 1}`).join(',');
+      // Utilizziamo una query JOIN più diretta che garantisce risultati corretti
       const sql_query = `
-        SELECT id, 
-               first_name as "firstName", 
-               last_name as "lastName", 
-               status, 
-               company_email as "companyEmail", 
-               private_email as "privateEmail", 
-               mobile_phone as "mobilePhone", 
-               office_phone as "officePhone",
-               private_phone as "privatePhone",
-               created_at as "createdAt", 
-               updated_at as "updatedAt" 
-        FROM contacts 
-        WHERE id IN (${placeholders})
-        ORDER BY first_name, last_name
+        SELECT 
+          c.id, 
+          c.first_name AS "firstName", 
+          c.last_name AS "lastName", 
+          c.status, 
+          c.company_email AS "companyEmail", 
+          c.private_email AS "privateEmail", 
+          c.mobile_phone AS "mobilePhone", 
+          c.office_phone AS "officePhone",
+          c.private_phone AS "privatePhone",
+          c.created_at AS "createdAt", 
+          c.updated_at AS "updatedAt" 
+        FROM 
+          contacts c
+        INNER JOIN 
+          areas_of_activity aoa ON c.id = aoa.contact_id
+        WHERE 
+          aoa.company_id = $1
+        ORDER BY 
+          c.first_name, c.last_name
       `;
       
-      const result = await db.execute(sql_query, contactIdsArray);
-
+      // Eseguiamo la query con parametri
+      const result = await db.execute(sql_query, [companyId]);
+      
       console.log(
-        `Retrieved ${result.rows.length} contacts for company ${companyId}`,
+        `Retrieved ${result.rows.length} contacts for company ${companyId} using direct JOIN query`,
       );
+      
       return result.rows as Contact[];
     } catch (error) {
       console.error(`Error in getContactsByCompany(${companyId}):`, error);
+      console.error(`Query failed with error: ${error.message}`);
       return [];
     }
   }
