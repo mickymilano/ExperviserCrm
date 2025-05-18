@@ -122,7 +122,7 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
       // Prepare data for API
       const companyData = { ...data };
       
-      // Assicuriamoci che relations sia un array e non undefined
+      // Ora che il database supporta il campo relations, lo possiamo inviare
       companyData.relations = relationValues || [];
       
       // Convert tags string to array

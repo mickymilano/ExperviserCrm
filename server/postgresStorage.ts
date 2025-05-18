@@ -2055,10 +2055,10 @@ export class PostgresStorage implements IStorage {
       cleanCompanyData.fullAddress = companyData.address;
     }
 
-    // SICUREZZA: rimuovi esplicitamente i campi che sappiamo non esistere più o non sono gestiti dal DB
+    // SICUREZZA: rimuovi esplicitamente i campi che sappiamo non esistere più
     delete (cleanCompanyData as any).city;
     delete (cleanCompanyData as any).region;
-    delete (cleanCompanyData as any).relations; // Rimuovi relations che non esiste ancora nel DB
+    // Non rimuoviamo più relations perché ora esiste nel database
 
     // Log dei dati puliti prima dell'aggiornamento
     console.log("Updating company with sanitized data:", cleanCompanyData);
