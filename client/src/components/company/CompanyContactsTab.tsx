@@ -46,6 +46,7 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
   const [isContactLoading, setIsContactLoading] = useState(false);
   const [primaryContactId, setPrimaryContactId] = useState<number | null>(null);
   const [isUpdatingPrimary, setIsUpdatingPrimary] = useState(false);
+  // State per il modal contatto
   const [contactModalOpen, setContactModalOpen] = useState(false);
   const [contactModalInitialData, setContactModalInitialData] = useState<any>(null);
   
@@ -347,16 +348,7 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
               Associa Contatto Esistente
             </Button>
             <Button 
-              onClick={() => {
-                setContactModalOpen(true);
-                setContactModalInitialData({
-                  companyId,
-                  firstName: '',
-                  lastName: '',
-                  email: '',
-                  phone: '',
-                });
-              }} 
+              onClick={() => navigate(`/contacts/new?companyId=${companyId}&companyName=${encodeURIComponent(companyName)}`)}
               size="sm"
               className="flex items-center"
             >
@@ -534,27 +526,7 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
                 Questa azienda non ha ancora contatti associati.
               </p>
               <div className="flex flex-col space-y-2 items-center justify-center">
-                <Button onClick={() => {
-                  // Apri il modale invece di navigare a una nuova pagina
-                  const parentCompanyName = companyName;
-                  const event = new CustomEvent('openContactModal', {
-                    detail: {
-                      initialData: {
-                        firstName: '',
-                        lastName: '',
-                        companyEmail: '',
-                        areasOfActivity: [{
-                          companyId: companyId,
-                          companyName: parentCompanyName,
-                          isPrimary: true,
-                          role: '',
-                          jobDescription: `Works at ${parentCompanyName}`
-                        }]
-                      }
-                    }
-                  });
-                  document.dispatchEvent(event);
-                }}>
+                <Button onClick={() => navigate(`/contacts/new?companyId=${companyId}&companyName=${encodeURIComponent(companyName)}`)}>
                   Crea Nuovo Contatto
                 </Button>
                 <Button 

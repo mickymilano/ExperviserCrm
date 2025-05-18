@@ -28,8 +28,8 @@ export default function Contacts() {
   const [location, navigate] = useLocation();
   
   // Estrai parametri dalla querystring per gestire la creazione di un contatto da pagina azienda
-  const searchParams = new URLSearchParams(location.split('?')[1]);
-  const companyIdFromUrl = searchParams.get('newContactForCompany');
+  const searchParams = new URLSearchParams(location.split('?')[1] || '');
+  const companyIdFromUrl = searchParams.get('companyId');
   const companyNameFromUrl = searchParams.get('companyName');
   
   // Se il parametro di creazione da azienda è presente, apri il modal

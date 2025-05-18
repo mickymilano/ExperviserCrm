@@ -156,6 +156,8 @@ export default function ContactModal({ open, onOpenChange, initialData, onSucces
         ...(initialData?.companyId ? { companyId: initialData.companyId } : {})
       };
       
+      console.log("[DEBUG] ContactModal payload:", contactData);
+      
       // Convert tags string to array if provided
       if (tagsInput.trim()) {
         contactData.tags = tagsInput.split(",").map((tag: string) => tag.trim());
