@@ -654,7 +654,11 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
       <ContactModal 
         open={contactModalOpen} 
         onOpenChange={setContactModalOpen} 
-        initialData={contactModalInitialData} 
+        initialData={contactModalInitialData}
+        onSuccess={() => {
+          setContactModalOpen(false);
+          refetchContacts(); // Ricarica la lista contatti
+        }}
       />
     </>
   );

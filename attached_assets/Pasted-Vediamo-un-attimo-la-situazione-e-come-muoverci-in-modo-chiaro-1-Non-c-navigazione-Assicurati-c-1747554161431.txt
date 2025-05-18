@@ -1,0 +1,47 @@
+Vediamo un attimo la situazione e come muoverci in modo chiaro:
+	1.	Non c’è navigazione
+Assicurati che il pulsante “Crea Nuovo Contatto” chiami solo setContactModalOpen(true) (e non un navigate(...)), restando sulla stessa pagina.
+	2.	Modal registrato nel JSX
+Verifica alla fine di CompanyContactsTab.tsx di avere qualcosa del genere:
+
+{isContactModalOpen && (
+  <ContactModal
+    isOpen
+    initialData={contactModalInitialData}
+    onClose={() => setContactModalOpen(false)}
+    onSuccess={() => {
+      setContactModalOpen(false);
+      refetchCompanyContacts();
+    }}
+  />
+)}
+
+
+	3.	ContactModal.handleSubmit
+Dentro ContactModal.tsx, la funzione di submit deve includere companyId esplicitamente:
+
+const handleSubmit = async (values: ContactFormData) => {
+  const payload = { ...values, companyId: initialData.companyId };
+  await createContact(payload);        // POST /api/contacts
+  onSuccess();                         // chiude e ricarica
+};
+
+
+	4.	createContact
+Controlla che createContact passi correttamente companyId al backend e che il DTO lato server usi companyId per popolare la FK.
+	5.	Verifica in DevTools
+	•	Apri la Network tab e, quando premi “Salva”, cerca la chiamata POST /api/contacts.
+	•	Controlla il payload: deve contenere "companyId": <id dell’azienda>.
+	•	Se manca, torna al punto 3.
+	6.	Errore “Contact Not Found”
+Quell’errore esce quando React arriva a una pagina “/contacts/:id” inesistente. Ma con il modal non dovresti più navigare: se vedi ancora il redirect, allora c’è un residuale navigate() da qualche parte.
+	7.	Ultimo check
+	•	Controlla in CompanyContactsTab.tsx che il pulsante abbia solo onClick={handleAddContact} e niente navigate.
+	•	Rimuovi ogni navigate('/contacts/new') residuo nel progetto.
+
+Se dopo questi controlli:
+	•	NON vedi alcuna chiamata a /api/contacts in rete → il modal non sta nemmeno chiamando la create.
+	•	SI vedi la chiamata ma con payload sbagliato → il payload non include companyId.
+	•	SI la chiamata funziona ma il contact non appare → forse il refetch non è collegato correttamente.
+
+Fai questi 6 step di verifica, indicami esattamente in quale punto il flusso si interrompe (nessuna chiamata, payload mancante, errore server, refetch non eseguito) e ti do la patch mirata per quel punto.

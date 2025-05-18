@@ -18,6 +18,7 @@ interface ContactModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialData?: any; // Aggiungiamo il parametro initialData
+  onSuccess?: () => void; // Callback eseguita quando la creazione/modifica ha successo
 }
 
 const contactSchema = z.object({
@@ -48,7 +49,7 @@ const contactSchema = z.object({
 
 type ContactFormData = z.infer<typeof contactSchema>;
 
-export default function ContactModal({ open, onOpenChange, initialData }: ContactModalProps) {
+export default function ContactModal({ open, onOpenChange, initialData, onSuccess }: ContactModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isEditing = !!initialData;
@@ -148,12 +149,12 @@ export default function ContactModal({ open, onOpenChange, initialData }: Contac
   const createContact = useMutation({
     mutationFn: async (data: ContactFormData) => {
       // Prepare data for contact creation
-      const contactData = { ...data };
-      
-      // Usa companyId dai dati iniziali se presente
-      if (initialData?.companyId) {
-        contactData.companyId = initialData.companyId;
-      }
+      // Creiamo un oggetto separato così possiamo aggiungere companyId senza problemi di tipo
+      const contactData: any = { 
+        ...data,
+        // Aggiungiamo sempre companyId se presente nei dati iniziali
+        ...(initialData?.companyId ? { companyId: initialData.companyId } : {})
+      };
       
       // Convert tags string to array if provided
       if (tagsInput.trim()) {
@@ -276,6 +277,11 @@ export default function ContactModal({ open, onOpenChange, initialData }: Contac
         queryClient.invalidateQueries({ queryKey: [`/api/companies/${companyIdFromUrl}/contacts`] });
         queryClient.invalidateQueries({ queryKey: ["/api/companies", companyIdFromUrl] });
         queryClient.invalidateQueries({ queryKey: ["/api/companies"] });
+      }
+      
+      // Se abbiamo un callback onSuccess, eseguiamolo
+      if (onSuccess) {
+        onSuccess();
       }
     },
     onError: (error: any) => {
