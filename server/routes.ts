@@ -1300,9 +1300,7 @@ export function registerRoutes(app: any) {
         return res.status(400).json({ message: 'ID deal non valido' });
       }
       
-      // Importiamo direttamente il pool dal modulo db.ts
-      const { pool } = require('./db');
-      
+      // Utilizziamo il pool già importato all'inizio del file
       console.log(`[DEAL DEBUG] Fetching deal with id ${dealId} using direct SQL`);
       
       // Query per il deal
