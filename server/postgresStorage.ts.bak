@@ -2144,7 +2144,7 @@ export class PostgresStorage implements IStorage {
 
   async getDealsCount(options?: { status?: string }): Promise<number> {
     try {
-      console.log("Getting deals count", options);
+      console.log("PostgresStorage.getDealsCount: retrieving deals count with options:", options);
       
       let queryStr = "SELECT COUNT(*) as count FROM deals";
       const params: any[] = [];
