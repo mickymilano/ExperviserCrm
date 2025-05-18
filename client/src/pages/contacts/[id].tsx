@@ -421,7 +421,7 @@ export default function ContactDetail() {
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center text-lg">
                     <Handshake className="h-5 w-5 mr-2" />
-                    Business Synergies
+                    {t('synergies.business_synergies')}
                   </CardTitle>
                   <CardDescription>
                     Special business relationships involving this contact
