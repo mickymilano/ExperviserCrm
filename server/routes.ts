@@ -33,33 +33,11 @@ import { getJobTitles, createJobTitle } from './controllers/jobTitleController';
 // Chiave segreta per JWT
 const JWT_SECRET = process.env.JWT_SECRET || 'experviser-dev-secret';
 
-// Middleware di autenticazione
+// Middleware di autenticazione - DEVELOPMENT MODE ENABLED
 export const authenticate = (req: any, res: any, next: any) => {
-  // Ottieni il token dal cookie o dall'header Authorization
-  const token = req.cookies?.token || req.headers.authorization?.split(' ')[1];
-
-  if (!token) {
-    return res.status(401).json({ message: 'Autenticazione richiesta' });
-  }
-
-  try {
-    // Verifica il token
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded;
-    next();
-  } catch (error) {
-    return res.status(401).json({ message: 'Token non valido' });
-  }
-};
-
-// Middleware di autenticazione JWT specifico
-export const authenticateJWT = (req: any, res: any, next: any) => {
-  // Ottieni il token dal cookie o dall'header Authorization
-  const token = req.cookies?.token || req.headers.authorization?.split(' ')[1];
-
-  // Consenti l'autenticazione come utente di debug in sviluppo
-  if (process.env.NODE_ENV === 'development' && !token) {
-    console.log('Using debug authentication');
+  // DEVELOPMENT MODE: Per test e sviluppo, l'autenticazione è sempre consentita
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[AUTH DEBUG] Autenticazione bypassata in modalità sviluppo');
     req.user = {
       id: 1,
       username: 'debug',
@@ -68,6 +46,36 @@ export const authenticateJWT = (req: any, res: any, next: any) => {
     return next();
   }
 
+  // In PRODUCTION continua con la verifica del token
+  const token = req.cookies?.token || req.headers.authorization?.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ message: 'Autenticazione richiesta' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    return res.status(401).json({ message: 'Token non valido' });
+  }
+};
+
+// Middleware di autenticazione JWT - SEMPRE ABILITATO IN SVILUPPO
+export const authenticateJWT = (req: any, res: any, next: any) => {
+  // BYPASS TOTALE: in modalità development garantiamo l'autenticazione
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[AUTH DEBUG] Autenticazione JWT bypassata in modalità sviluppo');
+    req.user = {
+      id: 1,
+      username: 'debug',
+      role: 'super_admin'
+    };
+    return next();
+  }
+
+  // Solo in PRODUCTION verifichiamo il token
+  const token = req.cookies?.token || req.headers.authorization?.split(' ')[1];
   if (!token) {
     return res.status(401).json({ message: 'Autenticazione richiesta' });
   }
