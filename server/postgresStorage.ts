@@ -2041,7 +2041,21 @@ export class PostgresStorage implements IStorage {
     // Mappa custom_fields direttamente qui fuori dal ciclo se esiste
     if (companyData.customFields !== undefined) {
       console.log("Trovato customFields nell'input:", companyData.customFields);
-      cleanCompanyData["custom_fields"] = companyData.customFields;
+      
+      try {
+        // Assicuriamoci che i dati siano in formato jsonb valido
+        if (typeof companyData.customFields === 'string') {
+          // Se è una stringa JSON, parsifichiamola
+          cleanCompanyData.custom_fields = JSON.parse(companyData.customFields);
+        } else {
+          // Se è già un oggetto, lo usiamo direttamente
+          cleanCompanyData.custom_fields = companyData.customFields;
+        }
+        console.log("Custom fields formattati per il database:", cleanCompanyData.custom_fields);
+      } catch (error) {
+        console.error("Errore nella conversione dei customFields in jsonb:", error);
+        // In caso di errore, non aggiorniamo questo campo
+      }
     }
 
     // Copia solo i campi sicuri che esistono nell'input
