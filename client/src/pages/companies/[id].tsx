@@ -188,8 +188,8 @@ export default function CompanyDetail() {
           {isEditing ? (
             <Card>
               <CardHeader>
-                <CardTitle>Edit Company Details</CardTitle>
-                <CardDescription>Make changes to the company information below</CardDescription>
+                <CardTitle>{t("company.companyDetail.editCompanyDetails")}</CardTitle>
+                <CardDescription>{t("company.companyDetail.makeChanges")}</CardDescription>
               </CardHeader>
               <CardContent>
                 <CompanyEditForm 
@@ -203,7 +203,7 @@ export default function CompanyDetail() {
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <Building className="h-5 w-5 mr-2" />
-                  Company Details
+                  {t("company.companyDetail.sections.companyDetails")}
                 </CardTitle>
               </CardHeader>
               
@@ -211,7 +211,7 @@ export default function CompanyDetail() {
               <CardContent>
                 <h3 className="text-md font-medium mb-4 flex items-center">
                   <Award className="h-4 w-4 mr-2 text-muted-foreground" />
-                  Basic Information
+                  {t("company.companyDetail.sections.basicInformation")}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   <div className="space-y-4">
