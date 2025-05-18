@@ -113,6 +113,7 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
   const handleRelationsChange = (values: string[]) => {
     setRelationValues(values);
     setValue('relations', values, { shouldValidate: true });
+    console.log('Relazioni selezionate:', values);
   };
 
   // Update company mutation
