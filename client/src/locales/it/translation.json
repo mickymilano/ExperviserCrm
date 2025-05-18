@@ -14,7 +14,9 @@
     "validationError": "Errore di validazione",
     "saving": "Salvataggio...",
     "adding": "Aggiunta...",
-    "success": "Successo"
+    "success": "Successo",
+    "searchNoResults": "Prova a modificare i termini di ricerca.",
+    "actions": "Azioni"
   },
   
   "validation": {

@@ -189,15 +189,15 @@ export default function Deals() {
             <div className="rounded-full bg-muted w-12 h-12 flex items-center justify-center mb-4">
               <TrendingUp className="h-6 w-6 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-medium mb-2">Nessuna opportunità trovata</h3>
+            <h3 className="text-lg font-medium mb-2">{t("deal.noDealsFound")}</h3>
             <p className="text-muted-foreground text-center mb-4">
               {searchTerm
-                ? "Prova a modificare i termini di ricerca."
-                : "Inizia aggiungendo la tua prima opportunità."}
+                ? t("common.searchNoResults")
+                : t("deal.createFirstDeal")}
             </p>
             {!searchTerm && (
               <Button onClick={() => setShowModal(true)}>
-                <Plus className="mr-2 h-4 w-4" /> Aggiungi Opportunità
+                <Plus className="mr-2 h-4 w-4" /> {t("deal.addDeal")}
               </Button>
             )}
           </CardContent>
