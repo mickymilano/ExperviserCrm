@@ -209,7 +209,7 @@ export default function SynergiesPage() {
                 </div>
                 {synergy.dealId && (
                   <div className="mt-2">
-                    <p className="text-muted-foreground mb-1 text-sm">Opportunità Associata</p>
+                    <p className="text-muted-foreground mb-1 text-sm">{t('synergies.associated_opportunity')}</p>
                     <Button 
                       variant="link" 
                       className="p-0 h-auto text-sm flex items-center"
