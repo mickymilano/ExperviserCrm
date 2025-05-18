@@ -1496,25 +1496,35 @@ export class PostgresStorage implements IStorage {
         return [];
       }
 
-      // Get all contacts with these IDs usando SQL nativo
-      const idsList = contactIds.map((c) => c.contactId).join(",");
-      const result = await db.execute(
-        `SELECT 
-          id, 
-          first_name as "firstName", 
-          last_name as "lastName", 
-          status, 
-          company_email as "companyEmail", 
-          private_email as "privateEmail", 
-          mobile_phone as "mobilePhone", 
-          office_phone as "officePhone",
-          private_phone as "privatePhone",
-          created_at as "createdAt", 
-          updated_at as "updatedAt" 
+      // Get all contacts with these IDs using SQL with parameters
+      const contactIdsArray = contactIds.map(c => c.contactId);
+      
+      // Gestione caso speciale: se non ci sono contatti, evita errori SQL
+      if (contactIdsArray.length === 0) {
+        console.log(`No contacts found for company ${companyId}, returning empty array`);
+        return [];
+      }
+      
+      // Use SQL builder with safe parameterization
+      const placeholders = contactIdsArray.map((_, i) => `$${i + 1}`).join(',');
+      const sql_query = `
+        SELECT id, 
+               first_name as "firstName", 
+               last_name as "lastName", 
+               status, 
+               company_email as "companyEmail", 
+               private_email as "privateEmail", 
+               mobile_phone as "mobilePhone", 
+               office_phone as "officePhone",
+               private_phone as "privatePhone",
+               created_at as "createdAt", 
+               updated_at as "updatedAt" 
         FROM contacts 
-        WHERE id IN (${idsList})
-        ORDER BY first_name, last_name`,
-      );
+        WHERE id IN (${placeholders})
+        ORDER BY first_name, last_name
+      `;
+      
+      const result = await db.execute(sql_query, contactIdsArray);
 
       console.log(
         `Retrieved ${result.rows.length} contacts for company ${companyId}`,
