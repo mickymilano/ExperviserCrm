@@ -360,10 +360,10 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
           <div>
             <CardTitle className="flex items-center">
               <Users className="h-5 w-5 mr-2" />
-              Contatti ({contacts?.length || 0})
+              {t('company.contacts.title')} ({contacts?.length || 0})
             </CardTitle>
             <CardDescription>
-              Persone associate a {companyName}
+              {t('company.contacts.description', { companyName })}
             </CardDescription>
           </div>
           <div className="flex space-x-2">
@@ -373,7 +373,7 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
               className="flex items-center"
             >
               <UserPlus className="h-4 w-4 mr-2" />
-              Associa Contatto Esistente
+              {t('company.contacts.associateExisting')}
             </Button>
             <Button 
               onClick={() => {
@@ -388,7 +388,7 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
                     companyName: company?.name || companyName,
                     isPrimary: true,
                     role: '',
-                    jobDescription: `Works at ${company?.name || companyName}`
+                    jobDescription: t('company.contacts.worksAt', { companyName: company?.name || companyName })
                   }]
                 });
               }}
@@ -396,7 +396,7 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
               className="flex items-center"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Crea Nuovo Contatto
+              {t('company.contacts.createNew')}
             </Button>
           </div>
         </CardHeader>
@@ -445,15 +445,15 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
                           {primaryContactId === contact.id && (
                             <span 
                               className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
-                              title="Questo contatto è il riferimento principale per l'azienda"
+                              title={t('company.contacts.primaryContactTooltip')}
                             >
                               <Star className="h-3 w-3 mr-1" />
-                              Contatto Primario
+                              {t('company.contacts.primaryContact')}
                             </span>
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          {contact.role || "Nessun ruolo specificato"}
+                          {contact.role || t('company.contacts.noRoleSpecified')}
                         </p>
                       </div>
                       <div className="flex gap-2">
@@ -464,18 +464,18 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
                             className="bg-white hover:bg-yellow-50 text-yellow-600 border-yellow-300 hover:border-yellow-400"
                             disabled={isUpdatingPrimary}
                             onClick={() => setPrimaryContact(contact.id)}
-                            title="Imposta questo contatto come riferimento principale per l'azienda"
-                            aria-label="Imposta come contatto primario"
+                            title={t('company.contacts.setPrimaryContactTooltip')}
+                            aria-label={t('company.contacts.setPrimaryContactAriaLabel')}
                           >
                             {isUpdatingPrimary ? (
                               <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Impostazione...
+                                {t('company.contacts.setting')}
                               </>
                             ) : (
                               <>
                                 <Star className="mr-2 h-4 w-4" />
-                                Imposta come primario
+                                {t('company.contacts.setAsPrimary')}
                               </>
                             )}
                           </Button>
@@ -486,18 +486,18 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
                             className="bg-yellow-50 hover:bg-white text-yellow-700 border-yellow-300"
                             disabled={isUpdatingPrimary}
                             onClick={() => removePrimaryContact()}
-                            title="Rimuovi lo stato di contatto primario"
-                            aria-label="Rimuovi contatto primario"
+                            title={t('company.contacts.removePrimaryContactTooltip')}
+                            aria-label={t('company.contacts.removePrimaryContactAriaLabel')}
                           >
                             {isUpdatingPrimary ? (
                               <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Rimozione...
+                                {t('company.contacts.removing')}
                               </>
                             ) : (
                               <>
                                 <StarOff className="mr-2 h-4 w-4" />
-                                Rimuovi primario
+                                {t('company.contacts.removePrimary')}
                               </>
                             )}
                           </Button>
