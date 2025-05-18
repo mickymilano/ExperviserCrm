@@ -201,10 +201,9 @@ export default function ContactModal({ open, onOpenChange, initialData }: Contac
         if (newContact.id) {
           let areasToCreate = [...areasOfActivity];
           
-          // If contact was created from a company but doesn't have areas for this company,
-          // automatically add the area for the current company
-          if (hasCompanyContext && companyIdFromUrl && 
-              !areasOfActivity.some(area => area.companyId === companyIdFromUrl)) {
+          // Se areasOfActivity è vuoto ma il modal è stato aperto dalla pagina di un'azienda,
+          // assicuriamoci di aggiungere l'associazione all'azienda corrente
+          if (areasToCreate.length === 0 && hasCompanyContext && companyIdFromUrl) {
             areasToCreate.push({
               contactId: newContact.id,
               companyId: companyIdFromUrl,
@@ -217,22 +216,30 @@ export default function ContactModal({ open, onOpenChange, initialData }: Contac
           
           // Create all areas of activity
           if (areasToCreate.length > 0) {
-            const areaPromises = areasToCreate.map(area => 
-              fetch("/api/areas-of-activity", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  ...area,
-                  contactId: newContact.id
-                }),
-                credentials: "include"
-              }).then(res => {
-                if (!res.ok) throw new Error(`${res.status}: ${res.statusText}`);
-                return res.json();
-              })
-            );
-            
-            await Promise.all(areaPromises);
+            try {
+              console.log("Creazione delle aree di attività:", areasToCreate);
+              
+              for (const area of areasToCreate) {
+                const response = await fetch("/api/areas-of-activity", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    ...area,
+                    contactId: newContact.id
+                  }),
+                  credentials: "include"
+                });
+                
+                if (!response.ok) {
+                  const errorText = await response.text();
+                  console.error(`Errore durante la creazione dell'area di attività: ${errorText}`);
+                } else {
+                  console.log("Area di attività creata con successo");
+                }
+              }
+            } catch (error) {
+              console.error("Errore durante la creazione delle aree di attività:", error);
+            }
           }
         }
         
