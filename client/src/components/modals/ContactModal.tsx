@@ -162,11 +162,8 @@ export default function ContactModal({ open, onOpenChange, initialData, onSucces
   const createContact = useMutation({
     mutationFn: async (data: ContactFormData) => {
       // Prepare data for contact creation
-      // Creiamo un oggetto separato così possiamo aggiungere companyId senza problemi di tipo
       const contactData: any = { 
         ...data,
-        // Aggiungiamo sempre companyId se presente nei dati iniziali
-        ...(initialData?.companyId ? { companyId: initialData.companyId } : {})
       };
       
       console.log("[DEBUG] ContactModal payload:", contactData);
@@ -184,32 +181,13 @@ export default function ContactModal({ open, onOpenChange, initialData, onSucces
       }
       
       try {
-        let response;
-        
-        // If we have a company context, use the specific endpoint
-        if (hasCompanyContext && companyIdFromUrl) {
-          // Create the contact directly associated with the company
-          response = await fetch(`/api/companies/${companyIdFromUrl}/contacts`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              ...contactData,
-              // Pass role and job description for the association
-              role: areasOfActivity.find(area => area.companyId === companyIdFromUrl)?.role || 'Employee',
-              jobDescription: areasOfActivity.find(area => area.companyId === companyIdFromUrl)?.jobDescription || 
-                `Works at ${companyName || 'the company'}`
-            }),
-            credentials: "include"
-          });
-        } else {
-          // Use the standard endpoint for contacts
-          response = await fetch("/api/contacts", {
-            method: "POST", 
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(contactData),
-            credentials: "include"
-          });
-        }
+        // Usiamo sempre l'endpoint standard per creare contatti
+        const response = await fetch("/api/contacts", {
+          method: "POST", 
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(contactData),
+          credentials: "include"
+        });
         
         if (!response.ok) {
           const errorText = await response.text();
@@ -222,11 +200,15 @@ export default function ContactModal({ open, onOpenChange, initialData, onSucces
         if (newContact.id) {
           let areasToCreate = [...areasOfActivity];
           
-          // Se areasOfActivity è vuoto ma il modal è stato aperto dalla pagina di un'azienda,
-          // assicuriamoci di aggiungere l'associazione all'azienda corrente
+          // Se il contatto è stato creato dalla pagina di un'azienda e abbiamo aree di attività
+          // o un ID azienda, assicuriamoci di creare l'associazione
+          if (areasToCreate.length === 0 && initialData?.areasOfActivity?.length > 0) {
+            areasToCreate = [...initialData.areasOfActivity];
+          }
+          
+          // Se abbiamo dati dal contesto dell'azienda ma nessuna area di attività
           if (areasToCreate.length === 0 && hasCompanyContext && companyIdFromUrl) {
             areasToCreate.push({
-              contactId: newContact.id,
               companyId: companyIdFromUrl,
               companyName: companyName || '',
               role: 'Employee',
@@ -237,10 +219,8 @@ export default function ContactModal({ open, onOpenChange, initialData, onSucces
           
           // Create all areas of activity
           if (areasToCreate.length > 0) {
-            try {
-              console.log("Creazione delle aree di attività:", areasToCreate);
-              
-              for (const area of areasToCreate) {
+            for (const area of areasToCreate) {
+              try {
                 const response = await fetch("/api/areas-of-activity", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
@@ -251,15 +231,15 @@ export default function ContactModal({ open, onOpenChange, initialData, onSucces
                   credentials: "include"
                 });
                 
-                if (!response.ok) {
+                if (response.ok) {
+                  console.log("Area di attività creata con successo");
+                } else {
                   const errorText = await response.text();
                   console.error(`Errore durante la creazione dell'area di attività: ${errorText}`);
-                } else {
-                  console.log("Area di attività creata con successo");
                 }
+              } catch (error) {
+                console.error("Errore durante la creazione di un'area di attività:", error);
               }
-            } catch (error) {
-              console.error("Errore durante la creazione delle aree di attività:", error);
             }
           }
         }
