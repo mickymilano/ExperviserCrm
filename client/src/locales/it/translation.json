@@ -155,7 +155,38 @@
       "removePrimaryContactAriaLabel": "Rimuovi contatto primario",
       "removing": "Rimozione...",
       "removePrimary": "Rimuovi primario",
-      "noRoleSpecified": "Nessun ruolo specificato"
+      "noRoleSpecified": "Nessun ruolo specificato",
+      "viewContactDetails": "Visualizza la scheda completa del contatto",
+      "removeFromCompany": "Rimuovi questo contatto dall'azienda corrente",
+      "error": "Errore",
+      "retry": "Riprova",
+      "errorLoadingContacts": "Impossibile caricare i contatti di questa azienda.",
+      "confirmRemoval": "Sei sicuro di voler rimuovere \"{{contactName}}\" da {{companyName}}?",
+      "notifications": {
+        "associatedSuccess": "Contatto associato con successo",
+        "associatedDescription": "Il contatto è stato associato a {{companyName}}",
+        "associationError": "Impossibile associare il contatto all'azienda",
+        "primaryContactSet": "Contatto primario impostato",
+        "primaryContactSetDescription": "Il contatto primario è stato aggiornato con successo",
+        "primaryContactSetError": "Impossibile impostare il contatto primario",
+        "primaryContactRemoved": "Contatto primario rimosso",
+        "primaryContactRemovedDescription": "Il contatto primario è stato rimosso con successo",
+        "primaryContactRemoveError": "Impossibile rimuovere il contatto primario",
+        "contactDisassociated": "Contatto disassociato",
+        "contactDisassociatedDescription": "Il contatto è stato rimosso da {{companyName}}",
+        "contactDisassociatedError": "Impossibile disassociare il contatto dall'azienda"
+      },
+      "errors": {
+        "fetchContacts": "Impossibile recuperare i contatti",
+        "fetchCompanyDetails": "Impossibile recuperare i dettagli dell'azienda",
+        "fetchUnassignedContacts": "Impossibile recuperare i contatti non assegnati",
+        "associationError": "Errore nell'associazione del contatto",
+        "setPrimaryContact": "Impossibile impostare il contatto primario",
+        "removePrimaryContact": "Impossibile rimuovere il contatto primario",
+        "fetchAreasOfActivity": "Impossibile recuperare le aree di attività",
+        "areaNotFound": "Area di attività non trovata",
+        "deleteArea": "Impossibile eliminare l'area di attività"
+      }
     },
     "companyList": {
       "title": "Aziende",

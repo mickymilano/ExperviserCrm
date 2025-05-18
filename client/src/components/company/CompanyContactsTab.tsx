@@ -60,7 +60,7 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
     queryKey: ["/api/contacts"],
     queryFn: async () => {
       const res = await fetch(`/api/contacts?includeAreas=true`);
-      if (!res.ok) throw new Error("Failed to fetch contacts");
+      if (!res.ok) throw new Error(t("company.contacts.errors.fetchContacts"));
       const data = await res.json();
       console.log(`Retrieved ${data.length} total contacts with their areas`);
       return data;
@@ -98,7 +98,7 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
     queryKey: ["/api/companies", companyId],
     queryFn: async () => {
       const res = await fetch(`/api/companies/${companyId}`);
-      if (!res.ok) throw new Error("Failed to fetch company details");
+      if (!res.ok) throw new Error(t("company.contacts.errors.fetchCompanyDetails"));
       const data = await res.json();
       
       // Aggiorna lo stato del contatto primario
@@ -119,7 +119,7 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
       console.log(`Fetching contacts with URL: ${url}`);
       
       const res = await fetch(url);
-      if (!res.ok) throw new Error("Failed to fetch unassigned contacts");
+      if (!res.ok) throw new Error(t("company.contacts.errors.fetchUnassignedContacts"));
       
       const contacts = await res.json();
       
@@ -152,7 +152,7 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
       });
 
       if (!res.ok) {
-        throw new Error("Errore nell'associazione del contatto");
+        throw new Error(t("company.contacts.errors.associationError"));
       }
 
       // Aggiorniamo anche il campo companyId del contatto
@@ -176,8 +176,8 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
       queryClient.invalidateQueries({ queryKey: ["/api/companies", companyId, "contacts"] });
       
       toast({
-        title: "Contatto associato con successo",
-        description: `Il contatto è stato associato a ${companyName}`,
+        title: t("company.contacts.notifications.associatedSuccess"),
+        description: t("company.contacts.notifications.associatedDescription", { companyName }),
       });
       
       // Refresh contacts list
@@ -186,8 +186,8 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
     } catch (error) {
       console.error("Errore nell'associazione:", error);
       toast({
-        title: "Errore",
-        description: "Impossibile associare il contatto all'azienda",
+        title: t("company.contacts.error"),
+        description: t("company.contacts.notifications.associationError"),
         variant: "destructive",
       });
     } finally {
@@ -285,7 +285,7 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
   
   const disassociateContact = async (contactId: number, contactName: string) => {
     // Chiediamo conferma all'utente prima di procedere
-    if (!window.confirm(`Sei sicuro di voler rimuovere "${contactName}" da ${companyName}?`)) {
+    if (!window.confirm(t("company.contacts.confirmRemoval", { contactName, companyName }))) {
       return; // L'utente ha annullato l'operazione
     }
     
