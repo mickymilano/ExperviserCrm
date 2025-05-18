@@ -265,6 +265,12 @@ export default function ContactModal({ open, onOpenChange, initialData, onSucces
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ["/api/contacts"] });
       queryClient.invalidateQueries({ queryKey: ["/api/areas-of-activity"] });
+      
+      // Se siamo in una pagina azienda, invalidare anche i contatti di quell'azienda
+      if (companyIdFromUrl) {
+        queryClient.invalidateQueries({ queryKey: ["/api/companies", companyIdFromUrl, "contacts"] });
+      }
+      
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
       
       // If created from a company page, invalidate that specific cache
