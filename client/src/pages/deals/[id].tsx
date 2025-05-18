@@ -311,7 +311,7 @@ export default function DealDetail() {
           <TaskList 
             entityId={dealId} 
             entityType="deal" 
-            title="Tasks"
+            title={t('tab.tasks')}
           />
         </TabsContent>
         

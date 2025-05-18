@@ -440,7 +440,7 @@ export default function ContactDetail() {
               <TaskList 
                 entityId={contactId} 
                 entityType="contact" 
-                title="Tasks"
+                title={t('tab.tasks')}
               />
             </div>
           </div>

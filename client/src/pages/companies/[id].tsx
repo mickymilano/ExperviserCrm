@@ -485,7 +485,7 @@ export default function CompanyDetail() {
             <TaskList 
               entityId={companyId} 
               entityType="company" 
-              title="Tasks"
+              title={t('tab.tasks')}
             />
             
             {/* Synergies Component */}
