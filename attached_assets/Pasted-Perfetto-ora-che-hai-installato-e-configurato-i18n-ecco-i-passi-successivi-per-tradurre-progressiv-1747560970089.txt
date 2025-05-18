@@ -1,0 +1,140 @@
+Perfetto, ora che hai installato e configurato i18n, ecco i passi successivi per tradurre progressivamente tutto il front-end in italiano (e in futuro anche altre lingue):
+
+⸻
+
+1. Avvia il Provider i18n
+
+Nel tuo client/src/main.tsx (o index.tsx), assicurati di avvolgere l’app con il provider di react-i18next:
+
+import React from 'react';
+import ReactDOM from 'react-dom';
+import App from './App';
+import './i18n'; // già presente
+
+ReactDOM.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+  document.getElementById('root')
+);
+
+(Se invece usi createRoot, lo scopo è lo stesso: importare ./i18n PRIMA di montare l’app.)
+
+⸻
+
+2. Refactoring di un componente “pilota”
+
+Prendiamo ad esempio CompanyModal.tsx. Dobbiamo:
+	1.	Importare il hook useTranslation
+	2.	Sostituire tutte le stringhe literali con le chiavi di traduzione
+
+*** Begin Patch
+*** Update File: client/src/components/modals/CompanyModal.tsx
+@@
+-import React from 'react';
++import React from 'react';
++import { useTranslation } from 'react-i18next';
+ 
+ function CompanyModal(props) {
+-  return (
++  const { t } = useTranslation();
++  return (
+       <Modal>
+-        <ModalHeader>Crea Azienda</ModalHeader>
++        <ModalHeader>{t('modal.company.createTitle')}</ModalHeader>
+         <ModalBody>
+-          <Label>Ragione Sociale</Label>
++          <Label>{t('form.company.name')}</Label>
+           <Input name="name" ... />
+@@
+-        <Button>Salva</Button>
+-        <Button>Annulla</Button>
++        <Button>{t('button.save')}</Button>
++        <Button>{t('button.cancel')}</Button>
+*** End Patch
+
+Chiavi da aggiungere in client/src/locales/it/translation.json:
+
+{
+  "modal.company.createTitle": "Crea nuova azienda",
+  "button.save": "Salva",
+  "button.cancel": "Annulla",
+  "form.company.name": "Ragione sociale"
+}
+
+
+
+⸻
+
+3. Procedura per estendere a tutti i componenti
+
+Ripeti lo stesso schema in ogni file:
+	1.	Import:
+
+import { useTranslation } from 'react-i18next';
+
+
+	2.	Hook:
+
+const { t } = useTranslation();
+
+
+	3.	Sostituzioni:
+
+{/* da  */} <Label>Email</Label>
+{/* a  */} <Label>{t('form.company.email')}</Label>
+
+
+	4.	Aggiornamento di translation.json con la nuova chiave e traduzione italiana.
+
+⸻
+
+4. Boilerplate per le chiavi
+
+Nella root di client/src/locales/it/translation.json mantieni un file ordinato per sezioni:
+
+{
+  "button": {
+    "save": "Salva",
+    "cancel": "Annulla",
+    "delete": "Elimina"
+  },
+  "modal": {
+    "company": {
+      "createTitle": "Crea nuova azienda",
+      "editTitle": "Modifica azienda"
+    }
+  },
+  "form": {
+    "company": {
+      "name": "Ragione sociale",
+      "fullAddress": "Indirizzo completo",
+      "email": "Email aziendale"
+    },
+    "contact": {
+      "firstName": "Nome",
+      "lastName": "Cognome",
+      "email": "Email"
+    }
+  },
+  "alert": {
+    "contactNotFound": "Contatto non trovato"
+  }
+}
+
+
+⸻
+
+5. Testing
+	1.	Avvia il client (npm run dev)
+	2.	Naviga nei vari modali / form
+	3.	Verifica che tutte le etichette appaiano in italiano
+	4.	Se manca qualche stringa, aggiungi la chiave in translation.json e sostituisci il testo hard-coded nel componente
+
+⸻
+
+Quando avrai tradotto tutti i componenti principali, potremo:
+	•	Creare locales/en/translation.json, locales/fr/translation.json, ecc.
+	•	Aggiungere un selettore di lingua (dropdown) che chiami i18n.changeLanguage('en'), i18n.changeLanguage('fr'), …
+
+Fammi sapere quando hai applicato il refactoring al componente pilota e che funziona, così procediamo con il resto del front-end.
