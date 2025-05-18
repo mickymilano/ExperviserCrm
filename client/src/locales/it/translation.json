@@ -115,6 +115,33 @@
       "qualified": "Qualificati",
       "unqualified": "Non Qualificati",
       "inProgress": "In Lavorazione"
+    },
+    "detail": {
+      "back": "Indietro",
+      "edit": "Modifica",
+      "convertToContact": "Converti in Contatto",
+      "notFound": "Lead non trovato",
+      "notFoundDescription": "Il lead che stai cercando non esiste o non hai i permessi necessari.",
+      "returnToLeads": "Torna ai Lead",
+      "success": "Operazione completata",
+      "convertSuccess": "Lead convertito in contatto con successo.",
+      "tabs": {
+        "overview": "Panoramica",
+        "activities": "Attività"
+      },
+      "fields": {
+        "addedOn": "Aggiunto il",
+        "email": "Email",
+        "phone": "Telefono",
+        "jobTitle": "Posizione",
+        "source": "Fonte",
+        "tags": "Tag",
+        "notes": "Note",
+        "tasks": "Attività",
+        "recentActivities": "Attività Recenti",
+        "activitiesDescription": "Cronologia di tutte le interazioni con questo lead",
+        "noActivity": "Nessuna attività registrata"
+      }
     }
   },
   

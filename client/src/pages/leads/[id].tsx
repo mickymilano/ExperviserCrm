@@ -16,6 +16,7 @@ import LeadModal from "@/components/modals/LeadModal";
 import TaskList from "@/components/tasks/TaskList";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 export default function LeadDetail() {
   const params = useParams();
@@ -23,6 +24,7 @@ export default function LeadDetail() {
   const leadId = parseInt(params.id);
   const [activeTab, setActiveTab] = useState("overview");
   const [showEditModal, setShowEditModal] = useState(false);
+  const { t } = useTranslation();
   
   // Fetch lead data
   const { data: lead, isLoading, isError } = useLead(leadId);
@@ -34,7 +36,7 @@ export default function LeadDetail() {
         <div className="flex items-center mb-6">
           <Button variant="ghost" onClick={() => navigate("/leads")} className="mr-4">
             <ArrowLeft className="h-4 w-4 mr-1" />
-            Back
+            {t('lead.detail.back')}
           </Button>
           <Skeleton className="h-8 w-48" />
         </div>
@@ -57,15 +59,15 @@ export default function LeadDetail() {
         <div className="flex items-center mb-6">
           <Button variant="ghost" onClick={() => navigate("/leads")} className="mr-4">
             <ArrowLeft className="h-4 w-4 mr-1" />
-            Back
+            {t('lead.detail.back')}
           </Button>
-          <h1 className="text-2xl font-bold">Lead not found</h1>
+          <h1 className="text-2xl font-bold">{t('lead.detail.notFound')}</h1>
         </div>
         <Card>
           <CardContent className="p-6 text-center">
             <AlertCircle className="h-12 w-12 mx-auto text-destructive mb-2" />
-            <p className="mb-4">The lead you're looking for doesn't exist or you don't have access.</p>
-            <Button onClick={() => navigate("/leads")}>Return to Leads</Button>
+            <p className="mb-4">{t('lead.detail.notFoundDescription')}</p>
+            <Button onClick={() => navigate("/leads")}>{t('lead.detail.returnToLeads')}</Button>
           </CardContent>
         </Card>
       </div>
@@ -93,8 +95,8 @@ export default function LeadDetail() {
       {
         onSuccess: () => {
           toast({
-            title: "Success",
-            description: "Lead has been converted to a contact successfully."
+            title: t('lead.detail.success'),
+            description: t('lead.detail.convertSuccess')
           });
           // Navigate to contacts page
           navigate("/contacts");
@@ -109,26 +111,26 @@ export default function LeadDetail() {
         <div className="flex items-center">
           <Button variant="ghost" onClick={() => navigate("/leads")} className="mr-4">
             <ArrowLeft className="h-4 w-4 mr-1" />
-            Back
+            {t('lead.detail.back')}
           </Button>
           <h1 className="text-2xl font-bold">{leadName}</h1>
         </div>
         <div className="flex space-x-2">
           <Button variant="outline" onClick={() => setShowEditModal(true)}>
             <Edit className="h-4 w-4 mr-2" />
-            Edit
+            {t('lead.detail.edit')}
           </Button>
           <Button variant="outline" onClick={handleConvertToContact}>
             <User className="h-4 w-4 mr-2" />
-            Convert to Contact
+            {t('lead.detail.convertToContact')}
           </Button>
         </div>
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-6">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="activities">Activities</TabsTrigger>
+          <TabsTrigger value="overview">{t('lead.detail.tabs.overview')}</TabsTrigger>
+          <TabsTrigger value="activities">{t('lead.detail.tabs.activities')}</TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview" className="space-y-6">
@@ -147,7 +149,7 @@ export default function LeadDetail() {
                       {lead.status || "New"}
                     </Badge>
                     <p className="text-sm text-muted-foreground mt-2">
-                      Added on {formatDateToLocal(lead.createdAt)}
+                      {t('lead.detail.fields.addedOn')} {formatDateToLocal(lead.createdAt)}
                     </p>
                     
                     <Separator className="my-4" />
@@ -157,7 +159,7 @@ export default function LeadDetail() {
                         <div className="flex items-start">
                           <Mail className="h-5 w-5 mr-2 mt-0.5 text-muted-foreground" />
                           <div>
-                            <p className="text-sm font-medium">Email</p>
+                            <p className="text-sm font-medium">{t('lead.detail.fields.email')}</p>
                             <p className="text-sm text-muted-foreground">{lead.email}</p>
                           </div>
                         </div>
@@ -167,7 +169,7 @@ export default function LeadDetail() {
                         <div className="flex items-start">
                           <Phone className="h-5 w-5 mr-2 mt-0.5 text-muted-foreground" />
                           <div>
-                            <p className="text-sm font-medium">Phone</p>
+                            <p className="text-sm font-medium">{t('lead.detail.fields.phone')}</p>
                             <p className="text-sm text-muted-foreground">{formatPhoneNumber(lead.phone)}</p>
                           </div>
                         </div>
@@ -177,7 +179,7 @@ export default function LeadDetail() {
                         <div className="flex items-start">
                           <Building2 className="h-5 w-5 mr-2 mt-0.5 text-muted-foreground" />
                           <div>
-                            <p className="text-sm font-medium">Job Title</p>
+                            <p className="text-sm font-medium">{t('lead.detail.fields.jobTitle')}</p>
                             <p className="text-sm text-muted-foreground">{lead.jobTitle}</p>
                           </div>
                         </div>
@@ -187,7 +189,7 @@ export default function LeadDetail() {
                         <div className="flex items-start">
                           <Calendar className="h-5 w-5 mr-2 mt-0.5 text-muted-foreground" />
                           <div>
-                            <p className="text-sm font-medium">Source</p>
+                            <p className="text-sm font-medium">{t('lead.detail.fields.source')}</p>
                             <p className="text-sm text-muted-foreground">{lead.source}</p>
                           </div>
                         </div>
