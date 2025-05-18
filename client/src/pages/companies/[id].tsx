@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useLocation } from "wouter";
 import { useCompany, useCompanyContacts } from "@/hooks/useCompanies";
 import { useDeals } from "@/hooks/useDeals";
@@ -33,6 +33,34 @@ export default function CompanyDetail() {
   const [activeTab, setActiveTab] = useState("overview");
   const [isEditing, setIsEditing] = useState(false);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [contactModalInitialData, setContactModalInitialData] = useState({
+    firstName: "",
+    lastName: "",
+    companyEmail: "",
+    areasOfActivity: [{
+      companyId: companyId,
+      companyName: "",
+      isPrimary: true,
+      role: "",
+      jobDescription: ""
+    }]
+  });
+  
+  // Ascolta l'evento personalizzato per aprire il modale di contatto
+  useEffect(() => {
+    const handleOpenContactModal = (event: any) => {
+      if (event.detail && event.detail.initialData) {
+        setContactModalInitialData(event.detail.initialData);
+      }
+      setIsContactModalOpen(true);
+    };
+    
+    // Aggiungi e rimuovi il listener
+    document.addEventListener('openContactModal', handleOpenContactModal);
+    return () => {
+      document.removeEventListener('openContactModal', handleOpenContactModal);
+    };
+  }, []);
   
   // Fetch company data
   const { data: company, isLoading, isError, error } = useCompany(companyId);
@@ -107,20 +135,7 @@ export default function CompanyDetail() {
       <ContactModal 
         open={isContactModalOpen} 
         onOpenChange={setIsContactModalOpen} 
-        initialData={{
-          // Campi obbligatori del contatto
-          firstName: "",
-          lastName: "",
-          companyEmail: "",
-          // Predisponiamo automaticamente l'area di attività per collegarla all'azienda corrente
-          areasOfActivity: [{
-            companyId: company?.id,
-            companyName: company?.name,
-            isPrimary: true,
-            role: "", // L'utente dovrà specificare il ruolo
-            jobDescription: `Works at ${company?.name}`
-          }]
-        }}
+        initialData={contactModalInitialData}
       />
       
       {/* Header with back button and company name */}
