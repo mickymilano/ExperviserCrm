@@ -26,9 +26,9 @@ import { Company } from "@/types";
 
 const companySchema = z.object({
   // Campi principali
-  name: z.string().min(1, "Nome azienda obbligatorio"),
+  name: z.string().min(1, { message: "company.validation.nameRequired" }),
   // Reso email completamente facoltativo (può essere vuoto o formato non valido)
-  email: z.union([z.string().email("Inserisci un'email valida"), z.string().length(0), z.null()]).optional(),
+  email: z.union([z.string().email({ message: "validation.invalidEmail" }), z.string().length(0), z.null()]).optional(),
   phone: z.string().optional(),
   website: z.string().optional(),
   industry: z.string().optional(),

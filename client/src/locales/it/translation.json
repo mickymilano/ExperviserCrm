@@ -16,6 +16,15 @@
     "adding": "Aggiunta...",
     "success": "Successo"
   },
+  
+  "validation": {
+    "invalidEmail": "Inserisci un'email valida"
+  },
+
+  "modal": {
+    "editCompany": "Modifica Azienda",
+    "addCompany": "Aggiungi Azienda"
+  },
 
   "button": {
     "save": "Salva",
