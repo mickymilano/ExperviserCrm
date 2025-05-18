@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
+import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +21,7 @@ interface TaskListProps {
 export default function TaskList({ entityId, entityType, title = "Attività" }: TaskListProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<any>(null);
+  const { t } = useTranslation();
 
   // Costruisci il parametro di query appropriato in base al tipo di entità
   const queryParams = entityId ? `?${getEntityParam(entityType)}=${entityId}` : '';
@@ -90,7 +92,7 @@ export default function TaskList({ entityId, entityType, title = "Attività" }: 
         <CardTitle className="text-xl">{title}</CardTitle>
         <Button onClick={openCreateModal} variant="ghost" size="sm">
           <Plus className="h-4 w-4 mr-2" />
-          Nuovo
+          {t('tasks.new')}
         </Button>
       </CardHeader>
 
@@ -107,8 +109,8 @@ export default function TaskList({ entityId, entityType, title = "Attività" }: 
         ) : tasks.length === 0 ? (
           // Nessun task
           <div className="text-center py-6 text-muted-foreground">
-            <p>Nessuna attività trovata.</p>
-            <p className="text-sm mt-1">Clicca su "Nuovo" per aggiungere un'attività.</p>
+            <p>{t('tasks.empty.title')}</p>
+            <p className="text-sm mt-1">{t('tasks.empty.description')}</p>
           </div>
         ) : (
           // Lista dei task
@@ -141,7 +143,7 @@ export default function TaskList({ entityId, entityType, title = "Attività" }: 
                   {task.dueDate && (
                     <div className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
-                      <span>Scadenza: {format(new Date(task.dueDate), "d MMM yyyy", { locale: it })}</span>
+                      <span>{t('tasks.due_date')}: {format(new Date(task.dueDate), "d MMM yyyy", { locale: it })}</span>
                     </div>
                   )}
                   
@@ -158,7 +160,7 @@ export default function TaskList({ entityId, entityType, title = "Attività" }: 
                   {task.taskValue > 0 && (
                     <div className="flex items-center gap-1">
                       <Euro className="h-3 w-3" />
-                      <span>Valore: {formatCurrency(task.taskValue)}</span>
+                      <span>{t('tasks.value')}: {formatCurrency(task.taskValue)}</span>
                     </div>
                   )}
                 </div>

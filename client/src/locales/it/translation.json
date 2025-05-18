@@ -92,6 +92,16 @@
   "navigation.settings": "Impostazioni",
   "navigation.branches": "Filiali",
   
+  "tasks": {
+    "new": "Nuovo",
+    "due_date": "Scadenza",
+    "value": "Valore",
+    "empty": {
+      "title": "Nessuna attività trovata.",
+      "description": "Clicca su \"Nuovo\" per aggiungere un'attività."
+    }
+  },
+  
   "table.actions": "Azioni",
   "table.noRecords": "Nessun record trovato",
   "table.loading": "Caricamento in corso...",
