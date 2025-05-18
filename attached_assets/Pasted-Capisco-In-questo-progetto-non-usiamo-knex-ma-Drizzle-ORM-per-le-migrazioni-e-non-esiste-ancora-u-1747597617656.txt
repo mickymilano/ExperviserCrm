@@ -1,0 +1,182 @@
+Capisco. In questo progetto non usiamo knex, ma Drizzle ORM per le migrazioni, e non esiste ancora un componente “TagMultiSelect”. Procediamo così:
+
+⸻
+
+1. Creazione della migration Drizzle
+
+Crea un nuovo file di migration nella cartella migrations/ chiamato ad es. 20250519_add_relations_to_companies.ts con questo contenuto:
+
+import { pgTable, serial, varchar, json } from 'drizzle-orm/pg-core';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
+import { sql } from 'drizzle-orm';
+
+export default {
+  up: async (db: ReturnType<typeof drizzle>) => {
+    await db.execute(sql`
+      ALTER TABLE companies
+        ADD COLUMN IF NOT EXISTS relations jsonb NOT NULL DEFAULT '[]';
+    `);
+  },
+  down: async (db: ReturnType<typeof drizzle>) => {
+    await db.execute(sql`
+      ALTER TABLE companies
+        DROP COLUMN IF EXISTS relations;
+    `);
+  },
+};
+
+Comando da incollare in Replit
+(assicurati di aver già Drizzle configurato)
+
+cat > migrations/20250519_add_relations_to_companies.ts << 'EOF'
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { sql } from 'drizzle-orm';
+export default {
+  up: async (db: ReturnType<typeof drizzle>) => {
+    await db.execute(sql\`
+      ALTER TABLE companies
+        ADD COLUMN IF NOT EXISTS relations jsonb NOT NULL DEFAULT '[]';
+    \`);
+  },
+  down: async (db: ReturnType<typeof drizzle>) => {
+    await db.execute(sql\`
+      ALTER TABLE companies
+        DROP COLUMN IF EXISTS relations;
+    \`);
+  },
+};
+EOF
+
+
+
+⸻
+
+2. Allineamento dello schema TypeScript
+
+2.1 shared/schema.ts
+
+Trova l’interfaccia Company e aggiungi il campo relations: string[];:
+
+ export interface Company {
+   id: number;
+   name: string;
++  /** tag multipli per la relazione utente↔azienda */
++  relations: string[];
+   // … gli altri campi esistenti
+ }
+
+Comando da incollare in Replit
+
+apply_patch << 'EOF'
+*** Begin Patch
+*** Update File: shared/schema.ts
+@@ export interface Company {
+   name: string;
++   /** tag multipli per la relazione utente↔azienda */
++   relations: string[];
+*** End Patch
+EOF
+
+
+
+2.2 client/src/types/index.ts (o client/src/types.ts)
+
+Allo stesso modo, aggiungi relations: string[]; nell’interfaccia Company lato frontend.
+
+ export interface Company {
+   id: number;
+   name: string;
++  /** tag multipli per la relazione utente↔azienda */
++  relations: string[];
+   // … altri campi
+ }
+
+Comando
+
+apply_patch << 'EOF'
+*** Begin Patch
+*** Update File: client/src/types/index.ts
+@@ export interface Company {
+   name: string;
++   /** tag multipli per la relazione utente↔azienda */
++   relations: string[];
+*** End Patch
+EOF
+
+
+
+⸻
+
+3. Aggiungere il campo nel form Azienda
+
+In client/src/components/forms/CompanyEditForm.tsx, inserisci dopo il blocco dei campi esistenti (ad es. subito dopo companyType), un <Combobox> multi-tag (già presente in client/src/components/ui/combobox.tsx) così:
+
+import { Combobox } from '../ui/combobox';
+// …
+<Controller
+  name="relations"
+  control={control}
+  render={({ field }) => (
+    <Combobox
+      {...field}
+      multiple
+      label="Relazioni con l'azienda"
+      placeholder="Seleziona o digita..."
+      options={[
+        'cliente','potenziale cliente','fornitore','mandante',
+        'partner strategico','competitor','investitore',
+        'sponsor','sub-contraente','consulente'
+      ]}
+    />
+  )}
+/>
+
+Comando
+
+apply_patch << 'EOF'
+*** Begin Patch
+*** Update File: client/src/components/forms/CompanyEditForm.tsx
+@@ render() {
++    {/* Relazioni multi-tag utente↔azienda */}
++    <Controller
++      name="relations"
++      control={control}
++      render={({ field }) => (
++        <Combobox
++          {...field}
++          multiple
++          label="Relazioni con l'azienda"
++          placeholder="Seleziona o digita..."
++          options={[
++            'cliente','potenziale cliente','fornitore','mandante',
++            'partner strategico','competitor','investitore',
++            'sponsor','sub-contraente','consulente'
++          ]}
++        />
++      )}
++    />
+*** End Patch
+EOF
+
+
+
+⸻
+
+4. Esegui la migration e riavvia
+
+
+
+npx drizzle-kit migrate:latest
+npm run dev
+
+
+
+⸻
+
+Con questi passaggi:
+	1.	Il database avrà il campo JSONB relations in companies.
+	2.	Il backend e il frontend sapranno che Company.relations: string[].
+	3.	Il form di modifica conterrà un componente a tag multipli per gestire le relazioni.
+
+Fammi sapere quando hai applicato tutto e siamo pronti a testare!
