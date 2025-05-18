@@ -424,7 +424,7 @@ export default function ContactDetail() {
                     {t('synergies.business_synergies')}
                   </CardTitle>
                   <CardDescription>
-                    Special business relationships involving this contact
+                    {t('synergies.special_relationships')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>

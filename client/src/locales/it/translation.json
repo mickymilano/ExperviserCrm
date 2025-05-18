@@ -180,6 +180,18 @@
     }
   },
   
+  "synergies": {
+    "title": "Sinergie",
+    "business_synergies": "Sinergie di business",
+    "special_relationships": "Relazioni commerciali speciali che coinvolgono questo contatto",
+    "no_synergies_found": "Nessuna sinergia trovata",
+    "create_synergy": "Crea sinergia",
+    "view_all": "Visualizza tutte",
+    "synergy_contacts": "Contatti sinergia",
+    "add_contacts": "Aggiungi contatti",
+    "select_contacts": "Seleziona contatti"
+  },
+  
   "modal.addCompany": "Aggiungi Azienda",
   "modal.editCompany": "Modifica Azienda",
   "modal.addContact": "Aggiungi Contatto",
@@ -195,6 +207,7 @@
   "tab.history": "Cronologia",
   "tab.files": "File",
   "tab.settings": "Impostazioni",
+  "tab.synergies": "Sinergie",
   
   "company": {
     "name": "Nome Azienda",
