@@ -50,26 +50,46 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
   const [contactModalOpen, setContactModalOpen] = useState(false);
   const [contactModalInitialData, setContactModalInitialData] = useState<any>(null);
   
-  // Fetch contatti associati all'azienda (usando il nuovo endpoint v2)
+  // Fetch di TUTTI i contatti e aree di attività
   const { 
-    data: contacts, 
-    isLoading: isLoadingContacts, 
-    error: contactsError,
-    refetch: refetchContacts
+    data: allContacts, 
+    isLoading: isLoadingAllContacts 
   } = useQuery({
-    queryKey: ["/api/v2/companies", companyId, "contacts"],
+    queryKey: ["/api/contacts"],
     queryFn: async () => {
-      const res = await fetch(`/api/v2/companies/${companyId}/contacts`);
-      console.log(`Fetching contacts for company ${companyId} from v2 API`);
-      if (!res.ok) {
-        console.error(`Error fetching contacts: ${res.status} ${res.statusText}`);
-        throw new Error("Failed to fetch company contacts");
-      }
+      const res = await fetch(`/api/contacts?includeAreas=true`);
+      if (!res.ok) throw new Error("Failed to fetch contacts");
       const data = await res.json();
-      console.log(`Retrieved ${data.length} contacts from v2 API`);
+      console.log(`Retrieved ${data.length} total contacts with their areas`);
       return data;
     }
   });
+
+  // Filtriamo i contatti basandoci sui dati delle aree di attività 
+  // contenute dentro ciascun contatto
+  const contacts = useMemo(() => {
+    if (!allContacts) return [];
+    
+    // Filtriamo i contatti che hanno aree di attività associate a questa azienda
+    const companyContacts = allContacts.filter(contact => {
+      if (!contact.areasOfActivity) return false;
+      
+      // Controlla se almeno un'area è associata a questa azienda
+      return contact.areasOfActivity.some(
+        area => area.companyId === companyId
+      );
+    });
+    
+    console.log(`Filtered ${companyContacts.length} contacts for company ${companyId}`);
+    return companyContacts;
+  }, [allContacts, companyId]);
+  
+  // Stato derivato per facilità d'uso nel componente
+  const isLoadingContacts = isLoadingAllContacts;
+  const contactsError = null; // Non abbiamo più lo stato di errore separato
+  const refetchContacts = () => {
+    queryClient.invalidateQueries({ queryKey: ["/api/contacts"] });
+  };
   
   // Fetch dati dell'azienda per ottenere il contatto primario
   const { data: company } = useQuery({
