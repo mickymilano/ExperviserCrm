@@ -230,6 +230,21 @@
   "modal.addDeal": "Aggiungi Opportunità",
   "modal.editDeal": "Modifica Opportunità",
 
+  "api.deal": {
+    "not_found": "Opportunità non trovata",
+    "invalid_id": "ID opportunità non valido",
+    "create_success": "Opportunità creata con successo",
+    "update_success": "Opportunità aggiornata con successo",
+    "delete_success": "Opportunità eliminata con successo",
+    "error_fetching": "Errore durante il recupero delle opportunità",
+    "error_creating": "Errore durante la creazione dell'opportunità",
+    "error_updating": "Errore durante l'aggiornamento dell'opportunità",
+    "error_deleting": "Errore durante l'eliminazione dell'opportunità",
+    "invalid_data": "Dati non validi per l'opportunità",
+    "validation_error": "Errore di validazione dei dati",
+    "update_failed": "Impossibile aggiornare l'opportunità"
+  },
+
   "tab.details": "Dettagli",
   "tab.contacts": "Contatti",
   "tab.deals": "Opportunità",

@@ -1588,14 +1588,20 @@ export function registerRoutes(app: any) {
       const dealId = parseInt(req.params.id);
       
       if (isNaN(dealId)) {
-        return res.status(400).json({ message: 'ID opportunità non valido' });
+        return res.status(400).json({ 
+          message: 'ID opportunità non valido',
+          code: 'INVALID_ID' 
+        });
       }
       
       // Verifica se l'opportunità esiste
       const deal = await storage.getDeal(dealId);
       if (!deal) {
         console.log(`Opportunità con ID ${dealId} non trovata`);
-        return res.status(404).json({ message: 'Opportunità non trovata' });
+        return res.status(404).json({ 
+          message: 'Opportunità non trovata',
+          code: 'NOT_FOUND' 
+        });
       }
       
       try {
@@ -1644,7 +1650,7 @@ export function registerRoutes(app: any) {
         if (validationError instanceof z.ZodError) {
           console.error('Errore di validazione dati:', validationError.errors);
           return res.status(400).json({ 
-            message: 'Dati non validi per l\'aggiornamento', 
+            message: 'Dati non validi per l\'opportunità', 
             errors: validationError.errors,
             code: 'VALIDATION_ERROR'
           });
