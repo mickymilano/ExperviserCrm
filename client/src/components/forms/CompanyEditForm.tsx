@@ -196,7 +196,13 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
   
   // Form submission handler
   const onSubmit = (data: CompanyFormData) => {
-    updateCompany.mutate(data);
+    // Assicuriamoci che le relazioni siano incluse nei dati da inviare
+    const formDataWithRelations = {
+      ...data,
+      relations: relationValues
+    };
+    console.log('Invio dati al server:', formDataWithRelations);
+    updateCompany.mutate(formDataWithRelations);
   };
   
   return (
