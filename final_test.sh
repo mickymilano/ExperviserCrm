@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 TOKEN=$(node -e "require('jsonwebtoken').sign({id:1,username:'debug',role:'super_admin'},'experviser-dev-secret',{expiresIn:'1h'}, (err, token) => console.log(token))")
 COMPANY_ID=19  # ID fisso di EasyPoke
-NAME="EasyPoke_Final_$(date +%s)"
+NAME="EasyPoke_Test_$(date +%s)"
 echo "Creo contatto $NAME per azienda $COMPANY_ID"
 
 # Crea contatto associato all'azienda EasyPoke
@@ -10,7 +10,7 @@ RESPONSE=$(curl -s -X POST http://localhost:5000/api/contacts \
   -H "Content-Type: application/json" \
   -d "{
     \"firstName\":\"$NAME\",
-    \"lastName\":\"User\",
+    \"lastName\":\"Test\",
     \"companyEmail\":\"$NAME@example.com\",
     \"companyId\":$COMPANY_ID
   }")

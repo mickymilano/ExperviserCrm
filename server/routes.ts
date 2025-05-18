@@ -1055,61 +1055,78 @@ export function registerRoutes(app: any) {
       if (!company) {
         return res.status(404).json({ message: 'Azienda non trovata' });
       }
-      
-      // Query diretta al database per maggiore affidabilità
-      // Prima otteniamo gli ID dei contatti associati
-      const areasQuery = `
-        SELECT contact_id FROM areas_of_activity 
-        WHERE company_id = ${companyId}
+
+      // Query SQL diretta per estrarre i contatti associati all'azienda
+      const contactsQuery = `
+        SELECT 
+          c.id, 
+          c.first_name AS "firstName", 
+          c.last_name AS "lastName", 
+          c.status, 
+          c.company_email AS "companyEmail", 
+          c.private_email AS "privateEmail", 
+          c.mobile_phone AS "mobilePhone", 
+          c.office_phone AS "officePhone",
+          c.private_phone AS "privatePhone",
+          c.created_at AS "createdAt", 
+          c.updated_at AS "updatedAt"
+        FROM contacts c
+        JOIN areas_of_activity a ON c.id = a.contact_id
+        WHERE a.company_id = $1
+        ORDER BY c.first_name, c.last_name
       `;
       
-      const areasResult = await db.execute(areasQuery);
-      console.log(`Query aree risultato:`, areasResult);
+      // Usa direttamente pool.query con parametri SQL sicuri
+      const { rows } = await pool.query(contactsQuery, [companyId]);
       
-      if (areasResult.rowCount === 0 || areasResult.rows.length === 0) {
-        console.log(`No contacts found for company ${companyId}`);
-        return res.json([]);
-      }
-      
-      // Estrai gli ID dei contatti
-      const contactIds = areasResult.rows.map(row => row.contact_id);
-      console.log(`Found ${contactIds.length} contact IDs for company ${companyId}: ${contactIds.join(', ')}`);
-      
-      if (contactIds.length > 0) {
-        // Crea una stringa di ID per la query IN
-        const contactIdsStr = contactIds.join(',');
-        
-        const contactsQuery = `
-          SELECT 
-            id, 
-            first_name AS "firstName", 
-            last_name AS "lastName", 
-            status, 
-            company_email AS "companyEmail", 
-            private_email AS "privateEmail", 
-            mobile_phone AS "mobilePhone", 
-            office_phone AS "officePhone",
-            private_phone AS "privatePhone",
-            created_at AS "createdAt", 
-            updated_at AS "updatedAt" 
-          FROM 
-            contacts
-          WHERE 
-            id IN (${contactIdsStr})
-          ORDER BY 
-            first_name, last_name
-        `;
-        
-        const contactsResult = await db.execute(contactsQuery);
-        console.log(`Retrieved ${contactsResult.rows.length} contacts for company ${companyId}`);
-        
-        return res.json(contactsResult.rows);
-      } else {
-        return res.json([]);
-      }
+      console.log(`Retrieved ${rows.length} contacts for company ${companyId}`);
+      return res.json(rows);
     } catch (error) {
       console.error('Error fetching company contacts:', error);
       res.status(500).json({ message: 'Errore durante il recupero dei contatti dell\'azienda' });
+    }
+  });
+
+  // Endpoint di debug - ottieni i contatti associati ad un'azienda con SQL diretto
+  app.get('/api/debug/companies/:id/contacts', authenticate, async (req, res) => {
+    try {
+      const companyId = parseInt(req.params.id);
+      console.log(`DEBUG: Fetching contacts for company ${companyId}`);
+      
+      // Primo approccio: Query diretta con pg client
+      const query = `
+        SELECT 
+          a.id as area_id, 
+          a.contact_id, 
+          a.company_id,
+          a.company_name,
+          a.is_primary,
+          c.id as contact_id,
+          c.first_name,
+          c.last_name,
+          c.company_email
+        FROM areas_of_activity a
+        LEFT JOIN contacts c ON a.contact_id = c.id
+        WHERE a.company_id = $1
+      `;
+      
+      // Usa la query preparata con parametri
+      const result = await pool.query(query, [companyId]);
+      
+      console.log(`DEBUG: Query result:`, result.rows);
+      
+      res.json({
+        success: true, 
+        count: result.rows.length,
+        data: result.rows
+      });
+    } catch (error) {
+      console.error('Debug Error:', error);
+      res.status(500).json({ 
+        success: false,
+        message: 'Errore durante l\'esecuzione della query di debug',
+        error: error.message 
+      });
     }
   });
   
