@@ -1279,7 +1279,7 @@ export function registerRoutes(app: any) {
   });
   
   // Ottieni un singolo deal - implementazione debug
-  app.get('/api/deals/:id', async (req, res) => {
+  app.get('/api/deals/:id', authenticate, async (req, res) => {
     console.log('=====================================================');
     console.log(`[DEAL DEBUG] API endpoint /api/deals/${req.params.id} è stato chiamato`);
     console.log('=====================================================');
