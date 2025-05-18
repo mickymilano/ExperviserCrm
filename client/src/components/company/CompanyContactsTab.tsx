@@ -649,6 +649,13 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal per creare un nuovo contatto */}
+      <ContactModal 
+        open={contactModalOpen} 
+        onOpenChange={setContactModalOpen} 
+        initialData={contactModalInitialData} 
+      />
     </>
   );
 }
