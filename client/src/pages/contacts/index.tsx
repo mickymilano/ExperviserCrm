@@ -25,7 +25,31 @@ export default function Contacts() {
   const { contacts, isLoading, deleteContact } = useContacts();
   const { companies, isLoading: isLoadingCompanies } = useCompanies();
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
-  const [_, navigate] = useLocation();
+  const [location, navigate] = useLocation();
+  
+  // Estrai parametri dalla querystring per gestire la creazione di un contatto da pagina azienda
+  const searchParams = new URLSearchParams(location.split('?')[1]);
+  const companyIdFromUrl = searchParams.get('newContactForCompany');
+  const companyNameFromUrl = searchParams.get('companyName');
+  
+  // Se il parametro di creazione da azienda è presente, apri il modal
+  useEffect(() => {
+    if (companyIdFromUrl && companyNameFromUrl) {
+      setSelectedContact({
+        firstName: '',
+        lastName: '',
+        companyEmail: '',
+        areasOfActivity: [{
+          companyId: parseInt(companyIdFromUrl),
+          companyName: decodeURIComponent(companyNameFromUrl),
+          isPrimary: true,
+          role: '',
+          jobDescription: `Works at ${decodeURIComponent(companyNameFromUrl)}`
+        }]
+      } as any);
+      setShowModal(true);
+    }
+  }, [companyIdFromUrl, companyNameFromUrl]);
   
   // Debug: Aggiungiamo console.log per verificare i dati ricevuti
   console.log("Contacts Page - contacts:", contacts);
