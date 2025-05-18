@@ -218,8 +218,8 @@ export default function CompanyDetail() {
                     <div className="flex items-start">
                       <Building className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
                       <div>
-                        <p className="text-sm font-medium mb-1">Industry</p>
-                        <p>{company.industry || "Not specified"}</p>
+                        <p className="text-sm font-medium mb-1">{t("company.companyDetail.fields.industry")}</p>
+                        <p>{company.industry || t("company.companyDetail.sections.notSpecified")}</p>
                       </div>
                     </div>
                     
@@ -260,7 +260,7 @@ export default function CompanyDetail() {
                 {/* Contact Information Section */}
                 <h3 className="text-md font-medium mb-4 flex items-center">
                   <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
-                  Contact Information
+                  {t("company.companyDetail.sections.contactInformation")}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   <div className="space-y-4">
@@ -268,7 +268,7 @@ export default function CompanyDetail() {
                       <div className="flex items-start">
                         <Mail className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
                         <div>
-                          <p className="text-sm font-medium mb-1">Email</p>
+                          <p className="text-sm font-medium mb-1">{t("company.companyDetail.fields.email")}</p>
                           <a 
                             href={`mailto:${company.email}`} 
                             className="text-primary hover:underline"
@@ -283,7 +283,7 @@ export default function CompanyDetail() {
                       <div className="flex items-start">
                         <Phone className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
                         <div>
-                          <p className="text-sm font-medium mb-1">Phone</p>
+                          <p className="text-sm font-medium mb-1">{t("company.companyDetail.fields.phone")}</p>
                           <p>{formatPhoneNumber(company.phone)}</p>
                         </div>
                       </div>
@@ -295,7 +295,7 @@ export default function CompanyDetail() {
                       <div className="flex items-start">
                         <Globe className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
                         <div>
-                          <p className="text-sm font-medium mb-1">Website</p>
+                          <p className="text-sm font-medium mb-1">{t("company.companyDetail.fields.website")}</p>
                           <a 
                             href={company.website.startsWith('http') ? company.website : `https://${company.website}`}
                             target="_blank"
@@ -313,7 +313,7 @@ export default function CompanyDetail() {
                 {/* Location Section */}
                 <h3 className="text-md font-medium mb-4 flex items-center">
                   <MapPinned className="h-4 w-4 mr-2 text-muted-foreground" />
-                  Sede e Localizzazione
+                  {t("company.companyDetail.sections.locationInfo")}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   <div className="space-y-4">
@@ -321,7 +321,7 @@ export default function CompanyDetail() {
                       <div className="flex items-start">
                         <MapPin className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
                         <div>
-                          <p className="text-sm font-medium mb-1">Indirizzo</p>
+                          <p className="text-sm font-medium mb-1">{t("company.companyDetail.fields.address")}</p>
                           <p className="whitespace-pre-line">{company.fullAddress}</p>
                         </div>
                       </div>
@@ -335,7 +335,7 @@ export default function CompanyDetail() {
                       <div className="flex items-start">
                         <Clock className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
                         <div>
-                          <p className="text-sm font-medium mb-1">Fuso Orario</p>
+                          <p className="text-sm font-medium mb-1">{t("company.companyDetail.fields.timezone")}</p>
                           <p>{company.customFields.timezone}</p>
                         </div>
                       </div>
@@ -348,7 +348,7 @@ export default function CompanyDetail() {
                 {/* Relazioni Section */}
                 <h3 className="text-md font-medium mb-4 flex items-center">
                   <Handshake className="h-4 w-4 mr-2 text-muted-foreground" />
-                  Relazioni con me
+                  {t("company.companyDetail.sections.relationshipsWithMe")}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   <div className="space-y-2">
