@@ -2218,16 +2218,7 @@ export class PostgresStorage implements IStorage {
         let companyData = null;
         if (deal.companyId) {
           const companyResult = await pool.query(
-            `SELECT 
-            id, 
-            name, 
-            website, 
-            industry, 
-            status,
-            created_at as "createdAt", 
-            updated_at as "updatedAt" 
-          FROM companies 
-          WHERE id = $1`,
+            "SELECT id, name, website, industry, status, created_at as \"createdAt\", updated_at as \"updatedAt\" FROM companies WHERE id = $1",
             [deal.companyId],
           );
           if (companyResult.rows.length > 0) {
