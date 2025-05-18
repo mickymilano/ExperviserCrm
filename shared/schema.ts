@@ -436,9 +436,8 @@ export const sectors = pgTable('sectors', {
 export const sub_sectors = pgTable('sub_sectors', {
   id: serial('id').primaryKey(),
   sectorId: integer('sector_id').notNull().references(() => sectors.id, { onDelete: 'cascade' }),
-  name: text('name').notNull(),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
+  name: text('name').notNull()
+  // Rimosse colonne createdAt e updatedAt che non esistono nel database reale
 });
 
 export const job_titles = pgTable('job_titles', {
@@ -451,7 +450,7 @@ export const job_titles = pgTable('job_titles', {
 
 // Schema inserimento
 export const insertSectorSchema = createInsertSchema(sectors).omit({ id: true });
-export const insertSubSectorSchema = createInsertSchema(sub_sectors).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertSubSectorSchema = createInsertSchema(sub_sectors).omit({ id: true });
 export const insertJobTitleSchema = createInsertSchema(job_titles).omit({ id: true, createdAt: true, updatedAt: true });
 
 // Tipi
