@@ -2038,8 +2038,12 @@ export class PostgresStorage implements IStorage {
         field in companyData &&
         companyData[field as keyof Partial<InsertCompany>] !== undefined
       ) {
-        cleanCompanyData[field] =
-          companyData[field as keyof Partial<InsertCompany>];
+        // Per companyType, assicuriamoci che venga mappato a company_type
+        if (field === "companyType") {
+          cleanCompanyData["company_type"] = companyData[field as keyof Partial<InsertCompany>];
+        } else {
+          cleanCompanyData[field] = companyData[field as keyof Partial<InsertCompany>];
+        }
       }
     }
 
