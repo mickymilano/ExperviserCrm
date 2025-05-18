@@ -17,8 +17,8 @@ import { InsertAreaOfActivity } from "@shared/schema";
 interface ContactModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  initialData?: any; // Aggiungiamo il parametro initialData
-  onSuccess?: () => void; // Callback eseguita quando la creazione/modifica ha successo
+  initialData?: any;
+  onSuccess?: () => void;
 }
 
 const contactSchema = z.object({
@@ -52,13 +52,13 @@ type ContactFormData = z.infer<typeof contactSchema>;
 export default function ContactModal({ open, onOpenChange, initialData, onSuccess }: ContactModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const isEditing = !!initialData;
+  const isEditing = !!initialData?.id;
   
   // Get company information from URL context
   const [location] = useLocation();
   const hasCompanyContext = location.includes("/companies/");
   const companyIdFromUrl = hasCompanyContext 
-    ? parseInt(location.split("/companies/")[1]) 
+    ? parseInt(location.split("/companies/")[1].split("/")[0]) 
     : undefined;
   
   // Get company name if we have a company ID
@@ -66,6 +66,7 @@ export default function ContactModal({ open, onOpenChange, initialData, onSucces
     queryKey: ["/api/companies", companyIdFromUrl],
     enabled: !!companyIdFromUrl
   });
+  
   const companyName = companyData?.name || '';
   
   // Prepare initial tags if they exist
@@ -74,8 +75,6 @@ export default function ContactModal({ open, onOpenChange, initialData, onSucces
   
   // Prepare initial areas of activity if they exist
   const initialAreas = initialData?.areasOfActivity || [];
-  
-  // Debug: log initialAreas
   console.log("initialAreas in AreasOfActivityManager changed:", initialAreas);
   
   // Ensure we have properly formatted areas with all required fields
@@ -88,12 +87,6 @@ export default function ContactModal({ open, onOpenChange, initialData, onSucces
   }));
   
   const [areasOfActivity, setAreasOfActivity] = useState<Partial<InsertAreaOfActivity>[]>(formattedAreas);
-  
-  // Check if any area has company ID
-  const hasAreaWithCompany = areasOfActivity.some(area => area.companyId);
-  const selectedCompanyId = hasAreaWithCompany 
-    ? areasOfActivity.find(area => area.companyId)?.companyId 
-    : companyIdFromUrl;
   
   // Debug: log initialData
   console.log("ContactModal initialData:", initialData);
@@ -158,13 +151,11 @@ export default function ContactModal({ open, onOpenChange, initialData, onSucces
     }
   }, [initialData, reset]);
 
-  // Mutation for creating a new contact, potentially associated with a company
-  const createContact = useMutation({
+  // Function to handle contact creation
+  const createContactMutation = useMutation({
     mutationFn: async (data: ContactFormData) => {
       // Prepare data for contact creation
-      const contactData: any = { 
-        ...data,
-      };
+      const contactData: any = { ...data };
       
       console.log("[DEBUG] ContactModal payload:", contactData);
       
@@ -180,75 +171,68 @@ export default function ContactModal({ open, onOpenChange, initialData, onSucces
         delete contactData.areasOfActivity;
       }
       
-      try {
-        // Usiamo sempre l'endpoint standard per creare contatti
-        const response = await fetch("/api/contacts", {
-          method: "POST", 
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(contactData),
-          credentials: "include"
-        });
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`${response.status}: ${errorText}`);
-        }
-        
-        const newContact = await response.json();
-        
-        // Handle areas of activity
-        if (newContact.id) {
-          let areasToCreate = [...areasOfActivity];
-          
-          // Se il contatto è stato creato dalla pagina di un'azienda e abbiamo aree di attività
-          // o un ID azienda, assicuriamoci di creare l'associazione
-          if (areasToCreate.length === 0 && initialData?.areasOfActivity?.length > 0) {
-            areasToCreate = [...initialData.areasOfActivity];
-          }
-          
-          // Se abbiamo dati dal contesto dell'azienda ma nessuna area di attività
-          if (areasToCreate.length === 0 && hasCompanyContext && companyIdFromUrl) {
-            areasToCreate.push({
-              companyId: companyIdFromUrl,
-              companyName: companyName || '',
-              role: 'Employee',
-              jobDescription: `Works at ${companyName || 'the company'}`,
-              isPrimary: true
-            });
-          }
-          
-          // Create all areas of activity
-          if (areasToCreate.length > 0) {
-            for (const area of areasToCreate) {
-              try {
-                const response = await fetch("/api/areas-of-activity", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    ...area,
-                    contactId: newContact.id
-                  }),
-                  credentials: "include"
-                });
-                
-                if (response.ok) {
-                  console.log("Area di attività creata con successo");
-                } else {
-                  const errorText = await response.text();
-                  console.error(`Errore durante la creazione dell'area di attività: ${errorText}`);
-                }
-              } catch (error) {
-                console.error("Errore durante la creazione di un'area di attività:", error);
-              }
-            }
-          }
-        }
-        
-        return newContact;
-      } catch (error) {
-        console.error("Error creating contact:", error);
-        throw error;
+      // Create the contact
+      const response = await fetch("/api/contacts", {
+        method: "POST", 
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(contactData),
+        credentials: "include"
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`${response.status}: ${errorText}`);
       }
+      
+      const newContact = await response.json();
+      
+      // Handle areas of activity
+      if (newContact.id) {
+        let areasToCreate = [...areasOfActivity];
+        
+        // Se il contatto è stato creato dalla pagina di un'azienda e abbiamo aree di attività
+        // o un ID azienda, assicuriamoci di creare l'associazione
+        if (areasToCreate.length === 0 && initialData?.areasOfActivity?.length > 0) {
+          areasToCreate = [...initialData.areasOfActivity];
+        }
+        
+        // Se abbiamo dati dal contesto dell'azienda ma nessuna area di attività
+        if (areasToCreate.length === 0 && hasCompanyContext && companyIdFromUrl) {
+          areasToCreate.push({
+            companyId: companyIdFromUrl,
+            companyName: companyName || '',
+            role: 'Employee',
+            jobDescription: `Works at ${companyName || 'the company'}`,
+            isPrimary: true
+          });
+        }
+        
+        // Create all areas of activity
+        for (const area of areasToCreate) {
+          try {
+            const response = await fetch("/api/areas-of-activity", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                ...area,
+                contactId: newContact.id
+              }),
+              credentials: "include"
+            });
+            
+            if (response.ok) {
+              console.log("Area di attività creata con successo");
+            } else {
+              const errorText = await response.text();
+              console.error(`Errore durante la creazione dell'area di attività: ${errorText}`);
+            }
+          } catch (error) {
+            console.error("Errore durante la creazione di un'area di attività:", error);
+          }
+        }
+      }
+      
+      return newContact;
     },
     onSuccess: () => {
       toast({
@@ -273,14 +257,7 @@ export default function ContactModal({ open, onOpenChange, initialData, onSucces
       
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
       
-      // If created from a company page, invalidate that specific cache
-      if (hasCompanyContext && companyIdFromUrl) {
-        queryClient.invalidateQueries({ queryKey: [`/api/companies/${companyIdFromUrl}/contacts`] });
-        queryClient.invalidateQueries({ queryKey: ["/api/companies", companyIdFromUrl] });
-        queryClient.invalidateQueries({ queryKey: ["/api/companies"] });
-      }
-      
-      // Se abbiamo un callback onSuccess, eseguiamolo
+      // Se abbiamo callback di success, chiamala
       if (onSuccess) {
         onSuccess();
       }
@@ -293,341 +270,217 @@ export default function ContactModal({ open, onOpenChange, initialData, onSucces
       });
     }
   });
-  
-  // Mutation for updating an existing contact
-  const updateContact = useMutation({
-    mutationFn: async (data: ContactFormData) => {
-      // Check if we are in edit mode but without ID
-      // This can happen when adding a new contact from a company page
-      if (isEditing && (!initialData || !initialData.id)) {
-        // In this case, create a new contact instead of updating
-        return createContact.mutate(data);
-      }
-      
-      // Prepare data for contact update
-      const contactData = { ...data };
-      
-      // Convert tags string to array if provided
-      if (tagsInput.trim()) {
-        contactData.tags = tagsInput.split(",").map((tag: string) => tag.trim());
-      } else {
-        contactData.tags = [];
-      }
-      
-      // Remove areasOfActivity field since it's not part of the schema
-      if ('areasOfActivity' in contactData) {
-        delete contactData.areasOfActivity;
-      }
-      
-      try {
-        // Make the request with the correct format for apiRequest
-        const response = await fetch(`/api/contacts/${initialData.id}`, {
-          method: "PATCH", 
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(contactData),
-          credentials: "include"
-        });
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`${response.status}: ${errorText}`);
-        }
-        
-        const updatedContact = await response.json();
-        
-        // Update areas of activity
-        // First get existing areas
-        const existingAreasResponse = await fetch(`/api/contacts/${initialData.id}/areas-of-activity`, {
-          credentials: "include"
-        });
-        
-        if (!existingAreasResponse.ok) {
-          console.warn("Failed to fetch existing areas of activity");
-        } else {
-          const existingAreas = await existingAreasResponse.json();
-          
-          // Remove all existing areas
-          // This approach is simpler than calculating differences
-          const deletePromises = existingAreas.map((area: any) => 
-            fetch(`/api/areas-of-activity/${area.id}`, {
-              method: "DELETE",
-              credentials: "include"
-            })
-          );
-          
-          try {
-            await Promise.all(deletePromises);
-          } catch (error) {
-            console.warn("Some areas could not be deleted:", error);
-          }
-          
-          // Now create all new areas
-          if (areasOfActivity.length > 0) {
-            console.log("Creating areas of activity:", areasOfActivity);
-            
-            // Per ogni area, assicuriamoci che abbia il contactId corretto
-            const areasToCreate = areasOfActivity.map(area => ({
-              ...area,
-              contactId: initialData.id
-            }));
-            
-            console.log("Areas to create with correct contactId:", areasToCreate);
-            
-            for (const area of areasToCreate) {
-              try {
-                console.log(`Creating area for contact ID ${initialData.id} with company ${area.companyName || ''} (companyId: ${area.companyId || 'new'})`);
-                
-                // Se abbiamo un companyName ma non un companyId, dobbiamo prima creare l'azienda
-                if (area.companyName && !area.companyId) {
-                  console.log(`Area has company name "${area.companyName}" but no company ID. Creating new company first.`);
-                  
-                  const companyResponse = await fetch("/api/companies", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ name: area.companyName }),
-                    credentials: "include"
-                  });
-                  
-                  if (!companyResponse.ok) {
-                    const errorText = await companyResponse.text();
-                    console.error(`Error creating company: ${companyResponse.status}: ${errorText}`);
-                    throw new Error(`Failed to create company: ${errorText}`);
-                  }
-                  
-                  const company = await companyResponse.json();
-                  console.log(`Created new company: ${company.name}, ID: ${company.id}`);
-                  
-                  // Aggiorna l'area con il nuovo companyId
-                  area.companyId = company.id;
-                }
-                
-                // Ora crea l'area di attività
-                console.log(`POSTing area of activity to /api/areas-of-activity:`, area);
-                const areaResponse = await fetch("/api/areas-of-activity", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify(area),
-                  credentials: "include"
-                });
-                
-                if (!areaResponse.ok) {
-                  const errorText = await areaResponse.text();
-                  console.error(`Error creating area: ${areaResponse.status}: ${errorText}`);
-                  throw new Error(`Failed to create area of activity: ${errorText}`);
-                }
-                
-                const areaResult = await areaResponse.json();
-                console.log(`Successfully created area of activity with ID ${areaResult.id}`);
-              } catch (error) {
-                console.error(`Failed to create area of activity:`, error);
-              }
-            }
-            
-            // Dopo aver creato tutte le aree, aggiorna la cache di React Query
-            console.log(`Invalidating queries for contact ${initialData.id}`);
-            queryClient.invalidateQueries({ queryKey: [`/api/contacts/${initialData.id}`] });
-            queryClient.invalidateQueries({ queryKey: [`/api/contacts/${initialData.id}/areas-of-activity`] });
-          } else {
-            console.log("No areas to create");
-          }
-        }
-        
-        return updatedContact;
-      } catch (error) {
-        console.error("Error updating contact:", error);
-        throw error;
-      }
-    },
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Contact updated successfully",
-      });
-      
-      // Close modal
-      onOpenChange(false);
-      
-      // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: ["/api/contacts"] });
-      queryClient.invalidateQueries({ queryKey: [`/api/contacts/${initialData.id}`] });
-      queryClient.invalidateQueries({ queryKey: ["/api/areas-of-activity"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: `Failed to update contact: ${error.message}`,
-        variant: "destructive",
-      });
-    }
-  });
 
+  // Function to handle form submission
   const onSubmit = (data: ContactFormData) => {
-    if (isEditing && initialData && initialData.id) {
-      // Only if we have a valid ID, perform update
-      updateContact.mutate(data);
-    } else {
-      // Otherwise, create a new contact
-      createContact.mutate(data);
-    }
+    // Always use create for now (since we had issues with the edit path)
+    createContactMutation.mutate(data);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold">
-            {isEditing ? 'Edit Contact' : 'Add New Contact'}
+          <DialogTitle>
+            {isEditing ? "Edit Contact" : "Add New Contact"}
           </DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit(onSubmit)}>
-          {/* Personal Information */}
-          <div className="mb-6">
-            <h3 className="text-md font-medium mb-3">Personal Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">First Name</Label>
-                <Input id="firstName" {...register("firstName")} />
-                {errors.firstName && (
-                  <p className="text-xs text-destructive">{errors.firstName.message}</p>
-                )}
-              </div>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Nome e Cognome */}
+            <div className="space-y-2">
+              <Label htmlFor="firstName" className="required">First Name</Label>
+              <Input
+                id="firstName"
+                {...register("firstName")}
+                placeholder="First Name"
+                className={errors.firstName ? "border-red-500" : ""}
+              />
+              {errors.firstName && (
+                <p className="text-red-500 text-xs mt-1">{errors.firstName.message}</p>
+              )}
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="lastName" className="required">Last Name</Label>
+              <Input
+                id="lastName"
+                {...register("lastName")}
+                placeholder="Last Name"
+                className={errors.lastName ? "border-red-500" : ""}
+              />
+              {errors.lastName && (
+                <p className="text-red-500 text-xs mt-1">{errors.lastName.message}</p>
+              )}
+            </div>
+            
+            {/* Campos adicionales */}
+            <div className="space-y-2">
+              <Label htmlFor="middleName">Middle Name</Label>
+              <Input
+                id="middleName"
+                {...register("middleName")}
+                placeholder="Middle Name"
+              />
+            </div>
+            
+            {/* Email / Phone section */}
+            <div className="sm:col-span-2">
+              <h3 className="text-lg font-medium mb-2">Contact Details</h3>
               
-              <div className="space-y-2">
-                <Label htmlFor="middleName">Middle Name</Label>
-                <Input id="middleName" {...register("middleName")} />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name</Label>
-                <Input id="lastName" {...register("lastName")} />
-                {errors.lastName && (
-                  <p className="text-xs text-destructive">{errors.lastName.message}</p>
-                )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="companyEmail" className="required">Company Email</Label>
+                  <Input
+                    id="companyEmail"
+                    type="email"
+                    {...register("companyEmail")}
+                    placeholder="company@example.com"
+                    className={errors.companyEmail ? "border-red-500" : ""}
+                  />
+                  {errors.companyEmail && (
+                    <p className="text-red-500 text-xs mt-1">{errors.companyEmail.message}</p>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="privateEmail">Private Email</Label>
+                  <Input
+                    id="privateEmail"
+                    type="email"
+                    {...register("privateEmail")}
+                    placeholder="private@example.com"
+                    className={errors.privateEmail ? "border-red-500" : ""}
+                  />
+                  {errors.privateEmail && (
+                    <p className="text-red-500 text-xs mt-1">{errors.privateEmail.message}</p>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="mobilePhone">Mobile Phone</Label>
+                  <Input
+                    id="mobilePhone"
+                    {...register("mobilePhone")}
+                    placeholder="+123456789"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="officePhone">Office Phone</Label>
+                  <Input
+                    id="officePhone"
+                    {...register("officePhone")}
+                    placeholder="+123456789"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="privatePhone">Private Phone</Label>
+                  <Input
+                    id="privatePhone"
+                    {...register("privatePhone")}
+                    placeholder="+123456789"
+                  />
+                </div>
               </div>
             </div>
-          </div>
-          
-          {/* Contact Details */}
-          <div className="mb-6">
-            <h3 className="text-md font-medium mb-3">Contact Details</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div className="space-y-2">
-                <Label htmlFor="companyEmail">Work Email</Label>
-                <Input id="companyEmail" {...register("companyEmail")} />
-                {errors.companyEmail && (
-                  <p className="text-xs text-destructive">{errors.companyEmail.message}</p>
-                )}
-              </div>
+            
+            {/* Areas of Activity manager */}
+            <div className="sm:col-span-2">
+              <h3 className="text-lg font-medium mb-2">Companies</h3>
+              <AreasOfActivityManager 
+                areas={areasOfActivity} 
+                onChange={setAreasOfActivity} 
+              />
+            </div>
+            
+            {/* Social media section */}
+            <div className="sm:col-span-2">
+              <h3 className="text-lg font-medium mb-2">Social Media</h3>
               
-              <div className="space-y-2">
-                <Label htmlFor="privateEmail">Personal Email</Label>
-                <Input id="privateEmail" {...register("privateEmail")} />
-                {errors.privateEmail && (
-                  <p className="text-xs text-destructive">{errors.privateEmail.message}</p>
-                )}
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="mobilePhone">Mobile Phone</Label>
-                <Input id="mobilePhone" {...register("mobilePhone")} />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="officePhone">Office Phone</Label>
-                <Input id="officePhone" {...register("officePhone")} />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="privatePhone">Home Phone</Label>
-                <Input id="privatePhone" {...register("privatePhone")} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="linkedin">LinkedIn</Label>
+                  <Input
+                    id="linkedin"
+                    {...register("linkedin")}
+                    placeholder="LinkedIn profile URL"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="facebook">Facebook</Label>
+                  <Input
+                    id="facebook"
+                    {...register("facebook")}
+                    placeholder="Facebook profile URL"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="instagram">Instagram</Label>
+                  <Input
+                    id="instagram"
+                    {...register("instagram")}
+                    placeholder="Instagram handle"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="tiktok">TikTok</Label>
+                  <Input
+                    id="tiktok"
+                    {...register("tiktok")}
+                    placeholder="TikTok handle"
+                  />
+                </div>
               </div>
             </div>
-          </div>
-          
-          {/* Social Profiles */}
-          <div className="mb-6">
-            <h3 className="text-md font-medium mb-3">Social Profiles</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            
+            {/* Tags and Notes */}
+            <div className="sm:col-span-2">
               <div className="space-y-2">
-                <Label htmlFor="linkedin">LinkedIn</Label>
-                <Input id="linkedin" {...register("linkedin")} />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="facebook">Facebook</Label>
-                <Input id="facebook" {...register("facebook")} />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="instagram">Instagram</Label>
-                <Input id="instagram" {...register("instagram")} />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="tiktok">TikTok</Label>
-                <Input id="tiktok" {...register("tiktok")} />
-              </div>
-            </div>
-          </div>
-          
-          {/* Areas of Activity */}
-          <div className="mb-6">
-            <h3 className="text-md font-medium mb-3">Company Affiliations</h3>
-            <AreasOfActivityManager
-              contactId={initialData?.id}
-              initialAreas={areasOfActivity}
-              onChange={setAreasOfActivity}
-            />
-          </div>
-          
-          {/* Email Addresses Management - Only shown when editing an existing contact */}
-          {isEditing && initialData?.id && (
-            <div className="mb-6">
-              <ContactEmailsPanel contactId={initialData.id} />
-            </div>
-          )}
-          
-          {/* Additional Information */}
-          <div className="mb-6">
-            <h3 className="text-md font-medium mb-3">Additional Information</h3>
-            <div className="grid grid-cols-1 gap-4 mb-4">
-              <div className="space-y-2">
-                <Label htmlFor="tags">Tags (comma separated)</Label>
-                <Input 
-                  id="tags" 
+                <Label htmlFor="tags">Tags</Label>
+                <Input
+                  id="tags"
                   value={tagsInput}
                   onChange={(e) => setTagsInput(e.target.value)}
-                  placeholder="e.g. vip, influencer, prospect"
+                  placeholder="Enter tags separated by commas"
                 />
+                <p className="text-xs text-muted-foreground">
+                  Enter tags separated by commas (e.g. important, follow-up, sales)
+                </p>
               </div>
-              
+            </div>
+            
+            <div className="sm:col-span-2">
               <div className="space-y-2">
                 <Label htmlFor="notes">Notes</Label>
-                <Textarea 
-                  id="notes" 
-                  {...register("notes")} 
-                  className="min-h-[100px]" 
-                  placeholder="Add any additional notes about this contact..."
+                <Textarea
+                  id="notes"
+                  {...register("notes")}
+                  placeholder="Add any additional notes here"
+                  rows={4}
                 />
               </div>
             </div>
           </div>
           
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
+            <Button 
+              type="button" 
+              variant="outline" 
               onClick={() => onOpenChange(false)}
             >
               Cancel
             </Button>
             <Button 
               type="submit"
-              disabled={createContact.isPending || updateContact.isPending}
+              disabled={createContactMutation.isPending}
             >
-              {createContact.isPending || updateContact.isPending ? 'Saving...' : isEditing ? 'Update Contact' : 'Create Contact'}
+              {createContactMutation.isPending ? "Saving..." : (isEditing ? "Update Contact" : "Create Contact")}
             </Button>
           </DialogFooter>
         </form>
