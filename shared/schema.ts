@@ -444,8 +444,7 @@ export const job_titles = pgTable('job_titles', {
   id: serial('id').primaryKey(),
   subSectorId: integer('sub_sector_id').notNull().references(() => sub_sectors.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
+  // Rimossi campi createdAt e updatedAt che non esistono nel database reale
 });
 
 // Schema inserimento
