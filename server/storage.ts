@@ -141,6 +141,10 @@ export class MemStorage implements IStorage {
   private contactEmails: ContactEmail[] = [];
   private branches: Branch[] = [];
 
+  private sectors: Sector[] = [];
+  private subSectors: SubSector[] = [];
+  private jobTitles: JobTitle[] = [];
+
   private nextIds = {
     users: 1,
     contacts: 1,
@@ -148,6 +152,9 @@ export class MemStorage implements IStorage {
     deals: 1,
     leads: 1,
     pipelineStages: 1,
+    sectors: 1,
+    subSectors: 1,
+    jobTitles: 1,
     areasOfActivity: 1,
     synergies: 1,
     contactEmails: 1,
@@ -925,6 +932,95 @@ export class MemStorage implements IStorage {
   
   async getMeetings(): Promise<Meeting[]> {
     return []; // Implementazione mock vuota per MemStorage
+  }
+  
+  async getBranchesCount(): Promise<number> {
+    return this.branches.length;
+  }
+  
+  // Implementazione dei metodi per Sector, SubSector e JobTitle
+  async getSectors(): Promise<Sector[]> {
+    return this.sectors;
+  }
+
+  async createSector(data: { name: string }): Promise<Sector> {
+    const id = this.nextIds.sectors++;
+    const newSector: Sector = {
+      id,
+      name: data.name,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.sectors.push(newSector);
+    return newSector;
+  }
+
+  async getSubSectors(opts: { sectorId: number; search: string }): Promise<SubSector[]> {
+    let filtered = this.subSectors.filter(
+      (subSector) => subSector.sectorId === opts.sectorId
+    );
+    
+    if (opts.search && opts.search.trim() !== '') {
+      const searchLower = opts.search.toLowerCase();
+      filtered = filtered.filter(
+        (subSector) => subSector.name.toLowerCase().includes(searchLower)
+      );
+    }
+    
+    return filtered;
+  }
+
+  async createSubSector(data: { sectorId: number; name: string }): Promise<SubSector> {
+    // Verifica che il settore esista
+    const sector = this.sectors.find((s) => s.id === data.sectorId);
+    if (!sector) {
+      throw new Error(`Sector with id ${data.sectorId} not found`);
+    }
+    
+    const id = this.nextIds.subSectors++;
+    const newSubSector: SubSector = {
+      id,
+      sectorId: data.sectorId,
+      name: data.name,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.subSectors.push(newSubSector);
+    return newSubSector;
+  }
+
+  async getJobTitles(opts: { subSectorId: number; search: string }): Promise<JobTitle[]> {
+    let filtered = this.jobTitles.filter(
+      (jobTitle) => jobTitle.subSectorId === opts.subSectorId
+    );
+    
+    if (opts.search && opts.search.trim() !== '') {
+      const searchLower = opts.search.toLowerCase();
+      filtered = filtered.filter(
+        (jobTitle) => jobTitle.name.toLowerCase().includes(searchLower)
+      );
+    }
+    
+    return filtered;
+  }
+
+  async createJobTitle(data: { subSectorId: number; name: string }): Promise<JobTitle> {
+    // Verifica che il sottosettore esista
+    const subSector = this.subSectors.find((s) => s.id === data.subSectorId);
+    if (!subSector) {
+      throw new Error(`SubSector with id ${data.subSectorId} not found`);
+    }
+    
+    const id = this.nextIds.jobTitles++;
+    const newJobTitle: JobTitle = {
+      id,
+      subSectorId: data.subSectorId,
+      name: data.name,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.jobTitles.push(newJobTitle);
+    return newJobTitle;
   }
 }
 
