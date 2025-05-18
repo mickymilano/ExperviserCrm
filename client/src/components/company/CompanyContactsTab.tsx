@@ -344,7 +344,26 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
               Associa Contatto Esistente
             </Button>
             <Button 
-              onClick={() => navigate(`/contacts/new?companyId=${companyId}&companyName=${encodeURIComponent(companyName)}`)} 
+              onClick={() => {
+                // Apri il modale invece di navigare a una nuova pagina
+                const event = new CustomEvent('openContactModal', {
+                  detail: {
+                    initialData: {
+                      firstName: '',
+                      lastName: '',
+                      companyEmail: '',
+                      areasOfActivity: [{
+                        companyId: companyId,
+                        companyName: companyName,
+                        isPrimary: true,
+                        role: '',
+                        jobDescription: `Works at ${companyName}`
+                      }]
+                    }
+                  }
+                });
+                document.dispatchEvent(event);
+              }} 
               size="sm"
               className="flex items-center"
             >
