@@ -363,34 +363,40 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => {
                   window.location.href = '/contacts';
-                }}>
-                  Nuovo Contatto
+                }} className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  <span>Nuovo Contatto</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => {
                   window.location.href = '/companies';
-                }}>
-                  Nuova Azienda
+                }} className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4" />
+                  <span>Nuova Azienda</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => {
                   window.location.href = '/deals/new';
-                }}>
-                  Nuova Opportunità
+                }} className="flex items-center gap-2">
+                  <Briefcase className="h-4 w-4" />
+                  <span>Nuova Opportunità</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => {
                   window.location.href = '/leads';
-                }}>
-                  Nuovo Lead
+                }} className="flex items-center gap-2">
+                  <Target className="h-4 w-4" />
+                  <span>Nuovo Lead</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => {
                   window.location.href = '/calendar';
-                }}>
-                  Nuovo Appuntamento
+                }} className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  <span>Nuovo Appuntamento</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => {
                   window.location.href = '/tasks';
-                }}>
-                  Nuova Attività
+                }} className="flex items-center gap-2">
+                  <CheckSquare className="h-4 w-4" />
+                  <span>Nuova Attività</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
