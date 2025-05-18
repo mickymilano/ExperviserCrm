@@ -43,6 +43,64 @@
     }
   },
   
+  "deals": {
+    "title": "Opportunità",
+    "deal": "Opportunità",
+    "deals": "Opportunità",
+    "new_deal": "Nuova opportunità",
+    "create_deal": "Crea opportunità",
+    "edit_deal": "Modifica opportunità",
+    "view_deal": "Visualizza opportunità",
+    "delete_deal": "Elimina opportunità",
+    "deal_details": "Dettagli opportunità",
+    "deal_created": "Opportunità creata con successo",
+    "deal_updated": "Opportunità aggiornata con successo",
+    "deal_deleted": "Opportunità eliminata con successo",
+    "confirm_delete": "Sei sicuro di voler eliminare questa opportunità?",
+    "select_company": "Seleziona un'azienda",
+    "select_contact": "Seleziona un contatto",
+    "select_stage": "Seleziona una fase",
+    "form": {
+      "name": "Nome opportunità",
+      "value": "Valore",
+      "company": "Azienda",
+      "contact": "Contatto",
+      "stage": "Fase",
+      "expected_close_date": "Data prevista di chiusura",
+      "notes": "Note",
+      "tags": "Tag",
+      "synergies": "Sinergie"
+    },
+    "columns": {
+      "name": "Nome",
+      "company": "Azienda",
+      "contact": "Contatto",
+      "value": "Valore",
+      "stage": "Fase",
+      "expected_close_date": "Data di chiusura",
+      "created_at": "Data creazione",
+      "actions": "Azioni"
+    },
+    "stages": {
+      "lead": "Lead",
+      "proposal": "Proposta",
+      "negotiation": "Negoziazione",
+      "closed_won": "Chiusa (vinta)",
+      "closed_lost": "Chiusa (persa)"
+    },
+    "filters": {
+      "all": "Tutte",
+      "active": "Attive",
+      "closed": "Chiuse",
+      "search": "Cerca opportunità..."
+    },
+    "empty": {
+      "title": "Nessuna opportunità trovata",
+      "description": "Inizia creando una nuova opportunità.",
+      "button": "Crea opportunità"
+    }
+  },
+  
   "validation": {
     "invalidEmail": "Inserisci un'email valida"
   },

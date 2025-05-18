@@ -160,8 +160,8 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
   }, [companyId, contacts, setSynergyContacts]);
 
   const dealSchema = z.object({
-    name: z.string().min(1, t("deal.validation.nameRequired")),
-    value: z.coerce.number().min(0, t("deal.validation.valuePositive")),
+    name: z.string().min(1, t("deals.validation.nameRequired", "Il nome dell'opportunità è obbligatorio")),
+    value: z.coerce.number().min(0, t("deals.validation.valuePositive", "Il valore deve essere un numero positivo")),
     stageId: z.coerce.number(),
     companyId: z.coerce.number().optional().nullable(),
     contactId: z.coerce.number().optional().nullable(),
@@ -640,13 +640,13 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       <AlertDialog open={showNoCompanyAlert} onOpenChange={setShowNoCompanyAlert}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("deal.alerts.noCompany")}</AlertDialogTitle>
+            <AlertDialogTitle>{t("deals.alerts.noCompany", "Nessuna azienda selezionata")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("deal.alerts.noCompanyDescription")}
+              {t("deals.alerts.noCompanyDescription", "Per creare un'opportunità è necessario selezionare un'azienda. Vuoi procedere comunque?")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("deal.form.cancel")}</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel", "Annulla")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (formRef.current) {
@@ -665,10 +665,9 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       <AlertDialog open={showNoContactAlert} onOpenChange={setShowNoContactAlert}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>No Contact Selected</AlertDialogTitle>
+            <AlertDialogTitle>{t("deals.alerts.noContact", "Nessun contatto selezionato")}</AlertDialogTitle>
             <AlertDialogDescription>
-              You're creating a deal for a company without linking it to a specific contact.
-              Please select a contact before proceeding.
+              {t("deals.alerts.noContactDescription", "Stai creando un'opportunità per un'azienda senza collegarla a un contatto specifico. Per favore seleziona un contatto prima di procedere.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -682,7 +681,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{isEditMode ? t("deal.editDeal") : t("deal.addDeal")}</DialogTitle>
+            <DialogTitle>{isEditMode ? t("deals.edit_deal", "Modifica opportunità") : t("deals.new_deal", "Nuova opportunità")}</DialogTitle>
           </DialogHeader>
           
           <form ref={formRef} onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
