@@ -313,72 +313,116 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       return;
     }
     
-    // Aggiungiamo debug per verificare le strutture dati
-    console.log("DEBUG - Contatti disponibili:", contacts);
-    
-    // Filtriamo i contatti usando le aree di attività o altre associazioni
-    const filteredByAreas = contacts.filter(contact => {
-      // Debug per questo contatto specifico
-      console.log(`DEBUG - Verifico contatto ${contact.id} (${contact.firstName} ${contact.lastName})`);
-      
-      if (contact.areasOfActivity && Array.isArray(contact.areasOfActivity)) {
-        console.log(`DEBUG - Contatto ${contact.id} ha ${contact.areasOfActivity.length} aree:`, contact.areasOfActivity);
+    // Effettuiamo una query all'API per ottenere i contatti dell'azienda specificata
+    // Questo è un approccio alternativo che garantisce di catturare tutti i tipi di associazione
+    fetch(`/api/companies/${companyId}/contacts`)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Error fetching company contacts');
+        }
+        return response.json();
+      })
+      .then(companyContacts => {
+        console.log(`Found ${companyContacts.length} contacts via API for company ${companyId}`);
         
-        // Verifica le aree di attività
-        const hasMatchingArea = contact.areasOfActivity.some(area => {
-          const areaCompanyId = typeof area.companyId === 'number' ? 
-            area.companyId : 
-            (area.companyId ? parseInt(area.companyId as string) : null);
+        // Converto i contatti ottenuti dall'API e li filtro per assicurarmi che esistano anche nel nostro elenco contacts
+        const filteredByAPI = companyContacts
+          .filter(apiContact => {
+            // Cerchiamo il contatto corrispondente nel nostro elenco
+            return contacts.some(contact => contact.id === apiContact.id);
+          })
+          .map(apiContact => {
+            // Troviamo il contatto completo dal nostro elenco per avere tutti i dati
+            const fullContact = contacts.find(contact => contact.id === apiContact.id);
+            return fullContact || apiContact; // Usiamo i dati completi se disponibili, altrimenti quelli dall'API
+          });
+        
+        // Backup: se l'API non restituisce contatti, proviamo il metodo con le aree di attività
+        if (filteredByAPI.length === 0) {
+          console.log("API non ha restituito contatti, provo con areasOfActivity");
           
-          console.log(`DEBUG - Area companyId=${areaCompanyId}, confronto con ${companyId}, match=${areaCompanyId === companyId}`);
-          return areaCompanyId === companyId;
+          // Filtriamo i contatti usando le aree di attività o altre associazioni
+          const filteredByAreas = contacts.filter(contact => {
+            if (contact.areasOfActivity && Array.isArray(contact.areasOfActivity)) {
+              // Verifica le aree di attività
+              return contact.areasOfActivity.some(area => {
+                // Normalizziamo companyId considerando diverse possibili strutture
+                const areaCompanyId = typeof area.companyId === 'number' ? 
+                  area.companyId : 
+                  typeof area.companyId === 'string' ? 
+                  parseInt(area.companyId) : 
+                  area.company_id ? 
+                  parseInt(String(area.company_id)) : null;
+                
+                return areaCompanyId === companyId;
+              });
+            }
+            
+            // Verifica anche il campo companyId diretto, se presente
+            if (contact.companyId !== undefined) {
+              const contactCompanyId = typeof contact.companyId === 'number' ? 
+                contact.companyId : 
+                (contact.companyId ? parseInt(contact.companyId as string) : null);
+              
+              return contactCompanyId === companyId;
+            }
+            
+            return false;
+          });
+          
+          // Usiamo i contatti filtrati con aree di attività
+          setFilteredContacts(filteredByAreas);
+          console.log(`Filtrati ${filteredByAreas.length} contatti con aree di attività`);
+          
+          // Auto-select single contact or clear selection
+          if (filteredByAreas.length === 1) {
+            console.log(`Auto-selecting the only contact: ${filteredByAreas[0].id}`);
+            setValue("contactId", filteredByAreas[0].id);
+          } else if (filteredByAreas.length === 0) {
+            setValue("contactId", null);
+            console.log("Nessun contatto trovato per questa azienda, svuoto la selezione");
+          }
+        } else {
+          // Usiamo i contatti ottenuti dall'API
+          setFilteredContacts(filteredByAPI);
+          console.log(`Impostati ${filteredByAPI.length} contatti dall'API`);
+          
+          // Auto-select single contact or clear selection
+          if (filteredByAPI.length === 1) {
+            console.log(`Auto-selecting the only contact: ${filteredByAPI[0].id}`);
+            setValue("contactId", filteredByAPI[0].id);
+          } else if (filteredByAPI.length === 0) {
+            setValue("contactId", null);
+            console.log("Nessun contatto trovato per questa azienda, svuoto la selezione");
+          }
+        }
+      })
+      .catch(error => {
+        console.error("Error fetching company contacts:", error);
+        
+        // Fallback: filtra contatti usando le aree di attività
+        const filteredByAreas = contacts.filter(contact => {
+          if (contact.areasOfActivity && Array.isArray(contact.areasOfActivity)) {
+            return contact.areasOfActivity.some(area => {
+              const areaCompanyId = typeof area.companyId === 'number' ? 
+                area.companyId : 
+                area.companyId ? parseInt(String(area.companyId)) : null;
+              
+              return areaCompanyId === companyId;
+            });
+          }
+          return false;
         });
         
-        if (hasMatchingArea) return true;
-      } else {
-        console.log(`DEBUG - Contatto ${contact.id} non ha aree di attività`);
-      }
-      
-      // Verifica anche il campo companyId diretto, se presente
-      if (contact.companyId !== undefined) {
-        const contactCompanyId = typeof contact.companyId === 'number' ? 
-          contact.companyId : 
-          (contact.companyId ? parseInt(contact.companyId as string) : null);
-          
-        console.log(`DEBUG - Contatto companyId=${contactCompanyId}, confronto con ${companyId}, match=${contactCompanyId === companyId}`);
-        return contactCompanyId === companyId;
-      }
-      
-      return false;
-    });
-    
-    // Mostriamo SOLO i contatti associati all'azienda selezionata
-    setFilteredContacts(filteredByAreas);
-    console.log(`Filtrati ${filteredByAreas.length} contatti associati all'azienda ${companyId}`);
-    
-    if (filteredByAreas.length === 0) {
-      console.log(`Non ci sono contatti associati all'azienda ${companyId}`);
-    }
-    /*
-    // Solo per debug - Verifichiamo quanti contatti hanno areasOfActivity
-    let contactsWithAreas = 0;
-    contacts.forEach(contact => {
-      if (contact.areasOfActivity && Array.isArray(contact.areasOfActivity) && contact.areasOfActivity.length > 0) {
-        contactsWithAreas++;
-        console.log(`Contact ${contact.id} has ${contact.areasOfActivity.length} areas:`, contact.areasOfActivity);
-      }
-    });
-    console.log(`${contactsWithAreas} / ${contacts.length} contacts have areasOfActivity data`);
-    */
-    // If there's only one contact for this company, auto-select it
-    if (filteredByAreas.length === 1) {
-      console.log(`Auto-selecting the only contact: ${filteredByAreas[0].id}`);
-      setValue("contactId", filteredByAreas[0].id);
-    } else if (filteredByAreas.length === 0) {
-      // Clear contact selection if no contacts available
-      setValue("contactId", null);
-      console.log("Nessun contatto trovato per questa azienda, svuoto la selezione");
-    }
+        setFilteredContacts(filteredByAreas);
+        console.log(`Fallback: filtrati ${filteredByAreas.length} contatti`);
+        
+        if (filteredByAreas.length === 1) {
+          setValue("contactId", filteredByAreas[0].id);
+        } else if (filteredByAreas.length === 0) {
+          setValue("contactId", null);
+        }
+      });
   };
   
   // Rimuoviamo l'useEffect che causa cicli infiniti
