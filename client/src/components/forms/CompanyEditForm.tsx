@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -12,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { PlacesAutocomplete } from "@/components/ui/PlacesAutocomplete";
+import { MultiCombobox, ComboboxOption } from "@/components/ui/multi-combobox";
 import { 
   Select,
   SelectContent,
@@ -44,6 +45,8 @@ const companySchema = z.object({
   country: z.string().nullable().optional(),
   city: z.string().nullable().optional(),
   timezone: z.string().nullable().optional(),
+  // Tag multipli per la relazione utente↔azienda
+  relations: z.array(z.string()).optional(),
 });
 
 type CompanyFormData = z.infer<typeof companySchema>;
@@ -62,8 +65,8 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
   const customFields = company.customFields || {};
   
   // Stato per gestire le relazioni multiple
-  const [relationshipTypes, setRelationshipTypes] = useState<string[]>(
-    Array.isArray(company.relationshipType) ? company.relationshipType : []
+  const [relationValues, setRelationValues] = useState<string[]>(
+    Array.isArray(company.relations) ? company.relations : []
   );
   
   // Initialize form with company data
@@ -106,14 +109,9 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
   };
   
   // Gestione della selezione/deselezione delle relazioni
-  const handleRelationshipChange = (value: string, checked: boolean) => {
-    setRelationshipTypes(prev => {
-      if (checked) {
-        return [...prev, value];
-      } else {
-        return prev.filter(v => v !== value);
-      }
-    });
+  const handleRelationsChange = (values: string[]) => {
+    setRelationValues(values);
+    setValue('relations', values, { shouldValidate: true });
   };
 
   // Update company mutation
