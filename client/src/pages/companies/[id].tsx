@@ -353,9 +353,9 @@ export default function CompanyDetail() {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   <div className="space-y-2">
-                    {Array.isArray(company.relationshipType) && company.relationshipType.length > 0 ? (
+                    {Array.isArray(company.relations) && company.relations.length > 0 ? (
                       <div className="flex flex-wrap gap-2">
-                        {company.relationshipType.map((type, index) => (
+                        {company.relations.map((type, index) => (
                           <Badge key={index} variant="secondary" className="font-normal">
                             {type === 'prospect' && 'In fase di valutazione'}
                             {type === 'clienteAttivo' && 'Cliente attivo'}
@@ -368,6 +368,7 @@ export default function CompanyDetail() {
                             {type === 'clienteUnaTantum' && 'Cliente una-tantum'}
                             {type === 'fornitore' && 'Fornitore'}
                             {type === 'concorrente' && 'Concorrente'}
+                            {type === 'consulente' && 'Consulente'}
                             {type}
                           </Badge>
                         ))}
