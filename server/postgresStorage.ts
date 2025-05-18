@@ -2044,6 +2044,9 @@ export class PostgresStorage implements IStorage {
         // Per companyType, assicuriamoci che venga mappato a company_type
         if (field === "companyType") {
           cleanCompanyData["company_type"] = companyData[field as keyof Partial<InsertCompany>];
+        } else if (field === "customFields") {
+          // Mappa customFields a custom_fields per il database
+          cleanCompanyData["custom_fields"] = companyData[field as keyof Partial<InsertCompany>];
         } else {
           cleanCompanyData[field] = companyData[field as keyof Partial<InsertCompany>];
         }
