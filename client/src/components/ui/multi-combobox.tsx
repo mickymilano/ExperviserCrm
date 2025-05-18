@@ -64,10 +64,11 @@ export function MultiCombobox({
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className="justify-between"
+            className="w-full justify-between bg-white hover:bg-gray-100"
+            style={{ zIndex: 10 }}
           >
             {values.length > 0 ? `${values.length} selezionati` : placeholder}
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-100" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="p-0" align="start">
