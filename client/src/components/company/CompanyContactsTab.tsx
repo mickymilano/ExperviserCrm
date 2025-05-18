@@ -348,7 +348,10 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
               Associa Contatto Esistente
             </Button>
             <Button 
-              onClick={() => navigate(`/contacts/new?companyId=${companyId}&companyName=${encodeURIComponent(companyName || '')}`)}
+              onClick={() => {
+                console.log("Navigating to create contact with company:", companyName);
+                navigate(`/contacts/new?companyId=${companyId}&companyName=${encodeURIComponent(company?.name || '')}`);
+              }}
               size="sm"
               className="flex items-center"
             >
