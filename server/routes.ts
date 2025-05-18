@@ -536,6 +536,24 @@ export function registerRoutes(app: any) {
       
       console.log('POST /api/contacts - Dati validati:', validatedData);
       
+      let companyId = null;
+      let companyData = null;
+      
+      // Verifica se è stato fornito un companyId
+      if (req.body.companyId) {
+        companyId = parseInt(req.body.companyId);
+        console.log(`Verifico esistenza azienda con ID: ${companyId}`);
+        
+        // Controlla se esiste l'azienda prima di creare il contatto
+        companyData = await storage.getCompany(companyId);
+        if (!companyData) {
+          console.error(`Azienda ${companyId} non trovata`);
+          return res.status(404).json({ message: `Azienda con ID ${companyId} non trovata` });
+        }
+        
+        console.log(`Azienda trovata: ${companyData.name}`);
+      }
+      
       // Crea il contatto
       const newContact = await storage.createContact({
         ...validatedData,
@@ -544,31 +562,48 @@ export function registerRoutes(app: any) {
       
       console.log(`Contatto creato con ID: ${newContact.id}`);
       
-      // Se è stato fornito un companyId, crea anche un'area di attività
-      if (req.body.companyId) {
-        const companyId = req.body.companyId;
+      // Se abbiamo un'azienda valida, creiamo l'area di attività
+      if (companyId && companyData) {
         console.log(`Creazione area di attività per contatto ${newContact.id} e azienda ${companyId}`);
         
         try {
-          // Controlla se esiste l'azienda
-          const company = await storage.getCompany(companyId);
-          if (!company) {
-            console.error(`Azienda ${companyId} non trovata`);
-          } else {
-            // Crea l'area di attività
-            const area = await storage.createAreaOfActivity({
-              contactId: newContact.id,
-              companyId: companyId,
-              companyName: company.name,
-              isPrimary: true,
-              role: req.body.role || '',
-              jobDescription: req.body.jobDescription || ''
-            });
-            
+          // Crea direttamente nel DB con una query SQL per garantire che funzioni
+          const areaResult = await pool.query(
+            `INSERT INTO areas_of_activity 
+             (contact_id, company_id, company_name, is_primary, role, job_description, created_at, updated_at) 
+             VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW()) 
+             RETURNING *`,
+            [
+              newContact.id,
+              companyId,
+              companyData.name,
+              true,
+              req.body.role || '',
+              req.body.jobDescription || ''
+            ]
+          );
+          
+          if (areaResult.rows && areaResult.rows.length > 0) {
+            const area = areaResult.rows[0];
             console.log(`Area di attività creata con ID: ${area.id}`);
             
+            // Mappiamo i nomi delle colonne in camelCase per il frontend
+            const mappedArea = {
+              id: area.id,
+              contactId: area.contact_id,
+              companyId: area.company_id,
+              companyName: area.company_name,
+              isPrimary: area.is_primary,
+              role: area.role,
+              jobDescription: area.job_description,
+              createdAt: area.created_at,
+              updatedAt: area.updated_at
+            };
+            
             // Aggiungi l'area al contatto restituito
-            newContact.areasOfActivity = [area];
+            newContact.areasOfActivity = [mappedArea];
+          } else {
+            console.error("Errore: nessuna riga restituita dopo inserimento area di attività");
           }
         } catch (areaError) {
           console.error(`Errore creazione area di attività: ${areaError}`);
