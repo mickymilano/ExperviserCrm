@@ -422,41 +422,47 @@ export type InsertSynergy = z.infer<typeof insertSynergySchema>;
 export type ContactEmail = typeof contactEmails.$inferSelect;
 export type InsertContactEmail = z.infer<typeof insertContactEmailSchema>;
 
-// --- Settori, Sottosettori, Job Titles -------------------------------------
-export const sectorSchema = z.object({ id: z.number(), name: z.string() });
-export type Sector = z.infer<typeof sectorSchema>;
-
-export const subSectorSchema = z.object({
-  id: z.number(),
-  sectorId: z.number(),
-  name: z.string(),
-});
-export type SubSector = z.infer<typeof subSectorSchema>;
-
-export const jobTitleSchema = z.object({
-  id: z.number(),
-  subSectorId: z.number(),
-  name: z.string(),
-});
-export type JobTitle = z.infer<typeof jobTitleSchema>;
-
-// Tabelle DB per settori, sottosettori e job titles
+/**
+ * SECTOR HIERARCHY
+ * Tabelle per la struttura gerarchica settori/sottosettori/job titles
+ */
 export const sectors = pgTable('sectors', {
   id: serial('id').primaryKey(),
   name: text('name').notNull().unique(),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
 });
 
 export const sub_sectors = pgTable('sub_sectors', {
   id: serial('id').primaryKey(),
   sectorId: integer('sector_id').notNull().references(() => sectors.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
 });
 
 export const job_titles = pgTable('job_titles', {
   id: serial('id').primaryKey(),
   subSectorId: integer('sub_sector_id').notNull().references(() => sub_sectors.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
 });
+
+// Schema inserimento
+export const insertSectorSchema = createInsertSchema(sectors).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertSubSectorSchema = createInsertSchema(sub_sectors).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertJobTitleSchema = createInsertSchema(job_titles).omit({ id: true, createdAt: true, updatedAt: true });
+
+// Tipi
+export type Sector = typeof sectors.$inferSelect;
+export type InsertSector = z.infer<typeof insertSectorSchema>;
+
+export type SubSector = typeof sub_sectors.$inferSelect;
+export type InsertSubSector = z.infer<typeof insertSubSectorSchema>;
+
+export type JobTitle = typeof job_titles.$inferSelect;
+export type InsertJobTitle = z.infer<typeof insertJobTitleSchema>;
 
 /**
  * BRANCHES
@@ -722,48 +728,6 @@ export type InsertUserSession = z.infer<typeof insertUserSessionSchema>;
 
 export type SecurityLog = typeof securityLogs.$inferSelect;
 export type InsertSecurityLog = z.infer<typeof insertSecurityLogSchema>;
-
-/**
- * SECTOR HIERARCHY
- * Tabelle per la struttura gerarchica settori/sottosettori/job titles
- */
-export const sectors = pgTable('sectors', {
-  id: serial('id').primaryKey(),
-  name: varchar('name', { length: 100 }).notNull(),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
-});
-
-export const sub_sectors = pgTable('sub_sectors', {
-  id: serial('id').primaryKey(),
-  sectorId: integer('sector_id').notNull().references(() => sectors.id),
-  name: varchar('name', { length: 100 }).notNull(),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
-});
-
-export const job_titles = pgTable('job_titles', {
-  id: serial('id').primaryKey(),
-  subSectorId: integer('sub_sector_id').notNull().references(() => sub_sectors.id),
-  name: varchar('name', { length: 100 }).notNull(),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
-});
-
-// Schema inserimento
-export const insertSectorSchema = createInsertSchema(sectors).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertSubSectorSchema = createInsertSchema(sub_sectors).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertJobTitleSchema = createInsertSchema(job_titles).omit({ id: true, createdAt: true, updatedAt: true });
-
-// Tipi
-export type Sector = typeof sectors.$inferSelect;
-export type InsertSector = z.infer<typeof insertSectorSchema>;
-
-export type SubSector = typeof sub_sectors.$inferSelect;
-export type InsertSubSector = z.infer<typeof insertSubSectorSchema>;
-
-export type JobTitle = typeof job_titles.$inferSelect;
-export type InsertJobTitle = z.infer<typeof insertJobTitleSchema>;
 
 /**
  * Relations
