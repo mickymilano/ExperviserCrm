@@ -672,7 +672,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogAction onClick={() => setShowNoContactAlert(false)}>
-              OK
+              {t("common.ok", "OK")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -689,10 +689,10 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Deal Name</Label>
+                  <Label htmlFor="name">{t("deals.form.name", "Nome opportunità")}</Label>
                   <Input 
                     id="name" 
-                    placeholder="Enter deal name"
+                    placeholder={t("deals.form.name_placeholder", "Inserisci nome opportunità")}
                     {...register("name")}
                   />
                   {errors.name && (
@@ -701,7 +701,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="value">Value</Label>
+                  <Label htmlFor="value">{t("deals.form.value", "Valore")}</Label>
                   <Input 
                     id="value" 
                     type="number"
@@ -717,7 +717,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="stageId">Pipeline Stage</Label>
+                  <Label htmlFor="stageId">{t("deals.form.pipeline_stage", "Fase pipeline")}</Label>
                   <Controller
                     name="stageId"
                     control={control}
@@ -729,7 +729,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                         }}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select stage" />
+                          <SelectValue placeholder={t("deals.form.select_stage", "Seleziona fase")} />
                         </SelectTrigger>
                         <SelectContent>
                           {Array.isArray(stages) && 
