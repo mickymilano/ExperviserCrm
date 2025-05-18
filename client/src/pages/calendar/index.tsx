@@ -201,7 +201,7 @@ export default function Calendar() {
             <CardHeader className="pb-3 flex flex-row items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Button variant="outline" size="icon" onClick={() => setSelectedDate(new Date())}>
-                  Oggi
+                  {t('calendar.today')}
                 </Button>
                 <div className="flex items-center">
                   <Button variant="ghost" size="icon" onClick={() => {
@@ -293,7 +293,7 @@ export default function Calendar() {
                         ))
                       ) : (
                         <div className="text-center py-10 text-muted-foreground">
-                          Nessuna riunione programmata per questo giorno.
+                          {t('calendar.noMeetingScheduled')}
                         </div>
                       )}
                     </div>
@@ -337,7 +337,7 @@ export default function Calendar() {
                             )}
                             {!isLoading && getMeetingsForDate(day).length === 0 && (
                               <div className="h-16 flex items-center justify-center text-xs text-muted-foreground">
-                                Nessuna riunione
+                                {t('calendar.noMeetingDay')}
                               </div>
                             )}
                           </div>
@@ -348,7 +348,7 @@ export default function Calendar() {
                 </div>
               ) : (
                 <div className="text-center py-10 text-muted-foreground">
-                  La vista mensile sarà disponibile presto. Per favore utilizza la vista Settimana o Giorno.
+                  {t('calendar.monthViewComingSoon')}
                 </div>
               )}
             </CardContent>
