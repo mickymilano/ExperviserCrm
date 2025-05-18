@@ -1,0 +1,84 @@
+Ecco un frammento di patch da applicare in server/routes.ts per riscrivere definitivamente l’endpoint che serve il dettaglio di un deal, bypassando il Drizzle ORM e forzando una query SQL diretta. In questo modo il link “Apri Deal” partirà sempre dal record corretto.
+
+--- a/server/routes.ts
++++ b/server/routes.ts
+@@ -XXX,6 +XXX,40 @@ export default function registerRoutes(app: Express) {
+   // vecchia definizione:
+//  app.get('/api/deals/:id', authMiddleware, async (req, res) => { …drizzle ORM… });
+
++  // Nuova definizione: fetch diretto via SQL
++  app.get('/api/deals/:id', authMiddleware, async (req, res) => {
++    const dealId = Number(req.params.id);
++    if (isNaN(dealId)) {
++      return res.status(400).json({ error: 'ID deal non valido' });
++    }
++    try {
++      // 1) Recupera i dati base del deal
++      const dealResult = await db.query<{ 
++        id: number; title: string; amount: number; status: string; 
++        company_id: number; contact_id: number; stage_id: number 
++      }>(`
++        SELECT id, title, amount, status, company_id, contact_id, stage_id
++        FROM deals
++        WHERE id = $1
++      `, [dealId]);
++      if (dealResult.rowCount === 0) {
++        return res.status(404).json({ error: 'Deal non trovato' });
++      }
++      const deal = dealResult.rows[0];
++
++      // 2) Recupera info azienda
++      const companyRes = await db.query<{ id: number; name: string }>(`
++        SELECT id, name
++        FROM companies
++        WHERE id = $1
++      `, [deal.company_id]);
++      const company = companyRes.rows[0] || null;
++
++      // 3) Recupera info contatto
++      const contactRes = await db.query<{ id: number; first_name: string; last_name: string }>(`
++        SELECT id, first_name, last_name
++        FROM contacts
++        WHERE id = $1
++      `, [deal.contact_id]);
++      const contact = contactRes.rows[0]
++        ? {
++            id: contactRes.rows[0].id,
++            firstName: contactRes.rows[0].first_name,
++            lastName: contactRes.rows[0].last_name
++          }
++        : null;
++
++      // 4) Recupera info stage
++      const stageRes = await db.query<{ id: number; name: string }>(`
++        SELECT id, name
++        FROM stages
++        WHERE id = $1
++      `, [deal.stage_id]);
++      const stage = stageRes.rows[0] || null;
++
++      // 5) Bundling response in camelCase
++      return res.json({
++        id: deal.id,
++        title: deal.title,
++        amount: deal.amount,
++        status: deal.status,
++        company,
++        contact,
++        stage
++      });
++    } catch (err) {
++      console.error('Errore fetching deal via SQL diretto', err);
++      res.status(500).json({ error: 'Errore interno del server' });
++    }
++  });
++
+   // …altre rotte…
+
+I passi da seguire su Replit:
+	1.	Apri server/routes.ts, individua e rimuovi (o commenta) la vecchia rotta app.get('/api/deals/:id', …).
+	2.	Incolla la nuova definizione qui sopra, sostituendo XXX con il numero di linea corretto.
+	3.	Salva, rideploya l’app.
+	4.	Riprova a cliccare su una sinergia: il link /deals/:id ora userà sempre questa rotta SQL-diretta.
+
+Fammi sapere se così il dettaglio del deal si carica regolarmente!

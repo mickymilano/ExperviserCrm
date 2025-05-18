@@ -1278,7 +1278,7 @@ export function registerRoutes(app: any) {
     }
   });
   
-  // Ottieni un singolo deal
+  // Ottieni un singolo deal - implementazione SQL diretta
   app.get('/api/deals/:id', authenticate, async (req, res) => {
     try {
       const dealId = parseInt(req.params.id);
@@ -1287,8 +1287,10 @@ export function registerRoutes(app: any) {
         return res.status(400).json({ message: 'ID deal non valido' });
       }
       
-      // Utilizziamo SQL diretto per evitare problemi con le librerie ORM
-      const pool = storage.db.get?.pool || require('./db').pool;
+      // Importiamo direttamente il pool dal modulo db.ts
+      const { pool } = require('./db');
+      
+      console.log(`[DIRECT SQL] Fetching deal with id ${dealId}`);
       
       // Query per il deal
       const dealResult = await pool.query(`
@@ -1297,8 +1299,11 @@ export function registerRoutes(app: any) {
       `, [dealId]);
       
       if (dealResult.rows.length === 0) {
+        console.log(`[DIRECT SQL] Deal with id ${dealId} not found`);
         return res.status(404).json({ message: 'Deal non trovato' });
       }
+      
+      console.log(`[DIRECT SQL] Deal found:`, JSON.stringify(dealResult.rows[0]));
       
       const deal = dealResult.rows[0];
       
@@ -1321,6 +1326,8 @@ export function registerRoutes(app: any) {
         branchId: deal.branch_id
       };
       
+      console.log(`[DIRECT SQL] Converting to camelCase:`, JSON.stringify(dealData));
+      
       // Ottieni informazioni di contatto
       let contactData = null;
       if (dealData.contactId) {
@@ -1339,6 +1346,7 @@ export function registerRoutes(app: any) {
             phone: contact.phone,
             status: contact.status
           };
+          console.log(`[DIRECT SQL] Contact data found:`, JSON.stringify(contactData));
         }
       }
       
@@ -1362,6 +1370,7 @@ export function registerRoutes(app: any) {
             phone: company.phone,
             tags: company.tags
           };
+          console.log(`[DIRECT SQL] Company data found:`, JSON.stringify(companyData));
         }
       }
       
@@ -1380,6 +1389,7 @@ export function registerRoutes(app: any) {
             name: stage.name,
             order: stage.order
           };
+          console.log(`[DIRECT SQL] Stage data found:`, JSON.stringify(stageData));
         }
       }
       
@@ -1391,10 +1401,12 @@ export function registerRoutes(app: any) {
         stage: stageData
       };
       
+      console.log(`[DIRECT SQL] Sending response:`, JSON.stringify(responseData));
+      
       res.json(responseData);
       
     } catch (error) {
-      console.error('Error fetching deal:', error);
+      console.error('[DIRECT SQL] Error fetching deal:', error);
       res.status(500).json({ message: 'Errore durante il recupero del deal' });
     }
   });
