@@ -68,11 +68,21 @@ router.get('/', authenticateJWT, async (req: Request, res: Response) => {
   try {
     console.log('API /api/branches: retrieving branches from storage');
     const branches = await storage.getBranches();
-    console.log(`API /api/branches: found ${branches.length} branches in storage`);
-    res.json(branches);
+    
+    // Debug: log dettagliato delle filiali recuperate
+    if (branches && branches.length > 0) {
+      console.log(`API /api/branches: found ${branches.length} branches in storage`);
+      console.log('API /api/branches: first branch data sample:', JSON.stringify(branches[0]));
+    } else {
+      console.log('API /api/branches: no branches found in storage');
+    }
+    
+    // Assicuriamo di restituire sempre un array
+    res.json(branches || []);
   } catch (error) {
     console.error('Error retrieving branches:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    console.error('Error details:', error instanceof Error ? error.message : 'Unknown error');
+    res.status(500).json({ message: 'Internal server error', details: error instanceof Error ? error.message : null });
   }
 });
 

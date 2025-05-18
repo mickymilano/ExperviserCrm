@@ -3271,7 +3271,14 @@ export class PostgresStorage implements IStorage {
         ORDER BY b.name
       `;
       
+      console.log('PostgresStorage.getBranches: executing query:', query);
       const result = await pool.query(query);
+      console.log('PostgresStorage.getBranches: query result rows:', result.rows.length);
+      
+      if (result.rows.length > 0) {
+        console.log('PostgresStorage.getBranches: first row sample:', JSON.stringify(result.rows[0]));
+      }
+      
       const branchesWithCompanyName = result.rows.map(row => ({
         id: row.id,
         companyId: row.company_id,
@@ -3296,10 +3303,16 @@ export class PostgresStorage implements IStorage {
       }));
       
       console.log(`Retrieved ${branchesWithCompanyName.length} branches with company names`);
-      return branchesWithCompanyName;
+      
+      // Ritorniamo sempre un array, anche se vuoto
+      return branchesWithCompanyName || [];
     } catch (err) {
       console.error('Error retrieving branches:', err);
-      throw err;
+      console.error('Error details:', err instanceof Error ? err.message : 'Unknown error');
+      
+      // In caso di errore, restituiamo un array vuoto invece di generare un errore
+      // Questo evita che l'applicazione si interrompa, ma registra comunque l'errore
+      return [];
     }
   }
 
