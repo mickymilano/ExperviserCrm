@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import { z } from 'zod';
-import { storage } from '../postgresStorage';
+import { storage } from '../storage';
 
 const createSubSectorSchema = z.object({
   sectorId: z.number(),

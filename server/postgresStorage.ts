@@ -3444,4 +3444,123 @@ export class PostgresStorage implements IStorage {
       throw err;
     }
   }
+
+  // SECTOR, SUBSECTOR, JOB TITLE OPERATIONS
+  
+  async getSectors(): Promise<Sector[]> {
+    console.log('PostgresStorage.getSectors: retrieving all sectors');
+    try {
+      return await db
+        .select()
+        .from(sectors)
+        .orderBy(asc(sectors.name));
+    } catch (err) {
+      console.error('Error retrieving sectors:', err);
+      throw err;
+    }
+  }
+  
+  async createSector(data: { name: string }): Promise<Sector> {
+    console.log(`PostgresStorage.createSector: creating sector "${data.name}"`);
+    try {
+      const [newSector] = await db
+        .insert(sectors)
+        .values(data)
+        .returning();
+      return newSector;
+    } catch (err) {
+      console.error('Error creating sector:', err);
+      throw err;
+    }
+  }
+  
+  async getSubSectors(opts: { sectorId: number; search: string }): Promise<SubSector[]> {
+    console.log(`PostgresStorage.getSubSectors: retrieving subsectors for sector ${opts.sectorId} with search "${opts.search}"`);
+    try {
+      const query = db
+        .select()
+        .from(sub_sectors)
+        .where(eq(sub_sectors.sectorId, opts.sectorId))
+        .orderBy(asc(sub_sectors.name));
+      
+      // Se è presente una stringa di ricerca, filtriamo i risultati
+      if (opts.search && opts.search.trim() !== '') {
+        return await query.where(sql`LOWER(${sub_sectors.name}) LIKE LOWER(${'%' + opts.search + '%'})`);
+      }
+      
+      return await query;
+    } catch (err) {
+      console.error(`Error retrieving subsectors for sector ${opts.sectorId}:`, err);
+      throw err;
+    }
+  }
+  
+  async createSubSector(data: { sectorId: number; name: string }): Promise<SubSector> {
+    console.log(`PostgresStorage.createSubSector: creating subsector "${data.name}" for sector ${data.sectorId}`);
+    try {
+      // Verifichiamo che il settore esista
+      const [sector] = await db
+        .select()
+        .from(sectors)
+        .where(eq(sectors.id, data.sectorId));
+      
+      if (!sector) {
+        throw new Error(`Sector with id ${data.sectorId} not found`);
+      }
+      
+      const [newSubSector] = await db
+        .insert(sub_sectors)
+        .values(data)
+        .returning();
+      return newSubSector;
+    } catch (err) {
+      console.error('Error creating subsector:', err);
+      throw err;
+    }
+  }
+  
+  async getJobTitles(opts: { subSectorId: number; search: string }): Promise<JobTitle[]> {
+    console.log(`PostgresStorage.getJobTitles: retrieving job titles for subsector ${opts.subSectorId} with search "${opts.search}"`);
+    try {
+      const query = db
+        .select()
+        .from(job_titles)
+        .where(eq(job_titles.subSectorId, opts.subSectorId))
+        .orderBy(asc(job_titles.name));
+      
+      // Se è presente una stringa di ricerca, filtriamo i risultati
+      if (opts.search && opts.search.trim() !== '') {
+        return await query.where(sql`LOWER(${job_titles.name}) LIKE LOWER(${'%' + opts.search + '%'})`);
+      }
+      
+      return await query;
+    } catch (err) {
+      console.error(`Error retrieving job titles for subsector ${opts.subSectorId}:`, err);
+      throw err;
+    }
+  }
+  
+  async createJobTitle(data: { subSectorId: number; name: string }): Promise<JobTitle> {
+    console.log(`PostgresStorage.createJobTitle: creating job title "${data.name}" for subsector ${data.subSectorId}`);
+    try {
+      // Verifichiamo che il sottosettore esista
+      const [subSector] = await db
+        .select()
+        .from(sub_sectors)
+        .where(eq(sub_sectors.id, data.subSectorId));
+      
+      if (!subSector) {
+        throw new Error(`SubSector with id ${data.subSectorId} not found`);
+      }
+      
+      const [newJobTitle] = await db
+        .insert(job_titles)
+        .values(data)
+        .returning();
+      return newJobTitle;
+    } catch (err) {
+      console.error('Error creating job title:', err);
+      throw err;
+    }
+  }
 }
