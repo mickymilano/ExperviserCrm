@@ -301,7 +301,37 @@
           "stage": "Fase",
           "expectedCloseDate": "Data di chiusura prevista",
           "viewDetails": "Vedi dettagli"
-        }
+        },
+        "back": "Indietro",
+        "edit": "Modifica",
+        "delete": "Elimina",
+        "contactNotFound": "Contatto Non Trovato",
+        "contactNotFoundDescription": "Il contatto che stai cercando non esiste o non hai accesso.",
+        "returnToContacts": "Torna ai Contatti",
+        "tabs": {
+          "overview": "Panoramica",
+          "companies": "Aziende",
+          "deals": "Opportunità",
+          "activities": "Attività"
+        },
+        "contactDetails": "Dettagli Contatto",
+        "at": "presso",
+        "workEmail": "lavoro",
+        "personalEmail": "personale",
+        "officePhone": "ufficio",
+        "officePhoneExt": "ufficio",
+        "mobilePhone": "cellulare",
+        "personalPhone": "personale",
+        "jobDescription": "Descrizione Ruolo",
+        "deals": "Opportunità",
+        "dealsAssociatedWith": "Opportunità associate a",
+        "unnamedDeal": "Opportunità senza nome",
+        "value": "Valore",
+        "view": "Visualizza",
+        "viewAllDeals": "Visualizza tutte le {{count}} opportunità",
+        "noDealsAssociated": "Nessuna opportunità associata",
+        "createNewDeal": "Crea Nuova Opportunità",
+        "notes": "Note"
       }
     },
     "branchContacts": {
