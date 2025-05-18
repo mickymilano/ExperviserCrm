@@ -190,6 +190,8 @@
     "special_relationships": "Relazioni commerciali speciali che coinvolgono questo contatto",
     "no_synergies_found": "Nessuna sinergia trovata",
     "create_synergy": "Crea sinergia",
+    "feature_disabled_title": "Funzionalità disabilitata",
+    "feature_disabled_message": "Le sinergie possono essere create solo nel contesto delle opportunità.",
     "view_all": "Visualizza tutte",
     "synergy_contacts": "Contatti sinergia",
     "add_contacts": "Aggiungi contatti",

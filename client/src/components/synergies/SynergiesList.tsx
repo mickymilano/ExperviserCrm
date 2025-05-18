@@ -203,7 +203,13 @@ export function SynergiesList({
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={() => setIsCreateModalOpen(true)}
+                onClick={() => {
+                  toast({
+                    title: t('synergies.feature_disabled_title') || 'Funzionalità disabilitata',
+                    description: t('synergies.feature_disabled_message') || 'Le sinergie possono essere create solo nel contesto delle opportunità.',
+                    variant: "default"
+                  });
+                }}
               >
                 <Plus className="h-4 w-4 mr-1" />
                 {t('synergies.create_synergy')}
