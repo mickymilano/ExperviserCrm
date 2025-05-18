@@ -38,9 +38,14 @@ export async function getJobTitles(req: Request, res: Response) {
 // Ottiene un job title specifico per ID
 export async function getJobTitle(req: Request, res: Response) {
   const id = Number(req.params.id);
+  const subSectorId = Number(req.params.subSectorId);
   
   if (isNaN(id)) {
     return res.status(400).json({ message: 'ID job title non valido' });
+  }
+  
+  if (isNaN(subSectorId)) {
+    return res.status(400).json({ message: 'ID sottosettore non valido' });
   }
   
   try {
@@ -48,6 +53,13 @@ export async function getJobTitle(req: Request, res: Response) {
     
     if (!jobTitle) {
       return res.status(404).json({ message: 'Job title non trovato' });
+    }
+    
+    // Verifica che il job title appartenga effettivamente al sottosettore richiesto
+    if (jobTitle.subSectorId !== subSectorId) {
+      return res.status(404).json({ 
+        message: `Job title con ID ${id} non appartiene al sottosettore con ID ${subSectorId}` 
+      });
     }
     
     res.json(jobTitle);
@@ -96,9 +108,14 @@ export async function createJobTitle(req: Request, res: Response) {
 export async function updateJobTitle(req: Request, res: Response) {
   try {
     const id = Number(req.params.id);
+    const subSectorId = Number(req.params.subSectorId);
     
     if (isNaN(id)) {
       return res.status(400).json({ message: 'ID job title non valido' });
+    }
+    
+    if (isNaN(subSectorId)) {
+      return res.status(400).json({ message: 'ID sottosettore non valido' });
     }
     
     // Validazione dei dati di aggiornamento
@@ -109,6 +126,13 @@ export async function updateJobTitle(req: Request, res: Response) {
     
     if (!existingJobTitle) {
       return res.status(404).json({ message: 'Job title non trovato' });
+    }
+    
+    // Verifica che il job title appartenga effettivamente al sottosettore richiesto
+    if (existingJobTitle.subSectorId !== subSectorId) {
+      return res.status(404).json({ 
+        message: `Job title con ID ${id} non appartiene al sottosettore con ID ${subSectorId}` 
+      });
     }
     
     // Aggiorniamo il job title
@@ -129,9 +153,14 @@ export async function updateJobTitle(req: Request, res: Response) {
 export async function deleteJobTitle(req: Request, res: Response) {
   try {
     const id = Number(req.params.id);
+    const subSectorId = Number(req.params.subSectorId);
     
     if (isNaN(id)) {
       return res.status(400).json({ message: 'ID job title non valido' });
+    }
+    
+    if (isNaN(subSectorId)) {
+      return res.status(400).json({ message: 'ID sottosettore non valido' });
     }
     
     // Verifichiamo che il job title esista
@@ -139,6 +168,13 @@ export async function deleteJobTitle(req: Request, res: Response) {
     
     if (!existingJobTitle) {
       return res.status(404).json({ message: 'Job title non trovato' });
+    }
+    
+    // Verifica che il job title appartenga effettivamente al sottosettore richiesto
+    if (existingJobTitle.subSectorId !== subSectorId) {
+      return res.status(404).json({ 
+        message: `Job title con ID ${id} non appartiene al sottosettore con ID ${subSectorId}` 
+      });
     }
     
     // Eliminiamo il job title

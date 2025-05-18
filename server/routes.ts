@@ -2320,13 +2320,13 @@ export function registerRoutes(app: any) {
   app.post('/api/subsectors/:subSectorId/jobtitles', authenticate, isAdmin, createJobTitle);
   
   // Ottieni singolo job title per ID
-  app.get('/api/jobtitles/:id', authenticate, getJobTitle);
+  app.get('/api/subsectors/:subSectorId/jobtitles/:id', authenticate, getJobTitle);
   
   // Aggiorna un job title esistente
-  app.patch('/api/jobtitles/:id', authenticate, isAdmin, updateJobTitle);
+  app.patch('/api/subsectors/:subSectorId/jobtitles/:id', authenticate, isAdmin, updateJobTitle);
   
   // Elimina un job title
-  app.delete('/api/jobtitles/:id', authenticate, isAdmin, deleteJobTitle);
+  app.delete('/api/subsectors/:subSectorId/jobtitles/:id', authenticate, isAdmin, deleteJobTitle);
   
   // Crea il server HTTP
   const httpServer = createServer(app);
