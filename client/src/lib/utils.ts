@@ -65,20 +65,68 @@ export function formatNumber(value: number, locale = 'it-IT'): string {
 export function formatPhoneNumber(phone: string | null | undefined): string {
   if (!phone) return '';
   
-  // Rimuovi tutti i caratteri non numerici
-  const cleaned = phone.replace(/\D/g, '');
+  let formattedPhone = phone.trim();
+  
+  // Se il numero è già formattato con il prefisso internazionale (+), lo processiamo in modo speciale
+  if (formattedPhone.startsWith('+')) {
+    // Conserva il + originale
+    const cleaned = formattedPhone.replace(/[^\d+]/g, '');
+    
+    // Gestione specifica per numeri italiani (formato +39)
+    if (cleaned.startsWith('+39') && cleaned.length >= 12) {
+      return `${cleaned.slice(0, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(6, 9)} ${cleaned.slice(9)}`;
+    }
+    
+    // Gestione per altri numeri internazionali
+    if (cleaned.length > 3) {
+      // Separa il prefisso internazionale dal resto del numero
+      const countryCode = cleaned.slice(0, cleaned.startsWith('+') ? 3 : 2);
+      const restOfNumber = cleaned.slice(countryCode.length);
+      
+      // Formatta il resto del numero in gruppi di 3-2-2-2...
+      const formatted = [];
+      let i = 0;
+      
+      // Prima parte (area code) - 3 cifre
+      if (restOfNumber.length >= 3) {
+        formatted.push(restOfNumber.slice(i, 3));
+        i += 3;
+      }
+      
+      // Resto del numero in gruppi di 2-3 cifre
+      while (i < restOfNumber.length) {
+        const chunkSize = i === 3 ? 3 : 2;
+        const end = Math.min(i + chunkSize, restOfNumber.length);
+        formatted.push(restOfNumber.slice(i, end));
+        i = end;
+      }
+      
+      return `${countryCode} ${formatted.join(' ')}`;
+    }
+  }
+  
+  // Rimuovi tutti i caratteri non numerici per i numeri senza prefisso
+  const cleaned = formattedPhone.replace(/\D/g, '');
   
   // Formatta in base alla lunghezza
-  if (cleaned.length === 10) { // US format: (XXX) XXX-XXXX
-    return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6, 10)}`;
-  } else if (cleaned.length === 11 && cleaned.startsWith('1')) { // US with country code
-    return `+1 (${cleaned.slice(1, 4)}) ${cleaned.slice(4, 7)}-${cleaned.slice(7, 11)}`;
-  } else if (cleaned.length > 10) { // International format
-    return `+${cleaned.slice(0, cleaned.length-10)} ${cleaned.slice(cleaned.length-10, cleaned.length-7)} ${cleaned.slice(cleaned.length-7, cleaned.length-4)} ${cleaned.slice(cleaned.length-4)}`;
+  if (cleaned.length === 10) { 
+    // Formato 10 cifre: XXX XXX XXXX (formato standard)
+    return `${cleaned.slice(0, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(6, 10)}`;
+  } else if (cleaned.length === 11 && cleaned.startsWith('3')) { 
+    // Formato cellulare italiano (senza +39): 3XX XXX XXXX
+    return `${cleaned.slice(0, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(6, 9)} ${cleaned.slice(9)}`;
+  } else if (cleaned.length === 11 && cleaned.startsWith('1')) { 
+    // US with country code
+    return `+1 ${cleaned.slice(1, 4)} ${cleaned.slice(4, 7)} ${cleaned.slice(7, 11)}`;
+  } else if (cleaned.length > 10) {
+    // Formato internazionale generico
+    // Assumiamo che le prime 1-3 cifre siano il prefisso internazionale
+    const countryCodeLength = cleaned.length <= 12 ? 2 : 3;
+    return `+${cleaned.slice(0, countryCodeLength)} ${cleaned.slice(countryCodeLength, countryCodeLength+3)} ${cleaned.slice(countryCodeLength+3, countryCodeLength+6)} ${cleaned.slice(countryCodeLength+6)}`;
   }
   
   // Fallback per formati sconosciuti o incompleti
-  return phone;
+  return formattedPhone;
 }
 
 export function generateAvatarColor(text: string): string {
