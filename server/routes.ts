@@ -2268,9 +2268,9 @@ export function registerRoutes(app: any) {
         });
       }
       
-      // Verifica che la chiave API abbia un formato valido (inizia con AIza)
-      if (!googleMapsApiKey.startsWith('AIza')) {
-        console.error('GOOGLE_MAPS_API_KEY non ha un formato valido. Dovrebbe iniziare con "AIza".');
+      // Verifica che la chiave API non sia troppo corta (senza controllo restrittivo sul prefisso)
+      if (googleMapsApiKey.length < 10) {
+        console.error('GOOGLE_MAPS_API_KEY non sembra valida (troppo corta).');
         return res.status(500).json({ 
           error: 'Formato della chiave API di Google Maps non valido', 
           googleMapsApiKey: null 
