@@ -32,24 +32,37 @@ export default function Contacts() {
   const companyIdFromUrl = searchParams.get('companyId');
   const companyNameFromUrl = searchParams.get('companyName');
   
-  // Se il parametro di creazione da azienda è presente, apri il modal
+  // Verifica se siamo in modalità creazione nuovo contatto
+  // Può essere richiamato sia da "contacts/new" che da parametri URL
   useEffect(() => {
-    if (companyIdFromUrl && companyNameFromUrl) {
-      setSelectedContact({
+    // Controlla se siamo nella pagina "new" (direttamente o tramite query params)
+    const isNewContactPage = location.includes("/contacts/new") || companyIdFromUrl;
+    
+    if (isNewContactPage) {
+      console.log("Apertura automatica modale contatto con companyId:", companyIdFromUrl);
+      
+      // Prepariamo i dati iniziali per il modale
+      const initialContactData: any = {
         firstName: '',
         lastName: '',
-        companyEmail: '',
-        areasOfActivity: [{
+        companyEmail: ''
+      };
+      
+      // Se abbiamo informazioni sull'azienda, aggiungiamole
+      if (companyIdFromUrl && companyNameFromUrl) {
+        initialContactData.areasOfActivity = [{
           companyId: parseInt(companyIdFromUrl),
           companyName: decodeURIComponent(companyNameFromUrl),
           isPrimary: true,
           role: '',
           jobDescription: `Works at ${decodeURIComponent(companyNameFromUrl)}`
-        }]
-      } as any);
+        }];
+      }
+      
+      setSelectedContact(initialContactData);
       setShowModal(true);
     }
-  }, [companyIdFromUrl, companyNameFromUrl]);
+  }, [location, companyIdFromUrl, companyNameFromUrl]);
   
   // Debug: Aggiungiamo console.log per verificare i dati ricevuti
   console.log("Contacts Page - contacts:", contacts);

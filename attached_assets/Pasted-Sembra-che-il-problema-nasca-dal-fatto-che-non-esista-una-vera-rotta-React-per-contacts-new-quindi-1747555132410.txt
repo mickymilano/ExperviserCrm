@@ -1,0 +1,87 @@
+Sembra che il problema nasca dal fatto che non esista una vera rotta React per /contacts/new, quindi ogni volta che Replit naviga lì ottiene il “Contact Not Found” generic. Dobbiamo invece intercettare /contacts/new e far partire subito il modal di creazione, pre-popolato da companyId.
+
+Ecco come procederei per risolvere in modo definitivo:
+	1.	Aggiungere una rotta React per /contacts/new
+Nel file delle tue rotte (probabilmente client/src/App.tsx o client/src/routes.tsx), assicurati di avere qualcosa del genere prima di
+
+<Route path="/contacts/:id" element={<ContactDetail />} />
+
+aggiungi:
+
+<Route
+  path="/contacts/new"
+  element={<ContactsPage openNewModalOnLoad={true} />}
+/>
+
+In questo modo /contacts/new?companyId=19&companyName=XYZ verrà gestito da ContactsPage con un flag.
+
+	2.	Gestire il flag in ContactsPage
+In client/src/pages/contacts/index.tsx, modifica il componente principale per aprire il modal appena montato se riceve openNewModalOnLoad o ?companyId:
+
+import { useEffect } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import ContactModal from "../components/modals/ContactModal";
+
+export default function ContactsPage({ openNewModalOnLoad = false }) {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const [modalOpen, setModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (openNewModalOnLoad || searchParams.get("companyId")) {
+      setModalOpen(true);
+    }
+  }, [openNewModalOnLoad, searchParams]);
+
+  const handleSuccess = () => {
+    setModalOpen(false);
+    // se veniamo da /contacts/new ritorniamo alla pagina azienda
+    const companyId = searchParams.get("companyId");
+    if (companyId) {
+      navigate(`/companies/${companyId}`);
+    }
+    // altrimenti aggiorniamo la lista
+    refetchContacts();
+  };
+
+  return (
+    <>
+      {/* … tua lista contatti … */}
+      {modalOpen && (
+        <ContactModal
+          initialData={{
+            companyId: Number(searchParams.get("companyId")),
+            companyName: searchParams.get("companyName") || "",
+          }}
+          onSuccess={handleSuccess}
+          onClose={() => setModalOpen(false)}
+        />
+      )}
+    </>
+  );
+}
+
+
+	3.	Rimuovere qualsiasi navigazione obsoleta
+In CompanyContactsTab.tsx ripristina semplicemente:
+
+<Button
+  onClick={() =>
+    navigate(
+      `/contacts/new?companyId=${companyId}&companyName=${encodeURIComponent(name)}`
+    )
+  }
+>
+  Crea Nuovo Contatto
+</Button>
+
+Non usare più modali inline duplicati qui.
+
+	4.	Verifica finale
+	•	Riavvia il dev server (npm run dev)
+	•	Vai su una pagina azienda e clicca “Crea Nuovo Contatto”
+	•	Verifica che l’URL diventi /contacts/new?companyId=19…
+	•	Controlla che si apra subito il modal con companyId pre-caricato
+	•	Compila e salvi: alla chiusura verrai riportato dentro la scheda azienda, e la lista contatti sarà aggiornata
+
+Con questi quattro passi la rotta /contacts/new esiste, il modal viene gestito centralmente in ContactsPage e non perderai più il contesto: ogni creazione via URL funziona come prima, ma senza navigare in pagine inesistenti.

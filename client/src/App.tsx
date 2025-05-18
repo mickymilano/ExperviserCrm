@@ -73,7 +73,7 @@ export default function App() {
           </Route>
           
           {/* Routes for Contacts */}
-          <Route path="/contacts">
+          <Route path="/contacts/new">
             <ProtectedRoute>
               <LayoutPage component={ContactsPage} />
             </ProtectedRoute>
@@ -81,6 +81,11 @@ export default function App() {
           <Route path="/contacts/:id">
             <ProtectedRoute>
               <LayoutPage component={ContactDetailPage} />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/contacts">
+            <ProtectedRoute>
+              <LayoutPage component={ContactsPage} />
             </ProtectedRoute>
           </Route>
           
