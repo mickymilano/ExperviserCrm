@@ -346,8 +346,8 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
     } catch (error) {
       console.error("Errore nella disassociazione:", error);
       toast({
-        title: "Errore",
-        description: "Impossibile disassociare il contatto dall'azienda",
+        title: t("company.contacts.error"),
+        description: t("company.contacts.notifications.contactDisassociatedError"),
         variant: "destructive",
       });
     }
@@ -420,12 +420,12 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
           ) : contactsError ? (
             <div className="text-center py-8">
               <X className="h-12 w-12 mx-auto mb-4 text-destructive" />
-              <h3 className="text-lg font-medium mb-2">Errore</h3>
+              <h3 className="text-lg font-medium mb-2">{t("company.contacts.error")}</h3>
               <p className="text-muted-foreground mb-4">
-                Impossibile caricare i contatti di questa azienda.
+                {t("company.contacts.errorLoadingContacts")}
               </p>
               <Button onClick={() => refetchContacts()}>
-                Riprova
+                {t("company.contacts.retry")}
               </Button>
             </div>
           ) : contacts && contacts.length > 0 ? (
@@ -506,7 +506,7 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
                           variant="ghost" 
                           size="sm" 
                           onClick={() => navigate(`/contacts/${contact.id}`)}
-                          title="Visualizza la scheda completa del contatto"
+                          title={t("company.contacts.viewContactDetails")}
                           aria-label="Visualizza profilo contatto"
                         >
                           Visualizza Profilo
@@ -516,7 +516,7 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
                           size="sm" 
                           className="text-destructive border-destructive hover:bg-destructive/10"
                           onClick={() => disassociateContact(contact.id, `${contact.firstName} ${contact.lastName}`)}
-                          title="Rimuovi questo contatto dall'azienda corrente"
+                          title={t("company.contacts.removeFromCompany")}
                           aria-label="Disassocia contatto"
                         >
                           Disassocia
