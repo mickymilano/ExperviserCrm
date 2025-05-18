@@ -1282,13 +1282,117 @@ export function registerRoutes(app: any) {
   app.get('/api/deals/:id', authenticate, async (req, res) => {
     try {
       const dealId = parseInt(req.params.id);
-      const deal = await storage.getDeal(dealId);
       
-      if (!deal) {
+      if (isNaN(dealId)) {
+        return res.status(400).json({ message: 'ID deal non valido' });
+      }
+      
+      // Utilizziamo SQL diretto per evitare problemi con le librerie ORM
+      const pool = storage.db.get?.pool || require('./db').pool;
+      
+      // Query per il deal
+      const dealResult = await pool.query(`
+        SELECT * FROM deals 
+        WHERE id = $1
+      `, [dealId]);
+      
+      if (dealResult.rows.length === 0) {
         return res.status(404).json({ message: 'Deal non trovato' });
       }
       
-      res.json(deal);
+      const deal = dealResult.rows[0];
+      
+      // Convertiamo in camelCase
+      const dealData = {
+        id: deal.id,
+        name: deal.name,
+        value: deal.value,
+        stageId: deal.stage_id,
+        contactId: deal.contact_id,
+        companyId: deal.company_id,
+        expectedCloseDate: deal.expected_close_date,
+        notes: deal.notes,
+        tags: deal.tags,
+        createdAt: deal.created_at,
+        updatedAt: deal.updated_at,
+        status: deal.status,
+        lastContactedAt: deal.last_contacted_at,
+        nextFollowUpAt: deal.next_follow_up_at,
+        branchId: deal.branch_id
+      };
+      
+      // Ottieni informazioni di contatto
+      let contactData = null;
+      if (dealData.contactId) {
+        const contactResult = await pool.query(`
+          SELECT * FROM contacts WHERE id = $1
+        `, [dealData.contactId]);
+        
+        if (contactResult.rows.length > 0) {
+          const contact = contactResult.rows[0];
+          // Convertiamo in camelCase
+          contactData = {
+            id: contact.id,
+            firstName: contact.first_name,
+            lastName: contact.last_name,
+            email: contact.email,
+            phone: contact.phone,
+            status: contact.status
+          };
+        }
+      }
+      
+      // Ottieni informazioni di azienda
+      let companyData = null;
+      if (dealData.companyId) {
+        const companyResult = await pool.query(`
+          SELECT * FROM companies WHERE id = $1
+        `, [dealData.companyId]);
+        
+        if (companyResult.rows.length > 0) {
+          const company = companyResult.rows[0];
+          // Convertiamo in camelCase
+          companyData = {
+            id: company.id,
+            name: company.name,
+            status: company.status,
+            address: company.address,
+            fullAddress: company.full_address,
+            email: company.email,
+            phone: company.phone,
+            tags: company.tags
+          };
+        }
+      }
+      
+      // Ottieni informazioni di stage
+      let stageData = null;
+      if (dealData.stageId) {
+        const stageResult = await pool.query(`
+          SELECT * FROM pipeline_stages WHERE id = $1
+        `, [dealData.stageId]);
+        
+        if (stageResult.rows.length > 0) {
+          const stage = stageResult.rows[0];
+          // Convertiamo in camelCase
+          stageData = {
+            id: stage.id,
+            name: stage.name,
+            order: stage.order
+          };
+        }
+      }
+      
+      // Assembla l'oggetto finale
+      const responseData = {
+        ...dealData,
+        contact: contactData,
+        company: companyData,
+        stage: stageData
+      };
+      
+      res.json(responseData);
+      
     } catch (error) {
       console.error('Error fetching deal:', error);
       res.status(500).json({ message: 'Errore durante il recupero del deal' });
