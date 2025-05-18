@@ -1111,6 +1111,56 @@ export function registerRoutes(app: any) {
     }
   });
   
+  // Endpoint per recuperare i deal associati a un'azienda
+  app.get('/api/companies/:id/deals', authenticate, async (req, res) => {
+    try {
+      const companyId = parseInt(req.params.id);
+      console.log(`API: Fetching deals for company ${companyId}`);
+      
+      // Query per ottenere tutti i deal associati a questa azienda
+      const dealsQuery = {
+        text: `
+          SELECT 
+            d.id, 
+            d.name,
+            d.description,
+            d.amount,
+            d.currency,
+            d.status,
+            d.stage_id AS "stageId",
+            d.probability,
+            d.expected_close_date AS "expectedCloseDate",
+            d.actual_close_date AS "actualCloseDate",
+            d.contact_id AS "contactId",
+            d.company_id AS "companyId",
+            d.product_id AS "productId",
+            d.source,
+            d.tags,
+            d.priority,
+            d.type,
+            d.created_at AS "createdAt",
+            d.updated_at AS "updatedAt",
+            ps.name AS "stageName",
+            COALESCE(c.first_name || ' ' || c.last_name, '') AS "contactName"
+          FROM deals d
+          LEFT JOIN pipeline_stages ps ON d.stage_id = ps.id
+          LEFT JOIN contacts c ON d.contact_id = c.id
+          WHERE d.company_id = $1 AND d.status != 'deleted'
+          ORDER BY d.updated_at DESC
+        `,
+        values: [companyId]
+      };
+      
+      const dealsResult = await pool.query(dealsQuery);
+      console.log(`Retrieved ${dealsResult.rows.length} deals for company ${companyId}`);
+      
+      res.json(dealsResult.rows);
+    } catch (error) {
+      console.error('Error fetching company deals:', error);
+      res.status(500).json({ message: 'Errore durante il recupero delle opportunità dell\'azienda' });
+    }
+  });
+  
   // Manteniamo anche la versione v2 per retrocompatibilità
   app.get('/api/v2/companies/:id/contacts', authenticate, async (req, res) => {
     try {
