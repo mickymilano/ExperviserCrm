@@ -422,6 +422,24 @@ export type InsertSynergy = z.infer<typeof insertSynergySchema>;
 export type ContactEmail = typeof contactEmails.$inferSelect;
 export type InsertContactEmail = z.infer<typeof insertContactEmailSchema>;
 
+// --- Settori, Sottosettori, Job Titles -------------------------------------
+export const sectorSchema = z.object({ id: z.number(), name: z.string() });
+export type Sector = z.infer<typeof sectorSchema>;
+
+export const subSectorSchema = z.object({
+  id: z.number(),
+  sectorId: z.number(),
+  name: z.string(),
+});
+export type SubSector = z.infer<typeof subSectorSchema>;
+
+export const jobTitleSchema = z.object({
+  id: z.number(),
+  subSectorId: z.number(),
+  name: z.string(),
+});
+export type JobTitle = z.infer<typeof jobTitleSchema>;
+
 /**
  * BRANCHES
  * Tabella delle filiali/sedi delle aziende

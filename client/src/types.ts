@@ -291,3 +291,7 @@ export interface Meeting {
   createdAt: Date | null;
   updatedAt: Date | null;
 }
+
+export interface Sector { id: number; name: string }
+export interface SubSector { id: number; sectorId: number; name: string }
+export interface JobTitle { id: number; subSectorId: number; name: string }

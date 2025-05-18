@@ -1,0 +1,18 @@
+BEGIN;
+CREATE TABLE IF NOT EXISTS sectors (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL UNIQUE
+);
+CREATE TABLE IF NOT EXISTS sub_sectors (
+  id SERIAL PRIMARY KEY,
+  sector_id INTEGER NOT NULL REFERENCES sectors(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  UNIQUE(sector_id, name)
+);
+CREATE TABLE IF NOT EXISTS job_titles (
+  id SERIAL PRIMARY KEY,
+  sub_sector_id INTEGER NOT NULL REFERENCES sub_sectors(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  UNIQUE(sub_sector_id, name)
+);
+COMMIT;
