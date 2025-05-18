@@ -215,7 +215,16 @@ export default function SynergiesPage() {
                       className="p-0 h-auto text-sm flex items-center"
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate(`/deals/${synergy.dealId}`);
+                        // Creiamo una funzione di navigazione più sicura che verifichi prima l'esistenza del deal
+                        const deal = deals.find(d => d.id === synergy.dealId);
+                        if (deal) {
+                          console.log("Navigando al deal esistente:", deal);
+                          navigate(`/deals/${synergy.dealId}`);
+                        } else {
+                          console.error("Deal non trovato con ID:", synergy.dealId);
+                          // Mostriamo un messaggio all'utente
+                          alert(t('synergies.deal_not_found_error'));
+                        }
                       }}
                     >
                       <DollarSign className="h-3 w-3 mr-1" />
