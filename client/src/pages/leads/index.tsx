@@ -7,10 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LeadModal from "@/components/modals/LeadModal";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useTranslation } from "react-i18next";
 
 export default function LeadsPage() {
   const [showLeadModal, setShowLeadModal] = useState(false);
   const [_, navigate] = useLocation();
+  const { t } = useTranslation();
   
   const { data: leads = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/leads"],
@@ -19,10 +21,10 @@ export default function LeadsPage() {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Lead</h1>
+        <h1 className="text-2xl font-bold">{t('lead.title')}</h1>
         <Button onClick={() => setShowLeadModal(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          Aggiungi Lead
+          {t('lead.addLead')}
         </Button>
       </div>
       
@@ -67,13 +69,13 @@ export default function LeadsPage() {
                     {`${lead.firstName || ''} ${lead.lastName || ''}`}
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    {lead.source || 'No source'} · {lead.status || 'New'}
+                    {lead.source || t('lead.noSource')} · {lead.status || t('lead.newStatus')}
                   </p>
                 </CardHeader>
                 <CardContent className="pb-2">
                   {/* Mostro sempre l'azienda come prima informazione */}
                   <div className="flex items-center text-sm mb-1 font-medium">
-                    <span>{lead.company || 'Nessuna azienda'}</span>
+                    <span>{lead.company || t('lead.noCompany')}</span>
                   </div>
                   
                   {(lead.email || lead.companyEmail || lead.privateEmail) && (

@@ -90,10 +90,23 @@
   "navigation.calendar": "Calendario",
   "navigation.reports": "Report",
   "navigation.settings": "Impostazioni",
+  "navigation.branches": "Filiali",
   
   "table.actions": "Azioni",
   "table.noRecords": "Nessun record trovato",
   "table.loading": "Caricamento in corso...",
+  
+  "lead.noSource": "Nessuna fonte",
+  "lead.newStatus": "Nuovo",
+  "lead.qualifiedStatus": "Qualificato",
+  "lead.unqualifiedStatus": "Non qualificato",
+  "lead.addLead": "Aggiungi Lead",
+  "lead.allLeads": "Tutti i lead",
+  "lead.newLeads": "Nuovi lead",
+  "lead.qualifiedLeads": "Lead qualificati",
+  "lead.unqualifiedLeads": "Lead non qualificati",
+  "lead.noCompany": "Nessuna azienda",
+  "lead.view": "Visualizza",
   
   "modal.addCompany": "Aggiungi Azienda",
   "modal.editCompany": "Modifica Azienda",
