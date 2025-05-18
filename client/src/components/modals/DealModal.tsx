@@ -600,14 +600,13 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       <AlertDialog open={showNoCompanyAlert} onOpenChange={setShowNoCompanyAlert}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Create Deal Without Company?</AlertDialogTitle>
+            <AlertDialogTitle>{t("deal.alerts.noCompany")}</AlertDialogTitle>
             <AlertDialogDescription>
-              You're creating a deal without linking it to a company. This is not recommended.
-              Are you sure you want to proceed?
+              {t("deal.alerts.noCompanyDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("deal.form.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (formRef.current) {
@@ -643,7 +642,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{isEditMode ? "Edit Deal" : "Create New Deal"}</DialogTitle>
+            <DialogTitle>{isEditMode ? t("deal.editDeal") : t("deal.addDeal")}</DialogTitle>
           </DialogHeader>
           
           <form ref={formRef} onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
