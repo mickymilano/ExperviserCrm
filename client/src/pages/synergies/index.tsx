@@ -151,35 +151,35 @@ export default function SynergiesPage() {
                   </Badge>
                 </div>
                 <CardDescription>
-                  ID: {synergy.id} • Creata il {format(new Date(synergy.createdAt), 'dd/MM/yyyy')}
+                  {t('synergies.id', { id: synergy.id })} • {t('synergies.created_on', { date: format(new Date(synergy.createdAt), 'dd/MM/yyyy') })}
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-4">
                 {/* Informazioni principali in evidenza */}
                 <div className="grid grid-cols-3 gap-2 mb-4 bg-muted/20 p-2 rounded">
                   <div>
-                    <p className="text-xs font-medium text-muted-foreground">Contatto</p>
+                    <p className="text-xs font-medium text-muted-foreground">{t('synergies.contact')}</p>
                     <p className="text-sm font-medium">{getContactName(synergy.contactId)}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-medium text-muted-foreground">Deal</p>
+                    <p className="text-xs font-medium text-muted-foreground">{t('synergies.deal')}</p>
                     <p className="text-sm font-medium">{synergy.dealId ? getDealName(synergy.dealId) : 'N/A'}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-medium text-muted-foreground">Data inizio</p>
+                    <p className="text-xs font-medium text-muted-foreground">{t('synergies.start_date')}</p>
                     <p className="text-sm font-medium">{synergy.startDate ? format(new Date(synergy.startDate), 'dd/MM/yyyy') : 'N/A'}</p>
                   </div>
                 </div>
                 
                 <div className="mb-4">
-                  <p className="text-sm text-muted-foreground mb-1">Descrizione</p>
+                  <p className="text-sm text-muted-foreground mb-1">{t('synergies.description')}</p>
                   <p className="text-sm">
-                    {synergy.description || "Nessuna descrizione fornita"}
+                    {synergy.description || t('synergies.no_description')}
                   </p>
                 </div>
                 <div className="flex justify-between text-sm">
                   <div>
-                    <p className="text-muted-foreground mb-1">Contatto</p>
+                    <p className="text-muted-foreground mb-1">{t('synergies.contact')}</p>
                     <Button 
                       variant="link" 
                       className="p-0 h-auto text-sm flex items-center"
@@ -193,7 +193,7 @@ export default function SynergiesPage() {
                     </Button>
                   </div>
                   <div>
-                    <p className="text-muted-foreground mb-1">Azienda</p>
+                    <p className="text-muted-foreground mb-1">{t('synergies.company')}</p>
                     <Button 
                       variant="link" 
                       className="p-0 h-auto text-sm flex items-center"
