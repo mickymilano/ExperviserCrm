@@ -67,7 +67,11 @@ export default function ContactModal({ open, onOpenChange, initialData, onSucces
     enabled: !!companyIdFromUrl
   });
   
-  const companyName = companyData?.name || '';
+  // Debug company data for structure
+  console.log("Company data from query:", companyData);
+  
+  // Verifica la struttura dell'oggetto per accedere al nome
+  const companyName = companyData ? companyData.name || '' : '';
   
   // Prepare initial tags if they exist
   const initialTags = initialData?.tags ? initialData.tags.join(", ") : "";
