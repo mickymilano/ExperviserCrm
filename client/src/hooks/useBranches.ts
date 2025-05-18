@@ -12,14 +12,28 @@ export const useBranches = (companyId?: number) => {
       console.log('useBranches: iniziando la richiesta API', companyId ? `per l'azienda ${companyId}` : 'per tutte le filiali');
       
       try {
-        let result;
-        if (companyId) {
-          result = await apiRequest(`/api/branches/company/${companyId}`, { method: "GET" });
-        } else {
-          result = await apiRequest('/api/branches', { method: "GET" });
+        // Utilizziamo fetch direttamente per vedere l'errore completo
+        const url = companyId ? `/api/branches/company/${companyId}` : '/api/branches';
+        console.log('useBranches: chiamata fetch diretta a:', url);
+        
+        const response = await fetch(url);
+        console.log('useBranches: risposta fetch status:', response.status);
+        
+        if (!response.ok) {
+          console.error('useBranches: risposta non ok:', response.status, response.statusText);
+          // Proviamo a leggere l'errore come JSON
+          try {
+            const errorData = await response.json();
+            console.error('useBranches: dettaglio errore:', errorData);
+          } catch (e) {
+            console.error('useBranches: impossibile leggere error json');
+          }
+          return [];
         }
         
+        const result = await response.json();
         console.log('useBranches: risposta API ricevuta:', result);
+        
         // Se il risultato è null o undefined, restituiamo un array vuoto
         return Array.isArray(result) ? result : [];
       } catch (err) {
