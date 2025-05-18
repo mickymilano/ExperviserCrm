@@ -116,7 +116,8 @@ export default function AreasOfActivityManager({
       companyName: "",
       role: "",
       jobDescription: "",
-      isPrimary: false
+      isPrimary: false,
+      branchId: null
     });
     
     // Show success toast
@@ -189,7 +190,8 @@ export default function AreasOfActivityManager({
       companyName: "",
       role: "",
       jobDescription: "",
-      isPrimary: false
+      isPrimary: false,
+      branchId: null
     });
     setError(null);
   };
