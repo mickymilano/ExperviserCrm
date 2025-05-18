@@ -1608,15 +1608,21 @@ export function registerRoutes(app: any) {
         // Validazione dei dati con Zod (schema parziale per consentire aggiornamenti parziali)
         const patchDealSchema = z.object({
           name: z.string().optional(),
-          value: z.union([
-            z.number(),
-            z.string().refine((val) => {
-              const parsed = Number(val);
-              return !isNaN(parsed);
-            }, {
-              message: "Il valore deve essere un numero valido"
-            })
-          ]).optional(),
+          value: z.preprocess(
+            (val) => {
+              if (typeof val === 'string') {
+                const parsed = Number(val);
+                if (isNaN(parsed)) {
+                  // Non è possibile gestire l'errore qui, quindi manteniamo la stringa originale
+                  // che poi verrà intercettata dal validatore successivo
+                  return val;
+                }
+                return parsed;
+              }
+              return val;
+            },
+            z.number().optional()
+          ),
           stageId: z.number().optional(),
           companyId: z.number().nullable().optional(),
           contactId: z.number().nullable().optional(),
