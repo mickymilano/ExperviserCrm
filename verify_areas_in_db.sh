@@ -1,20 +1,21 @@
 #!/usr/bin/env bash
 COMPANY_ID=19
 
-echo "Verifica diretta nel database PostgreSQL per la company $COMPANY_ID"
-echo "-----------------------------------------------------------------"
+echo "Verifica diretta delle aree di attività nel database PostgreSQL"
+echo "-------------------------------------------------------------"
 
-echo -e "\n1. Verifica aree di attività:"
+# Verifica le aree di attività associate alla company
+echo -e "\nAree di attività per company ID $COMPANY_ID:"
 AREAS_SQL="SELECT * FROM areas_of_activity WHERE company_id = $COMPANY_ID;"
 psql $DATABASE_URL -c "$AREAS_SQL"
 
-echo -e "\n2. Verifica contatti associati:"
-CONTACTS_SQL="
-SELECT c.id, c.first_name, c.last_name, c.company_email, a.id as area_id, a.is_primary
-FROM contacts c
-JOIN areas_of_activity a ON c.id = a.contact_id
-WHERE a.company_id = $COMPANY_ID
-ORDER BY c.id;
-"
-psql $DATABASE_URL -c "$CONTACTS_SQL"
+# Lista dei contact_id associati
+echo -e "\nLista di contact_id associati alla company $COMPANY_ID:"
+CONTACT_IDS_SQL="SELECT contact_id FROM areas_of_activity WHERE company_id = $COMPANY_ID;"
+psql $DATABASE_URL -c "$CONTACT_IDS_SQL"
+
+# Conta totale 
+echo -e "\nNumero totale di contatti associati alla company $COMPANY_ID:"
+COUNT_SQL="SELECT COUNT(*) FROM areas_of_activity WHERE company_id = $COMPANY_ID;"
+psql $DATABASE_URL -c "$COUNT_SQL"
 

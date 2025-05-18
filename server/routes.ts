@@ -1045,45 +1045,59 @@ export function registerRoutes(app: any) {
     }
   });
   
-  // Ottieni i contatti associati ad un'azienda
-  app.get('/api/companies/:id/contacts', authenticate, async (req, res) => {
+  // Versione più semplice e robusta dell'endpoint per ricevere i contatti di un'azienda
+  app.get('/api/v2/companies/:id/contacts', authenticate, async (req, res) => {
     try {
       const companyId = parseInt(req.params.id);
+      console.log(`ENDPOINT V2: Fetching contacts for company ${companyId}`);
       
-      // Verifica se l'azienda esiste
-      const company = await storage.getCompany(companyId);
-      if (!company) {
-        return res.status(404).json({ message: 'Azienda non trovata' });
+      // Usa l'approccio più semplice e diretto:
+      // 1. Prima ottiene tutti gli ID dei contatti associati all'azienda
+      const queryAreas = {
+        text: "SELECT contact_id FROM areas_of_activity WHERE company_id = $1",
+        values: [companyId]
+      };
+      
+      const areasResult = await pool.query(queryAreas);
+      console.log(`Found ${areasResult.rows.length} areas for company ${companyId}`);
+      
+      if (areasResult.rows.length === 0) {
+        return res.json([]);
       }
-
-      // Query SQL diretta per estrarre i contatti associati all'azienda
-      const contactsQuery = `
-        SELECT 
-          c.id, 
-          c.first_name AS "firstName", 
-          c.last_name AS "lastName", 
-          c.status, 
-          c.company_email AS "companyEmail", 
-          c.private_email AS "privateEmail", 
-          c.mobile_phone AS "mobilePhone", 
-          c.office_phone AS "officePhone",
-          c.private_phone AS "privatePhone",
-          c.created_at AS "createdAt", 
-          c.updated_at AS "updatedAt"
-        FROM contacts c
-        JOIN areas_of_activity a ON c.id = a.contact_id
-        WHERE a.company_id = $1
-        ORDER BY c.first_name, c.last_name
-      `;
       
-      // Usa direttamente pool.query con parametri SQL sicuri
-      const { rows } = await pool.query(contactsQuery, [companyId]);
+      // Estrae gli ID dei contatti
+      const contactIds = areasResult.rows.map(row => row.contact_id);
+      console.log(`Contact IDs for company ${companyId}:`, contactIds);
       
-      console.log(`Retrieved ${rows.length} contacts for company ${companyId}`);
-      return res.json(rows);
+      // 2. Poi recupera i dettagli di quei contatti in una sola query
+      const contactsQuery = {
+        text: `
+          SELECT 
+            id, 
+            first_name AS "firstName", 
+            last_name AS "lastName", 
+            status, 
+            company_email AS "companyEmail", 
+            private_email AS "privateEmail", 
+            mobile_phone AS "mobilePhone"
+          FROM contacts 
+          WHERE id = ANY($1::int[])
+          ORDER BY first_name, last_name
+        `,
+        values: [contactIds]
+      };
+      
+      const contactsResult = await pool.query(contactsQuery);
+      const contacts = contactsResult.rows;
+      
+      console.log(`ENDPOINT V2: Retrieved ${contacts.length} contacts for company ${companyId}`);
+      return res.json(contacts);
     } catch (error) {
-      console.error('Error fetching company contacts:', error);
-      res.status(500).json({ message: 'Errore durante il recupero dei contatti dell\'azienda' });
+      console.error('Error in contact retrieval:', error);
+      res.status(500).json({ 
+        message: 'Errore durante il recupero dei contatti dell\'azienda',
+        error: error.message
+      });
     }
   });
 

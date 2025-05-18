@@ -22,9 +22,9 @@ echo "ID del contatto creato: $CONTACT_ID"
 echo -e "\nAttendo propagazione... (3 secondi)"
 sleep 3
 
-# Verifica se il contatto è stato associato all'azienda
-echo -e "\nVerifico associazione nell'API:"
-CONTACTS=$(curl -s -H "Authorization: Bearer $TOKEN" http://localhost:5000/api/companies/$COMPANY_ID/contacts)
+# Verifica se il contatto è stato associato all'azienda usando l'endpoint v2
+echo -e "\nVerifico associazione nell'API v2:"
+CONTACTS=$(curl -s -H "Authorization: Bearer $TOKEN" http://localhost:5000/api/v2/companies/$COMPANY_ID/contacts)
 echo "Contatti trovati per azienda $COMPANY_ID:"
 echo "$CONTACTS" | jq '.'
 

@@ -50,18 +50,24 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
   const [contactModalOpen, setContactModalOpen] = useState(false);
   const [contactModalInitialData, setContactModalInitialData] = useState<any>(null);
   
-  // Fetch contatti associati all'azienda
+  // Fetch contatti associati all'azienda (usando il nuovo endpoint v2)
   const { 
     data: contacts, 
     isLoading: isLoadingContacts, 
     error: contactsError,
     refetch: refetchContacts
   } = useQuery({
-    queryKey: ["/api/companies", companyId, "contacts"],
+    queryKey: ["/api/v2/companies", companyId, "contacts"],
     queryFn: async () => {
-      const res = await fetch(`/api/companies/${companyId}/contacts`);
-      if (!res.ok) throw new Error("Failed to fetch company contacts");
-      return res.json();
+      const res = await fetch(`/api/v2/companies/${companyId}/contacts`);
+      console.log(`Fetching contacts for company ${companyId} from v2 API`);
+      if (!res.ok) {
+        console.error(`Error fetching contacts: ${res.status} ${res.statusText}`);
+        throw new Error("Failed to fetch company contacts");
+      }
+      const data = await res.json();
+      console.log(`Retrieved ${data.length} contacts from v2 API`);
+      return data;
     }
   });
   
