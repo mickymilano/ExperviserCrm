@@ -271,6 +271,19 @@
       "errorTitle": "Errore nel caricamento",
       "errorMessage": "Impossibile caricare i contatti delle filiali. Riprova più tardi."
     },
+    "branches": {
+      "contacts": {
+        "title": "Contatti delle Filiali",
+        "description": "Visualizza i contatti associati alle filiali di questa azienda",
+        "emptyTitle": "Nessun contatto nelle filiali",
+        "emptyDescription": "Non ci sono contatti associati alle filiali di questa azienda",
+        "errorTitle": "Errore nel caricamento",
+        "errorDescription": "Impossibile caricare i contatti delle filiali. Riprova più tardi.",
+        "contact": "contatto",
+        "contacts": "contatti",
+        "viewBranchDetails": "Visualizza dettagli filiale"
+      }
+    },
     "companyList": {
       "title": "Aziende",
       "addCompany": "Aggiungi Azienda",
