@@ -53,37 +53,19 @@ export default function ContactModal({ open, onOpenChange, initialData }: Contac
   const queryClient = useQueryClient();
   const isEditing = !!initialData;
   
-  // Get company information from URL context or from AreasOfActivity
+  // Get company information from URL context
   const [location] = useLocation();
-  
-  // Check if we have company context from URL
-  const hasCompanyContextFromUrl = location.includes("/companies/");
-  const companyIdFromUrl = hasCompanyContextFromUrl 
+  const hasCompanyContext = location.includes("/companies/");
+  const companyIdFromUrl = hasCompanyContext 
     ? parseInt(location.split("/companies/")[1]) 
     : undefined;
-    
-  // Check if we have company context from AreasOfActivity
-  const initialAreas = initialData?.areasOfActivity || [];
-  const hasAreaWithCompany = initialAreas.some(area => area.companyId);
-  const companyIdFromAreas = hasAreaWithCompany 
-    ? initialAreas.find(area => area.companyId)?.companyId 
-    : undefined;
-  
-  // Determine actual company context by checking both sources
-  const effectiveCompanyId = companyIdFromAreas || companyIdFromUrl;
-  const hasCompanyContext = !!effectiveCompanyId;
   
   // Get company name if we have a company ID
   const { data: companyData } = useQuery({
-    queryKey: ["/api/companies", effectiveCompanyId],
-    enabled: !!effectiveCompanyId
+    queryKey: ["/api/companies", companyIdFromUrl],
+    enabled: !!companyIdFromUrl
   });
-  
-  // Use company name from areas if available, otherwise from API
-  const companyNameFromArea = hasAreaWithCompany 
-    ? initialAreas.find(area => area.companyId)?.companyName 
-    : undefined;
-  const companyName = companyNameFromArea || companyData?.name;
+  const companyName = companyData?.name;
   
   // Prepare initial tags if they exist
   const initialTags = initialData?.tags ? initialData.tags.join(", ") : "";
