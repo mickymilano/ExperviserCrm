@@ -9,12 +9,15 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { useTranslation } from "react-i18next";
 
 export default function SynergiesPage() {
   // DISABLED: Synergy actions only allowed in DealModal
   // const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingSynergy, setEditingSynergy] = useState<any>(null);
   const [, navigate] = useLocation();
+  const { t } = useTranslation();
+  
   // Recuperare dati di contatti e aziende per mostrare i nomi invece degli ID
   const { data: contacts = [] } = useQuery<any[]>({
     queryKey: ['/api/contacts'],
@@ -35,17 +38,17 @@ export default function SynergiesPage() {
   // Funzioni di utilità per recuperare i nomi dalle liste
   const getContactName = (contactId: number) => {
     const contact = contacts.find((c: any) => c.id === contactId);
-    return contact ? `${contact.firstName} ${contact.lastName}` : `Contatto #${contactId}`;
+    return contact ? `${contact.firstName} ${contact.lastName}` : t('synergies.contact_fallback', { id: contactId });
   };
   
   const getCompanyName = (companyId: number) => {
     const company = companies.find((c: any) => c.id === companyId);
-    return company ? company.name : `Azienda #${companyId}`;
+    return company ? company.name : t('synergies.company_fallback', { id: companyId });
   };
   
   const getDealName = (dealId: number) => {
     const deal = deals.find((d: any) => d.id === dealId);
-    return deal ? deal.name || `Deal #${dealId}` : `Deal #${dealId}`;
+    return deal ? deal.name || t('synergies.deal_fallback', { id: dealId }) : t('synergies.deal_fallback', { id: dealId });
   };
 
   const handleEditSynergy = (synergy: any) => {
@@ -81,10 +84,10 @@ export default function SynergiesPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight flex items-center">
             <Handshake className="h-8 w-8 mr-2" />
-            Sinergie di Business
+            {t('synergies.page_title')}
           </h1>
           <p className="text-muted-foreground">
-            Gestisci le relazioni di business tra contatti e aziende
+            {t('synergies.manage_business_relationships')}
           </p>
         </div>
         <div className="flex items-center space-x-2">
@@ -95,7 +98,7 @@ export default function SynergiesPage() {
             className="h-9"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
-            Aggiorna
+            {t('synergies.refresh')}
           </Button>
           {/* DISABLED: Synergy actions only allowed in DealModal
           <Button 
