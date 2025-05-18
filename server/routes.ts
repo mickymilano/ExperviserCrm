@@ -2153,12 +2153,21 @@ export function registerRoutes(app: any) {
       console.log('POST /api/tasks - Creazione di un nuovo task', req.body);
       
       // Prepara i dati del task convertendo le date in oggetti Date
-      // e adattando i campi alla struttura reale del database
+      // e includendo solo i campi che esistono nella tabella
       const taskData = {
-        ...req.body,
+        title: req.body.title,
+        description: req.body.description || null,
         dueDate: req.body.dueDate ? new Date(req.body.dueDate) : null,
         completed: req.body.completed === true,
-        reminder: req.body.reminder ? new Date(req.body.reminder) : null
+        contactId: req.body.contactId || null,
+        companyId: req.body.companyId || null,
+        dealId: req.body.dealId || null,
+        leadId: req.body.leadId || null,
+        assignedToId: req.body.assignedToId || null,
+        isCalendarEvent: req.body.isCalendarEvent === true,
+        taskValue: req.body.taskValue || 0,
+        startDateTime: req.body.startDateTime ? new Date(req.body.startDateTime) : null,
+        endDateTime: req.body.endDateTime ? new Date(req.body.endDateTime) : null
       };
       
       console.log('Dati del task formattati:', taskData);
