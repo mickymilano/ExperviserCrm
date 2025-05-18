@@ -2152,8 +2152,18 @@ export function registerRoutes(app: any) {
     try {
       console.log('POST /api/tasks - Creazione di un nuovo task', req.body);
       
+      // Prepara i dati del task convertendo le date in oggetti Date
+      const taskData = {
+        ...req.body,
+        dueDate: req.body.dueDate ? new Date(req.body.dueDate) : null,
+        completedAt: req.body.completedAt ? new Date(req.body.completedAt) : null,
+        reminder: req.body.reminder ? new Date(req.body.reminder) : null
+      };
+      
+      console.log('Dati del task formattati:', taskData);
+      
       // Crea il task
-      const newTask = await storage.createTask(req.body);
+      const newTask = await storage.createTask(taskData);
       
       res.status(201).json(newTask);
     } catch (error) {

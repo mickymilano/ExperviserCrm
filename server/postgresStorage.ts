@@ -15,6 +15,7 @@ import {
   sectors,
   sub_sectors,
   job_titles,
+  tasks,
   type User,
   type InsertUser,
   type UserSession,
