@@ -542,7 +542,27 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
                 Questa azienda non ha ancora contatti associati.
               </p>
               <div className="flex flex-col space-y-2 items-center justify-center">
-                <Button onClick={() => navigate("/contacts/new?companyId=" + companyId)}>
+                <Button onClick={() => {
+                  // Apri il modale invece di navigare a una nuova pagina
+                  const parentCompanyName = companyName;
+                  const event = new CustomEvent('openContactModal', {
+                    detail: {
+                      initialData: {
+                        firstName: '',
+                        lastName: '',
+                        companyEmail: '',
+                        areasOfActivity: [{
+                          companyId: companyId,
+                          companyName: parentCompanyName,
+                          isPrimary: true,
+                          role: '',
+                          jobDescription: `Works at ${parentCompanyName}`
+                        }]
+                      }
+                    }
+                  });
+                  document.dispatchEvent(event);
+                }}>
                   Crea Nuovo Contatto
                 </Button>
                 <Button 
