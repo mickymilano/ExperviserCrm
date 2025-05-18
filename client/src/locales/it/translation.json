@@ -138,6 +138,24 @@
     "errors": {
       "createFailed": "Impossibile creare l'azienda: {{error}}",
       "updateFailed": "Impossibile aggiornare l'azienda: {{error}}"
+    },
+    "contacts": {
+      "title": "Contatti",
+      "description": "Persone associate a {{companyName}}",
+      "associateExisting": "Associa Contatto Esistente",
+      "createNew": "Crea Nuovo Contatto",
+      "worksAt": "Lavora presso {{companyName}}",
+      "primaryContact": "Contatto Primario",
+      "primaryContactTooltip": "Questo contatto è il riferimento principale per l'azienda",
+      "setPrimaryContactTooltip": "Imposta questo contatto come riferimento principale per l'azienda",
+      "setPrimaryContactAriaLabel": "Imposta come contatto primario",
+      "setting": "Impostazione...",
+      "setAsPrimary": "Imposta come primario",
+      "removePrimaryContactTooltip": "Rimuovi lo stato di contatto primario",
+      "removePrimaryContactAriaLabel": "Rimuovi contatto primario",
+      "removing": "Rimozione...",
+      "removePrimary": "Rimuovi primario",
+      "noRoleSpecified": "Nessun ruolo specificato"
     }
   }
 }
