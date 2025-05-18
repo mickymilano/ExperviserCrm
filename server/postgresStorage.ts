@@ -1046,8 +1046,7 @@ export class PostgresStorage implements IStorage {
           notes: lead.notes || "",
           tags: lead.tags || [],
           createdAt: lead.created_at,
-          updatedAt<previous_generation_end>
-: lead.updated_at,
+          updatedAt: lead.updated_at,
         };
       });
     } catch (error) {
@@ -1183,7 +1182,7 @@ export class PostgresStorage implements IStorage {
   ): Promise<Lead | undefined> {
     try {
       console.log("Aggiornamento lead con id", id, "e dati:", leadData);
-
+      
       // Costruiamo dinamicamente la query di aggiornamento
       let updateFields = [];
       let params = [];
@@ -1195,7 +1194,7 @@ export class PostgresStorage implements IStorage {
         updateFields.push(`first_name = $${paramCounter++}`);
         params.push(leadData.firstName);
       }
-
+      
       if (leadData.lastName !== undefined) {
         updateFields.push(`last_name = $${paramCounter++}`);
         params.push(leadData.lastName);
@@ -1215,42 +1214,42 @@ export class PostgresStorage implements IStorage {
         updateFields.push(`notes = $${paramCounter++}`);
         params.push(leadData.notes);
       }
-
+      
       if (leadData.email !== undefined) {
         updateFields.push(`email = $${paramCounter++}`);
         params.push(leadData.email);
       }
-
+      
       if (leadData.phone !== undefined) {
         updateFields.push(`phone = $${paramCounter++}`);
         params.push(leadData.phone);
       }
-
+      
       if (leadData.company !== undefined) {
         updateFields.push(`company_name = $${paramCounter++}`);
         params.push(leadData.company);
       }
-
+      
       if (leadData.address !== undefined) {
         updateFields.push(`address = $${paramCounter++}`);
         params.push(leadData.address);
       }
-
+      
       if (leadData.role !== undefined) {
         updateFields.push(`role = $${paramCounter++}`);
         params.push(leadData.role);
       }
-
+      
       if (leadData.website !== undefined) {
         updateFields.push(`website = $${paramCounter++}`);
         params.push(leadData.website);
       }
-
+      
       if (leadData.assignedToId !== undefined) {
         updateFields.push(`assigned_to_id = $${paramCounter++}`);
         params.push(leadData.assignedToId);
       }
-
+      
       if (leadData.customFields !== undefined) {
         updateFields.push(`custom_fields = $${paramCounter++}`);
         params.push(leadData.customFields);
@@ -1263,7 +1262,7 @@ export class PostgresStorage implements IStorage {
       if (updateFields.length === 1) {
         return this.getLead(id);
       }
-
+      
       // Costruiamo la query di aggiornamento completa
       const query = `
         UPDATE leads 
@@ -1286,17 +1285,17 @@ export class PostgresStorage implements IStorage {
           created_at as "createdAt",
           updated_at as "updatedAt"
       `;
-
+      
       // Aggiungiamo l'ID alla lista dei parametri
       params.push(id);
-
+      
       // Eseguiamo la query
       const result = await pool.query(query, params);
-
+      
       if (result.rows.length === 0) {
         return undefined;
       }
-
+      
       return result.rows[0];
     } catch (error) {
       console.error("Error in updateLead:", error);
@@ -1339,10 +1338,10 @@ export class PostgresStorage implements IStorage {
         FROM contacts 
         ORDER BY first_name, last_name`,
       );
-
+      
       // Recupera i contatti
       const contacts = contactsResult.rows as Contact[];
-
+      
       // Per ogni contatto, recupera le sue aree di attività
       for (const contact of contacts) {
         try {
@@ -1362,7 +1361,7 @@ export class PostgresStorage implements IStorage {
             WHERE contact_id = $1`,
             [contact.id]
           );
-
+          
           // Assegna le aree recuperate al contatto
           if (areasResult.rows.length > 0) {
             contact.areasOfActivity = areasResult.rows as AreaOfActivity[];
@@ -1372,7 +1371,7 @@ export class PostgresStorage implements IStorage {
           console.error(`Error fetching areas for contact ${contact.id}:`, areaError);
         }
       }
-
+      
       return contacts;
     } catch (error) {
       console.error("Error in getContacts:", error);
@@ -1384,21 +1383,21 @@ export class PostgresStorage implements IStorage {
     // Metodo alias per compatibilità con l'interfaccia
     return this.getContacts();
   }
-
+  
   // Ottieni i contatti non associati a nessuna azienda
   async getUnassignedContacts(searchQuery: string = ''): Promise<Contact[]> {
     try {
       console.log(`PostgresStorage.getUnassignedContacts: recupero contatti senza associazione ad aziende${searchQuery ? ' con ricerca: ' + searchQuery : ''}`);
-
+      
       let query = `
         SELECT c.*
         FROM contacts c
         LEFT JOIN areas_of_activity a ON c.id = a.contact_id AND a.company_id IS NOT NULL
         WHERE a.id IS NULL
       `;
-
+      
       const queryParams = [];
-
+      
       // Aggiungi filtro di ricerca se necessario
       if (searchQuery && searchQuery.trim() !== '') {
         queryParams.push(`%${searchQuery.toLowerCase()}%`);
@@ -1410,14 +1409,14 @@ export class PostgresStorage implements IStorage {
           )
         `;
       }
-
+      
       // Ordina i risultati
       query += ` ORDER BY c.first_name, c.last_name`;
-
+      
       const result = await pool.query(query, queryParams);
-
+      
       console.log(`Trovati ${result.rowCount} contatti non associati${searchQuery ? ' per la ricerca: ' + searchQuery : ''}`);
-
+      
       // Convertiamo i risultati in formato camelCase
       return result.rows.map(row => {
         return {
@@ -1489,28 +1488,28 @@ export class PostgresStorage implements IStorage {
       console.log(
         `PostgresStorage.getContactsByCompany: retrieving contacts for company ${companyId}`,
       );
-
+      
       // Approccio semplificato: usa due query separate invece di ANY che può causare problemi
       // Prima otteniamo gli ID dei contatti associati a questa azienda
       const contactIdsQuery = `
         SELECT contact_id FROM areas_of_activity 
         WHERE company_id = ${companyId}
       `;
-
+      
       const contactIdsResult = await pool.query(contactIdsQuery);
-
+      
       if (contactIdsResult.rows.length === 0) {
         console.log(`No contacts found for company ${companyId}`);
         return [];
       }
-
+      
       // Estrai gli ID dei contatti
       const contactIds = contactIdsResult.rows.map(row => row.contact_id);
       console.log(`Found ${contactIds.length} contact IDs for company ${companyId}: ${contactIds.join(', ')}`);
-
+      
       // Crea una stringa di ID per la query IN
       const contactIdsStr = contactIds.join(',');
-
+      
       // Recupera i dettagli dei contatti usando IN invece di ANY
       const contactsQuery = `
         SELECT 
@@ -1532,10 +1531,10 @@ export class PostgresStorage implements IStorage {
         ORDER BY 
           first_name, last_name
       `;
-
+      
       const contactsResult = await pool.query(contactsQuery);
       console.log(`Retrieved ${contactsResult.rows.length} contacts for company ${companyId}`);
-
+      
       return contactsResult.rows as Contact[];
     } catch (error) {
       console.error(`Error in getContactsByCompany(${companyId}):`, error);
@@ -1837,19 +1836,19 @@ export class PostgresStorage implements IStorage {
       // Preserviamo i campi esistenti e impostiamo correttamente i campi di indirizzo
       // Assicuriamoci che fullAddress sia impostato correttamente dal campo full_address
       company.fullAddress = row.full_address || row.address || null;
-
+      
       // Preserviamo il valore di country se presente nel database
       company.country = row.country || null;
-
+      
       // Aggiungiamo campi backward compatible che potrebbero essere attesi dal frontend ma non esistono più
       company.city = null;
       company.region = null;
       company.postalCode = null;
-
+      
       // Aggiungiamo eventuali campi mancanti
       if (company.description === undefined) company.description = null;
       if (company.logo === undefined) company.logo = null;
-
+      
       // Logging per debug
       console.log(`Company address data: fullAddress=${company.fullAddress}, country=${company.country}`);
 
@@ -1870,7 +1869,7 @@ export class PostgresStorage implements IStorage {
           WHERE company_id = $1`,
           [id]
         );
-
+        
         company.areasOfActivity = areasResult.rows as AreaOfActivity[];
       } catch (areaError) {
         console.error(`Error fetching areas for company ${id}:`, areaError);
@@ -2002,7 +2001,7 @@ export class PostgresStorage implements IStorage {
     // Aggiungi solo i campi che esistono davvero nel database e sono presenti nell'input
     const safeFields = [
       "name",
-      "email",```text
+      "email",
       "phone",
       "website",
       "industry",
@@ -2144,18 +2143,21 @@ export class PostgresStorage implements IStorage {
 
   async getDealsCount(options?: { status?: string }): Promise<number> {
     try {
-      console.log("Getting deals count", options);
-      
-      let queryStr = "SELECT COUNT(*) as count FROM deals";
+      console.log(
+        `PostgresStorage.getDealsCount: retrieving deals count with options:`,
+        options,
+      );
+
+      let queryStr = `SELECT COUNT(*) as count FROM deals`;
       const params: any[] = [];
 
       if (options?.status) {
         params.push(options.status);
-        queryStr += " WHERE status = $1";
+        queryStr += ` WHERE status = $1`;
       }
 
       const result = await pool.query(queryStr, params);
-      console.log("Retrieved", result.rows[0].count, "deals count");
+      console.log(`Retrieved ${result.rows[0].count} deals count`);
 
       return parseInt(result.rows[0].count) || 0;
     } catch (error) {
@@ -2520,23 +2522,23 @@ export class PostgresStorage implements IStorage {
   async getDeal(id: number): Promise<Deal | undefined> {
     try {
       console.log(`PostgresStorage.getDeal: retrieving deal with id ${id}`);
-
+      
       // Utilizziamo SQL diretto per evitare problemi con le librerie ORM
       const result = await pool.query(`
         SELECT * FROM deals 
         WHERE id = $1
       `, [id]);
-
+      
       if (result.rows.length === 0) {
         console.log(`Deal with id ${id} not found`);
         return undefined;
       }
-
+      
       // Log dei dati recuperati per debugging
       console.log(`Deal with id ${id} found:`, JSON.stringify(result.rows[0]));
-
+      
       const deal = result.rows[0];
-
+      
       // Convertiamo i nomi delle colonne da snake_case a camelCase
       const dealData = {
         id: deal.id,
@@ -2555,14 +2557,14 @@ export class PostgresStorage implements IStorage {
         nextFollowUpAt: deal.next_follow_up_at,
         branchId: deal.branch_id
       };
-
+      
       // Ottieni informazioni di contatto
       let contactData = null;
       if (dealData.contactId) {
         const contactResult = await pool.query(`
           SELECT * FROM contacts WHERE id = $1
         `, [dealData.contactId]);
-
+        
         if (contactResult.rows.length > 0) {
           const contactData = contactResult.rows[0];
           // Convertiamo in camelCase per il frontend
@@ -2574,14 +2576,14 @@ export class PostgresStorage implements IStorage {
           };
         }
       }
-
+      
       // Ottieni informazioni di azienda
       let companyData = null;
       if (dealData.companyId) {
         const companyResult = await pool.query(`
           SELECT * FROM companies WHERE id = $1
         `, [dealData.companyId]);
-
+        
         if (companyResult.rows.length > 0) {
           companyData = companyResult.rows[0];
           // Convertiamo in camelCase per il frontend
@@ -2592,14 +2594,14 @@ export class PostgresStorage implements IStorage {
           };
         }
       }
-
+      
       // Ottieni informazioni di stage
       let stageData = null;
       if (dealData.stageId) {
         const stageResult = await pool.query(`
           SELECT * FROM pipeline_stages WHERE id = $1
         `, [dealData.stageId]);
-
+        
         if (stageResult.rows.length > 0) {
           stageData = stageResult.rows[0];
           // Convertiamo in camelCase per il frontend
@@ -2610,7 +2612,7 @@ export class PostgresStorage implements IStorage {
           };
         }
       }
-
+      
       // Assembla l'oggetto finale
       return {
         ...dealData,
@@ -2649,28 +2651,7 @@ export class PostgresStorage implements IStorage {
 
   // TASKS
   async getTasks(): Promise<Task[]> {
-    try {
-      const result = await pool.query(`
-        SELECT * FROM tasks 
-        ORDER BY due_date DESC
-      `);
-      return result.rows.map(row => ({
-        id: row.id,
-        title: row.title,
-        description: row.description,
-        dueDate: row.due_date,
-        completed: row.completed,
-        assignedToId: row.assigned_to_id,
-        contactId: row.contact_id,
-        companyId: row.company_id,
-        dealId: row.deal_id,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at
-      }));
-    } catch (error) {
-      console.error('Error in getTasks:', error);
-      return [];
-    }
+    return await db.select().from(tasks).orderBy(tasks.dueDate);
   }
 
   async getTask(id: number): Promise<Task | undefined> {
@@ -3082,7 +3063,7 @@ export class PostgresStorage implements IStorage {
       description: `Meeting: ${meeting.title}`,
       userId: meeting.createdById,
       contactId: meeting.contactId || null,
-      companyId: meeting.company<previous_generation_end>Id || null,
+      companyId: meeting.companyId || null,
       dealId: meeting.dealId || null,
       metadata: {
         meetingId: newMeeting.id,
@@ -3289,13 +3270,13 @@ export class PostgresStorage implements IStorage {
         LEFT JOIN companies c ON b.company_id = c.id
         WHERE b.id = $1
       `;
-
+      
       const result = await pool.query(query, [id]);
-
+      
       if (result.rows.length === 0) {
         return null;
       }
-
+      
       const row = result.rows[0];
       const branchWithCompanyName = {
         id: row.id,
@@ -3319,7 +3300,7 @@ export class PostgresStorage implements IStorage {
         createdAt: row.created_at,
         updatedAt: row.updated_at
       };
-
+      
       return branchWithCompanyName;
     } catch (err) {
       console.error('Error retrieving branch:', err);
@@ -3337,15 +3318,15 @@ export class PostgresStorage implements IStorage {
         LEFT JOIN companies c ON b.company_id = c.id
         ORDER BY b.name
       `;
-
+      
       console.log('PostgresStorage.getBranches: executing query:', query);
       const result = await pool.query(query);
       console.log('PostgresStorage.getBranches: query result rows:', result.rows.length);
-
+      
       if (result.rows.length > 0) {
         console.log('PostgresStorage.getBranches: first row sample:', JSON.stringify(result.rows[0]));
       }
-
+      
       const branchesWithCompanyName = result.rows.map(row => ({
         id: row.id,
         companyId: row.company_id,
@@ -3368,15 +3349,15 @@ export class PostgresStorage implements IStorage {
         createdAt: row.created_at,
         updatedAt: row.updated_at
       }));
-
+      
       console.log(`Retrieved ${branchesWithCompanyName.length} branches with company names`);
-
+      
       // Ritorniamo sempre un array, anche se vuoto
       return branchesWithCompanyName || [];
     } catch (err) {
       console.error('Error retrieving branches:', err);
       console.error('Error details:', err instanceof Error ? err.message : 'Unknown error');
-
+      
       // In caso di errore, restituiamo un array vuoto invece di generare un errore
       // Questo evita che l'applicazione si interrompa, ma registra comunque l'errore
       return [];
@@ -3394,7 +3375,7 @@ export class PostgresStorage implements IStorage {
         WHERE b.company_id = $1
         ORDER BY b.name
       `;
-
+      
       const result = await pool.query(query, [companyId]);
       const branchesWithCompanyName = result.rows.map(row => ({
         id: row.id,
@@ -3418,7 +3399,7 @@ export class PostgresStorage implements IStorage {
         createdAt: row.created_at,
         updatedAt: row.updated_at
       }));
-
+      
       console.log(`Retrieved ${branchesWithCompanyName.length} branches for company ${companyId}`);
       return branchesWithCompanyName;
     } catch (err) {
@@ -3438,7 +3419,7 @@ export class PostgresStorage implements IStorage {
           updatedAt: new Date()
         })
         .returning();
-
+      
       console.log(`Branch created with id ${newBranch.id}`);
       return newBranch;
     } catch (err) {
@@ -3454,11 +3435,11 @@ export class PostgresStorage implements IStorage {
         .select()
         .from(branches)
         .where(eq(branches.id, id));
-
+      
       if (!branch) {
         throw new Error(`Branch with id ${id} not found`);
       }
-
+      
       const [updatedBranch] = await db
         .update(branches)
         .set({
@@ -3467,7 +3448,7 @@ export class PostgresStorage implements IStorage {
         })
         .where(eq(branches.id, id))
         .returning();
-
+      
       console.log(`Branch ${id} updated successfully`);
       return updatedBranch;
     } catch (err) {
@@ -3483,22 +3464,22 @@ export class PostgresStorage implements IStorage {
         .select()
         .from(branches)
         .where(eq(branches.id, id));
-
+      
       if (!branch) {
         throw new Error(`Branch with id ${id} not found`);
       }
-
+      
       await db
         .delete(branches)
         .where(eq(branches.id, id));
-
+      
       console.log(`Branch ${id} deleted successfully`);
     } catch (err) {
       console.error(`Error deleting branch ${id}:`, err);
       throw err;
     }
   }
-
+  
   async getBranchesCount(): Promise<number> {
     console.log('PostgresStorage.getBranchesCount: counting branches');
     try {
@@ -3513,7 +3494,7 @@ export class PostgresStorage implements IStorage {
   }
 
   // SECTOR, SUBSECTOR, JOB TITLE OPERATIONS
-
+  
   async getSectors(): Promise<Sector[]> {
     console.log('PostgresStorage.getSectors: retrieving all sectors');
     try {
@@ -3526,7 +3507,7 @@ export class PostgresStorage implements IStorage {
       throw err;
     }
   }
-
+  
   async createSector(data: { name: string }): Promise<Sector> {
     console.log(`PostgresStorage.createSector: creating sector "${data.name}"`);
     try {
@@ -3540,7 +3521,7 @@ export class PostgresStorage implements IStorage {
       throw err;
     }
   }
-
+  
   async getSubSectors(opts: { sectorId: number; search: string }): Promise<SubSector[]> {
     console.log(`PostgresStorage.getSubSectors: retrieving subsectors for sector ${opts.sectorId} with search "${opts.search}"`);
     try {
@@ -3549,19 +3530,19 @@ export class PostgresStorage implements IStorage {
         .from(sub_sectors)
         .where(eq(sub_sectors.sectorId, opts.sectorId))
         .orderBy(asc(sub_sectors.name));
-
+      
       // Se è presente una stringa di ricerca, filtriamo i risultati
       if (opts.search && opts.search.trim() !== '') {
         return await query.where(sql`LOWER(${sub_sectors.name}) LIKE LOWER(${'%' + opts.search + '%'})`);
       }
-
+      
       return await query;
     } catch (err) {
       console.error(`Error retrieving subsectors for sector ${opts.sectorId}:`, err);
       throw err;
     }
   }
-
+  
   async createSubSector(data: { sectorId: number; name: string }): Promise<SubSector> {
     console.log(`PostgresStorage.createSubSector: creating subsector "${data.name}" for sector ${data.sectorId}`);
     try {
@@ -3570,11 +3551,11 @@ export class PostgresStorage implements IStorage {
         .select()
         .from(sectors)
         .where(eq(sectors.id, data.sectorId));
-
+      
       if (!sector) {
         throw new Error(`Sector with id ${data.sectorId} not found`);
       }
-
+      
       const [newSubSector] = await db
         .insert(sub_sectors)
         .values(data)
@@ -3585,7 +3566,7 @@ export class PostgresStorage implements IStorage {
       throw err;
     }
   }
-
+  
   async getJobTitles(opts: { subSectorId: number; search: string }): Promise<JobTitle[]> {
     console.log(`PostgresStorage.getJobTitles: retrieving job titles for subsector ${opts.subSectorId} with search "${opts.search}"`);
     try {
@@ -3594,19 +3575,19 @@ export class PostgresStorage implements IStorage {
         .from(job_titles)
         .where(eq(job_titles.subSectorId, opts.subSectorId))
         .orderBy(asc(job_titles.name));
-
+      
       // Se è presente una stringa di ricerca, filtriamo i risultati
       if (opts.search && opts.search.trim() !== '') {
         return await query.where(sql`LOWER(${job_titles.name}) LIKE LOWER(${'%' + opts.search + '%'})`);
       }
-
+      
       return await query;
     } catch (err) {
       console.error(`Error retrieving job titles for subsector ${opts.subSectorId}:`, err);
       throw err;
     }
   }
-
+  
   async createJobTitle(data: { subSectorId: number; name: string }): Promise<JobTitle> {
     console.log(`PostgresStorage.createJobTitle: creating job title "${data.name}" for subsector ${data.subSectorId}`);
     try {
@@ -3615,11 +3596,11 @@ export class PostgresStorage implements IStorage {
         .select()
         .from(sub_sectors)
         .where(eq(sub_sectors.id, data.subSectorId));
-
+      
       if (!subSector) {
         throw new Error(`SubSector with id ${data.subSectorId} not found`);
       }
-
+      
       const [newJobTitle] = await db
         .insert(job_titles)
         .values(data)
