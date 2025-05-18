@@ -3503,10 +3503,16 @@ export class PostgresStorage implements IStorage {
   async getSectors(): Promise<Sector[]> {
     console.log('PostgresStorage.getSectors: retrieving all sectors');
     try {
-      return await db
-        .select()
-        .from(sectors)
-        .orderBy(asc(sectors.name));
+      // Utilizziamo SQL nativo per evitare problemi con colonne mancanti
+      const result = await pool.query(
+        `SELECT id, name FROM sectors ORDER BY name ASC`
+      );
+      
+      // Adattiamo il risultato al tipo Sector
+      return result.rows.map(row => ({
+        id: row.id,
+        name: row.name
+      }));
     } catch (err) {
       console.error('Error retrieving sectors:', err);
       throw err;
