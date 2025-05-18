@@ -37,21 +37,11 @@ export const listLeads = async (req, res, next) => {
 
 export const getLead = async (req, res, next) => {
   try {
+    console.log('Fetching lead with id:', req.params.id);
+    
+    // Prendiamo tutti i campi dalla tabella per evitare errori di mappatura
     const { rows } = await pool.query(`
-      SELECT
-        id,
-        first_name     AS "firstName",
-        last_name      AS "lastName",
-        company_name   AS company,
-        company_email  AS "companyEmail",
-        private_email  AS "privateEmail",
-        mobile_phone   AS "mobilePhone",
-        office_phone   AS "officePhone",
-        private_phone  AS "privatePhone",
-        status,
-        notes,
-        created_at     AS "createdAt",
-        updated_at     AS "updatedAt"
+      SELECT * 
       FROM leads
       WHERE id = $1
     `, [req.params.id]);
@@ -60,12 +50,34 @@ export const getLead = async (req, res, next) => {
       return res.status(404).json({ message: 'Lead non trovato' });
     }
     
+    const lead = rows[0];
+    console.log('Lead found:', lead);
+    
     // Mappiamo i campi per compatibilità con il frontend
     const mappedLead = {
-      ...rows[0],
-      email: rows[0].companyEmail || rows[0].privateEmail,
-      phone: rows[0].mobilePhone || rows[0].officePhone || rows[0].privatePhone
+      id: lead.id,
+      firstName: lead.first_name,
+      lastName: lead.last_name,
+      company: lead.company_name,
+      companyName: lead.company_name,
+      companyEmail: lead.company_email,
+      privateEmail: lead.private_email,
+      mobilePhone: lead.mobile_phone,
+      officePhone: lead.office_phone,
+      privatePhone: lead.private_phone,
+      role: lead.role,
+      jobTitle: lead.role, // Alias per compatibilità
+      status: lead.status,
+      notes: lead.notes,
+      source: lead.source,
+      tags: lead.tags ? (Array.isArray(lead.tags) ? lead.tags : [lead.tags]) : [],
+      createdAt: lead.created_at,
+      updatedAt: lead.updated_at,
+      email: lead.email || lead.company_email || lead.private_email,
+      phone: lead.phone || lead.mobile_phone || lead.office_phone || lead.private_phone
     };
+    
+    console.log('Mapped lead:', mappedLead);
     
     res.json(mappedLead);
   } catch (error) {

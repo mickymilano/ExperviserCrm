@@ -202,7 +202,7 @@ export default function LeadDetail() {
               {lead.tags && lead.tags.length > 0 && (
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-base">Tags</CardTitle>
+                    <CardTitle className="text-base">{t('lead.detail.fields.tags')}</CardTitle>
                   </CardHeader>
                   <CardContent className="flex flex-wrap gap-1">
                     {lead.tags.map((tag, i) => (
@@ -222,7 +222,7 @@ export default function LeadDetail() {
                   <CardHeader className="pb-2">
                     <CardTitle className="flex items-center text-lg">
                       <FileText className="h-5 w-5 mr-2" />
-                      Notes
+                      {t('lead.detail.fields.notes')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -235,7 +235,7 @@ export default function LeadDetail() {
               <TaskList 
                 entityId={leadId} 
                 entityType="lead" 
-                title="Tasks"
+                title={t('lead.detail.fields.tasks')}
               />
             </div>
           </div>
@@ -244,15 +244,15 @@ export default function LeadDetail() {
         <TabsContent value="activities" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Recent Activities</CardTitle>
+              <CardTitle>{t('lead.detail.fields.recentActivities')}</CardTitle>
               <CardDescription>
-                A history of all interactions with this lead
+                {t('lead.detail.fields.activitiesDescription')}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-center py-12">
                 <Clock className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">No activity recorded yet</p>
+                <p className="text-muted-foreground">{t('lead.detail.fields.noActivity')}</p>
               </div>
             </CardContent>
           </Card>
