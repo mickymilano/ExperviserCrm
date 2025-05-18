@@ -150,6 +150,11 @@ export default function ContactModal({ open, onOpenChange, initialData }: Contac
       // Prepare data for contact creation
       const contactData = { ...data };
       
+      // Usa companyId dai dati iniziali se presente
+      if (initialData?.companyId) {
+        contactData.companyId = initialData.companyId;
+      }
+      
       // Convert tags string to array if provided
       if (tagsInput.trim()) {
         contactData.tags = tagsInput.split(",").map((tag: string) => tag.trim());
