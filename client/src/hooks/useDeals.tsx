@@ -48,12 +48,22 @@ export const useDeals = (options?: UseDealsOptions) => {
     mutationFn: async (dealData: Omit<DealInfo, 'id' | 'createdAt' | 'updatedAt'>) => {
       return await apiRequest("POST", "/api/deals", dealData);
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       toast({
         title: "Success",
         description: "Deal created successfully",
       });
+      // Invalidate general deals query
       queryClient.invalidateQueries({ queryKey: ['/api/deals'] });
+      
+      // Invalidate specific company deals query if companyId is available
+      if (variables.companyId) {
+        queryClient.invalidateQueries({ 
+          queryKey: [`/api/companies/${variables.companyId}/deals`] 
+        });
+      }
+      
+      // Invalidate dashboard stats
       queryClient.invalidateQueries({ queryKey: ['/api/dashboard'] });
     },
     onError: (error) => {
@@ -128,10 +138,12 @@ export const useDeals = (options?: UseDealsOptions) => {
 };
 
 export const useDeal = (id: number) => {
-  return useQuery<DealInfo>({
+  const { data, isLoading, isError, error } = useQuery<DealInfo>({
     queryKey: [`/api/deals/${id}`],
     enabled: !!id,
   });
+  
+  return { data, isLoading, isError, error };
 };
 
 export const usePipelineStages = () => {
