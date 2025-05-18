@@ -262,6 +262,15 @@
         "deleteArea": "Impossibile eliminare l'area di attività"
       }
     },
+    "branchContacts": {
+      "title": "Contatti dalle Filiali",
+      "description": "Contatti associati alle filiali di {{companyName}}",
+      "noBranchContacts": "Nessun contatto dalle filiali di {{companyName}}",
+      "noContacts": "Non ci sono contatti associati alle filiali di questa azienda.",
+      "loading": "Caricamento contatti delle filiali...",
+      "errorTitle": "Errore nel caricamento",
+      "errorMessage": "Impossibile caricare i contatti delle filiali. Riprova più tardi."
+    },
     "companyList": {
       "title": "Aziende",
       "addCompany": "Aggiungi Azienda",

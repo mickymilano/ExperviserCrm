@@ -201,10 +201,10 @@ export default function BranchContactsSection({ companyId, companyName }: Branch
         <CardHeader>
           <CardTitle className="flex items-center">
             <Building className="h-5 w-5 mr-2" />
-            {t('company.branchContacts.title')}
+            Contatti dalle Filiali
           </CardTitle>
           <CardDescription>
-            {t('company.branchContacts.noBranchContacts', { companyName })}
+            Nessun contatto dalle filiali di {companyName}
           </CardDescription>
         </CardHeader>
         <CardContent>
