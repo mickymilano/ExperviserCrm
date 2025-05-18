@@ -2153,10 +2153,11 @@ export function registerRoutes(app: any) {
       console.log('POST /api/tasks - Creazione di un nuovo task', req.body);
       
       // Prepara i dati del task convertendo le date in oggetti Date
+      // e adattando i campi alla struttura reale del database
       const taskData = {
         ...req.body,
         dueDate: req.body.dueDate ? new Date(req.body.dueDate) : null,
-        completedAt: req.body.completedAt ? new Date(req.body.completedAt) : null,
+        completed: req.body.completed === true,
         reminder: req.body.reminder ? new Date(req.body.reminder) : null
       };
       
