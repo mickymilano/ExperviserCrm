@@ -196,13 +196,11 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
   
   // Form submission handler
   const onSubmit = (data: CompanyFormData) => {
-    // Assicuriamoci che le relazioni siano incluse nei dati da inviare
-    const formDataWithRelations = {
-      ...data,
-      relations: relationValues
-    };
-    console.log('Invio dati al server:', formDataWithRelations);
-    updateCompany.mutate(formDataWithRelations);
+    // Non inviamo il campo relations al backend poiché non è supportato nel database
+    console.log('Relazioni selezionate (non inviate al backend):', relationValues);
+    // Salviamo solo i campi supportati dal backend
+    console.log('Invio dati al server:', data);
+    updateCompany.mutate(data);
   };
   
   return (
