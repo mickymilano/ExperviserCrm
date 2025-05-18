@@ -28,7 +28,7 @@ import {
 import branchRoutes from './branchRoutes';
 import { getSectors, createSector } from './controllers/sectorController';
 import { getSubSectors, createSubSector } from './controllers/subSectorController';
-import { getJobTitles, createJobTitle } from './controllers/jobTitleController';
+import { getJobTitles, getJobTitle, createJobTitle, updateJobTitle, deleteJobTitle } from './controllers/jobTitleController';
 
 // Chiave segreta per JWT
 const JWT_SECRET = process.env.JWT_SECRET || 'experviser-dev-secret';
@@ -2318,6 +2318,15 @@ export function registerRoutes(app: any) {
   
   // Crea un nuovo job title
   app.post('/api/subsectors/:subSectorId/jobtitles', authenticate, isAdmin, createJobTitle);
+  
+  // Ottieni singolo job title per ID
+  app.get('/api/jobtitles/:id', authenticate, getJobTitle);
+  
+  // Aggiorna un job title esistente
+  app.patch('/api/jobtitles/:id', authenticate, isAdmin, updateJobTitle);
+  
+  // Elimina un job title
+  app.delete('/api/jobtitles/:id', authenticate, isAdmin, deleteJobTitle);
   
   // Crea il server HTTP
   const httpServer = createServer(app);
