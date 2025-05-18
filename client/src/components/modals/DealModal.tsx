@@ -483,7 +483,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
       // Prepare deal data
       const dealData: any = {
         name: data.name,
-        value: data.value,
+        value: data.value.toString(), // Converti il valore in stringa per compatibilità con il campo decimal nel DB
         stageId: data.stageId,
       };
 
