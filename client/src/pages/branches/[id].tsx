@@ -1,314 +1,257 @@
 import { useState } from "react";
-import { useRoute, useLocation } from "wouter";
-import { useBranch } from "@/hooks/useBranches";
-import { useCompanies } from "@/hooks/useCompanies";
-import { Branch } from "@/types";
+import { useParams, useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ArrowLeft, Building, Phone, Mail, MapPin, Info, Users, Edit } from "lucide-react";
 import BranchModal from "@/components/modals/BranchModal";
-import { 
-  ArrowLeft, Edit, Globe, Phone, Mail, MapPin, Building, Calendar, Info,
-  Flag, Hash, Users, User
-} from "lucide-react";
-import { formatDate } from "@/lib/utils";
+import BranchManagersViewer from "@/components/branches/BranchManagersViewer";
 
 export default function BranchDetail() {
-  const [_, params] = useRoute<{ id: string }>("/branches/:id");
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [__, navigate] = useLocation();
-  const branchId = parseInt(params?.id || "0");
-  
-  const { data: branch, isLoading, error } = useBranch(branchId);
-  const { companies } = useCompanies();
-  
-  // Debug console output
-  console.log("Branch detail page - branch:", branch);
-  
+  const { t } = useTranslation();
+  const params = useParams();
+  const [_, navigate] = useLocation();
+  const branchId = parseInt(params.id);
+  const [activeTab, setActiveTab] = useState("overview");
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  // Fetch branch data
+  const { data: branch, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["/api/branches", branchId],
+    queryFn: async () => {
+      const res = await fetch(`/api/branches/${branchId}`);
+      if (!res.ok) throw new Error("Failed to fetch branch");
+      return res.json();
+    },
+    enabled: !isNaN(branchId),
+  });
+
+  // Fetch company data if we have a companyId
+  const { data: company } = useQuery({
+    queryKey: ["/api/companies", branch?.companyId],
+    queryFn: async () => {
+      const res = await fetch(`/api/companies/${branch.companyId}`);
+      if (!res.ok) throw new Error("Failed to fetch company");
+      return res.json();
+    },
+    enabled: !!branch?.companyId,
+  });
+
   if (isLoading) {
     return (
-      <div className="max-w-5xl mx-auto p-6">
+      <div className="max-w-5xl mx-auto p-4 space-y-6">
         <div className="flex items-center mb-6">
-          <Button
-            variant="ghost"
-            className="mr-4"
-            onClick={() => navigate("/branches")}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" /> Indietro
+          <Button variant="ghost" onClick={() => navigate("/branches")} className="mr-4">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            {t('common.back')}
           </Button>
           <Skeleton className="h-9 w-64" />
         </div>
         <Card>
           <CardHeader>
-            <Skeleton className="h-8 w-40 mb-2" />
+            <Skeleton className="h-7 w-40" />
           </CardHeader>
-          <CardContent className="space-y-8">
-            <Skeleton className="h-48 w-full" />
-            <Skeleton className="h-32 w-full" />
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (error || !branch) {
-    return (
-      <div className="max-w-5xl mx-auto p-6">
-        <div className="flex items-center mb-6">
-          <Button
-            variant="ghost"
-            className="mr-4"
-            onClick={() => navigate("/branches")}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" /> Indietro
-          </Button>
-          <h1 className="text-2xl font-bold">Filiale non trovata</h1>
-        </div>
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <div className="rounded-full bg-muted w-12 h-12 flex items-center justify-center mb-4">
-              <Info className="h-6 w-6 text-muted-foreground" />
+          <CardContent>
+            <div className="grid gap-4">
+              {[1, 2, 3, 4].map((i) => (
+                <Skeleton key={i} className="h-10" />
+              ))}
             </div>
-            <h3 className="text-lg font-medium mb-2">
-              La filiale richiesta non esiste o è stata eliminata
-            </h3>
-            <p className="text-muted-foreground text-center mb-4">
-              Controlla l'URL o torna alla lista delle filiali
-            </p>
-            <Button onClick={() => navigate("/branches")}>
-              <ArrowLeft className="mr-2 h-4 w-4" /> Torna alle Filiali
-            </Button>
           </CardContent>
         </Card>
       </div>
     );
   }
 
-  // Find company name if not already in the branch data
-  const companyName = branch.companyName || companies?.find(c => c.id === branch.companyId)?.name || "Azienda non specificata";
+  if (isError) {
+    return (
+      <div className="max-w-5xl mx-auto p-4">
+        <div className="flex items-center mb-6">
+          <Button variant="ghost" onClick={() => navigate("/branches")} className="mr-4">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            {t('common.back')}
+          </Button>
+        </div>
+        <Card className="text-center p-6">
+          <CardTitle className="text-xl mb-4">{t('branches.detail.errorTitle')}</CardTitle>
+          <p className="text-muted-foreground mb-4">
+            {t('branches.detail.errorDescription')}
+          </p>
+          <Button onClick={() => refetch()}>
+            {t('common.retry')}
+          </Button>
+        </Card>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-5xl mx-auto">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-        <div className="flex items-center mb-4 md:mb-0">
-          <Button
-            variant="ghost"
+    <div className="max-w-5xl mx-auto p-4 space-y-6">
+      {/* Intestazione e pulsanti */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center">
+          <Button 
+            variant="ghost" 
+            onClick={() => branch?.companyId ? navigate(`/companies/${branch.companyId}`) : navigate("/branches")}
             className="mr-4"
-            onClick={() => navigate("/branches")}
           >
-            <ArrowLeft className="mr-2 h-4 w-4" /> Indietro
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            {branch?.companyId ? t('branches.detail.backToCompany') : t('common.back')}
           </Button>
-          <h1 className="text-2xl font-bold">{branch.name}</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{branch?.name}</h1>
+          {branch?.isHeadquarters && (
+            <span className="ml-2 inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+              {t('branches.detail.headquartersBadge')}
+            </span>
+          )}
         </div>
-        <Button onClick={() => setShowEditModal(true)}>
-          <Edit className="mr-2 h-4 w-4" /> Modifica Filiale
+        <Button onClick={() => setIsEditModalOpen(true)}>
+          <Edit className="h-4 w-4 mr-2" />
+          {t('common.edit')}
         </Button>
       </div>
 
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle className="text-xl">Informazioni Filiale</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">Dettagli Principali</h3>
-                <div className="space-y-2">
-                  <div className="flex items-center">
-                    <Building className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <span className="mr-2 font-medium">Azienda:</span>
-                    <span>{companyName}</span>
-                  </div>
-                  {branch.type && (
-                    <div className="flex items-center">
-                      <Flag className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <span className="mr-2 font-medium">Tipo:</span>
-                      <span>{branch.type}</span>
-                    </div>
-                  )}
-                  {branch.isHeadquarters && (
-                    <div className="flex items-center text-primary">
-                      <Info className="h-4 w-4 mr-2" />
-                      <span className="font-medium">Sede Principale</span>
-                    </div>
-                  )}
+      {/* Tabs di navigazione */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="mb-4">
+          <TabsTrigger value="overview">
+            <Info className="h-4 w-4 mr-2" />
+            {t('branches.detail.tabs.overview')}
+          </TabsTrigger>
+          <TabsTrigger value="managers">
+            <Users className="h-4 w-4 mr-2" />
+            {t('branches.detail.tabs.managers')}
+          </TabsTrigger>
+        </TabsList>
+        
+        {/* Contenuto della scheda Panoramica */}
+        <TabsContent value="overview">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Informazioni generali */}
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  <Building className="h-5 w-5 mr-2 inline-block" />
+                  {t('branches.detail.generalInfo')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground mb-1">
+                    {t('branches.detail.companyLabel')}
+                  </h3>
+                  <p className="text-base">
+                    {company?.name || branch?.companyName || '-'}
+                  </p>
                 </div>
-              </div>
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground mb-1">
+                    {t('branches.detail.typeLabel')}
+                  </h3>
+                  <p className="text-base">
+                    {branch?.type || '-'}
+                  </p>
+                </div>
+                {branch?.description && (
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-1">
+                      {t('branches.detail.descriptionLabel')}
+                    </h3>
+                    <p className="text-base">
+                      {branch.description}
+                    </p>
+                  </div>
+                )}
+                <Separator />
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground mb-1">
+                    {t('branches.detail.createdAtLabel')}
+                  </h3>
+                  <p className="text-base">
+                    {branch?.createdAt 
+                      ? new Date(branch.createdAt).toLocaleDateString()
+                      : '-'}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
 
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">Contatti</h3>
-                <div className="space-y-2">
-                  {branch.email && (
-                    <div className="flex items-center">
-                      <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <span className="mr-2 font-medium">Email:</span>
-                      <a 
-                        href={`mailto:${branch.email}`}
-                        className="text-primary hover:underline"
-                      >
+            {/* Informazioni di contatto */}
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  <MapPin className="h-5 w-5 mr-2 inline-block" />
+                  {t('branches.detail.contactInfo')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {branch?.address && (
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-1">
+                      {t('branches.detail.addressLabel')}
+                    </h3>
+                    <p className="text-base flex items-start">
+                      <MapPin className="h-4 w-4 mr-2 mt-1 shrink-0" />
+                      <span>
+                        {branch.address}
+                        {branch.city && `, ${branch.city}`}
+                        {branch.region && `, ${branch.region}`}
+                        {branch.postalCode && ` ${branch.postalCode}`}
+                        {branch.country && `, ${branch.country}`}
+                      </span>
+                    </p>
+                  </div>
+                )}
+                {branch?.phone && (
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-1">
+                      {t('branches.detail.phoneLabel')}
+                    </h3>
+                    <p className="text-base flex items-center">
+                      <Phone className="h-4 w-4 mr-2" />
+                      <a href={`tel:${branch.phone}`} className="hover:underline">
+                        {branch.phone}
+                      </a>
+                    </p>
+                  </div>
+                )}
+                {branch?.email && (
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-1">
+                      {t('branches.detail.emailLabel')}
+                    </h3>
+                    <p className="text-base flex items-center">
+                      <Mail className="h-4 w-4 mr-2" />
+                      <a href={`mailto:${branch.email}`} className="hover:underline">
                         {branch.email}
                       </a>
-                    </div>
-                  )}
-                  {branch.phone && (
-                    <div className="flex items-center">
-                      <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <span className="mr-2 font-medium">Telefono:</span>
-                      <span>{branch.phone}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-              
-              {/* Responsabili */}
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">
-                  <div className="flex items-center">
-                    <Users className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <span>Responsabili</span>
+                    </p>
                   </div>
-                </h3>
-                <div className="space-y-2">
-                  {branch.managers && branch.managers.length > 0 ? (
-                    branch.managers.map((manager, index) => (
-                      <div key={manager.id || index} className="flex items-center p-3 bg-muted/30 rounded-md">
-                        <User className="h-5 w-5 mr-3 text-muted-foreground" />
-                        <div className="flex-grow">
-                          <div className="flex flex-col">
-                            <span className="font-medium">{manager.name}</span>
-                            {manager.role && (
-                              <span className="text-sm text-muted-foreground">
-                                {manager.role}
-                              </span>
-                            )}
-                          </div>
-                          {manager.contactId && (
-                            <div className="mt-1 text-xs bg-primary/10 text-primary px-2 py-1 rounded inline-block">
-                              Collegato a contatto database
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))
-                  ) : branch.manager ? (
-                    // Fallback per supportare il vecchio formato
-                    <div className="flex items-center p-2 bg-muted/30 rounded-md">
-                      <User className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <span className="font-medium">{branch.manager}</span>
-                    </div>
-                  ) : (
-                    <div className="text-sm text-muted-foreground italic">
-                      Nessun responsabile assegnato
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">Social</h3>
-                <div className="space-y-2">
-                  {branch.linkedinUrl && (
-                    <div className="flex items-center">
-                      <Globe className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <span className="mr-2 font-medium">LinkedIn:</span>
-                      <a 
-                        href={branch.linkedinUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline truncate max-w-[200px]"
-                      >
-                        {branch.linkedinUrl}
-                      </a>
-                    </div>
-                  )}
-                  {branch.instagramUrl && (
-                    <div className="flex items-center">
-                      <Globe className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <span className="mr-2 font-medium">Instagram:</span>
-                      <a 
-                        href={branch.instagramUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline truncate max-w-[200px]"
-                      >
-                        {branch.instagramUrl}
-                      </a>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">Indirizzo</h3>
-                <div className="space-y-2">
-                  {branch.address && (
-                    <div className="flex items-start">
-                      <MapPin className="h-4 w-4 mr-2 mt-1 text-muted-foreground" />
-                      <div>
-                        <p>{branch.address}</p>
-                        {branch.city && (
-                          <p>
-                            {branch.city}
-                            {branch.postalCode && `, ${branch.postalCode}`}
-                          </p>
-                        )}
-                        {branch.region && <p>{branch.region}</p>}
-                        {branch.country && <p>{branch.country}</p>}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {branch.description && (
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground mb-2">Descrizione</h3>
-                  <p className="whitespace-pre-line">{branch.description}</p>
-                </div>
-              )}
-
-              {branch.customFields && Object.keys(branch.customFields).length > 0 && (
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground mb-2">Campi Personalizzati</h3>
-                  <div className="space-y-2">
-                    {Object.entries(branch.customFields).map(([key, value]) => (
-                      <div key={key} className="flex items-center">
-                        <Hash className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <span className="mr-2 font-medium">{key}:</span>
-                        <span>{value?.toString()}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">Date</h3>
-                <div className="space-y-2">
-                  <div className="flex items-center">
-                    <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <span className="mr-2 font-medium">Creata il:</span>
-                    <span>{formatDate(branch.createdAt)}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <span className="mr-2 font-medium">Ultima modifica:</span>
-                    <span>{formatDate(branch.updatedAt)}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
+        </TabsContent>
+        
+        {/* Contenuto della scheda Manager */}
+        <TabsContent value="managers">
+          <BranchManagersViewer 
+            branch={branch}
+            onUpdate={refetch}
+          />
+        </TabsContent>
+      </Tabs>
 
+      {/* Modale di modifica */}
       <BranchModal
-        open={showEditModal}
-        onOpenChange={setShowEditModal}
+        open={isEditModalOpen}
+        onOpenChange={setIsEditModalOpen}
         initialData={branch}
+        onClose={refetch}
       />
     </div>
   );
