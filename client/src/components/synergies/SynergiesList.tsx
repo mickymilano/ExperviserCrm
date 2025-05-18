@@ -1,5 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { Handshake, Plus, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,7 @@ export function SynergiesList({
   entityType, 
   showTitle = true 
 }: SynergiesListProps) {
+  const { t } = useTranslation();
   const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
   const [selectedSynergy, setSelectedSynergy] = React.useState<any>(null);
@@ -93,7 +95,7 @@ export function SynergiesList({
     }
     
     // 3. Fallback
-    return `Contatto #${contactId}`;
+    return t('synergies.contact_fallback', { id: contactId });
   };
   
   const getCompanyName = (companyId: number, synergy?: any) => {
@@ -152,7 +154,7 @@ export function SynergiesList({
       if (synergy.contactId) return getContactName(synergy.contactId, synergy);
       if (synergy.companyId) return getCompanyName(synergy.companyId, synergy);
     }
-    return 'Entità sconosciuta';
+    return t('synergies.unknown_entity');
   };
 
   return (
@@ -161,7 +163,7 @@ export function SynergiesList({
         <div className="flex justify-between items-center">
           <div className="flex items-center">
             <Handshake className="h-5 w-5 mr-2 text-muted-foreground" />
-            <h3 className="text-lg font-semibold">Sinergie</h3>
+            <h3 className="text-lg font-semibold">{t('synergies.title')}</h3>
           </div>
           {/* 
             DISABLED: Synergy actions only allowed in DealModal
@@ -176,7 +178,7 @@ export function SynergiesList({
               onClick={() => setIsCreateModalOpen(true)}
             >
               <Plus className="h-4 w-4 mr-1" />
-              Aggiungi
+              {t('common.add')}
             </Button>
           )}
         </div>
@@ -191,11 +193,11 @@ export function SynergiesList({
         <Card>
           <CardContent className="py-6 text-center">
             <Handshake className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-            <h4 className="text-sm font-medium mb-2">Nessuna sinergia trovata</h4>
+            <h4 className="text-sm font-medium mb-2">{t('synergies.no_synergies_found')}</h4>
             <p className="text-sm text-muted-foreground mb-4">
               {entityType === 'deal' 
-                ? "Non ci sono ancora sinergie associate a questa trattativa."
-                : "Le sinergie possono essere create solo all'interno delle trattative (Deals)."}
+                ? t('synergies.no_deal_synergies')
+                : t('synergies.deals_only_message')}
             </p>
             {entityType === 'deal' && (
               <Button 
@@ -204,7 +206,7 @@ export function SynergiesList({
                 onClick={() => setIsCreateModalOpen(true)}
               >
                 <Plus className="h-4 w-4 mr-1" />
-                Crea sinergia
+                {t('synergies.create_synergy')}
               </Button>
             )}
           </CardContent>
