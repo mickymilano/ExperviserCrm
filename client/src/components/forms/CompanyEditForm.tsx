@@ -66,8 +66,16 @@ export default function CompanyEditForm({ company, onComplete }: CompanyEditForm
   
   // Stato per gestire le relazioni multiple
   const [relationValues, setRelationValues] = useState<string[]>(
+    // Assicuriamoci che relations sia sempre un array
     Array.isArray(company.relations) ? company.relations : []
   );
+  
+  // Assicuriamoci che il valore di relations sia impostato nel form
+  React.useEffect(() => {
+    if (Array.isArray(company.relations)) {
+      setValue('relations', company.relations);
+    }
+  }, [company.relations, setValue]);
   
   // Initialize form with company data
   const { 
