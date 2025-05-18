@@ -1770,6 +1770,9 @@ export class PostgresStorage implements IStorage {
 
       // Adattiamo il formato per essere compatibile con quello che si aspetta il frontend
       return result.rows.map((company) => {
+        // Log per debug dei custom_fields
+        console.log("custom_fields dal database:", company.custom_fields);
+        
         return {
           id: company.id,
           name: company.name || "",
@@ -2034,19 +2037,23 @@ export class PostgresStorage implements IStorage {
       "primary_contact_id",
       "postalCode",
     ];
+    
+    // Mappa custom_fields direttamente qui fuori dal ciclo se esiste
+    if (companyData.customFields !== undefined) {
+      console.log("Trovato customFields nell'input:", companyData.customFields);
+      cleanCompanyData["custom_fields"] = companyData.customFields;
+    }
 
     // Copia solo i campi sicuri che esistono nell'input
     for (const field of safeFields) {
       if (
         field in companyData &&
-        companyData[field as keyof Partial<InsertCompany>] !== undefined
+        companyData[field as keyof Partial<InsertCompany>] !== undefined &&
+        field !== "customFields" // Saltiamo customFields perché l'abbiamo già gestito sopra
       ) {
         // Per companyType, assicuriamoci che venga mappato a company_type
         if (field === "companyType") {
           cleanCompanyData["company_type"] = companyData[field as keyof Partial<InsertCompany>];
-        } else if (field === "customFields") {
-          // Mappa customFields a custom_fields per il database
-          cleanCompanyData["custom_fields"] = companyData[field as keyof Partial<InsertCompany>];
         } else {
           cleanCompanyData[field] = companyData[field as keyof Partial<InsertCompany>];
         }
