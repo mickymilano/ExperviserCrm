@@ -32,8 +32,26 @@ export default function Contacts() {
   const companyIdFromUrl = searchParams.get('companyId');
   const companyNameFromUrl = searchParams.get('companyName');
   
+  // Ascoltiamo per l'evento personalizzato che può essere emesso da altre parti dell'app
+  useEffect(() => {
+    const handleOpenContactModal = (event: any) => {
+      console.log("⭐ Evento openContactModal ricevuto con dati:", event.detail);
+      if (event.detail && event.detail.initialData) {
+        setSelectedContact(event.detail.initialData);
+        setShowModal(true);
+      }
+    };
+    
+    // Aggiungi listener per l'evento personalizzato
+    document.addEventListener('openContactModal', handleOpenContactModal);
+    
+    // Cleanup al momento dello smontaggio
+    return () => {
+      document.removeEventListener('openContactModal', handleOpenContactModal);
+    };
+  }, []);
+
   // Verifica se siamo in modalità creazione nuovo contatto
-  // Può essere richiamato sia da "contacts/new" che da parametri URL
   useEffect(() => {
     // Controlla se siamo nella pagina "new" (direttamente o tramite query params)
     const isNewContactPage = location.includes("/contacts/new") || companyIdFromUrl;
@@ -44,7 +62,8 @@ export default function Contacts() {
       let initialContactData: any = {
         firstName: '',
         lastName: '',
-        companyEmail: ''
+        companyEmail: '',
+        areasOfActivity: []
       };
       
       // Se abbiamo informazioni sull'azienda, preleviamo il nome direttamente
@@ -56,28 +75,24 @@ export default function Contacts() {
                                decodeURIComponent(companyNameFromUrl) : 
                                (companyDetails?.name || 'Company');
         
-        console.log("Precompilazione contatto con azienda:", {
+        console.log("⭐ Precompilazione contatto con azienda:", {
           id: companyId,
           name: companyNameToUse
         });
         
         // IMPORTANTE: assicuriamoci che areasOfActivity sia un array con oggetti validi
-        initialContactData = {
-          ...initialContactData,
-          // Assegniamo direttamente con props ESPLICITE 
-          areasOfActivity: [{
-            companyId: companyId,
-            companyName: companyNameToUse,
-            isPrimary: true,
-            role: '',
-            jobDescription: `Works at ${companyNameToUse}`
-          }]
-        };
+        initialContactData.areasOfActivity.push({
+          companyId: companyId,
+          companyName: companyNameToUse,
+          isPrimary: true,
+          role: '',
+          jobDescription: `Works at ${companyNameToUse}`
+        });
         
-        console.log("⚠️ areasOfActivity precompilato:", initialContactData.areasOfActivity);
+        console.log("⭐ areasOfActivity precompilato:", initialContactData.areasOfActivity);
       }
       
-      console.log("Dati iniziali per nuovo contatto:", initialContactData);
+      console.log("⭐ Dati iniziali per nuovo contatto:", initialContactData);
       setSelectedContact(initialContactData);
       setShowModal(true);
     }

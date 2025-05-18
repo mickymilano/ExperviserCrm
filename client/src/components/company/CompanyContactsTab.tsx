@@ -349,8 +349,32 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
             </Button>
             <Button 
               onClick={() => {
-                console.log("Navigating to create contact with company:", companyName);
-                navigate(`/contacts/new?companyId=${companyId}&companyName=${encodeURIComponent(company?.name || '')}`);
+                // Creazione contatto direttamente con i dati completi dell'azienda
+                const companyNameToUse = company ? company.name : companyName;
+                console.log("Apertura modale creazione contatto con azienda:", 
+                  { id: companyId, name: companyNameToUse });
+                  
+                // Creiamo un evento personalizzato per aprire il modale di creazione contatto
+                const event = new CustomEvent('openContactModal', {
+                  detail: {
+                    initialData: {
+                      firstName: '',
+                      lastName: '',
+                      companyEmail: '',
+                      areasOfActivity: [{
+                        companyId: companyId,
+                        companyName: companyNameToUse,
+                        isPrimary: true,
+                        role: '',
+                        jobDescription: `Works at ${companyNameToUse}`
+                      }]
+                    }
+                  }
+                });
+                document.dispatchEvent(event);
+                
+                // Navigate serve solo a mantenere la funzionalità precedente
+                navigate(`/contacts/new?companyId=${companyId}&companyName=${encodeURIComponent(companyNameToUse || '')}`);
               }}
               size="sm"
               className="flex items-center"
