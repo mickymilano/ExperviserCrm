@@ -3,9 +3,20 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import { storage } from './storage';
-import { pool } from './db'; // Importiamo il pool di connessione PostgreSQL
+import { pool, db } from './db'; // Importiamo il pool di connessione PostgreSQL
 import { z } from 'zod';
-import { insertUserSchema, insertContactSchema, insertCompanySchema, insertDealSchema, insertPipelineStageSchema, insertLeadSchema, insertAreaOfActivitySchema, insertContactEmailSchema, insertBranchSchema } from '@shared/schema';
+import { 
+  insertUserSchema, 
+  insertContactSchema, 
+  insertCompanySchema, 
+  insertDealSchema, 
+  insertPipelineStageSchema, 
+  insertLeadSchema, 
+  insertAreaOfActivitySchema, 
+  insertContactEmailSchema, 
+  insertBranchSchema,
+  areasOfActivity  // Importiamo la tabella areasOfActivity
+} from '@shared/schema';
 import { 
   listLeads, 
   getLead, 
@@ -567,47 +578,115 @@ export function registerRoutes(app: any) {
         console.log(`Creazione area di attività per contatto ${newContact.id} e azienda ${companyId}`);
         
         try {
-          // Crea direttamente nel DB con una query SQL per garantire che funzioni
-          const areaResult = await pool.query(
-            `INSERT INTO areas_of_activity 
-             (contact_id, company_id, company_name, is_primary, role, job_description, created_at, updated_at) 
-             VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW()) 
-             RETURNING *`,
-            [
-              newContact.id,
-              companyId,
-              companyData.name,
-              true,
-              req.body.role || '',
-              req.body.jobDescription || ''
-            ]
+          // Approccio 1: Utilizzo di storage.createAreaOfActivity
+          console.log("Approccio 1: Utilizzo di storage.createAreaOfActivity");
+          const area = await storage.createAreaOfActivity({
+            contactId: newContact.id,
+            companyId: companyId,
+            companyName: companyData.name,
+            isPrimary: true,
+            role: req.body.role || null,
+            jobDescription: req.body.jobDescription || null
+          });
+          
+          console.log(`Area di attività creata con ID: ${area.id}`);
+          
+          // Aggiungi l'area al contatto restituito
+          newContact.areasOfActivity = [area];
+          
+          // Verifica che l'area sia stata creata correttamente
+          const verifyResult = await pool.query(
+            'SELECT * FROM areas_of_activity WHERE contact_id = $1 AND company_id = $2',
+            [newContact.id, companyId]
           );
           
-          if (areaResult.rows && areaResult.rows.length > 0) {
-            const area = areaResult.rows[0];
-            console.log(`Area di attività creata con ID: ${area.id}`);
-            
-            // Mappiamo i nomi delle colonne in camelCase per il frontend
-            const mappedArea = {
-              id: area.id,
-              contactId: area.contact_id,
-              companyId: area.company_id,
-              companyName: area.company_name,
-              isPrimary: area.is_primary,
-              role: area.role,
-              jobDescription: area.job_description,
-              createdAt: area.created_at,
-              updatedAt: area.updated_at
-            };
-            
-            // Aggiungi l'area al contatto restituito
-            newContact.areasOfActivity = [mappedArea];
+          if (verifyResult.rows && verifyResult.rows.length > 0) {
+            console.log(`✅ Verifica automatica: area di attività trovata nel database`);
           } else {
-            console.error("Errore: nessuna riga restituita dopo inserimento area di attività");
+            console.error(`❌ Verifica automatica: area di attività NON trovata nel database!`);
+            throw new Error("Area di attività non trovata dopo la creazione");
           }
         } catch (areaError) {
-          console.error(`Errore creazione area di attività: ${areaError}`);
-          // Non interrompiamo la creazione del contatto se l'area fallisce
+          console.error(`Errore nel primo approccio: ${areaError}`);
+          
+          try {
+            // Approccio 2: Query SQL diretta
+            console.log("Approccio 2: Query SQL diretta");
+            const areaResult = await pool.query(
+              `INSERT INTO areas_of_activity 
+               (contact_id, company_id, company_name, is_primary, role, job_description, created_at, updated_at) 
+               VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW()) 
+               RETURNING *`,
+              [
+                newContact.id,
+                companyId,
+                companyData.name,
+                true,
+                req.body.role || '',
+                req.body.jobDescription || ''
+              ]
+            );
+            
+            if (areaResult.rows && areaResult.rows.length > 0) {
+              const area = areaResult.rows[0];
+              console.log(`Area di attività creata con SQL diretta, ID: ${area.id}`);
+              
+              // Mappiamo i nomi delle colonne in camelCase per il frontend
+              const mappedArea = {
+                id: area.id,
+                contactId: area.contact_id,
+                companyId: area.company_id,
+                companyName: area.company_name,
+                isPrimary: area.is_primary,
+                role: area.role,
+                jobDescription: area.job_description,
+                createdAt: area.created_at,
+                updatedAt: area.updated_at
+              };
+              
+              // Aggiungi l'area al contatto restituito
+              newContact.areasOfActivity = [mappedArea];
+            } else {
+              throw new Error("Nessun risultato dall'inserimento SQL diretto");
+            }
+          } catch (sqlError) {
+            console.error(`Errore nel secondo approccio: ${sqlError}`);
+            
+            try {
+              // Approccio 3: Scrittura direttamente sulla connessione del pool
+              console.log("Approccio 3: Query con client dedicato");
+              
+              // Ottieni un client dedicato dal pool per una transazione
+              const client = await pool.connect();
+              
+              try {
+                await client.query('BEGIN');
+                
+                const areaResult = await client.query(
+                  `INSERT INTO areas_of_activity 
+                   (contact_id, company_id, company_name, is_primary, created_at, updated_at) 
+                   VALUES ($1, $2, $3, $4, NOW(), NOW()) 
+                   RETURNING id`,
+                  [newContact.id, companyId, companyData.name, true]
+                );
+                
+                if (areaResult.rows && areaResult.rows.length > 0) {
+                  console.log(`✅ Approccio 3 riuscito, area ID: ${areaResult.rows[0].id}`);
+                  await client.query('COMMIT');
+                } else {
+                  await client.query('ROLLBACK');
+                  throw new Error("Nessun risultato dall'inserimento con client dedicato");
+                }
+              } catch (transactionError) {
+                await client.query('ROLLBACK');
+                throw transactionError;
+              } finally {
+                client.release();
+              }
+            } catch (finalError) {
+              console.error(`Tutti gli approcci falliti: ${finalError}`);
+            }
+          }
         }
       }
       
