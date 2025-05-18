@@ -74,6 +74,7 @@ const companySchema = z.object({
 type CompanyFormData = z.infer<typeof companySchema>;
 
 export default function CompanyModal({ open, onOpenChange, initialData }: CompanyModalProps) {
+  const { t } = useTranslation(); // Funzione di traduzione
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [tagsInput, setTagsInput] = useState(initialData?.tags ? initialData.tags.join(", ") : "");
@@ -252,8 +253,8 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
     },
     onError: (error) => {
       toast({
-        title: "Errore",
-        description: `Impossibile ${isEditMode ? 'aggiornare' : 'creare'} l'azienda: ${error.message}`,
+        title: t('common.error'),
+        description: t(isEditMode ? 'company.errors.updateFailed' : 'company.errors.createFailed', {error: error.message}),
         variant: "destructive",
       });
     }
@@ -269,8 +270,8 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
         // IMPORTANTE: Verifica se ci sono dati nel form prima di inviare
         if (!data.name || data.name.trim() === '') {
           toast({
-            title: "Errore di validazione",
-            description: "Il nome dell'azienda è obbligatorio",
+            title: t('common.validationError'),
+            description: t('company.validation.nameRequired'),
             variant: "destructive",
           });
           return;
@@ -301,14 +302,14 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
       <DialogContent className="overflow-y-auto max-h-[80vh]">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">
-            {isEditMode ? 'Modifica Azienda' : 'Aggiungi Nuova Azienda'}
+            {isEditMode ? t('modal.editCompany') : t('modal.addCompany')}
           </DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-2 mb-4">
             <Label htmlFor="name" className="flex items-center">
-              <span>Nome Azienda</span>
+              <span>{t('company.name')}</span>
               <span className="ml-2 px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">Google Maps</span>
             </Label>
             <PlacesAutocomplete 
@@ -503,12 +504,12 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
                 onOpenChange(false);
               }}
             >
-              Annulla
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={saveCompany.isPending}>
               {saveCompany.isPending 
-                ? (isEditMode ? 'Salvataggio...' : 'Aggiunta...') 
-                : (isEditMode ? 'Salva Modifiche' : 'Aggiungi Azienda')}
+                ? (isEditMode ? t('common.saving') : t('common.adding')) 
+                : (isEditMode ? t('company.saveChanges') : t('company.addCompany'))}
             </Button>
           </DialogFooter>
         </form>
