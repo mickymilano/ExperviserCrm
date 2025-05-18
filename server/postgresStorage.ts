@@ -2668,13 +2668,65 @@ export class PostgresStorage implements IStorage {
     id: number,
     dealData: Partial<InsertDeal>,
   ): Promise<Deal | undefined> {
-    const [updatedDeal] = await db
-      .update(deals)
-      .set({ ...dealData, updatedAt: new Date() })
-      .where(eq(deals.id, id))
-      .returning();
-
-    return updatedDeal;
+    try {
+      console.log(`PostgresStorage.updateDeal: updating deal ${id} with data:`, dealData);
+      
+      // Preparazione dei dati da aggiornare
+      const updateData: any = {
+        ...dealData,
+        updated_at: new Date() // Usa snake_case per la colonna DB
+      };
+      
+      // Converti il value in stringa se è un numero
+      if (updateData.value !== undefined && typeof updateData.value !== 'string') {
+        updateData.value = updateData.value.toString();
+      }
+      
+      // Utilizza SQL diretto per maggiore sicurezza e controllo
+      const updateFields = Object.keys(updateData)
+        .filter(key => key !== 'id') // Escludiamo l'id dai campi da aggiornare
+        .map((key, index) => {
+          // Converti da camelCase a snake_case per nomi di colonna DB
+          const dbField = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+          return `${dbField} = $${index + 2}`; // +2 perché $1 è riservato per l'id
+        })
+        .join(', ');
+      
+      if (updateFields.length === 0) {
+        console.log(`No fields to update for deal ${id}`);
+        return await this.getDeal(id); // Ritorna i dati attuali se non ci sono campi da aggiornare
+      }
+      
+      const values = [
+        id, 
+        ...Object.keys(updateData)
+          .filter(key => key !== 'id')
+          .map(key => updateData[key])
+      ];
+      
+      const query = `
+        UPDATE deals 
+        SET ${updateFields} 
+        WHERE id = $1 
+        RETURNING *
+      `;
+      
+      console.log(`Executing update query:`, query, 'with values:', values);
+      
+      const result = await pool.query(query, values);
+      
+      if (result.rows.length === 0) {
+        console.log(`No deal found with id ${id}`);
+        return undefined;
+      }
+      
+      // Recupera il deal appena aggiornato con tutte le sue relazioni
+      console.log(`Deal ${id} successfully updated. Retrieving the updated deal with relations...`);
+      return await this.getDeal(id);
+    } catch (error) {
+      console.error(`Error in updateDeal(${id}):`, error);
+      throw error;
+    }
   }
 
   async deleteDeal(id: number): Promise<boolean> {
