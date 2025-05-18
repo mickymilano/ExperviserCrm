@@ -1909,6 +1909,8 @@ export class PostgresStorage implements IStorage {
         // Categorizzazioni
         industry: company.industry || null,
         tags: company.tags || [],
+        // Tag multipli per la relazione utente↔azienda
+        relations: company.relations || [],
 
         // Categorizzazioni specifiche aziende
         location_types: company.locationTypes || [],
@@ -2012,6 +2014,7 @@ export class PostgresStorage implements IStorage {
       "notes",
       "status",
       "tags",
+      "relations",
       "customFields",
       "parentCompanyId",
       "linkedinUrl",
