@@ -1295,6 +1295,22 @@ export function registerRoutes(app: any) {
     }
   });
   
+  // Ottieni sinergie per un deal specifico (rotta alternativa per compatibilità frontend)
+  app.get('/api/deals/:id/synergies', authenticate, async (req, res) => {
+    try {
+      const dealId = parseInt(req.params.id);
+      if (isNaN(dealId)) {
+        return res.status(400).json({ message: 'ID opportunità non valido' });
+      }
+      
+      const synergies = await storage.getSynergiesByDealId(dealId);
+      res.json(synergies);
+    } catch (error) {
+      console.error('Error fetching synergies for deal:', error);
+      res.status(500).json({ message: 'Errore durante il recupero delle sinergie per l\'opportunità' });
+    }
+  });
+  
   // Crea un nuovo deal
   app.post('/api/deals', authenticate, async (req, res) => {
     try {
