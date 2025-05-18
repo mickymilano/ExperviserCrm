@@ -189,7 +189,10 @@
     "view_all": "Visualizza tutte",
     "synergy_contacts": "Contatti sinergia",
     "add_contacts": "Aggiungi contatti",
-    "select_contacts": "Seleziona contatti"
+    "select_contacts": "Seleziona contatti",
+    "recent_synergies": "Sinergie Recenti",
+    "view_all_synergies": "Vedi tutte le sinergie",
+    "unspecified_type": "Tipo non specificato"
   },
   
   "modal.addCompany": "Aggiungi Azienda",

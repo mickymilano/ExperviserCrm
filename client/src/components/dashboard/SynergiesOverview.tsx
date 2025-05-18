@@ -88,7 +88,7 @@ export function SynergiesOverview() {
       <CardHeader className="pb-2">
         <CardTitle className="text-md font-medium flex items-center">
           <Handshake className="h-4 w-4 mr-2" />
-          Sinergie Recenti
+          {t('synergies.recent_synergies')}
         </CardTitle>
       </CardHeader>
       <CardContent className="pb-2">
@@ -96,7 +96,7 @@ export function SynergiesOverview() {
           <div className="text-center py-6">
             <Handshake className="h-8 w-8 mx-auto mb-2 text-muted-foreground opacity-50" />
             <p className="text-sm text-muted-foreground">
-              Nessuna sinergia trovata nel sistema.
+              {t('synergies.no_synergies_found')}
             </p>
           </div>
         ) : (
@@ -108,14 +108,14 @@ export function SynergiesOverview() {
               >
                 <div>
                   <div className="font-medium text-sm">
-                    {synergy?.type || 'Tipo non specificato'}
+                    {synergy?.type || t('synergies.unspecified_type')}
                   </div>
                   <div className="text-xs text-muted-foreground">
                     {getContactName(synergy?.contactId)} ↔ {getCompanyName(synergy?.companyId)}
                   </div>
                 </div>
                 <Badge className={getSynergyStatusColor(synergy?.status || '')}>
-                  {synergy?.status || 'Sconosciuto'}
+                  {synergy?.status || t('common.unknown')}
                 </Badge>
               </div>
             ))}
@@ -128,7 +128,7 @@ export function SynergiesOverview() {
           className="w-full" 
           onClick={() => setLocation('/synergies')}
         >
-          Vedi tutte le sinergie
+          {t('synergies.view_all_synergies')}
           <ArrowRight className="h-4 w-4 ml-1" />
         </Button>
       </CardFooter>
