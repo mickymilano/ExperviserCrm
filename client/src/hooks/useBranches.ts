@@ -90,7 +90,7 @@ export const useUpdateBranch = () => {
   
   return useMutation({
     mutationFn: async (branch: Partial<Branch> & { id: number }) => {
-      return await apiRequest(`/api/branches/${branch.id}`, "PUT", branch);
+      return await apiRequest("PUT", `/api/branches/${branch.id}`, branch);
     },
     onSuccess: (data, variables) => {
       // Invalida le query esistenti per aggiornare i dati
