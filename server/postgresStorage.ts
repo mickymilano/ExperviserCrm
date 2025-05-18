@@ -3635,4 +3635,67 @@ export class PostgresStorage implements IStorage {
       throw err;
     }
   }
+  
+  async getJobTitle(id: number): Promise<JobTitle | null> {
+    console.log(`PostgresStorage.getJobTitle: retrieving job title with id ${id}`);
+    try {
+      const [jobTitle] = await db
+        .select()
+        .from(job_titles)
+        .where(eq(job_titles.id, id));
+      
+      return jobTitle || null;
+    } catch (err) {
+      console.error(`Error retrieving job title with id ${id}:`, err);
+      throw err;
+    }
+  }
+  
+  async updateJobTitle(id: number, data: { name: string }): Promise<JobTitle> {
+    console.log(`PostgresStorage.updateJobTitle: updating job title with id ${id} to "${data.name}"`);
+    try {
+      // Verifichiamo che il job title esista
+      const existingJobTitle = await this.getJobTitle(id);
+      
+      if (!existingJobTitle) {
+        throw new Error(`Job title with id ${id} not found`);
+      }
+      
+      const [updatedJobTitle] = await db
+        .update(job_titles)
+        .set(data)
+        .where(eq(job_titles.id, id))
+        .returning();
+      
+      if (!updatedJobTitle) {
+        throw new Error(`Failed to update job title with id ${id}`);
+      }
+      
+      return updatedJobTitle;
+    } catch (err) {
+      console.error(`Error updating job title with id ${id}:`, err);
+      throw err;
+    }
+  }
+  
+  async deleteJobTitle(id: number): Promise<void> {
+    console.log(`PostgresStorage.deleteJobTitle: deleting job title with id ${id}`);
+    try {
+      // Verifichiamo che il job title esista
+      const existingJobTitle = await this.getJobTitle(id);
+      
+      if (!existingJobTitle) {
+        throw new Error(`Job title with id ${id} not found`);
+      }
+      
+      const result = await db
+        .delete(job_titles)
+        .where(eq(job_titles.id, id));
+      
+      // Nota: drizzle non ritorna rowCount come pg, quindi non possiamo verificare il numero di righe eliminate
+    } catch (err) {
+      console.error(`Error deleting job title with id ${id}:`, err);
+      throw err;
+    }
+  }
 }

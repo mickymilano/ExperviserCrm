@@ -121,7 +121,10 @@ export interface IStorage {
   
   // JobTitle operations
   getJobTitles(opts: { subSectorId: number; search: string }): Promise<JobTitle[]>;
+  getJobTitle(id: number): Promise<JobTitle | null>;
   createJobTitle(data: { subSectorId: number; name: string }): Promise<JobTitle>;
+  updateJobTitle(id: number, data: { name: string }): Promise<JobTitle>;
+  deleteJobTitle(id: number): Promise<void>;
 }
 
 /**
@@ -1003,6 +1006,11 @@ export class MemStorage implements IStorage {
     
     return filtered;
   }
+  
+  async getJobTitle(id: number): Promise<JobTitle | null> {
+    const jobTitle = this.jobTitles.find(jt => jt.id === id);
+    return jobTitle || null;
+  }
 
   async createJobTitle(data: { subSectorId: number; name: string }): Promise<JobTitle> {
     // Verifica che il sottosettore esista
@@ -1016,11 +1024,32 @@ export class MemStorage implements IStorage {
       id,
       subSectorId: data.subSectorId,
       name: data.name,
-      createdAt: new Date(),
-      updatedAt: new Date(),
     };
     this.jobTitles.push(newJobTitle);
     return newJobTitle;
+  }
+  
+  async updateJobTitle(id: number, data: { name: string }): Promise<JobTitle> {
+    const index = this.jobTitles.findIndex(jt => jt.id === id);
+    if (index === -1) {
+      throw new Error(`JobTitle with id ${id} not found`);
+    }
+    
+    this.jobTitles[index] = {
+      ...this.jobTitles[index],
+      name: data.name,
+    };
+    
+    return this.jobTitles[index];
+  }
+  
+  async deleteJobTitle(id: number): Promise<void> {
+    const index = this.jobTitles.findIndex(jt => jt.id === id);
+    if (index === -1) {
+      throw new Error(`JobTitle with id ${id} not found`);
+    }
+    
+    this.jobTitles.splice(index, 1);
   }
 }
 
