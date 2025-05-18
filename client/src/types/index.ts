@@ -98,6 +98,8 @@ export interface Company {
   address: string | null; // Deprecated: Use fullAddress instead
   fullAddress: string | null; // Unified location field
   country: string | null; // Direct property for country (Added 2025-05-13)
+  /** tag multipli per la relazione utente↔azienda */
+  relations: string[];
   tags: string[] | null;
   notes: string | null;
   customFields: Record<string, any> | null;

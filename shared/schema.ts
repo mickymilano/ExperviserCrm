@@ -184,6 +184,9 @@ export const companies = pgTable('companies', {
   channels: text('channels').array(),
   products_or_services_tags: text('products_or_services_tags').array(),
   
+  // Tag multipli per la relazione utente↔azienda
+  relations: jsonb('relations').default('[]').notNull(),
+  
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow(),
 });
