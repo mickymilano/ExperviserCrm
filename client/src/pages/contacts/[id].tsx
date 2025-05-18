@@ -159,10 +159,11 @@ export default function ContactDetail() {
       
       {/* Tabs Navigation */}
       <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4 md:w-auto md:inline-flex">
+        <TabsList className="grid w-full grid-cols-5 md:w-auto md:inline-flex">
           <TabsTrigger value="overview">{t('company.contacts.detail.tabs.overview')}</TabsTrigger>
           <TabsTrigger value="companies">{t('company.contacts.detail.tabs.companies')}</TabsTrigger>
           <TabsTrigger value="deals">{t('company.contacts.detail.tabs.deals')}</TabsTrigger>
+          <TabsTrigger value="synergies">{t('tab.synergies')}</TabsTrigger>
           <TabsTrigger value="activities">{t('company.contacts.detail.tabs.activities')}</TabsTrigger>
         </TabsList>
         

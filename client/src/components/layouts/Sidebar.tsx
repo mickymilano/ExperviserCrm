@@ -1,4 +1,5 @@
 import { useLocation, Link } from "wouter";
+import { useTranslation } from "react-i18next";
 import { 
   Home, 
   Users, 
@@ -109,6 +110,7 @@ function UserProfileSummary() {
 
 export default function Sidebar({ open, setOpen }: SidebarProps) {
   const [location] = useLocation();
+  const { t } = useTranslation();
 
   return (
     <>
@@ -179,7 +181,7 @@ export default function Sidebar({ open, setOpen }: SidebarProps) {
             <NavItem 
               href="/synergies" 
               icon={<Handshake className="h-6 w-6" />} 
-              label="Synergies" 
+              label={t('navigation.synergies')} 
               active={location === "/synergies"} 
             />
             <NavItem 
