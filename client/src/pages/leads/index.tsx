@@ -30,10 +30,10 @@ export default function LeadsPage() {
       
       <Tabs defaultValue="all" className="mb-6">
         <TabsList>
-          <TabsTrigger value="all">Tutti i Lead</TabsTrigger>
-          <TabsTrigger value="new">Nuovi</TabsTrigger>
-          <TabsTrigger value="qualified">Qualificati</TabsTrigger>
-          <TabsTrigger value="unqualified">Non Qualificati</TabsTrigger>
+          <TabsTrigger value="all">{t('lead.tabs.all')}</TabsTrigger>
+          <TabsTrigger value="new">{t('lead.tabs.new')}</TabsTrigger>
+          <TabsTrigger value="qualified">{t('lead.tabs.qualified')}</TabsTrigger>
+          <TabsTrigger value="unqualified">{t('lead.tabs.unqualified')}</TabsTrigger>
         </TabsList>
         
         <TabsContent value="all" className="mt-4">
@@ -111,7 +111,7 @@ export default function LeadsPage() {
                     onClick={() => navigate(`/leads/${lead.id}`)}
                   >
                     <Eye className="h-4 w-4 mr-1" />
-                    Visualizza
+                    {t('lead.view')}
                   </Button>
                 </CardFooter>
               </Card>

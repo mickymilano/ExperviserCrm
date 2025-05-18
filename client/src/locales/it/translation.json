@@ -96,17 +96,27 @@
   "table.noRecords": "Nessun record trovato",
   "table.loading": "Caricamento in corso...",
   
-  "lead.noSource": "Nessuna fonte",
-  "lead.newStatus": "Nuovo",
-  "lead.qualifiedStatus": "Qualificato",
-  "lead.unqualifiedStatus": "Non qualificato",
-  "lead.addLead": "Aggiungi Lead",
-  "lead.allLeads": "Tutti i lead",
-  "lead.newLeads": "Nuovi lead",
-  "lead.qualifiedLeads": "Lead qualificati",
-  "lead.unqualifiedLeads": "Lead non qualificati",
-  "lead.noCompany": "Nessuna azienda",
-  "lead.view": "Visualizza",
+  "lead": {
+    "title": "Lead",
+    "noSource": "Nessuna fonte",
+    "newStatus": "Nuovo",
+    "qualifiedStatus": "Qualificato",
+    "unqualifiedStatus": "Non qualificato",
+    "addLead": "Aggiungi Lead",
+    "allLeads": "Tutti i lead",
+    "newLeads": "Nuovi lead",
+    "qualifiedLeads": "Lead qualificati",
+    "unqualifiedLeads": "Lead non qualificati",
+    "noCompany": "Nessuna azienda",
+    "view": "Visualizza",
+    "tabs": {
+      "all": "Tutti i Lead",
+      "new": "Nuovi",
+      "qualified": "Qualificati",
+      "unqualified": "Non Qualificati",
+      "inProgress": "In Lavorazione"
+    }
+  },
   
   "modal.addCompany": "Aggiungi Azienda",
   "modal.editCompany": "Modifica Azienda",
