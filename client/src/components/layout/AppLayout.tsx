@@ -356,9 +356,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             {/* Pulsante Azione Rapida */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" className="h-9 w-9">
-                  <Plus className="h-5 w-5" />
-                </Button>
+                <div className="relative group">
+                  <Button variant="outline" size="icon" className="h-9 w-9">
+                    <Plus className="h-5 w-5" />
+                  </Button>
+                  <span className="absolute -top-9 left-1/2 -translate-x-1/2 bg-secondary text-secondary-foreground text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
+                    Azione Rapida
+                  </span>
+                </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => {
