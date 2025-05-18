@@ -1,0 +1,208 @@
+# 1) Crea lo script di migrazione
+cat << 'EOF' > migrations/20250518_create_sectors_sub_sectors_job_titles.sql
+BEGIN;
+CREATE TABLE IF NOT EXISTS sectors (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL UNIQUE
+);
+CREATE TABLE IF NOT EXISTS sub_sectors (
+  id SERIAL PRIMARY KEY,
+  sector_id INTEGER NOT NULL REFERENCES sectors(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  UNIQUE(sector_id, name)
+);
+CREATE TABLE IF NOT EXISTS job_titles (
+  id SERIAL PRIMARY KEY,
+  sub_sector_id INTEGER NOT NULL REFERENCES sub_sectors(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  UNIQUE(sub_sector_id, name)
+);
+COMMIT;
+EOF
+
+# 2) Applica tutti gli aggiornamenti in blocco
+cat << 'PATCH' | patch -p1
+--- a/shared/schema.ts
++++ b/shared/schema.ts
+@@ // aggiungi in fondo al file:
++// --- Settori, Sottosettori, Job Titles -------------------------------------
++export const sectorSchema = z.object({ id: z.number(), name: z.string() });
++export type Sector = z.infer<typeof sectorSchema>;
++
++export const subSectorSchema = z.object({
++  id: z.number(),
++  sectorId: z.number(),
++  name: z.string(),
++});
++export type SubSector = z.infer<typeof subSectorSchema>;
++
++export const jobTitleSchema = z.object({
++  id: z.number(),
++  subSectorId: z.number(),
++  name: z.string(),
++});
++export type JobTitle = z.infer<typeof jobTitleSchema>;
+--- a/client/src/types.ts
++++ b/client/src/types.ts
+@@ // inserisci dopo le interfacce esistenti:
++export interface Sector { id: number; name: string }
++export interface SubSector { id: number; sectorId: number; name: string }
++export interface JobTitle { id: number; subSectorId: number; name: string }
+--- a/server/routes.ts
++++ b/server/routes.ts
+@@ /* alla fine delle altre route, prima di export default app; */
++import { getSectors, createSector } from './controllers/sectorController';
++import { getSubSectors, createSubSector } from './controllers/subSectorController';
++import { getJobTitles, createJobTitle } from './controllers/jobTitleController';
++
++app.get('/api/sectors', getSectors);
++app.post('/api/sectors', createSector);
++app.get('/api/sub-sectors', getSubSectors);
++app.post('/api/sub-sectors', createSubSector);
++app.get('/api/job-titles', getJobTitles);
++app.post('/api/job-titles', createJobTitle);
+--- a/server/controllers/sectorController.ts
++++ b/server/controllers/sectorController.ts
++import type { Request, Response } from 'express';
++import { z } from 'zod';
++import { storage } from '../postgresStorage';
++
++const createSectorSchema = z.object({ name: z.string() });
++export async function getSectors(_req: Request, res: Response) {
++  const list = await storage.getSectors();
++  res.json(list);
++}
++export async function createSector(req: Request, res: Response) {
++  const { name } = createSectorSchema.parse(req.body);
++  const item = await storage.createSector({ name });
++  res.status(201).json(item);
++}
+--- a/server/controllers/subSectorController.ts
++++ b/server/controllers/subSectorController.ts
++import type { Request, Response } from 'express';
++import { z } from 'zod';
++import { storage } from '../postgresStorage';
++
++const createSubSectorSchema = z.object({
++  sectorId: z.number(),
++  name: z.string(),
++});
++export async function getSubSectors(req: Request, res: Response) {
++  const { sectorId, search } = req.query;
++  const list = await storage.getSubSectors({
++    sectorId: Number(sectorId),
++    search: String(search ?? ''),
++  });
++  res.json(list);
++}
++export async function createSubSector(req: Request, res: Response) {
++  const dto = createSubSectorSchema.parse(req.body);
++  const item = await storage.createSubSector(dto);
++  res.status(201).json(item);
++}
+--- a/server/controllers/jobTitleController.ts
++++ b/server/controllers/jobTitleController.ts
++import type { Request, Response } from 'express';
++import { z } from 'zod';
++import { storage } from '../postgresStorage';
++
++const createJobTitleSchema = z.object({
++  subSectorId: z.number(),
++  name: z.string(),
++});
++export async function getJobTitles(req: Request, res: Response) {
++  const { subSectorId, search } = req.query;
++  const list = await storage.getJobTitles({
++    subSectorId: Number(subSectorId),
++    search: String(search ?? ''),
++  });
++  res.json(list);
++}
++export async function createJobTitle(req: Request, res: Response) {
++  const dto = createJobTitleSchema.parse(req.body);
++  const item = await storage.createJobTitle(dto);
++  res.status(201).json(item);
++}
+--- a/server/postgresStorage.ts
++++ b/server/postgresStorage.ts
+@@ // all’interno della classe PostgresStorage:
++  async getSectors(): Promise<Sector[]> {
++    return db.select().from(sectors);
++  }
++  async createSector(data: { name: string }): Promise<Sector> {
++    const [row] = await db.insert(sectors).values(data).returning();
++    return row;
++  }
++  async getSubSectors(opts: { sectorId: number; search: string }): Promise<SubSector[]> {
++    return db
++      .select()
++      .from(sub_sectors)
++      .where(eq(sub_sectors.sectorId, opts.sectorId))
++      .where(opts.search ? like(sub_sectors.name, `%${opts.search}%`) : undefined);
++  }
++  async createSubSector(data: { sectorId: number; name: string }): Promise<SubSector> {
++    const [row] = await db.insert(sub_sectors).values(data).returning();
++    return row;
++  }
++  async getJobTitles(opts: { subSectorId: number; search: string }): Promise<JobTitle[]> {
++    return db
++      .select()
++      .from(job_titles)
++      .where(eq(job_titles.subSectorId, opts.subSectorId))
++      .where(opts.search ? like(job_titles.name, `%${opts.search}%`) : undefined);
++  }
++  async createJobTitle(data: { subSectorId: number; name: string }): Promise<JobTitle> {
++    const [row] = await db.insert(job_titles).values(data).returning();
++    return row;
++  }
+--- a/client/src/components/ui/GooglePlacesAutocomplete.tsx
++++ b/client/src/components/ui/GooglePlacesAutocomplete.tsx
++# Placeholder: import e setup di react-google-places-autocomplete
++import React from 'react';
++import ReactGooglePlacesAutocomplete from 'react-google-places-autocomplete';
++export function GooglePlacesAutocomplete(props: any) {
++  return <ReactGooglePlacesAutocomplete apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY} {...props} />;
++}
+--- a/client/src/components/modals/ContactModal.tsx
++++ b/client/src/components/modals/ContactModal.tsx
+@@ // nel render form, sostituisci i select statici con AsyncCreatableSelect
+-import Select from 'react-select';
++import AsyncCreatableSelect from 'react-select/async-creatable';
+@@
+-      <Select
+-        options={sectors.map(s => ({ label: s.name, value: s.id }))}
+-        onChange={opt => setFieldValue('sectorId', opt!.value)}
+-        value={sectors.find(s => s.id === values.sectorId) && { label: ... }}
+-      />
++      <AsyncCreatableSelect
++        cacheOptions
++        defaultOptions
++        loadOptions={async (input) => {
++          const res = await fetch(`/api/sectors?search=${encodeURIComponent(input)}`);
++          return (await res.json()).map((s: Sector) => ({ label: s.name, value: s.id }));
++        }}
++        onChange={opt => setFieldValue('sectorId', opt!.value)}
++        onCreateOption={async (name) => {
++          const res = await fetch(`/api/sectors`, {
++            method: 'POST',
++            headers: { 'Content-Type': 'application/json' },
++            body: JSON.stringify({ name })
++          });
++          const s = await res.json();
++          setFieldValue('sectorId', s.id);
++        }}
++        value={values.sectorId ? { label: values.sectorName, value: values.sectorId } : null}
++      />
++      {/* identicamente per sub-sectors e job-titles, con cascading */}
+PATCH
+
+# 3) Installa le dipendenze frontend
+npm install react-select @types/react-select
+
+# 4) Applica la migrazione
+npm run db:migrate
+
+# 5) Riavvia
+killall node && npm run start
+
+echo "Patch applicata! Ora hai settori, sottosettori e job title dinamici con AsyncCreatableSelect in frontend."

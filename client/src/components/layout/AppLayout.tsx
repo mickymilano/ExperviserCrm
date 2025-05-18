@@ -357,10 +357,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <div className="relative group">
-                  <Button variant="outline" size="icon" className="h-9 w-9">
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="h-9 w-9 transition-colors duration-200 hover:bg-primary hover:text-primary-foreground"
+                  >
                     <Plus className="h-5 w-5" />
                   </Button>
-                  <span className="absolute -top-9 left-1/2 -translate-x-1/2 bg-secondary text-secondary-foreground text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
+                  <span className="absolute -top-9 left-1/2 -translate-x-1/2 bg-secondary text-secondary-foreground text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap shadow-md">
                     Azione Rapida
                   </span>
                 </div>
