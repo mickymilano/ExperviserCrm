@@ -109,19 +109,19 @@ export default function ContactDetail() {
         <div className="flex items-center mb-6">
           <Button variant="ghost" onClick={() => navigate("/contacts")} className="mr-4">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
+            {t('company.contacts.detail.back')}
           </Button>
-          <h1 className="text-2xl font-bold">Contact Not Found</h1>
+          <h1 className="text-2xl font-bold">{t('company.contacts.detail.contactNotFound')}</h1>
         </div>
         <Card>
           <CardContent className="p-8 text-center">
             <AlertCircle className="h-12 w-12 mx-auto mb-4 text-destructive" />
-            <h2 className="text-xl font-medium mb-2">Contact Not Found</h2>
+            <h2 className="text-xl font-medium mb-2">{t('company.contacts.detail.contactNotFound')}</h2>
             <p className="text-muted-foreground mb-4">
-              The contact you're looking for doesn't exist or you don't have access.
+              {t('company.contacts.detail.contactNotFoundDescription')}
             </p>
             <Button onClick={() => navigate("/contacts")}>
-              Return to Contacts
+              {t('company.contacts.detail.returnToContacts')}
             </Button>
           </CardContent>
         </Card>
@@ -138,7 +138,7 @@ export default function ContactDetail() {
         <div className="flex items-center">
           <Button variant="ghost" onClick={() => navigate("/contacts")} className="mr-4">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
+            {t('company.contacts.detail.back')}
           </Button>
           <h1 className="text-2xl font-bold">{contact.firstName} {contact.lastName}</h1>
           {primaryCompany?.role && (
@@ -148,11 +148,11 @@ export default function ContactDetail() {
         <div className="flex space-x-2">
           <Button variant="outline" size="sm" onClick={() => setShowModal(true)}>
             <Edit className="h-4 w-4 mr-2" />
-            Edit
+            {t('company.contacts.detail.edit')}
           </Button>
           <Button variant="destructive" size="sm">
             <Trash className="h-4 w-4 mr-2" />
-            Delete
+            {t('company.contacts.detail.delete')}
           </Button>
         </div>
       </div>
@@ -160,10 +160,10 @@ export default function ContactDetail() {
       {/* Tabs Navigation */}
       <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-4 md:w-auto md:inline-flex">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="companies">Companies</TabsTrigger>
-          <TabsTrigger value="deals">Deals</TabsTrigger>
-          <TabsTrigger value="activities">Activities</TabsTrigger>
+          <TabsTrigger value="overview">{t('company.contacts.detail.tabs.overview')}</TabsTrigger>
+          <TabsTrigger value="companies">{t('company.contacts.detail.tabs.companies')}</TabsTrigger>
+          <TabsTrigger value="deals">{t('company.contacts.detail.tabs.deals')}</TabsTrigger>
+          <TabsTrigger value="activities">{t('company.contacts.detail.tabs.activities')}</TabsTrigger>
         </TabsList>
         
         {/* Overview Tab */}
@@ -175,7 +175,7 @@ export default function ContactDetail() {
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center text-lg">
                     <User className="h-5 w-5 mr-2" />
-                    Contact Details
+                    {t('company.contacts.detail.contactDetails')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -190,7 +190,7 @@ export default function ContactDetail() {
                   {primaryCompany && (
                     <div className="text-center">
                       <p className="text-sm text-muted-foreground">
-                        {primaryCompany.role || "No role specified"} at
+                        {primaryCompany.role || t('company.contacts.noRoleSpecified')} {t('company.contacts.detail.at')}
                       </p>
                       <Link 
                         href={primaryCompany.id ? `/companies/${primaryCompany.id}` : "#"}
@@ -216,7 +216,7 @@ export default function ContactDetail() {
                     <div className="flex items-center">
                       <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
                       <a href={`mailto:${contact.companyEmail}`} className="text-sm hover:underline">
-                        {contact.companyEmail} (work)
+                        {contact.companyEmail} ({t('company.contacts.detail.workEmail')})
                       </a>
                     </div>
                   )}
@@ -225,7 +225,7 @@ export default function ContactDetail() {
                     <div className="flex items-center">
                       <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
                       <a href={`mailto:${contact.privateEmail}`} className="text-sm hover:underline">
-                        {contact.privateEmail} (personal)
+                        {contact.privateEmail} ({t('company.contacts.detail.personalEmail')})
                       </a>
                     </div>
                   )}
