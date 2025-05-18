@@ -1123,21 +1123,15 @@ export function registerRoutes(app: any) {
           SELECT 
             d.id, 
             d.name,
-            d.description,
-            d.amount,
-            d.currency,
+            d.notes,
+            d.value,
             d.status,
             d.stage_id AS "stageId",
-            d.probability,
             d.expected_close_date AS "expectedCloseDate",
-            d.actual_close_date AS "actualCloseDate",
             d.contact_id AS "contactId",
             d.company_id AS "companyId",
-            d.product_id AS "productId",
-            d.source,
+            d.branch_id AS "branchId",
             d.tags,
-            d.priority,
-            d.type,
             d.created_at AS "createdAt",
             d.updated_at AS "updatedAt",
             ps.name AS "stageName",
@@ -1145,7 +1139,7 @@ export function registerRoutes(app: any) {
           FROM deals d
           LEFT JOIN pipeline_stages ps ON d.stage_id = ps.id
           LEFT JOIN contacts c ON d.contact_id = c.id
-          WHERE d.company_id = $1 AND d.status != 'deleted'
+          WHERE d.company_id = $1 AND d.status = 'active'
           ORDER BY d.updated_at DESC
         `,
         values: [companyId]
