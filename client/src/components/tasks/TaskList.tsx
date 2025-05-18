@@ -130,7 +130,7 @@ export default function TaskList({ entityId, entityType, title = "Attività" }: 
                   </div>
                   {task.isCalendarEvent && (
                     <Badge variant="outline" className="bg-primary/10 text-primary">
-                      Calendario
+                      {t('tasks.calendar_event')}
                     </Badge>
                   )}
                 </div>

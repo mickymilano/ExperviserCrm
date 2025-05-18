@@ -96,6 +96,7 @@
     "new": "Nuovo",
     "due_date": "Scadenza",
     "value": "Valore",
+    "calendar_event": "Calendario",
     "empty": {
       "title": "Nessuna attività trovata.",
       "description": "Clicca su \"Nuovo\" per aggiungere un'attività."
