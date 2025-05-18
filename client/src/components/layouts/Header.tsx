@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { Menu, Bell, Search, Plus, ChevronDown, User, LogOut, Settings } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -83,6 +84,7 @@ export default function Header({ toggleSidebar }: HeaderProps) {
   const [showLeadModal, setShowLeadModal] = useState(false);
   const [showCompanyModal, setShowCompanyModal] = useState(false);
   const [showDealModal, setShowDealModal] = useState(false);
+  const { t } = useTranslation();
   
   // Get page title based on current route
   const getPageTitle = () => {
@@ -103,7 +105,7 @@ export default function Header({ toggleSidebar }: HeaderProps) {
       case "/calendar":
         return "Calendar";
       case "/tasks":
-        return "Tasks";
+        return t('navigation.tasks');
       case "/settings":
         return "Settings";
       default:

@@ -197,7 +197,7 @@ export default function Sidebar({ open, setOpen }: SidebarProps) {
             <NavItem 
               href="/tasks" 
               icon={<CheckSquare className="h-6 w-6" />} 
-              label="Tasks" 
+              label={t('navigation.tasks')} 
               active={location === "/tasks"} 
             />
             
