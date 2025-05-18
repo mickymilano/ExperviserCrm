@@ -172,6 +172,74 @@
       "addFirstCompany": "Inizia aggiungendo la tua prima azienda.",
       "vatLabel": "VAT: {{number}}",
       "foundedLabel": "Fondata: {{year}}"
+    },
+    "companyDetail": {
+      "back": "Indietro",
+      "editCompany": "Modifica Azienda",
+      "deleteCompany": "Elimina",
+      "cancelEditing": "Annulla Modifica",
+      "companyNotFound": "Azienda Non Trovata",
+      "companyNotFoundDescription": "L'azienda che stai cercando non esiste o non hai i permessi necessari.",
+      "returnToCompanies": "Torna alle Aziende",
+      "editCompanyDetails": "Modifica Dettagli Azienda",
+      "makeChanges": "Apporta modifiche alle informazioni aziendali qui sotto",
+      "tabs": {
+        "overview": "Panoramica",
+        "contacts": "Contatti",
+        "deals": "Opportunità",
+        "branches": "Filiali",
+        "activities": "Attività"
+      },
+      "sections": {
+        "companyDetails": "Dettagli Azienda",
+        "basicInformation": "Informazioni di Base",
+        "contactInformation": "Informazioni di Contatto",
+        "locationInfo": "Sede e Localizzazione",
+        "relationshipsWithMe": "Relazioni con me",
+        "administrativeDetails": "Dettagli Amministrativi",
+        "summary": "Riepilogo",
+        "notSpecified": "Non specificato"
+      },
+      "fields": {
+        "industry": "Settore",
+        "companySize": "Dimensione Azienda",
+        "yearFounded": "Anno di Fondazione",
+        "annualRevenue": "Fatturato Annuale",
+        "email": "Email",
+        "phone": "Telefono",
+        "website": "Sito Web",
+        "address": "Indirizzo",
+        "timezone": "Fuso Orario",
+        "contacts": "Contatti",
+        "openDeals": "Opportunità Aperte",
+        "vatNumber": "Partita IVA",
+        "fiscalCode": "Codice Fiscale",
+        "uniqueCode": "Codice Univoco"
+      },
+      "deals": {
+        "title": "Opportunità ({{count}})",
+        "description": "Opportunità e trattative associate a {{companyName}}",
+        "noDealsFound": "Nessuna Opportunità Trovata",
+        "creatingYourFirst": "Inizia creando la tua prima opportunità per questa azienda."
+      },
+      "activities": {
+        "title": "Attività Recenti",
+        "noActivitiesFound": "Nessuna Attività Recente",
+        "createActivity": "Crea Attività"
+      },
+      "relationshipTypes": {
+        "prospect": "In fase di valutazione",
+        "clienteAttivo": "Cliente attivo",
+        "exCliente": "Ex-cliente",
+        "clienteRetainer": "Cliente retainer",
+        "segnalatore": "Segnalatore",
+        "partnerStrategico": "Partner strategico",
+        "investitoreCliente": "Investitore-cliente",
+        "mandante": "Mandante",
+        "clienteUnaTantum": "Cliente una-tantum",
+        "fornitore": "Fornitore",
+        "concorrente": "Concorrente"
+      }
     }
   }
 }

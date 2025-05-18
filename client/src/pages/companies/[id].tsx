@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 import { useCompany, useCompanyContacts } from "@/hooks/useCompanies";
 import { useDeals } from "@/hooks/useDeals";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ import CompanyBranchesList from "@/components/branches/CompanyBranchesList";
 import CompanyContactsTab from "@/components/company/CompanyContactsTab";
 
 export default function CompanyDetail() {
+  const { t } = useTranslation();
   const params = useParams();
   const [_, navigate] = useLocation();
   const companyId = parseInt(params.id);
@@ -155,17 +157,17 @@ export default function CompanyDetail() {
             <>
               <Button onClick={() => setIsEditing(true)} variant="outline" size="sm">
                 <Edit className="h-4 w-4 mr-2" />
-                Edit Company
+                {t("company.companyDetail.editCompany")}
               </Button>
               <Button variant="destructive" size="sm">
                 <Trash className="h-4 w-4 mr-2" />
-                Delete
+                {t("company.companyDetail.deleteCompany")}
               </Button>
             </>
           )}
           {isEditing && (
             <Button onClick={() => setIsEditing(false)} variant="outline" size="sm">
-              Cancel Editing
+              {t("company.companyDetail.cancelEditing")}
             </Button>
           )}
         </div>
@@ -174,11 +176,11 @@ export default function CompanyDetail() {
       {/* Main content with tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid grid-cols-5 md:w-fit mb-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="contacts">Contacts</TabsTrigger>
-          <TabsTrigger value="deals">Deals</TabsTrigger>
-          <TabsTrigger value="branches">Filiali</TabsTrigger>
-          <TabsTrigger value="activities">Activities</TabsTrigger>
+          <TabsTrigger value="overview">{t("company.companyDetail.tabs.overview")}</TabsTrigger>
+          <TabsTrigger value="contacts">{t("company.companyDetail.tabs.contacts")}</TabsTrigger>
+          <TabsTrigger value="deals">{t("company.companyDetail.tabs.deals")}</TabsTrigger>
+          <TabsTrigger value="branches">{t("company.companyDetail.tabs.branches")}</TabsTrigger>
+          <TabsTrigger value="activities">{t("company.companyDetail.tabs.activities")}</TabsTrigger>
         </TabsList>
         
         {/* Overview Tab */}
