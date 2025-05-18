@@ -1,0 +1,76 @@
+Ecco i passaggi precisi da dare a Replit per iniziare subito la traduzione in italiano di tutto il front-end, con scaffolding i18n e tagging delle stringhe:
+
+# 1. Installa le dipendenze i18n
+npm install i18next react-i18next
+
+# 2. Crea il file di configurazione i18n
+cat << 'EOF' > client/src/i18n.ts
+import i18n from 'i18next';
+import { initReactI18next } from 'react-i18next';
+import translationIT from './locales/it/translation.json';
+
+i18n
+  .use(initReactI18next)
+  .init({
+    resources: {
+      it: { translation: translationIT },
+    },
+    lng: 'it',
+    fallbackLng: 'it',
+    interpolation: { escapeValue: false },
+  });
+
+export default i18n;
+EOF
+
+# 3. Crea la cartella per le traduzioni e il file italiano
+mkdir -p client/src/locales/it
+cat << 'EOF' > client/src/locales/it/translation.json
+{
+  "button.save": "Salva",
+  "button.cancel": "Annulla",
+  "form.company.name": "Ragione Sociale",
+  "form.company.fullAddress": "Indirizzo",
+  "form.contact.firstName": "Nome",
+  "form.contact.lastName": "Cognome",
+  "alert.contactNotFound": "Contatto non trovato",
+  "...": "..."
+}
+EOF
+
+# 4. Inizializza i18n all’avvio dell’app
+#    (es. in client/src/main.tsx o index.tsx)
+apply_patch << 'EOF'
+*** Begin Patch
+*** Update File: client/src/main.tsx
+-import App from './App';
++import './i18n';
++import App from './App';
+*** End Patch
+EOF
+
+# 5. Sostituisci in un componente di prova (es. CompanyModal.tsx) le stringhe hard-coded
+apply_patch << 'EOF'
+*** Begin Patch
+*** Update File: client/src/components/modals/CompanyModal.tsx
+@@
+- <Button>Salva</Button>
++ <Button>{t('button.save')}</Button>
+@@
+- <Label>Ragione Sociale</Label>
++ <Label>{t('form.company.name')}</Label>
+*** End Patch
+EOF
+
+# 6. Verifica che in console non ci siano errori, la UI mostri “Salva” e “Annulla” in italiano.
+
+# A questo punto possiamo procedere modulo per modulo per sostituire tutte le stringhe rimanenti,
+# aggiungere chiavi in client/src/locales/it/translation.json e poi replicare in en, fr, es, ecc.
+
+Con queste istruzioni Replit:
+	1.	Installa e configura i18next
+	2.	Crea la struttura locales/it/translation.json con le chiavi iniziali
+	3.	Attiva la traduzione in italiano di CompanyModal
+	4.	Fornisce già il template per estendere ad altre lingue
+
+Fammi sapere appena è in funzione in modo da procedere con il completamento di tutte le etichette.

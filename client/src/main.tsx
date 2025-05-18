@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import * as Sentry from "@sentry/react";
+import './i18n'; // Importo prima di App per garantire che i18n sia inizializzato
 import App from './App';
 import './index.css';
 import { debugContext } from './lib/debugContext';
