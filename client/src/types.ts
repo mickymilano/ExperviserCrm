@@ -109,6 +109,7 @@ export interface AreaOfActivity {
   role: string | null;
   jobDescription: string | null;
   isPrimary: boolean | null;
+  branchId?: number | null;
   createdAt: Date | null;
   updatedAt: Date | null;
 }

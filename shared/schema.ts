@@ -198,6 +198,7 @@ export const areasOfActivity = pgTable('areas_of_activity', {
   contactId: integer('contact_id').notNull().references(() => contacts.id),
   companyId: integer('company_id').references(() => companies.id),
   companyName: varchar('company_name', { length: 100 }),
+  branchId: integer('branch_id').references(() => branches.id),
   role: varchar('role', { length: 100 }),
   jobDescription: text('job_description'),
   isPrimary: boolean('is_primary'),
