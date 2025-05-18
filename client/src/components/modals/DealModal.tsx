@@ -655,7 +655,7 @@ export default function DealModal({ open, onOpenChange, initialData }: DealModal
                 }
               }}
             >
-              Proceed
+              {t("common.proceed", "Procedi")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
