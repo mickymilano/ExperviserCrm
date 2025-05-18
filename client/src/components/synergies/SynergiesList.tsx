@@ -199,22 +199,8 @@ export function SynergiesList({
                 ? t('synergies.no_deal_synergies')
                 : t('synergies.deals_only_message')}
             </p>
-            {entityType === 'deal' && (
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => {
-                  toast({
-                    title: t('synergies.feature_disabled_title') || 'Funzionalità disabilitata',
-                    description: t('synergies.feature_disabled_message') || 'Le sinergie possono essere create solo nel contesto delle opportunità.',
-                    variant: "default"
-                  });
-                }}
-              >
-                <Plus className="h-4 w-4 mr-1" />
-                {t('synergies.create_synergy')}
-              </Button>
-            )}
+            {/* Il pulsante "Crea sinergia" è stato rimosso perché la funzionalità è disabilitata.
+              Le sinergie possono essere create solo nel contesto delle opportunità. */}
           </CardContent>
         </Card>
       ) : (
