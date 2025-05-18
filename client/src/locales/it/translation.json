@@ -1,14 +1,33 @@
 {
-  "button.save": "Salva",
-  "button.cancel": "Annulla",
-  "button.delete": "Elimina",
-  "button.edit": "Modifica",
-  "button.add": "Aggiungi",
-  "button.create": "Crea",
-  "button.submit": "Invia",
-  "button.close": "Chiudi",
-  "button.back": "Indietro",
-  "button.next": "Avanti",
+  "common": {
+    "save": "Salva",
+    "cancel": "Annulla", 
+    "delete": "Elimina",
+    "edit": "Modifica",
+    "add": "Aggiungi",
+    "create": "Crea",
+    "submit": "Invia",
+    "close": "Chiudi",
+    "back": "Indietro",
+    "next": "Avanti",
+    "error": "Errore",
+    "validationError": "Errore di validazione",
+    "saving": "Salvataggio...",
+    "adding": "Aggiunta..."
+  },
+
+  "button": {
+    "save": "Salva",
+    "cancel": "Annulla",
+    "delete": "Elimina",
+    "edit": "Modifica",
+    "add": "Aggiungi",
+    "create": "Crea",
+    "submit": "Invia",
+    "close": "Chiudi",
+    "back": "Indietro",
+    "next": "Avanti"
+  },
 
   "form.company.name": "Ragione Sociale",
   "form.company.fullAddress": "Indirizzo",
@@ -78,5 +97,34 @@
   "tab.notes": "Note",
   "tab.history": "Cronologia",
   "tab.files": "File",
-  "tab.settings": "Impostazioni"
+  "tab.settings": "Impostazioni",
+  
+  "company": {
+    "name": "Nome Azienda",
+    "industry": "Settore",
+    "sector": "Settore di Attività",
+    "email": "Email",
+    "website": "Sito Web",
+    "phone": "Telefono",
+    "address": "Indirizzo",
+    "fullAddress": "Indirizzo Completo",
+    "country": "Paese",
+    "employeeCount": "Numero Dipendenti",
+    "annualRevenue": "Fatturato Annuale",
+    "foundedYear": "Anno di Fondazione",
+    "status": "Stato",
+    "type": "Tipo",
+    "tags": "Tag",
+    "notes": "Note",
+    "saveChanges": "Salva Modifiche",
+    "addCompany": "Aggiungi Azienda",
+    "tagsPlaceholder": "Separa i tag con le virgole",
+    "validation": {
+      "nameRequired": "Il nome dell'azienda è obbligatorio"
+    },
+    "errors": {
+      "createFailed": "Impossibile creare l'azienda: {{error}}",
+      "updateFailed": "Impossibile aggiornare l'azienda: {{error}}"
+    }
+  }
 }

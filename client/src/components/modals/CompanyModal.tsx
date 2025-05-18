@@ -481,17 +481,17 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
           </div>
           
           <div className="space-y-2 mb-4">
-            <Label htmlFor="tags">Tag</Label>
+            <Label htmlFor="tags">{t('company.tags')}</Label>
             <Input 
               id="tags" 
-              placeholder="Separa i tag con le virgole" 
+              placeholder={t('company.tagsPlaceholder')} 
               value={tagsInput}
               onChange={(e) => setTagsInput(e.target.value)}
             />
           </div>
           
           <div className="space-y-2 mb-4">
-            <Label htmlFor="notes">Note</Label>
+            <Label htmlFor="notes">{t('company.notes')}</Label>
             <Textarea id="notes" {...register("notes")} />
           </div>
           
