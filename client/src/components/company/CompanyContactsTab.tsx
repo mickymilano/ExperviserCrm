@@ -212,7 +212,7 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
       });
       
       if (!res.ok) {
-        throw new Error("Impossibile impostare il contatto primario");
+        throw new Error(t("company.contacts.errors.setPrimaryContact"));
       }
       
       const updatedCompany = await res.json();
@@ -227,15 +227,15 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
       queryClient.invalidateQueries({ queryKey: ["/api/companies", companyId, "contacts"] });
       
       toast({
-        title: "Contatto primario impostato",
-        description: "Il contatto primario è stato aggiornato con successo",
+        title: t("company.contacts.notifications.primaryContactSet"),
+        description: t("company.contacts.notifications.primaryContactSetDescription"),
       });
       
     } catch (error) {
       console.error("Errore nell'impostazione del contatto primario:", error);
       toast({
-        title: "Errore",
-        description: "Impossibile impostare il contatto primario",
+        title: t("company.contacts.error"),
+        description: t("company.contacts.notifications.primaryContactSetError"),
         variant: "destructive",
       });
     } finally {
@@ -257,7 +257,7 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
       });
       
       if (!res.ok) {
-        throw new Error("Impossibile rimuovere il contatto primario");
+        throw new Error(t("company.contacts.errors.removePrimaryContact"));
       }
       
       // Aggiorna lo stato locale
@@ -267,15 +267,15 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
       queryClient.invalidateQueries({ queryKey: ["/api/companies", companyId] });
       
       toast({
-        title: "Contatto primario rimosso",
-        description: "Il contatto primario è stato rimosso con successo",
+        title: t("company.contacts.notifications.primaryContactRemoved"),
+        description: t("company.contacts.notifications.primaryContactRemovedDescription"),
       });
       
     } catch (error) {
       console.error("Errore nella rimozione del contatto primario:", error);
       toast({
-        title: "Errore",
-        description: "Impossibile rimuovere il contatto primario",
+        title: t("company.contacts.error"),
+        description: t("company.contacts.notifications.primaryContactRemoveError"),
         variant: "destructive",
       });
     } finally {
@@ -297,7 +297,7 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
       
       // Otteniamo prima le aree di attività del contatto
       const areasRes = await fetch(`/api/contacts/${contactId}/areas-of-activity`);
-      if (!areasRes.ok) throw new Error("Impossibile recuperare le aree di attività");
+      if (!areasRes.ok) throw new Error(t("company.contacts.errors.fetchAreasOfActivity"));
       
       const areas = await areasRes.json();
       
@@ -305,7 +305,7 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
       const area = areas.find((a: any) => a.companyId === companyId);
       
       if (!area) {
-        throw new Error("Area di attività non trovata");
+        throw new Error(t("company.contacts.errors.areaNotFound"));
       }
       
       // Eliminiamo l'area di attività
@@ -314,7 +314,7 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
       });
       
       if (!deleteRes.ok) {
-        throw new Error("Impossibile eliminare l'area di attività");
+        throw new Error(t("company.contacts.errors.deleteArea"));
       }
       
       // Aggiorniamo anche il campo companyId del contatto (se è questa l'azienda primaria)
@@ -336,8 +336,8 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
       queryClient.invalidateQueries({ queryKey: ["/api/companies", companyId, "contacts"] });
       
       toast({
-        title: "Contatto disassociato",
-        description: `Il contatto è stato rimosso da ${companyName}`,
+        title: t("company.contacts.notifications.contactDisassociated"),
+        description: t("company.contacts.notifications.contactDisassociatedDescription", { companyName }),
       });
       
       // Refresh contacts list
