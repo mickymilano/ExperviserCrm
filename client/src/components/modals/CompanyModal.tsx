@@ -424,7 +424,7 @@ export default function CompanyModal({ open, onOpenChange, initialData }: Compan
               }}
               className="w-full"
               types={['address']} // Limita la ricerca solo a indirizzi geografici
-              placeholder="Cerca o inserisci l'indirizzo completo (via, CAP, città, provincia, paese)"
+              placeholder={t('company.addressPlaceholder')}
             />
           </div>
           

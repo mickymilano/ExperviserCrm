@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
@@ -39,6 +40,7 @@ interface CompanyContactsTabProps {
 }
 
 export default function CompanyContactsTab({ companyId, companyName }: CompanyContactsTabProps) {
+  const { t } = useTranslation();
   const [_, navigate] = useLocation();
   const queryClient = useQueryClient();
   const [modalOpen, setModalOpen] = useState(false);

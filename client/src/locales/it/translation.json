@@ -129,6 +129,7 @@
     "saveChanges": "Salva Modifiche",
     "addCompany": "Aggiungi Azienda",
     "tagsPlaceholder": "Separa i tag con le virgole",
+    "addressPlaceholder": "Cerca o inserisci l'indirizzo completo (via, CAP, città, provincia, paese)",
     "createSuccess": "Azienda creata con successo",
     "updateSuccess": "Azienda aggiornata con successo",
     "validation": {
