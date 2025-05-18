@@ -52,6 +52,8 @@ interface StatCardProps {
 }
 
 function StatCard({ title, value, percentChange, icon, color }: StatCardProps) {
+  const { t } = useTranslation();
+  
   return (
     <div className="bg-card border border-border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between">
@@ -62,7 +64,7 @@ function StatCard({ title, value, percentChange, icon, color }: StatCardProps) {
             <span className="text-xs font-medium">
               {percentChange >= 0 ? '+' : ''}{percentChange}%
             </span>
-            <span className="text-xs text-muted-foreground ml-1">rispetto al mese scorso</span>
+            <span className="text-xs text-muted-foreground ml-1">{t('dashboard.stats.compared_to_last_month', 'rispetto al mese scorso')}</span>
           </div>
         </div>
         <div className={`p-2 rounded-full ${color}`}>
@@ -235,35 +237,35 @@ export default function DashboardPage() {
       {/* Statistiche */}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
         <StatCard
-          title="Contatti"
+          title={t('dashboard.stats.contacts', 'Contatti')}
           value={stats && typeof stats === 'object' && stats.contacts && typeof stats.contacts === 'object' ? stats.contacts.count || 0 : 0}
           percentChange={stats && typeof stats === 'object' && stats.contacts && typeof stats.contacts === 'object' ? stats.contacts.percentChange || 0 : 0}
           icon={<User className="h-5 w-5 text-blue-500" />}
           color="bg-blue-100 dark:bg-blue-900/20"
         />
         <StatCard
-          title="Aziende"
+          title={t('dashboard.stats.companies', 'Aziende')}
           value={stats && typeof stats === 'object' && stats.companies && typeof stats.companies === 'object' ? stats.companies.count || 0 : 0}
           percentChange={stats && typeof stats === 'object' && stats.companies && typeof stats.companies === 'object' ? stats.companies.percentChange || 0 : 0}
           icon={<Building2 className="h-5 w-5 text-violet-500" />}
           color="bg-violet-100 dark:bg-violet-900/20"
         />
         <StatCard
-          title="Filiali"
+          title={t('dashboard.stats.branches', 'Filiali')}
           value={stats && typeof stats === 'object' && stats.branches ? stats.branches : 0}
           percentChange={3.5}
           icon={<Building2 className="h-5 w-5 text-cyan-500" />}
           color="bg-cyan-100 dark:bg-cyan-900/20"
         />
         <StatCard
-          title="Opportunità"
+          title={t('dashboard.stats.opportunities', 'Opportunità')}
           value={stats && typeof stats === 'object' && stats.deals && typeof stats.deals === 'object' ? stats.deals.count || 0 : 0}
           percentChange={stats && typeof stats === 'object' && stats.deals && typeof stats.deals === 'object' ? stats.deals.percentChange || 0 : 0}
           icon={<Briefcase className="h-5 w-5 text-green-500" />}
           color="bg-green-100 dark:bg-green-900/20"
         />
         <StatCard
-          title="Lead"
+          title={t('dashboard.stats.leads', 'Lead')}
           value={stats && typeof stats === 'object' && stats.leads && typeof stats.leads === 'object' ? stats.leads.count || 0 : 0}
           percentChange={stats && typeof stats === 'object' && stats.leads && typeof stats.leads === 'object' ? stats.leads.percentChange || 0 : 0}
           icon={<Target className="h-5 w-5 text-orange-500" />}

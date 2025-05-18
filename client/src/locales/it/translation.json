@@ -19,6 +19,30 @@
     "actions": "Azioni"
   },
   
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Panoramica delle attività recenti e delle performance",
+    "recent_activities": "Attività recenti",
+    "recent_contacts": "Contatti recenti",
+    "recent_deals": "Opportunità recenti",
+    "no_recent_activities": "Nessuna attività recente",
+    "no_recent_contacts": "Nessun contatto recente",
+    "no_recent_deals": "Nessuna opportunità recente",
+    "activity_default": "Attività",
+    "no_description": "Nessuna descrizione",
+    "unnamed_deal": "Opportunità senza titolo",
+    "unspecified_stage": "Fase non specificata",
+    "view": "Visualizza",
+    "stats": {
+      "contacts": "Contatti",
+      "companies": "Aziende",
+      "branches": "Filiali",
+      "opportunities": "Opportunità",
+      "leads": "Lead",
+      "compared_to_last_month": "rispetto al mese scorso"
+    }
+  },
+  
   "validation": {
     "invalidEmail": "Inserisci un'email valida"
   },
