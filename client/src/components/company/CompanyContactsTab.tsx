@@ -348,7 +348,7 @@ export default function CompanyContactsTab({ companyId, companyName }: CompanyCo
               Associa Contatto Esistente
             </Button>
             <Button 
-              onClick={() => navigate(`/contacts/new?companyId=${companyId}&companyName=${encodeURIComponent(companyName)}`)}
+              onClick={() => navigate(`/contacts/new?companyId=${companyId}&companyName=${encodeURIComponent(companyName || '')}`)}
               size="sm"
               className="flex items-center"
             >

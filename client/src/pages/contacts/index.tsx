@@ -39,30 +39,44 @@ export default function Contacts() {
     const isNewContactPage = location.includes("/contacts/new") || companyIdFromUrl;
     
     if (isNewContactPage) {
-      console.log("Apertura automatica modale contatto con companyId:", companyIdFromUrl);
+      console.log("Apertura automatica modale contatto con companyId:", companyIdFromUrl, "companyName:", companyNameFromUrl);
       
-      // Prepariamo i dati iniziali per il modale
-      const initialContactData: any = {
+      let initialContactData: any = {
         firstName: '',
         lastName: '',
         companyEmail: ''
       };
       
-      // Se abbiamo informazioni sull'azienda, aggiungiamole
-      if (companyIdFromUrl && companyNameFromUrl) {
-        initialContactData.areasOfActivity = [{
-          companyId: parseInt(companyIdFromUrl),
-          companyName: decodeURIComponent(companyNameFromUrl),
-          isPrimary: true,
-          role: '',
-          jobDescription: `Works at ${decodeURIComponent(companyNameFromUrl)}`
-        }];
+      // Se abbiamo informazioni sull'azienda, preleviamo il nome direttamente
+      if (companyIdFromUrl && companies) {
+        // Cerchiamo prima nei dati già caricati
+        const companyDetails = companies.find(c => c.id === parseInt(companyIdFromUrl));
+        const companyNameToUse = companyNameFromUrl ? 
+                                 decodeURIComponent(companyNameFromUrl) : 
+                                 (companyDetails?.name || 'Company');
+        
+        console.log("Precompilazione contatto con azienda:", {
+          id: parseInt(companyIdFromUrl),
+          name: companyNameToUse
+        });
+        
+        initialContactData = {
+          ...initialContactData,
+          areasOfActivity: [{
+            companyId: parseInt(companyIdFromUrl),
+            companyName: companyNameToUse,
+            isPrimary: true,
+            role: '',
+            jobDescription: `Works at ${companyNameToUse}`
+          }]
+        };
       }
       
+      console.log("Dati iniziali per nuovo contatto:", initialContactData);
       setSelectedContact(initialContactData);
       setShowModal(true);
     }
-  }, [location, companyIdFromUrl, companyNameFromUrl]);
+  }, [location, companyIdFromUrl, companyNameFromUrl, companies]);
   
   // Debug: Aggiungiamo console.log per verificare i dati ricevuti
   console.log("Contacts Page - contacts:", contacts);

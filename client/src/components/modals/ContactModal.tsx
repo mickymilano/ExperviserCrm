@@ -74,7 +74,20 @@ export default function ContactModal({ open, onOpenChange, initialData, onSucces
   
   // Prepare initial areas of activity if they exist
   const initialAreas = initialData?.areasOfActivity || [];
-  const [areasOfActivity, setAreasOfActivity] = useState<Partial<InsertAreaOfActivity>[]>(initialAreas);
+  
+  // Debug: log initialAreas
+  console.log("initialAreas in AreasOfActivityManager changed:", initialAreas);
+  
+  // Ensure we have properly formatted areas with all required fields
+  const formattedAreas = initialAreas.map(area => ({
+    companyId: area.companyId,
+    companyName: area.companyName || '',
+    isPrimary: area.isPrimary || false,
+    role: area.role || '',
+    jobDescription: area.jobDescription || `Works at ${area.companyName || 'Company'}`,
+  }));
+  
+  const [areasOfActivity, setAreasOfActivity] = useState<Partial<InsertAreaOfActivity>[]>(formattedAreas);
   
   // Check if any area has company ID
   const hasAreaWithCompany = areasOfActivity.some(area => area.companyId);
