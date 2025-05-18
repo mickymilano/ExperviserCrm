@@ -21,12 +21,21 @@ import {
   ChevronDown,
   BellRing,
   Handshake,
-  CheckSquare
+  CheckSquare,
+  Plus
 } from 'lucide-react';
 import { useTheme } from '@/hooks/useTheme';
 import { cn } from '@/lib/utils';
 import DebugConsole from '@/components/debug/DebugConsole';
 import DebugButton from '@/components/debug/DebugButton';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 // Struttura per le voci di menu
 interface MenuItemProps {
@@ -344,6 +353,36 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           
           {/* Azioni header */}
           <div className="flex items-center gap-2">
+            {/* Pulsante Azione Rapida */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" className="h-9 w-9">
+                  <Plus className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link href="/contacts/new">Nuovo Contatto</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/companies/new">Nuova Azienda</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/deals/new">Nuova Opportunità</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/leads/new">Nuovo Lead</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/calendar/new">Nuovo Appuntamento</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/tasks/new">Nuova Attività</Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
             {/* Debug Button */}
             <div className="h-9 w-9 inline-flex items-center justify-center">
               <DebugButton />
