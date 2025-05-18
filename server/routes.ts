@@ -1056,12 +1056,57 @@ export function registerRoutes(app: any) {
         return res.status(404).json({ message: 'Azienda non trovata' });
       }
       
-      // Ottieni i contatti associati all'azienda
-      const contacts = await storage.getContactsByCompany(companyId);
+      // Query diretta al database per maggiore affidabilità
+      // Prima otteniamo gli ID dei contatti associati
+      const areasQuery = `
+        SELECT contact_id FROM areas_of_activity 
+        WHERE company_id = ${companyId}
+      `;
       
-      console.log(`Found ${contacts.length} contacts for company ${companyId}`);
+      const areasResult = await db.execute(areasQuery);
+      console.log(`Query aree risultato:`, areasResult);
       
-      res.json(contacts);
+      if (areasResult.rowCount === 0 || areasResult.rows.length === 0) {
+        console.log(`No contacts found for company ${companyId}`);
+        return res.json([]);
+      }
+      
+      // Estrai gli ID dei contatti
+      const contactIds = areasResult.rows.map(row => row.contact_id);
+      console.log(`Found ${contactIds.length} contact IDs for company ${companyId}: ${contactIds.join(', ')}`);
+      
+      if (contactIds.length > 0) {
+        // Crea una stringa di ID per la query IN
+        const contactIdsStr = contactIds.join(',');
+        
+        const contactsQuery = `
+          SELECT 
+            id, 
+            first_name AS "firstName", 
+            last_name AS "lastName", 
+            status, 
+            company_email AS "companyEmail", 
+            private_email AS "privateEmail", 
+            mobile_phone AS "mobilePhone", 
+            office_phone AS "officePhone",
+            private_phone AS "privatePhone",
+            created_at AS "createdAt", 
+            updated_at AS "updatedAt" 
+          FROM 
+            contacts
+          WHERE 
+            id IN (${contactIdsStr})
+          ORDER BY 
+            first_name, last_name
+        `;
+        
+        const contactsResult = await db.execute(contactsQuery);
+        console.log(`Retrieved ${contactsResult.rows.length} contacts for company ${companyId}`);
+        
+        return res.json(contactsResult.rows);
+      } else {
+        return res.json([]);
+      }
     } catch (error) {
       console.error('Error fetching company contacts:', error);
       res.status(500).json({ message: 'Errore durante il recupero dei contatti dell\'azienda' });

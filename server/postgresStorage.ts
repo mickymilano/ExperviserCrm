@@ -1480,38 +1480,53 @@ export class PostgresStorage implements IStorage {
         `PostgresStorage.getContactsByCompany: retrieving contacts for company ${companyId}`,
       );
       
-      // Utilizziamo una query JOIN più diretta che garantisce risultati corretti
-      const sql_query = `
-        SELECT 
-          c.id, 
-          c.first_name AS "firstName", 
-          c.last_name AS "lastName", 
-          c.status, 
-          c.company_email AS "companyEmail", 
-          c.private_email AS "privateEmail", 
-          c.mobile_phone AS "mobilePhone", 
-          c.office_phone AS "officePhone",
-          c.private_phone AS "privatePhone",
-          c.created_at AS "createdAt", 
-          c.updated_at AS "updatedAt" 
-        FROM 
-          contacts c
-        INNER JOIN 
-          areas_of_activity aoa ON c.id = aoa.contact_id
-        WHERE 
-          aoa.company_id = $1
-        ORDER BY 
-          c.first_name, c.last_name
+      // Approccio semplificato: usa due query separate invece di ANY che può causare problemi
+      // Prima otteniamo gli ID dei contatti associati a questa azienda
+      const contactIdsQuery = `
+        SELECT contact_id FROM areas_of_activity 
+        WHERE company_id = ${companyId}
       `;
       
-      // Eseguiamo la query con parametri
-      const result = await db.execute(sql_query, [companyId]);
+      const contactIdsResult = await pool.query(contactIdsQuery);
       
-      console.log(
-        `Retrieved ${result.rows.length} contacts for company ${companyId} using direct JOIN query`,
-      );
+      if (contactIdsResult.rows.length === 0) {
+        console.log(`No contacts found for company ${companyId}`);
+        return [];
+      }
       
-      return result.rows as Contact[];
+      // Estrai gli ID dei contatti
+      const contactIds = contactIdsResult.rows.map(row => row.contact_id);
+      console.log(`Found ${contactIds.length} contact IDs for company ${companyId}: ${contactIds.join(', ')}`);
+      
+      // Crea una stringa di ID per la query IN
+      const contactIdsStr = contactIds.join(',');
+      
+      // Recupera i dettagli dei contatti usando IN invece di ANY
+      const contactsQuery = `
+        SELECT 
+          id, 
+          first_name AS "firstName", 
+          last_name AS "lastName", 
+          status, 
+          company_email AS "companyEmail", 
+          private_email AS "privateEmail", 
+          mobile_phone AS "mobilePhone", 
+          office_phone AS "officePhone",
+          private_phone AS "privatePhone",
+          created_at AS "createdAt", 
+          updated_at AS "updatedAt" 
+        FROM 
+          contacts
+        WHERE 
+          id IN (${contactIdsStr})
+        ORDER BY 
+          first_name, last_name
+      `;
+      
+      const contactsResult = await pool.query(contactsQuery);
+      console.log(`Retrieved ${contactsResult.rows.length} contacts for company ${companyId}`);
+      
+      return contactsResult.rows as Contact[];
     } catch (error) {
       console.error(`Error in getContactsByCompany(${companyId}):`, error);
       console.error(`Query failed with error: ${error.message}`);
