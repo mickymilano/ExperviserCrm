@@ -361,24 +361,42 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <Link href="/contacts/new">Nuovo Contatto</Link>
+                <DropdownMenuItem onClick={() => {
+                  const contactModal = document.getElementById('contact-modal-trigger');
+                  if (contactModal) (contactModal as HTMLButtonElement).click();
+                }}>
+                  Nuovo Contatto
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/companies/new">Nuova Azienda</Link>
+                <DropdownMenuItem onClick={() => {
+                  const companyModal = document.getElementById('company-modal-trigger');
+                  if (companyModal) (companyModal as HTMLButtonElement).click();
+                }}>
+                  Nuova Azienda
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/deals/new">Nuova Opportunità</Link>
+                <DropdownMenuItem onClick={() => {
+                  const dealModal = document.getElementById('deal-modal-trigger');
+                  if (dealModal) (dealModal as HTMLButtonElement).click();
+                }}>
+                  Nuova Opportunità
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/leads/new">Nuovo Lead</Link>
+                <DropdownMenuItem onClick={() => {
+                  const leadModal = document.getElementById('lead-modal-trigger');
+                  if (leadModal) (leadModal as HTMLButtonElement).click();
+                }}>
+                  Nuovo Lead
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/calendar/new">Nuovo Appuntamento</Link>
+                <DropdownMenuItem onClick={() => {
+                  const meetingModal = document.getElementById('meeting-modal-trigger');
+                  if (meetingModal) (meetingModal as HTMLButtonElement).click();
+                }}>
+                  Nuovo Appuntamento
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/tasks/new">Nuova Attività</Link>
+                <DropdownMenuItem onClick={() => {
+                  const taskModal = document.getElementById('task-modal-trigger');
+                  if (taskModal) (taskModal as HTMLButtonElement).click();
+                }}>
+                  Nuova Attività
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
