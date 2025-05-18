@@ -361,51 +361,36 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <Link href="/contacts" onClick={(e) => {
-                    e.preventDefault();
-                    window.location.href = '/contacts?openNewModal=true';
-                  }}>
-                    Nuovo Contatto
-                  </Link>
+                <DropdownMenuItem onClick={() => {
+                  window.location.href = '/contacts';
+                }}>
+                  Nuovo Contatto
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/companies" onClick={(e) => {
-                    e.preventDefault();
-                    window.location.href = '/companies?openNewModal=true';
-                  }}>
-                    Nuova Azienda
-                  </Link>
+                <DropdownMenuItem onClick={() => {
+                  window.location.href = '/companies';
+                }}>
+                  Nuova Azienda
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/deals/new">
-                    Nuova Opportunità
-                  </Link>
+                <DropdownMenuItem onClick={() => {
+                  window.location.href = '/deals/new';
+                }}>
+                  Nuova Opportunità
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/leads" onClick={(e) => {
-                    e.preventDefault();
-                    window.location.href = '/leads?openNewModal=true';
-                  }}>
-                    Nuovo Lead
-                  </Link>
+                <DropdownMenuItem onClick={() => {
+                  window.location.href = '/leads';
+                }}>
+                  Nuovo Lead
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/calendar" onClick={(e) => {
-                    e.preventDefault();
-                    window.location.href = '/calendar?openNewModal=true';
-                  }}>
-                    Nuovo Appuntamento
-                  </Link>
+                <DropdownMenuItem onClick={() => {
+                  window.location.href = '/calendar';
+                }}>
+                  Nuovo Appuntamento
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/tasks" onClick={(e) => {
-                    e.preventDefault();
-                    window.location.href = '/tasks?openNewModal=true';
-                  }}>
-                    Nuova Attività
-                  </Link>
+                <DropdownMenuItem onClick={() => {
+                  window.location.href = '/tasks';
+                }}>
+                  Nuova Attività
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
