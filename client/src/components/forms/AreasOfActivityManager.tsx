@@ -32,7 +32,8 @@ export default function AreasOfActivityManager({
     companyName: "",
     role: "",
     jobDescription: "",
-    isPrimary: false
+    isPrimary: false,
+    branchId: null
   });
 
   // Reset the form when contactId changes
@@ -40,7 +41,8 @@ export default function AreasOfActivityManager({
     console.log(`ContactId in AreasOfActivityManager changed to: ${contactId}`);
     setNewArea(prev => ({
       ...prev,
-      contactId
+      contactId,
+      branchId: prev.branchId || null
     }));
   }, [contactId]);
 
@@ -56,7 +58,14 @@ export default function AreasOfActivityManager({
     enabled: true
   });
 
+  // Fetch branches for the selected company
+  const { data: branches = [] } = useQuery({
+    queryKey: ["/api/branches/company", newArea.companyId],
+    enabled: !!newArea.companyId,
+  });
+
   console.log("Available companies:", companies.map(c => `${c.id}: ${c.name}`).join(", "));
+  console.log("Available branches for company", newArea.companyId, ":", branches);
 
   const validateArea = (area: Partial<AreaOfActivity>): boolean => {
     setError(null);
@@ -192,6 +201,7 @@ export default function AreasOfActivityManager({
       setNewArea({
         ...newArea,
         companyId: null,
+        branchId: null, // Reset branch quando si seleziona nuova azienda
         // Manteniamo il companyName già inserito, se presente
         companyName: newArea.companyName || ""
       });
@@ -203,6 +213,7 @@ export default function AreasOfActivityManager({
         ...newArea,
         companyId: parseInt(companyId),
         companyName: company?.name || "",
+        branchId: null, // Reset branch quando si cambia azienda
       };
       setNewArea(updatedArea);
       console.log("Selected existing company, area state:", updatedArea);
@@ -279,6 +290,11 @@ export default function AreasOfActivityManager({
               </div>
             </CardHeader>
             <CardContent className="py-2 px-4">
+              {area.branchId && (
+                <p className="text-sm text-muted-foreground">
+                  Filiale: {branches.find(b => b.id === area.branchId)?.name || ""}
+                </p>
+              )}
               {area.role && <p className="text-sm text-muted-foreground">Role: {area.role}</p>}
               {area.jobDescription && (
                 <p className="text-sm mt-1">{area.jobDescription}</p>
@@ -323,6 +339,28 @@ export default function AreasOfActivityManager({
                 value={newArea.companyName || ""}
                 onChange={(e) => setNewArea({ ...newArea, companyName: e.target.value })}
               />
+            </div>
+          )}
+          
+          {newArea.companyId && branches.length > 0 && (
+            <div className="space-y-2">
+              <Label htmlFor="branch">Filiale</Label>
+              <Select
+                value={newArea.branchId?.toString() || ""}
+                onValueChange={(branchId) => setNewArea({ ...newArea, branchId: branchId ? parseInt(branchId) : null })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleziona una filiale (opzionale)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Nessuna filiale specifica</SelectItem>
+                  {branches.map(branch => (
+                    <SelectItem key={branch.id} value={branch.id.toString()}>
+                      {branch.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
           
