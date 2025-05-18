@@ -429,9 +429,8 @@ export type InsertContactEmail = z.infer<typeof insertContactEmailSchema>;
  */
 export const sectors = pgTable('sectors', {
   id: serial('id').primaryKey(),
-  name: text('name').notNull().unique(),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
+  name: text('name').notNull().unique()
+  // Rimosse colonne createdAt e updatedAt che non esistono nel database reale
 });
 
 export const sub_sectors = pgTable('sub_sectors', {
