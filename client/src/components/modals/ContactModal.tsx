@@ -67,7 +67,11 @@ export default function ContactModal({ open, onOpenChange, initialData, onSucces
   
   // Get company name if we have a company ID - chiamata specifica
   const { data: companyData, isLoading: isLoadingCompany } = useQuery({
-    queryKey: ["/api/companies", companyIdFromUrl],
+    queryKey: ["/api/companies"],
+    select: (data) => {
+      if (!data || !Array.isArray(data) || !companyIdFromUrl) return null;
+      return data.find(company => company.id === companyIdFromUrl) || null;
+    },
     enabled: !!companyIdFromUrl
   });
   
@@ -76,24 +80,6 @@ export default function ContactModal({ open, onOpenChange, initialData, onSucces
   
   // Verifica la struttura dell'oggetto per accedere al nome
   const companyName = companyData?.name || '';
-  
-  // Crea un'area di attività precompilata se siamo in contesto azienda
-  useEffect(() => {
-    if (companyData && hasCompanyContext && !areasOfActivity.length) {
-      console.log("Precompilando area di attività con azienda:", companyData.name);
-      
-      // Precompila un'area di attività con l'azienda corrente
-      const prefilledArea = {
-        companyId: companyIdFromUrl,
-        companyName: companyData.name,
-        role: "Employee",
-        jobDescription: `Works at ${companyData.name}`,
-        isPrimary: true
-      };
-      
-      setAreasOfActivity([prefilledArea]);
-    }
-  }, [companyData, hasCompanyContext, companyIdFromUrl]);
   
   // Prepare initial tags if they exist
   const initialTags = initialData?.tags ? initialData.tags.join(", ") : "";
@@ -112,7 +98,23 @@ export default function ContactModal({ open, onOpenChange, initialData, onSucces
     jobDescription: area.jobDescription || `Works at ${area.companyName || 'Company'}`,
   }));
   
-  const [areasOfActivity, setAreasOfActivity] = useState<Partial<InsertAreaOfActivity>[]>(formattedAreas);
+  // Prepara aree precompilate se siamo in contesto azienda
+  let startingAreas = formattedAreas;
+  if (companyData && hasCompanyContext && formattedAreas.length === 0 && typeof companyData === 'object') {
+    // Estrai il nome dell'azienda in modo sicuro
+    const companyNameSafe = companyData && 'name' in companyData ? companyData.name : 'Company';
+    
+    // Precompila un'area di attività con l'azienda corrente
+    startingAreas = [{
+      companyId: companyIdFromUrl,
+      companyName: companyNameSafe,
+      role: "Employee",
+      jobDescription: `Works at ${companyNameSafe}`,
+      isPrimary: true
+    }];
+  }
+  
+  const [areasOfActivity, setAreasOfActivity] = useState<Partial<InsertAreaOfActivity>[]>(startingAreas);
   
   // Debug: log initialData
   console.log("ContactModal initialData:", initialData);
