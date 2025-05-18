@@ -453,9 +453,7 @@ export default function CompanyDetail() {
                 <div>
                   <p className="text-sm font-medium text-muted-foreground mb-1">Contacts</p>
                   <p className="text-2xl font-bold">
-                    {Array.isArray(contacts) && contacts.filter(contact => 
-                      contact.areasOfActivity && contact.areasOfActivity.some(area => area.companyId === companyId)
-                    ).length || 0}
+                    {Array.isArray(contacts) ? contacts.length : 0}
                   </p>
                 </div>
                 <Users className="h-8 w-8 text-muted-foreground opacity-80" />
