@@ -1608,7 +1608,15 @@ export function registerRoutes(app: any) {
         // Validazione dei dati con Zod (schema parziale per consentire aggiornamenti parziali)
         const patchDealSchema = z.object({
           name: z.string().optional(),
-          value: z.union([z.number(), z.string()]).optional(),
+          value: z.union([
+            z.number(),
+            z.string().refine((val) => {
+              const parsed = Number(val);
+              return !isNaN(parsed);
+            }, {
+              message: "Il valore deve essere un numero valido"
+            })
+          ]).optional(),
           stageId: z.number().optional(),
           companyId: z.number().nullable().optional(),
           contactId: z.number().nullable().optional(),
@@ -1618,8 +1626,20 @@ export function registerRoutes(app: any) {
           status: z.string().optional()
         });
         
-        // Validazione dei dati ricevuti
-        const validatedData = patchDealSchema.parse(req.body);
+        // Validazione dei dati ricevuti con safeParse che non genera eccezioni
+        const parseResult = patchDealSchema.safeParse(req.body);
+        
+        // Se la validazione fallisce, restituisce un errore dettagliato
+        if (!parseResult.success) {
+          console.error('Errore di validazione dati:', parseResult.error);
+          return res.status(400).json({ 
+            message: 'Dati non validi per l\'opportunità',
+            errors: parseResult.error.errors,
+            code: 'VALIDATION_ERROR'
+          });
+        }
+        
+        const validatedData = parseResult.data;
         
         // Prepara i dati per l'aggiornamento
         const updateData = { ...validatedData };
