@@ -48,28 +48,33 @@ export default function Contacts() {
       };
       
       // Se abbiamo informazioni sull'azienda, preleviamo il nome direttamente
-      if (companyIdFromUrl && companies) {
+      if (companyIdFromUrl) {
         // Cerchiamo prima nei dati già caricati
-        const companyDetails = companies.find(c => c.id === parseInt(companyIdFromUrl));
+        const companyId = parseInt(companyIdFromUrl);
+        const companyDetails = companies?.find(c => c.id === companyId);
         const companyNameToUse = companyNameFromUrl ? 
-                                 decodeURIComponent(companyNameFromUrl) : 
-                                 (companyDetails?.name || 'Company');
+                               decodeURIComponent(companyNameFromUrl) : 
+                               (companyDetails?.name || 'Company');
         
         console.log("Precompilazione contatto con azienda:", {
-          id: parseInt(companyIdFromUrl),
+          id: companyId,
           name: companyNameToUse
         });
         
+        // IMPORTANTE: assicuriamoci che areasOfActivity sia un array con oggetti validi
         initialContactData = {
           ...initialContactData,
+          // Assegniamo direttamente con props ESPLICITE 
           areasOfActivity: [{
-            companyId: parseInt(companyIdFromUrl),
+            companyId: companyId,
             companyName: companyNameToUse,
             isPrimary: true,
             role: '',
             jobDescription: `Works at ${companyNameToUse}`
           }]
         };
+        
+        console.log("⚠️ areasOfActivity precompilato:", initialContactData.areasOfActivity);
       }
       
       console.log("Dati iniziali per nuovo contatto:", initialContactData);

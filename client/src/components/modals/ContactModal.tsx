@@ -66,7 +66,7 @@ export default function ContactModal({ open, onOpenChange, initialData, onSucces
     queryKey: ["/api/companies", companyIdFromUrl],
     enabled: !!companyIdFromUrl
   });
-  const companyName = companyData?.name;
+  const companyName = companyData?.name || '';
   
   // Prepare initial tags if they exist
   const initialTags = initialData?.tags ? initialData.tags.join(", ") : "";
@@ -79,7 +79,7 @@ export default function ContactModal({ open, onOpenChange, initialData, onSucces
   console.log("initialAreas in AreasOfActivityManager changed:", initialAreas);
   
   // Ensure we have properly formatted areas with all required fields
-  const formattedAreas = initialAreas.map(area => ({
+  const formattedAreas = initialAreas.map((area: any) => ({
     companyId: area.companyId,
     companyName: area.companyName || '',
     isPrimary: area.isPrimary || false,
