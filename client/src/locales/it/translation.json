@@ -192,7 +192,9 @@
     "select_contacts": "Seleziona contatti",
     "recent_synergies": "Sinergie Recenti",
     "view_all_synergies": "Vedi tutte le sinergie",
-    "unspecified_type": "Tipo non specificato"
+    "unspecified_type": "Tipo non specificato",
+    "selected_contacts_count": "{{count}} contatti selezionati",
+    "no_contacts_available": "Nessun contatto disponibile"
   },
   
   "modal.addCompany": "Aggiungi Azienda",

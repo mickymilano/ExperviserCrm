@@ -52,7 +52,7 @@ export function SynergiesSelect({
           
           // Formatta il nome completo di un contatto
           const getContactFullName = (contact: Contact) => {
-            return `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || 'Unnamed Contact';
+            return `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || t('contacts.unnamed_contact');
           };
 
           return (
@@ -72,7 +72,7 @@ export function SynergiesSelect({
                 <SelectTrigger>
                   <SelectValue placeholder={placeholder}>
                     {selectedContactIds.length > 0
-                      ? `${selectedContactIds.length} contatti selezionati`
+                      ? t('synergies.selected_contacts_count', { count: selectedContactIds.length })
                       : placeholder}
                   </SelectValue>
                 </SelectTrigger>
@@ -99,7 +99,7 @@ export function SynergiesSelect({
                     })
                   ) : (
                     <SelectItem value="no-contacts" disabled>
-                      Nessun contatto disponibile
+                      {t('synergies.no_contacts_available')}
                     </SelectItem>
                   )}
                 </SelectContent>
