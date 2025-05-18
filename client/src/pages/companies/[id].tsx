@@ -367,19 +367,19 @@ export default function CompanyDetail() {
                       <div className="flex flex-wrap gap-2">
                         {company.relations.map((type, index) => (
                           <Badge key={index} variant="secondary" className="font-normal">
-                            {type === 'prospect' && 'In fase di valutazione'}
-                            {type === 'clienteAttivo' && 'Cliente attivo'}
-                            {type === 'exCliente' && 'Ex-cliente'}
-                            {type === 'clienteRetainer' && 'Cliente retainer'}
-                            {type === 'segnalatore' && 'Segnalatore'}
-                            {type === 'partnerStrategico' && 'Partner strategico'}
-                            {type === 'investitoreCliente' && 'Investitore-cliente'}
-                            {type === 'mandante' && 'Mandante'}
-                            {type === 'clienteUnaTantum' && 'Cliente una-tantum'}
-                            {type === 'fornitore' && 'Fornitore'}
-                            {type === 'concorrente' && 'Concorrente'}
-                            {type === 'consulente' && 'Consulente'}
-                            {type}
+                            {type === 'prospect' ? 'In fase di valutazione' :
+                             type === 'clienteAttivo' ? 'Cliente attivo' :
+                             type === 'exCliente' ? 'Ex-cliente' :
+                             type === 'clienteRetainer' ? 'Cliente retainer' :
+                             type === 'segnalatore' ? 'Segnalatore' :
+                             type === 'partnerStrategico' ? 'Partner strategico' :
+                             type === 'investitoreCliente' ? 'Investitore-cliente' :
+                             type === 'mandante' ? 'Mandante' :
+                             type === 'clienteUnaTantum' ? 'Cliente una-tantum' :
+                             type === 'fornitore' ? 'Fornitore' :
+                             type === 'concorrente' ? 'Concorrente' :
+                             type === 'consulente' ? 'Consulente' :
+                             type}
                           </Badge>
                         ))}
                       </div>
