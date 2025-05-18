@@ -51,7 +51,7 @@ export default function Companies() {
 
   // Handle delete company
   const handleDelete = async (id: number) => {
-    if (window.confirm(t("companyList.deleteConfirmation"))) {
+    if (window.confirm(t("company.companyList.deleteConfirmation"))) {
       deleteCompany.mutate(id);
     }
   };
@@ -59,12 +59,12 @@ export default function Companies() {
   return (
     <div className="max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-        <h1 className="text-2xl font-bold mb-4 sm:mb-0">{t("companyList.title")}</h1>
+        <h1 className="text-2xl font-bold mb-4 sm:mb-0">{t("company.companyList.title")}</h1>
         <Button onClick={() => {
           setSelectedCompany(null);
           setShowModal(true);
         }}>
-          <Plus className="mr-2 h-4 w-4" /> {t("companyList.addCompany")}
+          <Plus className="mr-2 h-4 w-4" /> {t("company.companyList.addCompany")}
         </Button>
       </div>
 
@@ -74,14 +74,14 @@ export default function Companies() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder={t("companyList.searchPlaceholder")}
+                placeholder={t("company.companyList.searchPlaceholder")}
                 className="pl-9"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             <Button variant="outline" className="md:w-auto">
-              <Filter className="mr-2 h-4 w-4" /> {t("companyList.filter")}
+              <Filter className="mr-2 h-4 w-4" /> {t("company.companyList.filter")}
             </Button>
           </div>
         </CardContent>
@@ -122,13 +122,13 @@ export default function Companies() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => handleEdit(company)}>
-                        {t("companyList.editCompany")}
+                        {t("company.companyList.editCompany")}
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         className="text-destructive"
                         onClick={() => handleDelete(company.id)}
                       >
-                        {t("companyList.deleteCompany")}
+                        {t("company.companyList.deleteCompany")}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -190,14 +190,14 @@ export default function Companies() {
                       {company.customFields?.vatNumber && (
                         <div className="flex items-center text-sm">
                           <Hash className="h-4 w-4 mr-2 text-muted-foreground" />
-                          <span className="truncate max-w-[200px]">{t("companyList.vatLabel", { number: company.customFields.vatNumber })}</span>
+                          <span className="truncate max-w-[200px]">{t("company.companyList.vatLabel", { number: company.customFields.vatNumber })}</span>
                         </div>
                       )}
                       
                       {company.customFields?.yearFounded && (
                         <div className="flex items-center text-sm">
                           <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
-                          <span>{t("companyList.foundedLabel", { year: company.customFields.yearFounded })}</span>
+                          <span>{t("company.companyList.foundedLabel", { year: company.customFields.yearFounded })}</span>
                         </div>
                       )}
                     </div>
@@ -220,14 +220,14 @@ export default function Companies() {
                     size="sm" 
                     onClick={() => navigate(`/companies/${company.id}`)}
                   >
-                    <Eye className="h-4 w-4 mr-1" /> {t("companyList.viewDetails")}
+                    <Eye className="h-4 w-4 mr-1" /> {t("company.companyList.viewDetails")}
                   </Button>
                   <Button 
                     size="sm"
                     onClick={() => company.email ? window.location.href = `mailto:${company.email}` : null}
                     disabled={!company.email}
                   >
-                    <Mail className="h-4 w-4 mr-1" /> {t("companyList.contact")}
+                    <Mail className="h-4 w-4 mr-1" /> {t("company.companyList.contact")}
                   </Button>
                 </div>
               </CardContent>
@@ -240,15 +240,15 @@ export default function Companies() {
             <div className="rounded-full bg-muted w-12 h-12 flex items-center justify-center mb-4">
               <Search className="h-6 w-6 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-medium mb-2">{t("companyList.noCompaniesFound")}</h3>
+            <h3 className="text-lg font-medium mb-2">{t("company.companyList.noCompaniesFound")}</h3>
             <p className="text-muted-foreground text-center mb-4">
               {searchTerm
-                ? t("companyList.modifySearchTerms")
-                : t("companyList.addFirstCompany")}
+                ? t("company.companyList.modifySearchTerms")
+                : t("company.companyList.addFirstCompany")}
             </p>
             {!searchTerm && (
               <Button onClick={() => setShowModal(true)}>
-                <Plus className="mr-2 h-4 w-4" /> {t("companyList.addCompany")}
+                <Plus className="mr-2 h-4 w-4" /> {t("company.companyList.addCompany")}
               </Button>
             )}
           </CardContent>
