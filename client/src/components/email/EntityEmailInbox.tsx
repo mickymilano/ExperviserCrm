@@ -254,13 +254,13 @@ export default function EntityEmailInbox({
       ) : !emails || emails.length === 0 ? (
         <div className="text-center p-8 border rounded-md bg-muted/20">
           <Mail className="h-10 w-10 mx-auto mb-4 text-muted-foreground" />
-          <h3 className="text-lg font-medium mb-2">{t("email.noRelatedEmails")}</h3>
+          <h3 className="text-lg font-medium mb-2">{t("email.noRelatedEmails", "Nessuna email correlata")}</h3>
           <p className="text-muted-foreground mb-4">
-            {t("email.noRelatedEmailsDescription")}
+            {t("email.noRelatedEmailsDescription", "Non ci sono email correlate a questa entità")}
           </p>
           <Button onClick={handleComposeEmail}>
             <PlusCircle className="mr-2 h-4 w-4" />
-            {t("email.compose")}
+            {t("email.compose", "Scrivi Email")}
           </Button>
         </div>
       ) : (
