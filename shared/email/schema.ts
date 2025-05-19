@@ -41,50 +41,27 @@ export const emailAccounts = pgTable("email_accounts", {
 });
 
 // Tabella per memorizzare i messaggi email
+// NOTA: Questo schema riflette la struttura reale del database
 export const emails = pgTable("emails", {
   id: serial("id").primaryKey(),
-  accountId: integer("account_id").notNull(), // Riferimento all'account da cui è stato ricevuto/inviato
-  messageId: varchar("message_id", { length: 255 }), // ID univoco dell'email (header Message-ID)
-  conversationId: varchar("conversation_id", { length: 255 }), // ID della conversazione (thread)
-  
-  // Mittente e destinatari
-  from: jsonb("from"), // {name: "Nome", address: "email"}
-  to: jsonb("to"), // Array di {name, address}
-  cc: jsonb("cc"), // Array di {name, address}
-  bcc: jsonb("bcc"), // Array di {name, address}
-  
-  // Contenuto
-  subject: text("subject"),
-  textBody: text("text_body"),
-  htmlBody: text("html_body"),
-  
-  // Metadati
-  receivedDate: timestamp("received_date"),
-  sentDate: timestamp("sent_date"),
-  isRead: boolean("is_read").default(false),
-  isFlagged: boolean("is_flagged").default(false),
-  hasAttachments: boolean("has_attachments").default(false),
-  attachments: jsonb("attachments"), // Array di {filename, contentType, size, content}
-  
-  // Dati estratti dalla firma e informazioni aggiuntive
-  extractedData: jsonb("extracted_data"), // Dati estratti dalla firma dell'email
-  rawHeaders: jsonb("raw_headers"), // Tutti gli header originali dell'email
-  
-  // Tipo e stato
-  direction: varchar("direction", { length: 10 }).notNull(), // "inbound" o "outbound"
-  status: varchar("status", { length: 20 }).default("received"), // received, sent, draft, etc.
-  
-  // Associazione con CRM (può essere null se non associato)
-  dealId: integer("deal_id"),
+  subject: text("subject").notNull(),
+  body: text("body").notNull(),
+  from: text("from").notNull(),
+  to: text("to").array(),
+  cc: text("cc").array(),
+  bcc: text("bcc").array(),
+  date: timestamp("date").notNull(),
+  read: boolean("read").default(false),
+  accountId: integer("account_id").notNull(),
   contactId: integer("contact_id"),
   companyId: integer("company_id"),
-  
-  // Tracking
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  dealId: integer("deal_id"),
+  messageId: text("message_id"),
 });
 
-// Tabella per memorizzare le associazioni tra email e entità CRM
+// NOTA: La tabella email_associations non esiste ancora nel database
+// Questa definizione è pronta per quando verrà creata la tabella
+/*
 export const emailAssociations = pgTable("email_associations", {
   id: serial("id").primaryKey(),
   emailId: integer("email_id").notNull(),
@@ -96,12 +73,9 @@ export const emailAssociations = pgTable("email_associations", {
   leadId: integer("lead_id"),
   
   // Tipo di associazione
-  associationType: varchar("association_type", { length: 50 }).notNull(), // primary, mentioned, etc.
-  
-  // Tracking
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  associationType: text("association_type").notNull(), // primary, mentioned, etc.
 });
+*/
 
 // Schema Zod per validazione dati
 export const insertEmailAccountSchema = createInsertSchema(emailAccounts, {
@@ -124,11 +98,7 @@ export const insertEmailAccountSchema = createInsertSchema(emailAccounts, {
 });
 
 export const insertEmailSchema = createInsertSchema(emails).omit({ 
-  id: true, createdAt: true, updatedAt: true 
-});
-
-export const insertEmailAssociationSchema = createInsertSchema(emailAssociations).omit({ 
-  id: true, createdAt: true, updatedAt: true 
+  id: true
 });
 
 // Tipi inferiti
@@ -137,6 +107,3 @@ export type InsertEmailAccount = typeof emailAccounts.$inferInsert;
 
 export type Email = typeof emails.$inferSelect;
 export type InsertEmail = typeof emails.$inferInsert;
-
-export type EmailAssociation = typeof emailAssociations.$inferSelect;
-export type InsertEmailAssociation = typeof emailAssociations.$inferInsert;

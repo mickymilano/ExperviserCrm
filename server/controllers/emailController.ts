@@ -3,8 +3,7 @@ import { db } from '../db';
 import { 
   emails, 
   emailAccounts, 
-  insertEmailAccountSchema,
-  emailAssociations
+  insertEmailAccountSchema
 } from '../../shared/email/schema';
 import { eq, and, desc, like, sql } from 'drizzle-orm';
 import { EmailReceiver, ImapConfig, testImapConnection } from '../modules/email/emailReceiver';
