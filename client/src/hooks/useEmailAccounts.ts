@@ -22,6 +22,13 @@ export interface EmailAccount {
   isPrimary?: boolean;
   createdAt?: string;
   updatedAt?: string;
+  serverSettings?: {
+    incomingServer?: string;
+    incomingPort?: number;
+    outgoingServer?: string;
+    outgoingPort?: number;
+    security?: string;
+  };
 }
 
 interface UseEmailAccountsResult {

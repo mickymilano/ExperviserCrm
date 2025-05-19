@@ -163,10 +163,7 @@ export function EmailReplyComposer({
         entityType,
       };
 
-      return await apiRequest('/api/email/send', {
-        method: 'POST',
-        body: JSON.stringify(emailPayload),
-      });
+      return await apiRequest('POST', '/api/email/send', emailPayload);
     },
     onSuccess: () => {
       toast({

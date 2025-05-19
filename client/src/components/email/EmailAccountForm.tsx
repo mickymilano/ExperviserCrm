@@ -29,7 +29,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Switch } from "@/components/ui/switch";
-import { useCreateEmailAccount, useUpdateEmailAccount, EmailAccount } from "@/hooks/useEmailAccounts";
+import { useEmailAccounts, EmailAccount } from "@/hooks/useEmailAccounts";
 import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
@@ -79,9 +79,8 @@ export function EmailAccountForm({ onSuccess, onCancel, accountToEdit, isEditing
   const { t } = useTranslation();
   const [useCustomSettings, setUseCustomSettings] = useState(accountToEdit?.serverSettings ? true : false);
   
-  // Utilizziamo createAccount per gli account nuovi, updateAccount per le modifiche
-  const createAccountMutation = useCreateEmailAccount();
-  const updateAccountMutation = useUpdateEmailAccount();
+  // Utilizziamo l'hook useEmailAccounts per accedere alle funzioni di aggiunta e aggiornamento account
+  const { addAccount, updateAccount } = useEmailAccounts();
 
   // Valori predefiniti per il form, che verranno sovrascritti se si sta modificando un account esistente
   const defaultValues = {
@@ -126,7 +125,7 @@ export function EmailAccountForm({ onSuccess, onCancel, accountToEdit, isEditing
     }
   }, [accountToEdit, form]);
 
-  const onSubmit = (values: FormValues) => {
+  const onSubmit = async (values: FormValues) => {
     const formData = {
       name: values.name,
       email: values.email,
@@ -154,32 +153,22 @@ export function EmailAccountForm({ onSuccess, onCancel, accountToEdit, isEditing
 
     // Gestione diversa in base a se stiamo modificando o creando un account
     if (isEditing && accountToEdit) {
-      // In caso di modifica, usiamo updateAccountMutation
+      // In caso di modifica, usiamo updateAccount
       // Nota: per l'aggiornamento dobbiamo includere l'ID dell'account
-      updateAccountMutation.mutate(
-        { 
-          id: accountToEdit.id, 
-          ...formData 
-        } as any, 
-        {
-          onSuccess: () => {
-            onSuccess();
-          },
-          onError: (error) => {
-            console.error("Errore nella modifica dell'account:", error);
-          }
-        }
-      );
+      try {
+        await updateAccount(accountToEdit.id, formData as Partial<EmailAccount>);
+        onSuccess();
+      } catch (error: any) {
+        console.error("Errore nella modifica dell'account:", error);
+      }
     } else {
-      // In caso di creazione, usiamo createAccountMutation
-      createAccountMutation.mutate(formData as any, {
-        onSuccess: () => {
-          onSuccess();
-        },
-        onError: (error) => {
-          console.error("Errore nella creazione dell'account:", error);
-        }
-      });
+      // In caso di creazione, usiamo addAccount
+      try {
+        await addAccount(formData as Omit<EmailAccount, 'id'>);
+        onSuccess();
+      } catch (error: any) {
+        console.error("Errore nella creazione dell'account:", error);
+      }
     }
   };
 
@@ -409,17 +398,9 @@ export function EmailAccountForm({ onSuccess, onCancel, accountToEdit, isEditing
             {T(t, "common.cancel", "Annulla")}
           </Button>
           <Button 
-            type="submit" 
-            disabled={createAccountMutation.isPending || updateAccountMutation.isPending}
+            type="submit"
           >
-            {createAccountMutation.isPending || updateAccountMutation.isPending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {T(t, "common.saving", "Salvataggio...")}
-              </>
-            ) : (
-              isEditing ? T(t, "common.update", "Aggiorna") : T(t, "common.save", "Salva")
-            )}
+            {isEditing ? T(t, "common.update", "Aggiorna") : T(t, "common.save", "Salva")}
           </Button>
         </div>
       </form>
