@@ -735,7 +735,7 @@ export default function SettingsPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Annulla</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDeleteAccount} className="bg-destructive text-destructive-foreground">
-              {deleteAccountMutation.isPending ? "Rimozione in corso..." : "Rimuovi Account"}
+              Rimuovi Account
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
