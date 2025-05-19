@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import experviserLogoPath from "@assets/experviser_logo.png";
 
 const loginSchema = z.object({
-  emailOrUsername: z.string().min(1, { message: "Email or username is required" }),
+  email: z.string().min(1, { message: "Email is required" }),
   password: z.string().min(1, { message: "Password is required" }),
 });
 
@@ -47,7 +47,7 @@ export default function LoginPage() {
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      emailOrUsername: "",
+      email: "",
       password: "",
     },
   });
@@ -125,8 +125,8 @@ export default function LoginPage() {
     console.log("Form submitted with:", data);
     
     // Fornisci le credenziali di superadmin per debug
-    if (data.emailOrUsername === 'debug' && data.password === 'debug') {
-      form.setValue('emailOrUsername', 'michele@experviser.com');
+    if (data.email === 'debug' && data.password === 'debug') {
+      form.setValue('email', 'michele@experviser.com');
       form.setValue('password', 'admin_admin_69');
       
       toast({
@@ -172,12 +172,12 @@ export default function LoginPage() {
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <FormField
                   control={form.control}
-                  name="emailOrUsername"
+                  name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email or Username</FormLabel>
+                      <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter your email or username" {...field} />
+                        <Input placeholder="Enter your email" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
