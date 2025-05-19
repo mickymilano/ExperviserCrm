@@ -2618,14 +2618,14 @@ export function registerRoutes(app: any) {
   app.use('/api/branches', branchRoutes);
   
   // Integrazione API Email
-  // Utilizziamo l'implementazione di mock per test end-to-end
-  app.use('/api/email', authenticate, mockEmailRoutes);
+  // Disattiviamo l'implementazione di mock e utilizziamo quella reale
+  // app.use('/api/email', authenticate, mockEmailRoutes);
   
-  // Le implementazioni originali sono commentate in attesa di completamento backend
-  // app.use('/api/email', authenticate, emailRoutes);
+  // Attiviamo le implementazioni reali
+  app.use('/api/email', authenticate, emailRoutes);
   
-  // Implementazione per le firme email - commentata temporaneamente
-  // app.use('/api/email/sign', authenticate, emailSignatureRoutes);
+  // Implementazione per le firme email
+  app.use('/api/email/sign', authenticate, emailSignatureRoutes);
   
   // --- ROTTE PER SETTORI, SOTTOSETTORI E JOB TITLES ---
   

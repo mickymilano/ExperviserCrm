@@ -122,16 +122,16 @@ export default function EntityEmailInbox({
             // Azienda - controlliamo il dominio dell'email
             (entityType === 'company' && companyDomain && (
               email.from?.includes(`@${companyDomain}`) ||
-              email.to?.some(to => to.includes(`@${companyDomain}`)) ||
-              email.cc?.some(cc => cc.includes(`@${companyDomain}`)) ||
-              email.bcc?.some(bcc => bcc.includes(`@${companyDomain}`))
+              email.to?.some((to: string) => to.includes(`@${companyDomain}`)) ||
+              email.cc?.some((cc: string) => cc.includes(`@${companyDomain}`)) ||
+              email.bcc?.some((bcc: string) => bcc.includes(`@${companyDomain}`))
             )) ||
             // Branch - simile all'azienda ma più specifico
             (entityType === 'branch' && companyDomain && (
               email.from?.includes(`@${companyDomain}`) ||
-              email.to?.some(to => to.includes(`@${companyDomain}`)) ||
-              email.cc?.some(cc => cc.includes(`@${companyDomain}`)) ||
-              email.bcc?.some(bcc => bcc.includes(`@${companyDomain}`))
+              email.to?.some((to: string) => to.includes(`@${companyDomain}`)) ||
+              email.cc?.some((cc: string) => cc.includes(`@${companyDomain}`)) ||
+              email.bcc?.some((bcc: string) => bcc.includes(`@${companyDomain}`))
             )) ||
             // Deal - verifichiamo la presenza del numero di deal nell'oggetto o corpo
             (entityType === 'deal' && (
