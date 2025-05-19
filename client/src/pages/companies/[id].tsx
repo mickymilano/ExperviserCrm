@@ -183,7 +183,7 @@ export default function CompanyDetail() {
           <TabsTrigger value="deals">{t("company.companyDetail.tabs.deals")}</TabsTrigger>
           <TabsTrigger value="branches">{t("company.companyDetail.tabs.branches")}</TabsTrigger>
           <TabsTrigger value="activities">{t("company.companyDetail.tabs.activities")}</TabsTrigger>
-          <TabsTrigger value="email">Email</TabsTrigger>
+          <TabsTrigger value="email">{t("Email")}</TabsTrigger>
         </TabsList>
         
         {/* Overview Tab */}
