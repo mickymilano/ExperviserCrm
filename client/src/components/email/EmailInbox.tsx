@@ -133,14 +133,24 @@ export function EmailInbox({ filter }: EmailInboxProps) {
   // Test per la modalità E2E
   const loadE2eTestData = async () => {
     try {
-      const testData = await apiRequest<any[]>({ url: '/api/email/messages/e2e-test' });
-      refetchEmails();
-      toast({
-        title: t('Dati di test caricati'),
-        description: t('Email di test caricate per verifica interfaccia'),
-      });
+      // Carica i dati di test, inserendoli direttamente nel database se necessario
+      await apiRequest<any[]>({ url: '/api/email/messages/e2e-test' });
+      
+      // Aggiorna la lista delle email
+      setTimeout(() => {
+        refetchEmails();
+        toast({
+          title: t('Dati di test caricati'),
+          description: t('Email di test caricate per verifica interfaccia'),
+        });
+      }, 500);
     } catch (error) {
       console.error('Errore caricamento dati test:', error);
+      toast({
+        title: t('Errore caricamento dati test'),
+        description: t('Impossibile caricare le email di test. Controlla la console per i dettagli.'),
+        variant: 'destructive'
+      });
     }
   };
   
