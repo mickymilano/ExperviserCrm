@@ -131,19 +131,42 @@ export function EmailInbox({ filter }: EmailInboxProps) {
   };
   
   // Test per la modalità E2E
-  const loadE2eTestData = async () => {
+  const loadE2eTestData = () => {
     try {
-      // Carica i dati di test, inserendoli direttamente nel database se necessario
-      await apiRequest<any[]>({ url: '/api/email/messages/e2e-test' });
+      // Crea dati di test locali invece di chiamare l'API
+      const testEmails = [
+        {
+          id: 9999,
+          subject: '[TEST] Email di test 1',
+          from: 'test@example.com',
+          to: ['user@azienda.com'],
+          date: new Date().toISOString(),
+          isRead: false,
+          hasAttachments: false,
+          account_email: 'user@azienda.com',
+          account_display_name: 'Account Test'
+        },
+        {
+          id: 9998,
+          subject: '[TEST] Email di test 2 con allegato',
+          from: 'cliente@example.com',
+          to: ['user@azienda.com'],
+          date: new Date(Date.now() - 3600000).toISOString(), // 1 ora fa
+          isRead: true,
+          hasAttachments: true,
+          account_email: 'user@azienda.com',
+          account_display_name: 'Account Test'
+        }
+      ];
       
-      // Aggiorna la lista delle email
-      setTimeout(() => {
-        refetchEmails();
-        toast({
-          title: t('Dati di test caricati'),
-          description: t('Email di test caricate per verifica interfaccia'),
-        });
-      }, 500);
+      // Sovrascrive direttamente lo state locale con i dati di test
+      // @ts-ignore - Ignoriamo l'errore di tipo per questa soluzione temporanea
+      setEmails(testEmails);
+      
+      toast({
+        title: t('Dati di test caricati'),
+        description: t('Email di test caricate per verifica interfaccia'),
+      });
     } catch (error) {
       console.error('Errore caricamento dati test:', error);
       toast({
