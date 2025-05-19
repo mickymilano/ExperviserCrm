@@ -5,32 +5,8 @@ import { emails, emailAccounts } from '../../../shared/email/schema';
 import { extractSignatureData } from './signatureParser';
 import { processDomainForCompany } from './companyMatcher';
 import { processContactFromEmail } from './contactProcessor';
-import { eq } from 'drizzle-orm';
-
-// Configurazione per la connessione IMAP
-export interface ImapConfig {
-  user: string;
-  password: string;
-  host: string;
-  port: number;
-  tls: boolean;
-  authTimeout: number;
-  tlsOptions?: {
-    rejectUnauthorized: boolean;
-  };
-}
-
-interface EmailAccount {
-  id: number;
-  email: string;
-  displayName?: string;
-  username: string;
-  password: string;
-  server: string;
-  port: number;
-  tls: boolean;
-  isActive?: boolean;
-}
+import { sql, eq } from 'drizzle-orm';
+import { EmailAccount, EmailAccountDb, ImapConfig } from './types';
 
 // Registro delle connessioni attive
 const activeConnections: Map<number, ImapSimple.ImapSimpleObject> = new Map();
@@ -242,8 +218,9 @@ async function processEmail(message: ImapSimple.Message, accountId: number, conn
 export async function getEmailAccounts(): Promise<EmailAccount[]> {
   try {
     // Utilizziamo la query SQL nativa per ottenere solo gli account attivi
-    const accounts = await db.select().from(emailAccounts)
-      .where(eq(emailAccounts.is_active, true));
+    const accounts = await db.execute<EmailAccountDb>(
+      sql`SELECT * FROM email_accounts WHERE is_active = true`
+    );
     
     console.log(`[EmailListener] Trovati ${accounts.length} account email attivi`);
     
@@ -253,10 +230,12 @@ export async function getEmailAccounts(): Promise<EmailAccount[]> {
       email: account.email,
       username: account.username || account.email,
       password: account.password || '',
-      server: account.imapHost || '',
-      port: account.imapPort || 993,
-      tls: account.imapSecure !== false,
-      displayName: account.displayName
+      server: account.imap_host || '',
+      port: account.imap_port || 993,
+      tls: account.imap_secure !== false,
+      displayName: account.display_name,
+      isActive: account.is_active,
+      isPrimary: account.is_primary
     }));
   } catch (error) {
     console.error('[EmailListener] Errore nel recupero degli account email:', error);
