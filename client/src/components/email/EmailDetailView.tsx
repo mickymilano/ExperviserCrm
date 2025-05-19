@@ -4,6 +4,7 @@ import { it } from "date-fns/locale";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useEffect, useRef } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -52,6 +53,7 @@ export default function EmailDetailView({
   const { t } = useTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const markAsReadProcessed = useRef(false);
 
   // Mutation per segnare l'email come letta se non lo è già
   const markAsReadMutation = useMutation({
@@ -72,10 +74,20 @@ export default function EmailDetailView({
     }
   });
 
-  // Se l'email non è stata ancora letta, segnarla come letta
-  if (!email.read) {
-    markAsReadMutation.mutate();
-  }
+  // Usa useEffect per eseguire la mutation solo una volta quando il componente è montato
+  // o quando cambia l'email visualizzata
+  useEffect(() => {
+    // Evita di chiamare la mutation se è già stata processata o se l'email è già letta
+    if (!markAsReadProcessed.current && !email.read) {
+      markAsReadProcessed.current = true;
+      markAsReadMutation.mutate();
+    }
+    
+    return () => {
+      // Reset il flag quando il componente viene smontato o l'email cambia
+      markAsReadProcessed.current = false;
+    };
+  }, [email.id, email.read]);
 
   const formatFullDate = (dateString: string) => {
     try {
