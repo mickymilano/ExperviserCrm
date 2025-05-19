@@ -1,208 +1,100 @@
-import { useState } from "react";
-import { useTranslation } from "react-i18next";
-import { useQuery } from "@tanstack/react-query";
-import { Separator } from "@/components/ui/separator";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PlusCircle, Settings, Inbox, Send, Archive, Trash, Edit } from "lucide-react";
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink } from "@/components/ui/breadcrumb";
-import { Skeleton } from "@/components/ui/skeleton";
-import EmailAccountsList from "@/components/email/EmailAccountsList";
-import NewEmailAccountModal from "@/components/email/NewEmailAccountModal";
-import EmailInbox from "@/components/email/EmailInbox";
-import NewEmailComposer from "@/components/email/NewEmailComposer";
-import { EmptyState } from "@/components/ui/empty-state";
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { Helmet } from 'react-helmet';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Link } from 'wouter';
+import { MailIcon, Settings, Edit, Server, Inbox, Send } from 'lucide-react';
 
 export default function EmailPage() {
   const { t } = useTranslation();
-  const [showNewAccountModal, setShowNewAccountModal] = useState(false);
-  const [activeTab, setActiveTab] = useState("inbox");
-  const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null);
-  const [isComposing, setIsComposing] = useState(false);
-  const [replyToEmail, setReplyToEmail] = useState<{
-    id: number;
-    from: string;
-    to: string[];
-    subject: string;
-  } | undefined>(undefined);
-
-  const { data: accounts, isLoading: isLoadingAccounts } = useQuery({
-    queryKey: ["/api/email/accounts"],
-    retry: false,
-  });
+  
+  const emailModules = [
+    {
+      id: 'inbox',
+      title: t('email.inbox'),
+      description: t('email.inboxDescription'),
+      icon: <Inbox className="h-8 w-8" />,
+      href: '/emails/inbox',
+      color: 'bg-blue-100 text-blue-700'
+    },
+    {
+      id: 'compose',
+      title: t('email.compose'),
+      description: t('email.composeDescription'),
+      icon: <Send className="h-8 w-8" />,
+      href: '/emails/compose',
+      color: 'bg-green-100 text-green-700'
+    },
+    {
+      id: 'accounts',
+      title: t('email.accounts'),
+      description: t('email.accountsDescription'),
+      icon: <Server className="h-8 w-8" />,
+      href: '/emails/accounts',
+      color: 'bg-purple-100 text-purple-700'
+    },
+    {
+      id: 'signatures',
+      title: t('email.signatures'),
+      description: t('email.signaturesDescription'),
+      icon: <Edit className="h-8 w-8" />,
+      href: '/emails/signatures',
+      color: 'bg-amber-100 text-amber-700'
+    },
+    {
+      id: 'settings',
+      title: t('email.settings'),
+      description: t('email.settingsDescription'),
+      icon: <Settings className="h-8 w-8" />,
+      href: '/emails/settings',
+      color: 'bg-gray-100 text-gray-700'
+    }
+  ];
 
   return (
-    <div className="container mx-auto py-4">
-      <div className="flex justify-between items-center mb-4">
-        <div>
-          <Breadcrumb>
-            <BreadcrumbItem>
-              <BreadcrumbLink href="/">{t("dashboard.title")}</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbItem>
-              <BreadcrumbLink href="/email" isCurrentPage>
-                {t("email.title")}
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-          </Breadcrumb>
-          <h1 className="text-3xl font-bold mt-2">{t("email.title")}</h1>
-          <p className="text-muted-foreground">{t("email.description")}</p>
-        </div>
-        <div className="flex gap-2">
-          {selectedAccountId && (
-            <Button onClick={() => setIsComposing(true)}>
-              <Edit className="mr-2 h-4 w-4" />
-              {t("email.compose")}
-            </Button>
-          )}
-          <Button onClick={() => setShowNewAccountModal(true)}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            {t("email.addAccount")}
-          </Button>
-        </div>
-      </div>
-
-      <Separator className="my-6" />
-
-      <div className="grid grid-cols-12 gap-6">
-        {/* Sidebar */}
-        <div className="col-span-12 md:col-span-3">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("email.accounts")}</CardTitle>
-              <CardDescription>{t("email.accountsDescription")}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isLoadingAccounts ? (
-                <div className="space-y-2">
-                  <Skeleton className="h-10 w-full" />
-                  <Skeleton className="h-10 w-full" />
-                  <Skeleton className="h-10 w-full" />
-                </div>
-              ) : (
-                <EmailAccountsList 
-                  accounts={accounts || []} 
-                  selectedAccountId={selectedAccountId}
-                  onAccountSelect={(id) => setSelectedAccountId(id)}
-                />
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="mt-4">
-            <CardHeader>
-              <CardTitle>{t("email.folders")}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-1">
-                <Button 
-                  variant={activeTab === "inbox" ? "default" : "ghost"} 
-                  className="w-full justify-start"
-                  onClick={() => setActiveTab("inbox")}
-                >
-                  <Inbox className="mr-2 h-4 w-4" />
-                  {t("email.inbox")}
-                </Button>
-                <Button 
-                  variant={activeTab === "sent" ? "default" : "ghost"} 
-                  className="w-full justify-start"
-                  onClick={() => setActiveTab("sent")}
-                >
-                  <Send className="mr-2 h-4 w-4" />
-                  {t("email.sent")}
-                </Button>
-                <Button 
-                  variant={activeTab === "archive" ? "default" : "ghost"} 
-                  className="w-full justify-start"
-                  onClick={() => setActiveTab("archive")}
-                >
-                  <Archive className="mr-2 h-4 w-4" />
-                  {t("email.archive")}
-                </Button>
-                <Button 
-                  variant={activeTab === "trash" ? "default" : "ghost"} 
-                  className="w-full justify-start"
-                  onClick={() => setActiveTab("trash")}
-                >
-                  <Trash className="mr-2 h-4 w-4" />
-                  {t("email.trash")}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Main content */}
-        <div className="col-span-12 md:col-span-9">
-          {isComposing && selectedAccountId ? (
-            <NewEmailComposer 
-              accountId={selectedAccountId}
-              onCancel={() => setIsComposing(false)}
-              onSent={() => {
-                setIsComposing(false);
-                // Se necessario, qui possiamo aggiornare la lista delle email inviate
-              }}
-              replyToEmail={replyToEmail}
-            />
-          ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle>
-                  {selectedAccountId ? (
-                    <>
-                      {activeTab === "inbox" && t("email.inbox")}
-                      {activeTab === "sent" && t("email.sent")}
-                      {activeTab === "archive" && t("email.archive")}
-                      {activeTab === "trash" && t("email.trash")}
-                    </>
-                  ) : (
-                    t("email.noAccountSelected")
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {!selectedAccountId ? (
-                  <EmptyState
-                    icon={<Settings className="h-10 w-10" />}
-                    title={t("email.noAccountSelectedTitle")}
-                    description={t("email.noAccountSelectedDescription")}
-                    action={
-                      <Button onClick={() => setShowNewAccountModal(true)}>
-                        {t("email.addAccount")}
-                      </Button>
-                    }
-                  />
-                ) : (
-                  <EmailInbox 
-                    accountId={selectedAccountId} 
-                    folder={activeTab}
-                    onReply={(email) => {
-                      setReplyToEmail({
-                        id: email.id,
-                        from: email.from,
-                        to: email.to,
-                        subject: email.subject
-                      });
-                      setIsComposing(true);
-                    }}
-                  />
-                )}
-              </CardContent>
-            </Card>
-          )}
+    <>
+      <Helmet>
+        <title>{t('email.title')} | Experviser CRM</title>
+        <meta name="description" content={t('email.pageDescription')} />
+      </Helmet>
+      
+      <div className="container mx-auto p-6">
+        <div className="flex flex-col space-y-6">
+          <div className="flex items-center gap-2">
+            <MailIcon className="h-8 w-8 text-primary" />
+            <h1 className="text-3xl font-bold">{t('email.title')}</h1>
+          </div>
+          
+          <p className="text-lg text-muted-foreground max-w-3xl">
+            {t('email.subtitle')}
+          </p>
+          
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {emailModules.map((module) => (
+              <Link key={module.id} href={module.href}>
+                <a className="block h-full">
+                  <Card className="h-full transition-all hover:shadow-md cursor-pointer">
+                    <CardHeader>
+                      <div className={`w-12 h-12 rounded-full ${module.color} flex items-center justify-center mb-2`}>
+                        {module.icon}
+                      </div>
+                      <CardTitle>{module.title}</CardTitle>
+                      <CardDescription>
+                        {module.description}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardFooter>
+                      <p className="text-sm text-primary">
+                        {t('common.openModule')} →
+                      </p>
+                    </CardFooter>
+                  </Card>
+                </a>
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
-
-      {showNewAccountModal && (
-        <NewEmailAccountModal
-          onClose={() => setShowNewAccountModal(false)}
-          onAccountCreated={(newAccountId) => {
-            setShowNewAccountModal(false);
-            setSelectedAccountId(newAccountId);
-          }}
-        />
-      )}
-    </div>
+    </>
   );
 }

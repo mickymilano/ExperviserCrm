@@ -19,7 +19,8 @@
     "actions": "Azioni",
     "home": "Home",
     "retry": "Riprova",
-    "soon": "Presto"
+    "soon": "Presto",
+    "openModule": "Apri modulo"
   },
   
   "dashboard": {
@@ -752,6 +753,23 @@
       "valueConversionError": "Errore nella conversione del valore. Assicurati che sia un numero valido",
       "invalidData": "Dati non validi. Controlla tutti i campi obbligatori"
     }
+  },
+  
+  "email": {
+    "title": "Email",
+    "pageTitle": "Gestione Email",
+    "pageDescription": "Gestisci la tua comunicazione email professionale",
+    "subtitle": "Gestisci la tua comunicazione email tramite account multipli, firme personalizzate e strumenti avanzati di composizione.",
+    "inbox": "Posta in Arrivo",
+    "inboxDescription": "Visualizza, organizza e gestisci i tuoi messaggi email in arrivo",
+    "compose": "Scrivi Email",
+    "composeDescription": "Crea e invia nuovi messaggi email con editor avanzato e modelli",
+    "accounts": "Account Email",
+    "accountsDescription": "Configura e gestisci i tuoi account email personali e di lavoro",
+    "signatures": "Firme Email",
+    "signaturesDescription": "Crea e gestisci firme email professionali personalizzate",
+    "settings": "Impostazioni Email",
+    "settingsDescription": "Personalizza preferenze, filtri e notifiche per i tuoi account email"
   },
   
   "emailSignatures": {

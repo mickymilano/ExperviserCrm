@@ -24,7 +24,7 @@ import TextAlign from '@tiptap/extension-text-align';
 import TextStyle from '@tiptap/extension-text-style';
 import Color from '@tiptap/extension-color';
 import FontFamily from '@tiptap/extension-font-family';
-import { RichTextEditor } from './RichTextEditor';
+import { RichTextEditor } from '@/components/email/RichTextEditor';
 
 interface EmailSignature {
   id: number;

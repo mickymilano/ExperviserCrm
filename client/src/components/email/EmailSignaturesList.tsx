@@ -9,7 +9,7 @@ import { Trash, Edit, Star, StarOff } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { queryClient } from '@/lib/queryClient';
 import { useTranslation } from 'react-i18next';
-import NewEmailSignatureModal from './NewEmailSignatureModal';
+import NewEmailSignatureModal from '@/components/email/NewEmailSignatureModal';
 
 interface EmailSignature {
   id: number;
@@ -28,7 +28,7 @@ export default function EmailSignaturesList() {
   const [selectedSignature, setSelectedSignature] = React.useState<EmailSignature | null>(null);
 
   // Fetch signatures
-  const { data: signatures, isLoading, error } = useQuery({
+  const { data: signatures = [], isLoading, error } = useQuery<EmailSignature[]>({
     queryKey: ['/api/email/signatures'],
   });
 
@@ -160,7 +160,7 @@ export default function EmailSignaturesList() {
         </Button>
       </div>
 
-      {signatures && signatures.length === 0 ? (
+      {signatures.length === 0 ? (
         <Card>
           <CardContent className="p-8 text-center">
             <p className="text-muted-foreground mb-4">
@@ -172,7 +172,7 @@ export default function EmailSignaturesList() {
           </CardContent>
         </Card>
       ) : (
-        signatures?.map((signature: EmailSignature) => (
+        signatures.map((signature: EmailSignature) => (
           <Card key={signature.id} className={signature.isDefault ? "border-primary" : ""}>
             <CardHeader>
               <div className="flex justify-between items-start">
