@@ -1,102 +1,62 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { EmailAccount } from "@/types";
-import { apiRequest } from "@/lib/queryClient";
+import { useQuery } from '@tanstack/react-query';
 
-// Riceve tutti gli account email
+export interface EmailAccount {
+  id: number;
+  name: string;
+  email: string;
+  provider: string;
+  isDefault: boolean;
+  userId: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Hook per recuperare gli account email configurati nel sistema
+ * Utile per selezionare l'account da usare per inviare email
+ */
 export function useEmailAccounts() {
-  return useQuery<EmailAccount[]>({
-    queryKey: ["/api/email/accounts"],
-    retry: false,
-  });
-}
+  return useQuery({
+    queryKey: ['/api/email/accounts'],
+    queryFn: async () => {
+      try {
+        // Simulazione temporanea fino all'implementazione del backend reale
+        return [
+          {
+            id: 1,
+            name: 'Gmail',
+            email: 'user@gmail.com',
+            provider: 'gmail',
+            isDefault: true,
+            userId: 1,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          },
+          {
+            id: 2,
+            name: 'Outlook',
+            email: 'user@outlook.com',
+            provider: 'outlook',
+            isDefault: false,
+            userId: 1,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }
+        ];
 
-// Riceve un account email specifico
-export function useEmailAccount(id: number) {
-  return useQuery<EmailAccount>({
-    queryKey: ["/api/email/accounts", id],
-    enabled: !!id,
-    retry: false,
-  });
-}
-
-// Crea un nuovo account email
-export function useCreateEmailAccount() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async (account: Omit<EmailAccount, "id">) => {
-      return await apiRequest("/api/email/accounts", "POST", account);
+        // Implementazione reale da attivare quando il backend sarà pronto
+        /*
+        const response = await fetch('/api/email/accounts');
+        if (!response.ok) {
+          throw new Error('Errore nel caricamento degli account email');
+        }
+        return response.json();
+        */
+      } catch (error) {
+        console.error('Error fetching email accounts:', error);
+        return [];
+      }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/email/accounts"] });
-    }
-  });
-}
-
-// Aggiorna un account email
-export function useUpdateEmailAccount() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async ({ id, account }: { id: number, account: Partial<EmailAccount> }) => {
-      return await apiRequest(`/api/email/accounts/${id}`, "PATCH", account);
-    },
-    onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/email/accounts", id] });
-      queryClient.invalidateQueries({ queryKey: ["/api/email/accounts"] });
-    }
-  });
-}
-
-// Elimina un account email
-export function useDeleteEmailAccount() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async (id: number) => {
-      return await apiRequest(`/api/email/accounts/${id}`, "DELETE");
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/email/accounts"] });
-    }
-  });
-}
-
-// Sincronizza tutti gli account email (scarica nuove email)
-export function useSyncAllEmailAccounts() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async () => {
-      return await apiRequest("/api/email/sync", "POST");
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/emails"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/email/accounts"] });
-    }
-  });
-}
-
-// Sincronizza un account email specifico
-export function useSyncEmailAccount() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async (id: number) => {
-      return await apiRequest(`/api/email/accounts/${id}/sync`, "POST");
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/emails"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/email/accounts"] });
-    }
-  });
-}
-
-// Verifica la connessione di un account email
-export function useVerifyEmailAccount() {
-  return useMutation({
-    mutationFn: async (account: Partial<EmailAccount>) => {
-      return await apiRequest("/api/email/verify-account", "POST", account);
-    }
+    staleTime: 5 * 60 * 1000, // 5 minuti
   });
 }
