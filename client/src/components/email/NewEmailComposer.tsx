@@ -355,7 +355,7 @@ export default function NewEmailComposer({
                           <CommandList>
                             <CommandEmpty>{t("email.noContactsFound")}</CommandEmpty>
                             <CommandGroup>
-                              {filteredContacts.map((contact) => (
+                              {filteredContacts.map((contact: Contact) => (
                                 <CommandItem
                                   key={contact.id}
                                   onSelect={() => addCcRecipient(contact)}
@@ -437,7 +437,7 @@ export default function NewEmailComposer({
                           <CommandList>
                             <CommandEmpty>{t("email.noContactsFound")}</CommandEmpty>
                             <CommandGroup>
-                              {filteredContacts.map((contact) => (
+                              {filteredContacts.map((contact: Contact) => (
                                 <CommandItem
                                   key={contact.id}
                                   onSelect={() => addBccRecipient(contact)}
