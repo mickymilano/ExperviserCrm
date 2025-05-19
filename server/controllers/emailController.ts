@@ -28,7 +28,7 @@ export const emailController = {
           id: emailAccounts.id,
           name: emailAccounts.displayName, // Usa display_name invece di name
           email: emailAccounts.email,
-          provider: emailAccounts.provider,
+          // Rimuovo il riferimento a provider che non esiste nel database
           isActive: emailAccounts.isActive,
           lastSyncedAt: emailAccounts.lastSyncedAt,
           syncFrequency: emailAccounts.syncFrequency,
@@ -37,7 +37,13 @@ export const emailController = {
         .from(emailAccounts)
         .orderBy(emailAccounts.displayName);
         
-      res.json(allAccounts);
+      // Aggiungiamo un provider predefinito per compatibilità con il frontend
+      const accountsWithProvider = allAccounts.map(account => ({
+        ...account,
+        provider: 'imap' // Valore predefinito
+      }));
+        
+      res.json(accountsWithProvider);
     } catch (error) {
       console.error('Errore durante il recupero degli account email:', error);
       res.status(500).json({ error: 'Errore interno del server' });
@@ -56,7 +62,7 @@ export const emailController = {
           id: emailAccounts.id,
           name: emailAccounts.displayName, // Usiamo display_name ma mappiamo a name per il frontend
           email: emailAccounts.email,
-          provider: emailAccounts.provider,
+          // Rimosso provider che non esiste nel database
           imapHost: emailAccounts.imapHost,
           imapPort: emailAccounts.imapPort,
           imapSecure: emailAccounts.imapSecure,
@@ -78,7 +84,13 @@ export const emailController = {
         return res.status(404).json({ error: 'Account email non trovato' });
       }
       
-      res.json(account);
+      // Aggiunge il campo provider per compatibilità con il frontend
+      const accountWithProvider = {
+        ...account,
+        provider: 'imap' // Valore predefinito
+      };
+      
+      res.json(accountWithProvider);
     } catch (error) {
       console.error('Errore durante il recupero dell\'account email:', error);
       res.status(500).json({ error: 'Errore interno del server' });
