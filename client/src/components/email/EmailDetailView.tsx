@@ -1,18 +1,22 @@
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Avatar } from "@/components/ui/avatar";
 import {
   ArrowLeft,
   Reply,
   Forward,
   Trash2,
-  Paperclip,
-  Download,
+  Archive,
   User,
+  Paperclip,
+  Mail,
 } from "lucide-react";
 
 interface Email {
@@ -26,13 +30,7 @@ interface Email {
   body: string;
   date: string;
   read: boolean;
-  hasAttachments: boolean;
-  attachments?: Array<{
-    filename: string;
-    contentType: string;
-    size: number;
-    id: string;
-  }>;
+  hasAttachments?: boolean;
   accountId: number;
 }
 
@@ -52,11 +50,32 @@ export default function EmailDetailView({
   onDelete,
 }: EmailDetailViewProps) {
   const { t } = useTranslation();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const formatDate = (dateString: string) => {
+  // Mutation per segnare l'email come letta se non lo è già
+  const markAsReadMutation = useMutation({
+    mutationFn: () => {
+      return apiRequest(`/api/email/messages/${email.id}/read`, {
+        method: "POST",
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [`/api/email/accounts/${email.accountId}/messages`],
+      });
+    }
+  });
+
+  // Se l'email non è stata ancora letta, segnarla come letta
+  if (!email.read) {
+    markAsReadMutation.mutate();
+  }
+
+  const formatFullDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
-      return format(date, "dd MMMM yyyy, HH:mm", { locale: it });
+      return format(date, "EEEE d MMMM yyyy, HH:mm", { locale: it });
     } catch (e) {
       return dateString;
     }
@@ -78,28 +97,10 @@ export default function EmailDetailView({
       .join(" ");
   };
 
-  const formatEmailAddress = (address: string) => {
-    const name = extractName(address);
-    const emailPart = address.match(/<([^>]+)>/) ? address.match(/<([^>]+)>/)![1] : address;
-    
-    return (
-      <span>
-        {name}{" "}
-        <span className="text-muted-foreground">&lt;{emailPart}&gt;</span>
-      </span>
-    );
-  };
-
-  const formatSize = (bytes: number) => {
-    if (bytes < 1024) return bytes + " B";
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
-    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
-  };
-
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <Button variant="ghost" onClick={onBack} className="pl-0">
+        <Button variant="ghost" onClick={onBack}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           {t("email.back")}
         </Button>
@@ -112,7 +113,7 @@ export default function EmailDetailView({
             <Forward className="mr-2 h-4 w-4" />
             {t("email.forward")}
           </Button>
-          <Button variant="ghost" size="sm" onClick={onDelete}>
+          <Button variant="outline" size="sm" className="text-destructive" onClick={onDelete}>
             <Trash2 className="mr-2 h-4 w-4" />
             {t("email.delete")}
           </Button>
@@ -121,82 +122,54 @@ export default function EmailDetailView({
 
       <div className="space-y-4">
         <div>
-          <h2 className="text-xl font-semibold">{email.subject}</h2>
-          <div className="flex items-center mt-2">
-            <Avatar className="h-8 w-8 mr-2">
-              <User className="h-4 w-4" />
-            </Avatar>
-            <div>
-              <div className="font-medium">{email.fromName || extractName(email.from)}</div>
-              <div className="text-xs text-muted-foreground">
-                {formatDate(email.date)}
-              </div>
-            </div>
+          <h2 className="text-xl font-bold">{email.subject}</h2>
+          <div className="text-muted-foreground text-sm">
+            {formatFullDate(email.date)}
           </div>
         </div>
 
-        <div className="text-sm">
-          <div className="flex">
-            <span className="font-medium w-12">{t("email.to")}:</span>
-            <div className="flex-1">
-              {email.to?.map((address, i) => (
-                <div key={i}>{formatEmailAddress(address)}</div>
-              ))}
-            </div>
+        <div className="flex items-start space-x-3 pt-2 pb-4 border-b">
+          <Avatar>
+            <User className="h-5 w-5" />
+          </Avatar>
+          <div className="flex-1">
+            <div className="font-medium">{email.fromName || extractName(email.from)}</div>
+            <div className="text-sm text-muted-foreground">{email.from}</div>
           </div>
-          
+        </div>
+
+        <div className="space-y-2">
+          <div className="text-sm">
+            <span className="font-medium">{t("email.to")}:</span>{" "}
+            {email.to.join(", ")}
+          </div>
           {email.cc && email.cc.length > 0 && (
-            <div className="flex mt-1">
-              <span className="font-medium w-12">{t("email.cc")}:</span>
-              <div className="flex-1">
-                {email.cc.map((address, i) => (
-                  <div key={i}>{formatEmailAddress(address)}</div>
-                ))}
-              </div>
+            <div className="text-sm">
+              <span className="font-medium">{t("email.cc")}:</span>{" "}
+              {email.cc.join(", ")}
             </div>
           )}
         </div>
 
-        <Separator />
-
-        <div className="prose prose-sm max-w-none">
-          {email.body.includes("<") ? (
-            <div dangerouslySetInnerHTML={{ __html: email.body }} />
-          ) : (
-            <pre className="whitespace-pre-wrap font-sans">{email.body}</pre>
-          )}
-        </div>
-
-        {email.attachments && email.attachments.length > 0 && (
-          <div className="mt-6">
-            <h3 className="text-sm font-medium mb-2">
-              <Paperclip className="inline h-4 w-4 mr-1" />
-              {t("email.attachments")} ({email.attachments.length})
-            </h3>
-            <div className="space-y-2">
-              {email.attachments.map((attachment, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between p-2 border rounded-md"
-                >
-                  <div className="flex items-center">
-                    <Paperclip className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <div>
-                      <div className="text-sm font-medium">{attachment.filename}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {formatSize(attachment.size)}
-                      </div>
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Download">
-                    <Download className="h-4 w-4" />
-                    <span className="sr-only">Download</span>
-                  </Button>
-                </div>
-              ))}
+        {email.hasAttachments && (
+          <div className="py-2 border-t border-b">
+            <div className="flex items-center gap-2">
+              <Paperclip className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium">{t("email.attachments")}</span>
+            </div>
+            <div className="text-sm text-muted-foreground mt-1">
+              {t("email.attachmentsNotImplemented")}
             </div>
           </div>
         )}
+
+        <div className="py-4">
+          {/* Utilizzare dangerouslySetInnerHTML per renderizzare il corpo HTML dell'email */}
+          <div 
+            className="prose prose-sm max-w-none dark:prose-invert"
+            dangerouslySetInnerHTML={{ __html: email.body }}
+          />
+        </div>
       </div>
     </div>
   );
