@@ -25,8 +25,9 @@ import { eq } from 'drizzle-orm';
  */
 export interface IStorage {
   // User operations
-  getUser(id: number): Promise<User | null>;
-  getUserByUsername(username: string): Promise<User | null>;
+  getUser(id: number): Promise<User | null | undefined>;
+  getUserByUsername(username: string): Promise<User | null | undefined>;
+  getUserByEmail(email: string): Promise<User | null | undefined>;
   getAllUsers(): Promise<User[]>;
   createUser(userData: InsertUser): Promise<User>;
   updateUser(id: number, userData: Partial<User>): Promise<User>;
@@ -285,6 +286,10 @@ export class MemStorage implements IStorage {
 
   async getUserByUsername(username: string): Promise<User | null> {
     return this.users.find(user => user.username === username) || null;
+  }
+  
+  async getUserByEmail(email: string): Promise<User | null> {
+    return this.users.find(user => user.email === email) || null;
   }
 
   async getAllUsers(): Promise<User[]> {

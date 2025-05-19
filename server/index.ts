@@ -52,16 +52,12 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 // Inizializzazione del database
 async function initialize() {
   try {
-    // Inizializza il database PostgreSQL
-    await initializePostgresDb();
+    console.log('Inizializzazione del sistema...');
     
-    // Importa le rotte di autenticazione sicura
-    import authRoutes from './auth/authRoutes';
-    
-    // Registra le rotte di autenticazione sicura
+    // Registra le rotte di autenticazione sicura prima di inizializzare il database
     app.use('/api/auth', authRoutes);
     
-    // Registra le rotte API
+    // Crea il server HTTP
     const server = registerRoutes(app);
     
     // Configurazione client in base all'ambiente
@@ -78,9 +74,21 @@ async function initialize() {
       }
     }
     
-    // Avvia il server
+    // Avvia il server prima dell'inizializzazione del database
     server.listen(port, () => {
       console.log(`Server running on port ${port}`);
+    });
+    
+    // Inizializza il database PostgreSQL in background
+    initializePostgresDb().then(dbSuccess => {
+      if (dbSuccess) {
+        console.log('Database inizializzato con successo');
+      } else {
+        console.warn('Inizializzazione database fallita, alcune funzionalità potrebbero essere limitate');
+      }
+    }).catch(dbError => {
+      console.error('Errore durante l\'inizializzazione del database:', dbError);
+      console.warn('Il sistema funzionerà in modalità limitata');
     });
     
     // Gestione terminazione
@@ -96,8 +104,24 @@ async function initialize() {
       process.exit(0);
     });
   } catch (error) {
-    console.error('Errore durante l\'inizializzazione:', error);
-    process.exit(1);
+    console.error('Errore critico durante l\'inizializzazione:', error);
+    
+    // In modalità sviluppo, tentiamo comunque di avviare il server
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('Tentativo di avvio in modalità di emergenza...');
+      try {
+        const emergencyServer = registerRoutes(app);
+        await setupVite(app, emergencyServer);
+        emergencyServer.listen(port, () => {
+          console.log(`Server di emergenza avviato sulla porta ${port}`);
+        });
+      } catch (emergencyError) {
+        console.error('Impossibile avviare il server di emergenza:', emergencyError);
+        process.exit(1);
+      }
+    } else {
+      process.exit(1);
+    }
   }
 }
 

@@ -1,160 +1,112 @@
 /**
- * Sistema di autenticazione sicuro e robusto per Experviser CRM
- * Implementa autenticazione JWT con crittografia avanzata e resilienza agli errori di database
+ * Modulo per la gestione sicura dell'autenticazione
+ * Supporta modalità di fallback in caso di problemi con il database
  */
-
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-import { User } from '../../shared/schema';
+import { Request } from 'express';
 
-// Configurazione
-const JWT_SECRET = process.env.JWT_SECRET || 'experviser-dev-secret';
-const TOKEN_EXPIRY = '30d'; // Durata token: 30 giorni
-const REFRESH_TOKEN_EXPIRY = '90d'; // Durata refresh token: 90 giorni
-const DEV_MODE = process.env.NODE_ENV === 'development';
+// Durata del token (24 ore)
+const TOKEN_EXPIRY = '24h';
 
-// Interfacce
+// Chiave segreta per JWT (in produzione usare variabile d'ambiente)
+const JWT_SECRET = process.env.JWT_SECRET || 'experviser-secure-auth-secret-key';
+
+// Interfaccia per il payload del token
 export interface TokenPayload {
-  id: number;
-  username: string;
+  id: number | string;
   email: string;
-  role: string;
-  iat?: number;
+  username?: string;
+  role: 'user' | 'admin' | 'super_admin';
   exp?: number;
 }
 
-export interface AuthResponse {
-  success: boolean;
-  message: string;
-  token?: string;
-  refreshToken?: string;
-  user?: Partial<User>;
-}
-
 /**
- * Genera un token JWT sicuro
- * @param payload Dati da includere nel token
- * @param expiry Durata di validità del token
- * @returns Token JWT firmato
+ * Genera una password hash
+ * @param password Password in chiaro
+ * @returns Password hash
  */
-export function generateToken(payload: TokenPayload, expiry = TOKEN_EXPIRY): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: expiry });
+export async function hashPassword(password: string): Promise<string> {
+  const salt = await bcrypt.genSalt(10);
+  return bcrypt.hash(password, salt);
 }
 
 /**
- * Verifica e decodifica un token JWT
- * @param token Token JWT da verificare
- * @returns Dati decodificati o null in caso di errore
+ * Verifica la password
+ * @param password Password in chiaro
+ * @param hashedPassword Password hash
+ * @returns true se la password è corretta
+ */
+export async function verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
+  return bcrypt.compare(password, hashedPassword);
+}
+
+/**
+ * Genera un token JWT
+ * @param payload Dati da includere nel token
+ * @returns Token JWT
+ */
+export function generateToken(payload: TokenPayload): string {
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: TOKEN_EXPIRY });
+}
+
+/**
+ * Verifica un token JWT
+ * @param token Token JWT
+ * @returns Payload del token se valido, null altrimenti
  */
 export function verifyToken(token: string): TokenPayload | null {
   try {
     return jwt.verify(token, JWT_SECRET) as TokenPayload;
   } catch (error) {
-    console.error('Errore verifica token:', error);
     return null;
   }
 }
 
 /**
- * Crea un utente di sviluppo predefinito per i test
- * @returns Utente di sviluppo con privilegi di amministratore
+ * Estrae il token dalla richiesta
+ * @param req Richiesta Express
+ * @returns Token JWT o null
  */
-export function createDevUser(): Partial<User> {
-  return {
-    id: 1,
+export function extractTokenFromRequest(req: Request): string | null {
+  // Controllo in header Authorization (Bearer token)
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    return authHeader.substring(7);
+  }
+  
+  // Controllo nei cookie
+  if (req.cookies && req.cookies.token) {
+    return req.cookies.token;
+  }
+  
+  return null;
+}
+
+/**
+ * Genera un token di amministratore per sviluppo
+ * Da usare SOLO in ambiente di sviluppo
+ */
+export function generateDevToken(): string {
+  const adminPayload: TokenPayload = {
+    id: 0,
+    email: 'admin@experviser.test',
     username: 'admin',
-    email: 'admin@experviser.com',
-    fullName: 'Amministratore',
-    role: 'super_admin',
-    status: 'active',
-    language: 'it',
-    timezone: 'Europe/Rome',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    lastLogin: new Date(),
-    emailVerified: true
+    role: 'admin'
   };
+  
+  return generateToken(adminPayload);
 }
 
 /**
- * Verifica l'accesso con bypass per ambiente di sviluppo
- * @param token Token JWT da verificare
- * @returns Payload decodificato o utente di sviluppo
+ * Genera un payload di emergenza basato sulle informazioni dell'utente
+ * Da usare quando il database non è disponibile
  */
-export function authenticateSecure(token?: string): TokenPayload | null {
-  // In modalità sviluppo, fornisci sempre un utente di test
-  if (DEV_MODE) {
-    console.log('[AUTH] Utilizzando autenticazione di sviluppo');
-    const devUser = createDevUser();
-    return {
-      id: devUser.id!,
-      username: devUser.username!,
-      email: devUser.email!,
-      role: devUser.role!
-    };
-  }
-
-  // In produzione, verifica il token
-  if (!token) {
-    return null;
-  }
-
-  return verifyToken(token);
-}
-
-/**
- * Genera un hash sicuro della password
- * @param password Password in chiaro
- * @returns Hash della password
- */
-export async function hashPassword(password: string): Promise<string> {
-  const saltRounds = 10;
-  return await bcrypt.hash(password, saltRounds);
-}
-
-/**
- * Verifica una password confrontandola con l'hash
- * @param password Password in chiaro
- * @param hash Hash della password
- * @returns true se la password è corretta
- */
-export async function verifyPassword(password: string, hash: string): Promise<boolean> {
-  return await bcrypt.compare(password, hash);
-}
-
-/**
- * Genera un token di accesso per l'utente
- * @param user Dati utente
- * @returns Risposta di autenticazione
- */
-export function createAuthResponse(user: Partial<User>): AuthResponse {
-  if (!user || !user.id || !user.username || !user.email || !user.role) {
-    return {
-      success: false,
-      message: 'Dati utente incompleti'
-    };
-  }
-
-  const tokenPayload: TokenPayload = {
-    id: user.id,
-    username: user.username,
-    email: user.email,
-    role: user.role
-  };
-
-  // Genera token di accesso e refresh token
-  const token = generateToken(tokenPayload);
-  const refreshToken = generateToken(tokenPayload, REFRESH_TOKEN_EXPIRY);
-
-  // Rimuovi campi sensibili dai dati utente
-  const safeUser = { ...user };
-  delete safeUser.password;
-
+export function generateEmergencyPayload(email: string): TokenPayload {
   return {
-    success: true,
-    message: 'Autenticazione completata con successo',
-    token,
-    refreshToken,
-    user: safeUser
+    id: 'emergency',
+    email: email,
+    username: email.split('@')[0],
+    role: 'user'
   };
 }

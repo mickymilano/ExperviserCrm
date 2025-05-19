@@ -47,6 +47,18 @@ try {
   }
 }
 
+// Verifica se il sistema è in modalità fallback
+let fallbackModeActive = false;
+
+export const setFallbackMode = (mode: boolean) => {
+  fallbackModeActive = mode;
+  process.env.FALLBACK_MODE = mode ? 'true' : 'false';
+};
+
+export const isFallbackMode = () => {
+  return process.env.FALLBACK_MODE === 'true' || fallbackModeActive;
+};
+
 // Funzione per verificare la connessione al database
 export async function testConnection() {
   try {

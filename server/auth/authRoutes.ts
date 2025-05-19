@@ -1,21 +1,28 @@
 /**
- * Routes per l'autenticazione sicura
+ * Rotte per l'autenticazione
+ * Con supporto per funzionamento in modalità fallback
  */
-import express from 'express';
-import { login, logout, getMe, generateEmergencyToken } from './authController';
+import { Router } from 'express';
+import { login, logout, register, verifyAuth, generateEmergencyAccess } from './authController';
 import { authenticate } from './authMiddleware';
 
-// Crea un router dedicato per l'autenticazione
-const authRouter = express.Router();
+const authRouter = Router();
 
-// Definisci le rotte di autenticazione
+// Rotta per il login
 authRouter.post('/login', login);
-authRouter.post('/logout', logout);
-authRouter.get('/me', authenticate, getMe);
 
-// Rotta per generare token di emergenza (solo per sviluppo)
+// Rotta per la registrazione
+authRouter.post('/register', register);
+
+// Rotta per il logout
+authRouter.post('/logout', logout);
+
+// Rotta per verificare l'autenticazione e ottenere i dati utente
+authRouter.get('/me', authenticate, verifyAuth);
+
+// Rotta per ottenere un token di emergenza (solo sviluppo)
 if (process.env.NODE_ENV === 'development') {
-  authRouter.get('/emergency-token', generateEmergencyToken);
+  authRouter.post('/emergency-access', generateEmergencyAccess);
 }
 
 export default authRouter;

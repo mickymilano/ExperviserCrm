@@ -1,227 +1,298 @@
 /**
- * Controller per la gestione delle operazioni di autenticazione
- * Versione con meccanismo di bypass per sviluppo
+ * Controller per la gestione dell'autenticazione
+ * Supporta modalità di fallback quando il database non è disponibile
  */
 import { Request, Response } from 'express';
-import { verifyPassword, generateToken, createAuthResponse, createDevUser, TokenPayload } from './secureAuth';
 import { storage } from '../storage';
+import { isFallbackMode } from '../db';
+import { 
+  hashPassword, 
+  verifyPassword, 
+  generateToken, 
+  generateEmergencyPayload,
+  TokenPayload 
+} from './secureAuth';
 
 /**
- * Gestisce il login utente
- * In modalità sviluppo: fornisce sempre l'utente admin predefinito
- * In produzione: verifica le credenziali contro il database
+ * Crea una risposta di autenticazione con token e dati utente
+ * @param payload Dati utente da includere nel token
+ * @returns Oggetto con token e dati utente
+ */
+// Helper per creare una risposta di autenticazione coerente
+function createAuthResponse(payload: TokenPayload) {
+  const token = generateToken(payload);
+  
+  // Rimuovi la password e altri dati sensibili
+  const { password, ...userWithoutPassword } = payload as any;
+  
+  return {
+    success: true,
+    token,
+    user: userWithoutPassword
+  };
+}
+
+/**
+ * Controller per il login utente
+ * @param req Request con email e password
+ * @param res Response
  */
 export async function login(req: Request, res: Response) {
   try {
-    const { username, password } = req.body;
+    const { email, password, bypassAuth } = req.body;
     
-    // Validazione input base
-    if (!username || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Username e password sono richiesti'
+    // Validazione input
+    if (!email || (!password && !bypassAuth)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Email e password sono richiesti' 
       });
     }
     
-    // In modalità sviluppo, bypass della verifica credenziali
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[AUTH] Login in modalità sviluppo');
+    // Bypass autenticazione in sviluppo (se abilitato)
+    if (process.env.NODE_ENV === 'development' && bypassAuth) {
+      const devPayload: TokenPayload = {
+        id: 0,
+        email: email || 'dev@experviser.test',
+        username: 'dev_user',
+        role: 'admin'
+      };
       
-      // Crea una risposta di autenticazione con l'utente di sviluppo
-      const devUser = createDevUser();
-      const authResponse = createAuthResponse(devUser);
-      
-      // Imposta il cookie di autenticazione
-      if (authResponse.token) {
-        res.cookie('token', authResponse.token, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          maxAge: 30 * 24 * 60 * 60 * 1000 // 30 giorni
-        });
-      }
-      
-      return res.json(authResponse);
+      return res.json(createAuthResponse(devPayload));
     }
     
-    // In produzione, verifica le credenziali nel database
-    const user = await storage.getUserByUsername(username);
+    // In modalità fallback, crea un token di emergenza
+    if (isFallbackMode()) {
+      console.log('Login in modalità fallback per:', email);
+      const emergencyPayload = generateEmergencyPayload(email);
+      return res.json(createAuthResponse(emergencyPayload));
+    }
+    
+    // Verifica credenziali nel database
+    const user = await storage.getUserByEmail(email);
     
     if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Credenziali non valide'
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Credenziali non valide' 
       });
     }
     
-    // Verifica la password
+    // Verifica password
     const isPasswordValid = await verifyPassword(password, user.password);
-    
     if (!isPasswordValid) {
-      return res.status(401).json({
-        success: false,
-        message: 'Credenziali non valide'
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Credenziali non valide' 
       });
     }
     
-    // Genera la risposta di autenticazione
-    const authResponse = createAuthResponse(user);
+    // Aggiorna ultimo accesso
+    await storage.updateUser(user.id, { lastLogin: new Date() });
     
-    // Imposta il cookie di autenticazione
-    if (authResponse.token) {
-      res.cookie('token', authResponse.token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 30 * 24 * 60 * 60 * 1000 // 30 giorni
-      });
+    // Crea token e risposta
+    const payload: TokenPayload = {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      role: user.role
+    };
+    
+    res.json(createAuthResponse(payload));
+  } catch (error: any) {
+    console.error('Errore login:', error);
+    
+    // Se c'è un errore di database, usa la modalità fallback
+    if (error.message?.includes('database') || error.message?.includes('connection')) {
+      const email = req.body.email || 'unknown@emergency.com';
+      console.log('Login fallback per errore database:', email);
+      const emergencyPayload = generateEmergencyPayload(email);
+      return res.json(createAuthResponse(emergencyPayload));
     }
     
-    return res.json(authResponse);
-  } catch (error) {
-    console.error('Errore durante il login:', error);
-    
-    // In caso di errore in sviluppo, genera comunque l'autenticazione
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[AUTH] Generando autenticazione di fallback');
-      
-      // Crea una risposta di autenticazione con l'utente di sviluppo
-      const devUser = createDevUser();
-      const authResponse = createAuthResponse(devUser);
-      
-      // Imposta il cookie di autenticazione
-      if (authResponse.token) {
-        res.cookie('token', authResponse.token, {
-          httpOnly: true,
-          secure: false,
-          maxAge: 30 * 24 * 60 * 60 * 1000 // 30 giorni
-        });
-      }
-      
-      return res.json(authResponse);
-    }
-    
-    return res.status(500).json({
-      success: false,
-      message: 'Errore durante il login'
+    res.status(500).json({ 
+      success: false, 
+      message: 'Errore durante il login' 
     });
   }
 }
 
 /**
- * Gestisce il logout utente
- * Elimina il cookie di autenticazione
+ * Controller per la registrazione
+ * @param req Request con dati utente
+ * @param res Response
+ */
+export async function register(req: Request, res: Response) {
+  try {
+    const { email, password, username, fullName } = req.body;
+    
+    // Validazione input
+    if (!email || !password) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Email e password sono richiesti' 
+      });
+    }
+    
+    // In modalità fallback, restituisci un errore
+    if (isFallbackMode()) {
+      return res.status(503).json({ 
+        success: false, 
+        message: 'Registrazione disabilitata in modalità fallback. Riprova più tardi.' 
+      });
+    }
+    
+    // Verifica se utente esiste già
+    const existingUser = await storage.getUserByEmail(email);
+    if (existingUser) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Email già registrata' 
+      });
+    }
+    
+    // Hash password
+    const hashedPassword = await hashPassword(password);
+    
+    // Crea utente
+    const newUser = await storage.createUser({
+      email,
+      password: hashedPassword,
+      username: username || email.split('@')[0],
+      fullName: fullName || username || email.split('@')[0],
+      role: 'user',
+      status: 'active',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+    
+    // Crea token e risposta
+    const payload: TokenPayload = {
+      id: newUser.id,
+      email: newUser.email,
+      username: newUser.username,
+      role: newUser.role
+    };
+    
+    res.status(201).json(createAuthResponse(payload));
+  } catch (error: any) {
+    console.error('Errore registrazione:', error);
+    
+    res.status(500).json({ 
+      success: false, 
+      message: 'Errore durante la registrazione' 
+    });
+  }
+}
+
+/**
+ * Controller per il logout
+ * @param req Request
+ * @param res Response
  */
 export function logout(req: Request, res: Response) {
+  // Elimina il cookie (se utilizzato)
   res.clearCookie('token');
-  return res.json({
-    success: true,
-    message: 'Logout completato con successo'
+  
+  res.json({ 
+    success: true, 
+    message: 'Logout effettuato con successo' 
   });
 }
 
 /**
- * Fornisce informazioni sull'utente corrente
- * In modalità sviluppo: fornisce sempre l'utente admin predefinito
- * In produzione: recupera i dati utente dal database
+ * Controller per verificare il token e ottenere dati utente
+ * @param req Request (con user impostato dal middleware)
+ * @param res Response
  */
-export async function getMe(req: Request, res: Response) {
+export async function verifyAuth(req: Request, res: Response) {
   try {
+    // L'utente è stato già verificato dal middleware
     if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Utente non autenticato'
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Non autorizzato' 
       });
     }
     
-    // In modalità sviluppo, restituisci l'utente predefinito completo
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[AUTH] Restituendo utente di sviluppo');
-      
-      const devUser = createDevUser();
-      
+    // In modalità fallback, restituisci i dati del token
+    if (isFallbackMode() || req.user.id === 'emergency') {
       return res.json({
         success: true,
-        user: devUser
+        user: {
+          id: req.user.id,
+          email: req.user.email,
+          username: req.user.username,
+          role: req.user.role,
+          fallbackMode: true
+        }
       });
     }
     
-    // In produzione, recupera i dati utente dal database
-    const user = await storage.getUser(req.user.id);
+    // Altrimenti, ottieni i dati dal database
+    const user = await storage.getUser(Number(req.user.id));
     
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'Utente non trovato'
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Utente non trovato' 
       });
     }
     
-    // Rimuovi dati sensibili
-    const safeUser = { ...user };
-    delete safeUser.password;
+    // Rimuovi la password dalla risposta
+    const { password, ...userWithoutPassword } = user as any;
     
-    return res.json({
+    res.json({
       success: true,
-      user: safeUser
+      user: userWithoutPassword
     });
-  } catch (error) {
-    console.error('Errore nel recupero dei dati utente:', error);
+  } catch (error: any) {
+    console.error('Errore verifica auth:', error);
     
-    // In caso di errore in sviluppo, restituisci comunque l'utente predefinito
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[AUTH] Restituendo utente di sviluppo di fallback');
-      
-      const devUser = createDevUser();
-      
+    // Se c'è un errore di database, usa i dati dal token
+    if (error.message?.includes('database') || error.message?.includes('connection')) {
       return res.json({
         success: true,
-        user: devUser
+        user: {
+          id: req.user?.id,
+          email: req.user?.email,
+          username: req.user?.username,
+          role: req.user?.role,
+          fallbackMode: true
+        }
       });
     }
     
-    return res.status(500).json({
-      success: false,
-      message: 'Errore nel recupero dei dati utente'
+    res.status(500).json({ 
+      success: false, 
+      message: 'Errore durante la verifica dell\'autenticazione' 
     });
   }
 }
 
 /**
- * Genera un token di emergenza (solo per sviluppo)
+ * Genera un token di accesso di emergenza (solo per sviluppo/test)
+ * @param req Request
+ * @param res Response
  */
-export function generateEmergencyToken(req: Request, res: Response) {
-  if (process.env.NODE_ENV !== 'development') {
-    return res.status(403).json({
-      success: false,
-      message: 'Questa funzione è disponibile solo in modalità sviluppo'
-    });
-  }
-  
+export function generateEmergencyAccess(req: Request, res: Response) {
   try {
-    // Crea l'utente di sviluppo
-    const devUser = createDevUser();
+    const { email } = req.body;
     
-    // Crea il payload del token
-    const payload: TokenPayload = {
-      id: devUser.id!,
-      username: devUser.username!,
-      email: devUser.email!,
-      role: devUser.role!
-    };
+    if (!email) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Email richiesta' 
+      });
+    }
     
-    // Genera il token con durata estesa (90 giorni)
-    const token = generateToken(payload, '90d');
-    
-    return res.json({
-      success: true,
-      message: 'Token di emergenza generato con successo',
-      token,
-      instructions: 'Salva questo token in localStorage con: localStorage.setItem("auth_token", token)'
-    });
+    const emergencyPayload = generateEmergencyPayload(email);
+    res.json(createAuthResponse(emergencyPayload));
   } catch (error) {
-    console.error('Errore nella generazione del token di emergenza:', error);
-    
-    return res.status(500).json({
-      success: false,
-      message: 'Errore nella generazione del token di emergenza'
+    console.error('Errore generazione accesso emergenza:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Errore durante la generazione del token di emergenza' 
     });
   }
 }

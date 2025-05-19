@@ -249,38 +249,82 @@ export async function initializePostgresDb() {
     // In modalità sviluppo, gestiamo errori in modo più tollerante
     if (process.env.NODE_ENV === 'development') {
       try {
+        console.log('Development mode: trying connection to database...');
         // Verifica la connessione
         const isConnected = await testConnection();
+        
         if (!isConnected) {
           console.warn('ATTENZIONE: Impossibile connettersi al database PostgreSQL');
           console.warn('L\'applicazione funzionerà in modalità limitata senza database');
           console.warn('Usa il token JWT generato per accedere comunque all\'interfaccia');
+          
+          // Impostiamo la modalità fallback
+          if (typeof global.FALLBACK_MODE !== 'undefined') {
+            global.FALLBACK_MODE = true;
+          }
+          if (typeof process.env.FALLBACK_MODE !== 'undefined') {
+            process.env.FALLBACK_MODE = 'true';
+          }
+          
+          console.log('FALLBACK_MODE attivata per il sistema di autenticazione');
           return true; // In sviluppo, continuiamo anche senza database
         }
+        
+        console.log('Database connected successfully, continuing initialization...');
         
         // Se la connessione è riuscita, continua con l'inizializzazione
         const tables = await tablesExist();
         if (tables) {
-          console.log('Database tables already exist');
+          console.log('Database tables already exist, skipping schema creation');
         } else {
-          console.log('Database tables don\'t exist yet. This is normal if this is the first run.');
-          console.log('Schema will be applied during migration.');
+          console.log('Database tables don\'t exist yet. Creating schema...');
           
           // Crea le tabelle
-          await createTables();
+          const tablesCreated = await createTables();
+          if (!tablesCreated) {
+            console.error('Failed to create tables');
+            return true; // Continuiamo comunque in sviluppo
+          }
+          
           // Crea l'utente admin iniziale
-          await createInitialAdmin();
+          const adminCreated = await createInitialAdmin();
+          if (!adminCreated) {
+            console.error('Failed to create admin user');
+          }
+          
           // Crea le fasi della pipeline iniziali
-          await createInitialPipelineStages();
+          const stagesCreated = await createInitialPipelineStages();
+          if (!stagesCreated) {
+            console.error('Failed to create pipeline stages');
+          }
         }
         
         console.log('PostgreSQL database initialized successfully');
+        
+        // Disattiviamo la modalità fallback
+        if (typeof global.FALLBACK_MODE !== 'undefined') {
+          global.FALLBACK_MODE = false;
+        }
+        if (typeof process.env.FALLBACK_MODE !== 'undefined') {
+          process.env.FALLBACK_MODE = 'false';
+        }
+        
         return true;
       } catch (error) {
         // In sviluppo, registriamo l'errore ma consentiamo all'app di avviarsi
         console.error('Errore durante l\'inizializzazione del database in modalità sviluppo:', error);
         console.warn('L\'applicazione funzionerà in modalità limitata senza accesso al database');
         console.warn('Il login automatico e le funzionalità di base rimarranno disponibili');
+        
+        // Impostiamo la modalità fallback
+        if (typeof global.FALLBACK_MODE !== 'undefined') {
+          global.FALLBACK_MODE = true;
+        }
+        if (typeof process.env.FALLBACK_MODE !== 'undefined') {
+          process.env.FALLBACK_MODE = 'true';
+        }
+        
+        console.log('FALLBACK_MODE attivata per il sistema di autenticazione');
         return true;
       }
     } else {
@@ -316,6 +360,16 @@ export async function initializePostgresDb() {
     // In sviluppo, consentiamo all'app di avviarsi anche in caso di errore
     if (process.env.NODE_ENV === 'development') {
       console.warn('L\'applicazione continuerà in modalità limitata (solo frontend)');
+      
+      // Impostiamo la modalità fallback
+      if (typeof global.FALLBACK_MODE !== 'undefined') {
+        global.FALLBACK_MODE = true;
+      }
+      if (typeof process.env.FALLBACK_MODE !== 'undefined') {
+        process.env.FALLBACK_MODE = 'true';
+      }
+      
+      console.log('FALLBACK_MODE attivata per il sistema di autenticazione');
       return true;
     }
     
