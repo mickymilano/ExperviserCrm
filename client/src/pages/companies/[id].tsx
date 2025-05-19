@@ -27,6 +27,7 @@ import { SynergiesList } from "@/components/synergies/SynergiesList";
 import CompanyBranchesList from "@/components/branches/CompanyBranchesList";
 import CompanyContactsTab from "@/components/company/CompanyContactsTab";
 import BranchContactsSection from "@/components/company/BranchContactsSection";
+import EntityEmailInbox from "@/components/email/EntityEmailInbox";
 
 export default function CompanyDetail() {
   const { t } = useTranslation();
@@ -642,6 +643,17 @@ export default function CompanyDetail() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+        
+        {/* Email Tab */}
+        <TabsContent value="email" className="space-y-4">
+          <EntityEmailInbox
+            entityId={companyId}
+            entityType="company"
+            entityName={company.name}
+            entityEmail={company.email}
+            companyDomain={company.domain}
+          />
         </TabsContent>
       </Tabs>
     </div>
