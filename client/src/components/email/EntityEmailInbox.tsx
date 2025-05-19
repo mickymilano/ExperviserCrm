@@ -208,8 +208,8 @@ export default function EntityEmailInbox({
             queryKey: [`/api/email/filter/${entityType}/${entityId}`],
           });
           toast({
-            title: t("email.sentSuccess", "Email inviata"),
-            description: t("email.sentSuccessDescription", "La tua email è stata inviata con successo"),
+            title: T(t, "email.sentSuccess", "Email inviata"),
+            description: T(t, "email.sentSuccessDescription", "La tua email è stata inviata con successo"),
           });
         }}
       />
@@ -229,7 +229,7 @@ export default function EntityEmailInbox({
             className="text-xs"
           >
             <FileText className="h-3 w-3 mr-1" />
-            {t("email.createTask", "Crea attività")}
+            {T(t, "email.createTask", "Crea attività")}
           </Button>
           <Button 
             variant="outline" 
@@ -238,7 +238,7 @@ export default function EntityEmailInbox({
             className="text-xs"
           >
             <Briefcase className="h-3 w-3 mr-1" />
-            {t("email.createDeal", "Crea opportunità")}
+            {T(t, "email.createDeal", "Crea opportunità")}
           </Button>
         </div>
       );
@@ -261,10 +261,10 @@ export default function EntityEmailInbox({
   return (
     <>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">{t("email.relatedEmails", "Email correlate")}</h2>
+        <h2 className="text-xl font-semibold">{T(t, "email.relatedEmails", "Email correlate")}</h2>
         <Button onClick={handleComposeEmail}>
           <PlusCircle className="mr-2 h-4 w-4" />
-          {t("email.compose", "Scrivi Email")}
+          {T(t, "email.compose", "Scrivi Email")}
         </Button>
       </div>
       
@@ -275,13 +275,13 @@ export default function EntityEmailInbox({
       ) : !emails || emails.length === 0 ? (
         <div className="text-center p-8 border rounded-md bg-muted/20">
           <Mail className="h-10 w-10 mx-auto mb-4 text-muted-foreground" />
-          <h3 className="text-lg font-medium mb-2">{t("email.noRelatedEmails", "Nessuna email correlata")}</h3>
+          <h3 className="text-lg font-medium mb-2">{T(t, "email.noRelatedEmails", "Nessuna email correlata")}</h3>
           <p className="text-muted-foreground mb-4">
-            {t("email.noRelatedEmailsDescription", "Non ci sono email correlate a questa entità")}
+            {T(t, "email.noRelatedEmailsDescription", "Non ci sono email correlate a questa entità")}
           </p>
           <Button onClick={handleComposeEmail}>
             <PlusCircle className="mr-2 h-4 w-4" />
-            {t("email.compose", "Scrivi Email")}
+            {T(t, "email.compose", "Scrivi Email")}
           </Button>
         </div>
       ) : (
