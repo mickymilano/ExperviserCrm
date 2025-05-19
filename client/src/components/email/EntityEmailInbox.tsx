@@ -114,9 +114,9 @@ export default function EntityEmailInbox({
             (entityType === 'contact' || entityType === 'lead') && (
               (entityEmail && (
                 email.from?.includes(entityEmail) || 
-                email.to?.some(to => to.includes(entityEmail)) ||
-                email.cc?.some(cc => cc.includes(entityEmail)) ||
-                email.bcc?.some(bcc => bcc.includes(entityEmail))
+                email.to?.some((to: string) => to.includes(entityEmail)) ||
+                email.cc?.some((cc: string) => cc.includes(entityEmail)) ||
+                email.bcc?.some((bcc: string) => bcc.includes(entityEmail))
               ))
             ) ||
             // Azienda - controlliamo il dominio dell'email
