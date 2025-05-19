@@ -104,7 +104,7 @@ const getMainMenuItems = (stats?: any): MenuItemProps[] => [
     label: 'Email',
     path: '/emails',
     icon: <Mail className="h-5 w-5" />,
-    badge: stats?.unreadEmails
+    badge: stats?.unreadEmails > 0 ? stats.unreadEmails : null
   },
 ];
 
