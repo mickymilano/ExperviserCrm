@@ -28,9 +28,8 @@ export const emailController = {
           id: emailAccounts.id,
           name: emailAccounts.displayName, // Usa display_name invece di name
           email: emailAccounts.email,
-          isActive: emailAccounts.isActive,
+          isActive: emailAccounts.isActive
           // Rimuovi campi che non esistono nel database
-          createdAt: emailAccounts.createdAt
         })
         .from(emailAccounts)
         .orderBy(emailAccounts.displayName);
@@ -69,9 +68,7 @@ export const emailController = {
           smtpPort: emailAccounts.smtpPort,
           smtpSecure: emailAccounts.smtpSecure,
           username: emailAccounts.username,
-          isActive: emailAccounts.isActive,
-          createdAt: emailAccounts.createdAt,
-          updatedAt: emailAccounts.updatedAt
+          isActive: emailAccounts.isActive
         })
         .from(emailAccounts)
         .where(eq(emailAccounts.id, parseInt(id)))
@@ -193,23 +190,27 @@ export const emailController = {
         delete dbData.name;
       }
       
+      // Rimuovi campi che non esistono nel database
+      // @ts-ignore - rimuoviamo provider che non esiste nel database
+      delete dbData.provider;
+      // @ts-ignore - rimuoviamo syncFrequency che non esiste nel database
+      delete dbData.syncFrequency;
+      // @ts-ignore - rimuoviamo lastSyncedAt che non esiste nel database
+      delete dbData.lastSyncedAt;
+      // @ts-ignore - rimuoviamo updatedAt che potrebbe non esistere
+      delete dbData.updatedAt;
+      
       // Aggiorna il database
       const [updatedAccount] = await db
         .update(emailAccounts)
-        .set({
-          ...dbData,
-          updatedAt: new Date()
-        })
+        .set(dbData)
         .where(eq(emailAccounts.id, accountId))
         .returning();
         
       // Aggiorna la pianificazione della sincronizzazione se necessario
-      if (
-        updatedAccount.isActive !== existingAccount.isActive ||
-        updatedAccount.syncFrequency !== existingAccount.syncFrequency
-      ) {
+      if (updatedAccount.isActive !== existingAccount.isActive) {
         if (updatedAccount.isActive) {
-          await scheduleSyncJob(accountId, updatedAccount.syncFrequency || 5);
+          await scheduleSyncJob(accountId, 5); // Usa valore fisso di 5 minuti
         } else {
           // Disabilita la sincronizzazione se l'account non è più attivo
           const jobs = await emailSyncQueue.getRepeatableJobs();
@@ -222,13 +223,16 @@ export const emailController = {
         }
       }
       
-      // Adatta i nomi dei campi per il frontend (aggiungi name per retrocompatibilità)
-      const accountWithName = {
+      // Adatta i nomi dei campi per il frontend e aggiungi valori predefiniti
+      const accountWithDefaults = {
         ...updatedAccount,
-        name: updatedAccount.displayName
+        name: updatedAccount.displayName,
+        provider: 'imap', // Valore predefinito per il frontend
+        syncFrequency: 5, // Valore predefinito per il frontend
+        lastSyncedAt: null // Valore predefinito per il frontend
       };
       
-      res.json(accountWithName);
+      res.json(accountWithDefaults);
     } catch (error) {
       console.error('Errore durante l\'aggiornamento dell\'account email:', error);
       
