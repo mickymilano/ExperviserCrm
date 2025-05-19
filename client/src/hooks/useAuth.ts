@@ -86,7 +86,7 @@ export function useAuth() {
       });
       
       // Redirect to login page
-      window.location.href = "/auth/login";
+      window.location.href = "/login";
     }
   });
 
