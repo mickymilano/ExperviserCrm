@@ -1,584 +1,409 @@
-import { useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
-import { useForm } from "react-hook-form";
-import { T } from "@/lib/translationHelper";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-
+import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent } from "@/components/ui/card";
-import { Avatar } from "@/components/ui/avatar";
-import { 
-  ArrowLeft, 
-  Paperclip, 
-  Send, 
-  X, 
-  Loader2, 
-  Search, 
-  User,
-  Plus,
-  UserPlus
-} from "lucide-react";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-
-const formSchema = z.object({
-  to: z.string().min(1, { message: "Destinatario obbligatorio" }),
-  cc: z.string().optional(),
-  bcc: z.string().optional(),
-  subject: z.string().min(1, { message: "Oggetto obbligatorio" }),
-  body: z.string().min(1, { message: "Corpo del messaggio obbligatorio" }),
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
-interface Contact {
-  id: number;
-  fullName: string;
-  email: string;
-  company?: {
-    name: string;
-  };
-}
+  FormMessage
+} from '@/components/ui/form';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { useQuery } from '@tanstack/react-query';
 
 interface ContactOption {
-  id: number;
-  label: string;
   value: string;
-  company?: string;
+  label: string;
 }
 
 interface NewEmailComposerProps {
-  accountId: number;
-  onCancel: () => void;
   onSent: () => void;
-  replyToEmail?: {
-    id: number;
-    from: string;
-    to: string[];
-    subject: string;
+  onCancel: () => void;
+  defaultTo?: string[];
+  defaultCc?: string[];
+  defaultBcc?: string[];
+  defaultSubject?: string;
+  defaultContent?: string;
+  filter?: {
+    contactId?: number;
+    companyId?: number;
+    dealId?: number;
+    leadId?: number;
+    branchId?: number;
   };
 }
 
-export default function NewEmailComposer({
-  accountId,
-  onCancel,
+const emailSchema = z.object({
+  to: z.array(z.string()).min(1, 'Destinatario richiesto'),
+  cc: z.array(z.string()).optional(),
+  bcc: z.array(z.string()).optional(),
+  subject: z.string().min(1, 'Oggetto richiesto'),
+  content: z.string().min(1, 'Contenuto richiesto'),
+  accountId: z.string().min(1, 'Account email richiesto'),
+});
+
+type EmailFormValues = z.infer<typeof emailSchema>;
+
+export function NewEmailComposer({
   onSent,
-  replyToEmail,
+  onCancel,
+  defaultTo = [],
+  defaultCc = [],
+  defaultBcc = [],
+  defaultSubject = '',
+  defaultContent = '',
+  filter,
 }: NewEmailComposerProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [attachments, setAttachments] = useState<File[]>([]);
-  const [ccRecipients, setCcRecipients] = useState<ContactOption[]>([]);
-  const [bccRecipients, setBccRecipients] = useState<ContactOption[]>([]);
-  const [ccPopoverOpen, setCcPopoverOpen] = useState(false);
-  const [bccPopoverOpen, setBccPopoverOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [isSending, setIsSending] = useState(false);
+  const [contactOptions, setContactOptions] = useState<ContactOption[]>([]);
+  const [selectedContacts, setSelectedContacts] = useState<string[]>(defaultTo);
+  const [selectedCc, setSelectedCc] = useState<string[]>(defaultCc);
+  const [selectedBcc, setSelectedBcc] = useState<string[]>(defaultBcc);
 
-  // Carica i contatti dal CRM
-  const { data: contacts, isLoading: isLoadingContacts } = useQuery({
-    queryKey: ["/api/contacts"],
-    select: (data: any) => {
-      return data.map((contact: any) => ({
-        id: contact.id,
-        fullName: contact.firstName && contact.lastName 
-          ? `${contact.firstName} ${contact.lastName}`
-          : contact.firstName || "Contatto",
-        email: contact.email,
-        company: contact.company
-      }));
-    }
+  // Recupera gli account email
+  const { data: accounts, isLoading: isLoadingAccounts } = useQuery({
+    queryKey: ['email-accounts'],
+    queryFn: () => apiRequest({ url: '/api/email/accounts' }),
   });
 
-  // Prepara i valori predefiniti per il form
-  let defaultSubject = "";
-  let defaultTo = "";
-  let defaultBody = "";
+  // Recupera i contatti per l'autocompletamento
+  const { data: contacts, isLoading: isLoadingContacts } = useQuery({
+    queryKey: ['contacts'],
+    queryFn: () => apiRequest({ url: '/api/contacts' }),
+  });
 
-  if (replyToEmail) {
-    defaultSubject = `Re: ${replyToEmail.subject}`;
-    defaultTo = replyToEmail.from;
-    defaultBody = `\n\n---------------------------------------\n${
-      replyToEmail.from
-    } ha scritto:\n`;
-  }
-
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+  // Inizializza il form
+  const form = useForm<EmailFormValues>({
+    resolver: zodResolver(emailSchema),
     defaultValues: {
       to: defaultTo,
-      cc: "",
-      bcc: "",
+      cc: defaultCc,
+      bcc: defaultBcc,
       subject: defaultSubject,
-      body: defaultBody,
+      content: defaultContent,
+      accountId: '',
     },
   });
 
-  // Aggiorna i campi CC e BCC quando vengono modificati i destinatari
+  // Prepara le opzioni per il dropdown dei contatti
   useEffect(() => {
-    const ccEmails = ccRecipients.map(r => r.value).join(", ");
-    form.setValue("cc", ccEmails);
-  }, [ccRecipients, form]);
+    if (contacts && Array.isArray(contacts)) {
+      const options = contacts.map((contact: any) => ({
+        value: contact.email,
+        label: `${contact.firstName} ${contact.lastName} (${contact.email})`,
+      }));
+      setContactOptions(options);
+    }
+  }, [contacts]);
 
+  // Prepara gli elementi per la relazione con le entità (contatto, azienda, deal, ecc.)
   useEffect(() => {
-    const bccEmails = bccRecipients.map(r => r.value).join(", ");
-    form.setValue("bcc", bccEmails);
-  }, [bccRecipients, form]);
+    if (filter) {
+      const entityRelations = [];
+      if (filter.contactId) entityRelations.push({ entityType: 'contact', entityId: filter.contactId });
+      if (filter.companyId) entityRelations.push({ entityType: 'company', entityId: filter.companyId });
+      if (filter.dealId) entityRelations.push({ entityType: 'deal', entityId: filter.dealId });
+      if (filter.leadId) entityRelations.push({ entityType: 'lead', entityId: filter.leadId });
+      if (filter.branchId) entityRelations.push({ entityType: 'branch', entityId: filter.branchId });
+      
+      // Salva le relazioni nel form
+      form.setValue('entityRelations', entityRelations);
+    }
+  }, [filter, form]);
 
-  const mutation = useMutation({
-    mutationFn: (values: FormValues & { accountId: number; attachments?: File[] }) => {
-      // SIMULAZIONE TEMPORANEA - Da sostituire con l'implementazione reale
-      // In una versione di produzione, questo codice invierebbe l'email tramite API
-      console.log("Simulazione invio email:", {
-        to: values.to,
-        cc: values.cc,
-        bcc: values.bcc,
-        subject: values.subject,
-        body: values.body,
-        accountId: values.accountId,
-        attachments: values.attachments?.map(file => file.name) || []
-      });
-      
-      // Simuliamo un ritardo per l'invio
-      return new Promise(resolve => {
-        setTimeout(() => {
-          resolve({
-            id: Math.floor(Math.random() * 1000) + 1000,
-            success: true,
-            message: "Email inviata con successo (simulazione)"
-          });
-        }, 1500); // Ritardo simulato di 1.5 secondi
-      });
-      
-      // IMPLEMENTAZIONE REALE COMMENTATA - Da riabilitare quando le API saranno pronte
-      /*
-      const formData = new FormData();
-      formData.append("to", values.to);
-      formData.append("subject", values.subject);
-      formData.append("body", values.body);
-      formData.append("accountId", String(values.accountId));
-      
-      if (values.cc) formData.append("cc", values.cc);
-      if (values.bcc) formData.append("bcc", values.bcc);
-      
-      // Aggiungi gli allegati se presenti
-      if (values.attachments) {
-        values.attachments.forEach((file, index) => {
-          formData.append(`attachment_${index}`, file);
-        });
-      }
+  // Imposta l'account primario come default
+  useEffect(() => {
+    if (accounts && Array.isArray(accounts) && accounts.length > 0) {
+      const primaryAccount = accounts.find((account: any) => account.is_primary);
+      form.setValue('accountId', (primaryAccount || accounts[0]).id.toString());
+    }
+  }, [accounts, form]);
 
-      // Utilizziamo il metodo fetch direttamente per FormData
-      return fetch("/api/email/send", {
-        method: "POST",
-        body: formData,
-        // La Content-Type viene impostata automaticamente con il boundary corretto
-      }).then(response => {
-        if (!response.ok) {
-          throw new Error('Errore nell\'invio dell\'email');
-        }
-        return response.json();
+  // Invia l'email
+  const onSubmit = async (data: EmailFormValues) => {
+    setIsSending(true);
+    
+    try {
+      // Prepara i dati per l'invio
+      const emailData = {
+        accountId: parseInt(data.accountId),
+        to: data.to,
+        cc: data.cc || [],
+        bcc: data.bcc || [],
+        subject: data.subject,
+        text: data.content,
+        html: data.content.replace(/\n/g, '<br>'),
+        entityRelations: form.getValues('entityRelations') || [],
+      };
+      
+      // Invia la richiesta all'API
+      await apiRequest({
+        url: '/api/email/send',
+        method: 'POST',
+        data: emailData,
       });
-      */
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [`/api/email/accounts/${accountId}/messages`],
-      });
+      
       toast({
-        title: T(t, "email.sentSuccess", "Email inviata"),
-        description: T(t, "email.sentSuccessDescription", "La tua email è stata inviata con successo"),
+        title: t('Email inviata'),
+        description: t('La tua email è stata inviata con successo'),
       });
+      
       onSent();
-    },
-    onError: (error) => {
+    } catch (error) {
+      console.error('Errore invio email:', error);
       toast({
-        title: T(t, "email.sentError", "Errore invio"),
-        description: T(t, "email.sentErrorDescription", "Non è stato possibile inviare l'email. Riprova più tardi."),
-        variant: "destructive",
+        title: t('Errore invio email'),
+        description: t('Non è stato possibile inviare l\'email'),
+        variant: 'destructive',
       });
-    },
-  });
-
-  const onSubmit = (values: FormValues) => {
-    mutation.mutate({
-      ...values,
-      accountId,
-      attachments,
-    });
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setAttachments((prev) => [...prev, ...Array.from(e.target.files!)]);
+    } finally {
+      setIsSending(false);
     }
   };
 
-  const removeAttachment = (index: number) => {
-    setAttachments((prev) => prev.filter((_, i) => i !== index));
+  // Gestisce i destinatari selezionati
+  const handleToChange = (emails: string[]) => {
+    setSelectedContacts(emails);
+    form.setValue('to', emails, { shouldValidate: true });
   };
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes < 1024) return bytes + " B";
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
-    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  // Gestisce i destinatari in CC
+  const handleCcChange = (emails: string[]) => {
+    setSelectedCc(emails);
+    form.setValue('cc', emails, { shouldValidate: true });
   };
 
-  const addCcRecipient = (contact: ContactOption) => {
-    if (!ccRecipients.some(r => r.id === contact.id)) {
-      setCcRecipients([...ccRecipients, contact]);
-    }
-    setCcPopoverOpen(false);
+  // Gestisce i destinatari in BCC
+  const handleBccChange = (emails: string[]) => {
+    setSelectedBcc(emails);
+    form.setValue('bcc', emails, { shouldValidate: true });
   };
-
-  const removeCcRecipient = (id: number) => {
-    setCcRecipients(ccRecipients.filter(r => r.id !== id));
-  };
-
-  const addBccRecipient = (contact: ContactOption) => {
-    if (!bccRecipients.some(r => r.id === contact.id)) {
-      setBccRecipients([...bccRecipients, contact]);
-    }
-    setBccPopoverOpen(false);
-  };
-
-  const removeBccRecipient = (id: number) => {
-    setBccRecipients(bccRecipients.filter(r => r.id !== id));
-  };
-
-  // Filtra i contatti basandosi sulla query di ricerca
-  const filteredContacts = contacts?.filter((contact: Contact) => {
-    if (!contact.email) return false;
-    
-    const fullName = contact.fullName?.toLowerCase() || "";
-    const email = contact.email.toLowerCase();
-    const company = contact.company?.name?.toLowerCase() || "";
-    const query = searchQuery.toLowerCase();
-    
-    return fullName.includes(query) || email.includes(query) || company.includes(query);
-  }).map((contact: Contact) => ({
-    id: contact.id,
-    label: contact.fullName,
-    value: contact.email,
-    company: contact.company?.name
-  })) || [];
 
   return (
-    <Card>
-      <CardContent className="pt-6">
-        <div className="mb-6 flex items-center justify-between">
-          <Button variant="ghost" onClick={onCancel} className="pl-0">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            {T(t, "email.back", "Indietro")}
-          </Button>
-          <div>
-            <Button
-              type="submit"
-              onClick={form.handleSubmit(onSubmit)}
-              disabled={mutation.isPending}
-            >
-              {mutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {T(t, "email.sending", "Invio in corso...")}
-                </>
-              ) : (
-                <>
-                  <Send className="mr-2 h-4 w-4" />
-                  {T(t, "email.send", "Invia")}
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="to"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{T(t, "email.to", "A")}</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="nome@esempio.com" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="cc"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="flex items-center justify-between">
-                    <FormLabel>{T(t, "email.cc", "Cc")}</FormLabel>
-                    <Popover open={ccPopoverOpen} onOpenChange={setCcPopoverOpen}>
-                      <PopoverTrigger asChild>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="h-8"
-                          type="button"
-                        >
-                          <UserPlus className="h-3.5 w-3.5 mr-1" />
-                          {t("email.addRecipient")}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="p-0" align="end" side="right" sideOffset={5}>
-                        <Command className="w-[250px]">
-                          <CommandInput 
-                            placeholder={t("email.searchContacts")} 
-                            onValueChange={setSearchQuery}
-                          />
-                          <CommandList>
-                            <CommandEmpty>{t("email.noContactsFound")}</CommandEmpty>
-                            <CommandGroup>
-                              {filteredContacts.map((contact: Contact) => (
-                                <CommandItem
-                                  key={contact.id}
-                                  onSelect={() => addCcRecipient(contact)}
-                                  className="flex items-center"
-                                >
-                                  <Avatar className="h-6 w-6 mr-2">
-                                    <User className="h-4 w-4" />
-                                  </Avatar>
-                                  <div className="flex flex-col">
-                                    <span className="text-sm">{contact.label}</span>
-                                    <span className="text-xs text-muted-foreground">{contact.value}</span>
-                                    {contact.company && (
-                                      <span className="text-xs text-muted-foreground">{contact.company}</span>
-                                    )}
-                                  </div>
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                  
-                  {/* Visualizzazione dei destinatari in CC */}
-                  {ccRecipients.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mb-2">
-                      {ccRecipients.map(recipient => (
-                        <Badge key={recipient.id} variant="secondary" className="flex items-center gap-1">
-                          {recipient.label}
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="h-4 w-4 p-0 text-muted-foreground hover:text-foreground"
-                            onClick={() => removeCcRecipient(recipient.id)}
-                          >
-                            <X className="h-3 w-3" />
-                            <span className="sr-only">Rimuovi</span>
-                          </Button>
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-
-                  <FormControl>
-                    <Input {...field} placeholder="nome@esempio.com" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="bcc"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="flex items-center justify-between">
-                    <FormLabel>{T(t, "email.bcc", "Ccn")}</FormLabel>
-                    <Popover open={bccPopoverOpen} onOpenChange={setBccPopoverOpen}>
-                      <PopoverTrigger asChild>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="h-8"
-                          type="button"
-                        >
-                          <UserPlus className="h-3.5 w-3.5 mr-1" />
-                          {t("email.addRecipient")}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="p-0" align="end" side="right" sideOffset={5}>
-                        <Command className="w-[250px]">
-                          <CommandInput 
-                            placeholder={t("email.searchContacts")} 
-                            onValueChange={setSearchQuery}
-                          />
-                          <CommandList>
-                            <CommandEmpty>{t("email.noContactsFound")}</CommandEmpty>
-                            <CommandGroup>
-                              {filteredContacts.map((contact: Contact) => (
-                                <CommandItem
-                                  key={contact.id}
-                                  onSelect={() => addBccRecipient(contact)}
-                                  className="flex items-center"
-                                >
-                                  <Avatar className="h-6 w-6 mr-2">
-                                    <User className="h-4 w-4" />
-                                  </Avatar>
-                                  <div className="flex flex-col">
-                                    <span className="text-sm">{contact.label}</span>
-                                    <span className="text-xs text-muted-foreground">{contact.value}</span>
-                                    {contact.company && (
-                                      <span className="text-xs text-muted-foreground">{contact.company}</span>
-                                    )}
-                                  </div>
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                  
-                  {/* Visualizzazione dei destinatari in BCC */}
-                  {bccRecipients.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mb-2">
-                      {bccRecipients.map(recipient => (
-                        <Badge key={recipient.id} variant="secondary" className="flex items-center gap-1">
-                          {recipient.label}
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="h-4 w-4 p-0 text-muted-foreground hover:text-foreground"
-                            onClick={() => removeBccRecipient(recipient.id)}
-                          >
-                            <X className="h-3 w-3" />
-                            <span className="sr-only">Rimuovi</span>
-                          </Button>
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-
-                  <FormControl>
-                    <Input {...field} placeholder="nome@esempio.com" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="subject"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{T(t, "email.subject", "Oggetto")}</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder={T(t, "email.subjectPlaceholder", "Oggetto dell'email")} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="body"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("email.body")}</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      {...field}
-                      placeholder={t("email.bodyPlaceholder")}
-                      className="min-h-[200px]"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Gestione allegati */}
-            <div>
-              <FormLabel>{t("email.attachments")}</FormLabel>
-              
-              {attachments.length > 0 && (
-                <div className="mt-2 space-y-2">
-                  {attachments.map((file, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-2 border rounded-md"
-                    >
-                      <div className="flex items-center">
-                        <Paperclip className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <div>
-                          <div className="text-sm font-medium">{file.name}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {formatFileSize(file.size)}
-                          </div>
-                        </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                        onClick={() => removeAttachment(index)}
-                        title={t("email.removeAttachment")}
-                      >
-                        <X className="h-4 w-4" />
-                        <span className="sr-only">{t("email.removeAttachment")}</span>
-                      </Button>
-                    </div>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="accountId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t('Account mittente')}</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value.toString()}
+                disabled={isLoadingAccounts || !accounts || accounts.length === 0}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('Seleziona account')} />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {accounts && Array.isArray(accounts) && accounts.map((account: any) => (
+                    <SelectItem key={account.id} value={account.id.toString()}>
+                      {account.display_name} ({account.email})
+                    </SelectItem>
                   ))}
-                </div>
-              )}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-              <div className="mt-2">
-                <Input
-                  type="file"
-                  onChange={handleFileChange}
-                  multiple
-                  id="attachments"
-                  className="hidden"
+        <FormField
+          control={form.control}
+          name="to"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t('A')}</FormLabel>
+              <FormControl>
+                <div className="flex flex-wrap gap-1 p-2 border rounded-md">
+                  {selectedContacts.map((email) => {
+                    const contact = contactOptions.find((c) => c.value === email);
+                    return (
+                      <div 
+                        key={email} 
+                        className="bg-primary/10 px-2 py-1 rounded-md flex items-center"
+                      >
+                        <span>{contact ? contact.label : email}</span>
+                        <button
+                          type="button"
+                          className="ml-1 text-gray-500 hover:text-gray-700"
+                          onClick={() => handleToChange(selectedContacts.filter(e => e !== email))}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    );
+                  })}
+                  <input
+                    className="flex-1 min-w-[100px] outline-none border-none"
+                    placeholder={t('Inserisci indirizzo email...')}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && e.currentTarget.value) {
+                        e.preventDefault();
+                        const email = e.currentTarget.value.trim();
+                        if (email && !selectedContacts.includes(email)) {
+                          handleToChange([...selectedContacts, email]);
+                          e.currentTarget.value = '';
+                        }
+                      }
+                    }}
+                  />
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="cc"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t('CC')}</FormLabel>
+              <FormControl>
+                <div className="flex flex-wrap gap-1 p-2 border rounded-md">
+                  {selectedCc.map((email) => {
+                    const contact = contactOptions.find((c) => c.value === email);
+                    return (
+                      <div 
+                        key={email} 
+                        className="bg-primary/10 px-2 py-1 rounded-md flex items-center"
+                      >
+                        <span>{contact ? contact.label : email}</span>
+                        <button
+                          type="button"
+                          className="ml-1 text-gray-500 hover:text-gray-700"
+                          onClick={() => handleCcChange(selectedCc.filter(e => e !== email))}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    );
+                  })}
+                  <input
+                    className="flex-1 min-w-[100px] outline-none border-none"
+                    placeholder={t('Inserisci indirizzo email...')}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && e.currentTarget.value) {
+                        e.preventDefault();
+                        const email = e.currentTarget.value.trim();
+                        if (email && !selectedCc.includes(email)) {
+                          handleCcChange([...selectedCc, email]);
+                          e.currentTarget.value = '';
+                        }
+                      }
+                    }}
+                  />
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="bcc"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t('BCC')}</FormLabel>
+              <FormControl>
+                <div className="flex flex-wrap gap-1 p-2 border rounded-md">
+                  {selectedBcc.map((email) => {
+                    const contact = contactOptions.find((c) => c.value === email);
+                    return (
+                      <div 
+                        key={email} 
+                        className="bg-primary/10 px-2 py-1 rounded-md flex items-center"
+                      >
+                        <span>{contact ? contact.label : email}</span>
+                        <button
+                          type="button"
+                          className="ml-1 text-gray-500 hover:text-gray-700"
+                          onClick={() => handleBccChange(selectedBcc.filter(e => e !== email))}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    );
+                  })}
+                  <input
+                    className="flex-1 min-w-[100px] outline-none border-none"
+                    placeholder={t('Inserisci indirizzo email...')}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && e.currentTarget.value) {
+                        e.preventDefault();
+                        const email = e.currentTarget.value.trim();
+                        if (email && !selectedBcc.includes(email)) {
+                          handleBccChange([...selectedBcc, email]);
+                          e.currentTarget.value = '';
+                        }
+                      }
+                    }}
+                  />
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="subject"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t('Oggetto')}</FormLabel>
+              <FormControl>
+                <Input placeholder={t('Inserisci oggetto')} {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="content"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t('Contenuto')}</FormLabel>
+              <FormControl>
+                <Textarea 
+                  placeholder={t('Scrivi il contenuto dell\'email')} 
+                  className="min-h-[200px]" 
+                  {...field} 
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => document.getElementById("attachments")?.click()}
-                >
-                  <Paperclip className="mr-2 h-4 w-4" />
-                  {t("email.addAttachment")}
-                </Button>
-              </div>
-            </div>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="flex justify-end space-x-2">
+          <Button variant="outline" onClick={onCancel} type="button">
+            {t('Annulla')}
+          </Button>
+          <Button type="submit" disabled={isSending}>
+            {isSending ? t('Invio in corso...') : t('Invia')}
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 }
