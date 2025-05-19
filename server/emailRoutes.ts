@@ -17,6 +17,9 @@ router.get('/accounts/:id/messages', emailController.getEmailsByAccount);
 router.get('/messages/:id', emailController.getEmailById);
 router.post('/send', emailController.sendEmail);
 
+// Filtro email per entità (contatti, aziende, lead, deal)
+router.get('/filter/:entityType/:entityId', emailController.getEmailsByEntity);
+
 // Email signatures routes
 router.get('/signatures', emailController.getEmailSignatures);
 router.get('/signatures/:id', emailController.getEmailSignatureById);

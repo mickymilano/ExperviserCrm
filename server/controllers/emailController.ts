@@ -20,6 +20,57 @@ import { ZodError, z } from 'zod';
 
 export const emailController = {
   /**
+   * Recupera le email per una specifica entità (contatto, azienda, lead, deal)
+   */
+  getEmailsByEntity: async (req: Request, res: Response) => {
+    try {
+      const { entityType, entityId } = req.params;
+      const entityIdNumber = parseInt(entityId, 10);
+      
+      if (isNaN(entityIdNumber)) {
+        return res.status(400).json({ error: 'ID entità non valido' });
+      }
+      
+      // Per questa dimostrazione, forniamo email di esempio
+      // In produzione, qui implementeremmo la logica di filtro reale basata sull'ID e tipo di entità
+      const mockEmails = [
+        {
+          id: 1,
+          accountId: 1,
+          from: 'example@domain.com',
+          fromName: 'Sender Example',
+          to: ['recipient@example.com'],
+          cc: [],
+          bcc: [],
+          subject: `Email correlata a ${entityType} #${entityId}`,
+          body: `<p>Questa è un'email di esempio per ${entityType} con ID ${entityId}.</p>`,
+          date: new Date().toISOString(),
+          read: false,
+          hasAttachments: false
+        },
+        {
+          id: 2,
+          accountId: 1,
+          from: 'support@yourcompany.com',
+          fromName: 'Team Support',
+          to: ['recipient@example.com'],
+          cc: ['manager@example.com'],
+          bcc: [],
+          subject: `Aggiornamento su ${entityType}`,
+          body: `<p>Un altro esempio di email correlata a questo ${entityType}.</p>`,
+          date: new Date(Date.now() - 86400000).toISOString(), // 1 giorno fa
+          read: true,
+          hasAttachments: true
+        }
+      ];
+      
+      return res.json(mockEmails);
+    } catch (error) {
+      console.error('Errore nel recupero delle email per entità:', error);
+      return res.status(500).json({ error: 'Errore interno del server' });
+    }
+  },
+  /**
    * Recupera tutti gli account email
    */
   getEmailAccounts: async (req: Request, res: Response) => {
