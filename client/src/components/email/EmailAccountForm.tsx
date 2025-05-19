@@ -135,6 +135,11 @@ export default function EmailAccountForm({ onSuccess, onCancel, accountToEdit, i
         },
       });
     }
+    
+    // Se stiamo modificando e la password è vuota, non inviarla al server
+    if (isEditing && !values.password) {
+      delete formData.password;
+    }
 
     // Gestione diversa in base a se stiamo modificando o creando un account
     if (isEditing && accountToEdit) {
