@@ -75,7 +75,7 @@ interface EmailAccountFormProps {
   isEditing?: boolean;
 }
 
-export default function EmailAccountForm({ onSuccess, onCancel, accountToEdit, isEditing = false }: EmailAccountFormProps) {
+export function EmailAccountForm({ onSuccess, onCancel, accountToEdit, isEditing = false }: EmailAccountFormProps) {
   const { t } = useTranslation();
   const [useCustomSettings, setUseCustomSettings] = useState(accountToEdit?.serverSettings ? true : false);
   

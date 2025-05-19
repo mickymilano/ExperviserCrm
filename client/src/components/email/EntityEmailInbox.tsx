@@ -64,10 +64,13 @@ export default function EntityEmailInbox({
   const [selectedEmailId, setSelectedEmailId] = useState<number | null>(null);
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [showDealModal, setShowDealModal] = useState(false);
+  const [showReplyModal, setShowReplyModal] = useState(false);
   const [selectedTaskEmail, setSelectedTaskEmail] = useState<Email | null>(null);
   const [selectedDealEmail, setSelectedDealEmail] = useState<Email | null>(null);
+  const [selectedReplyEmail, setSelectedReplyEmail] = useState<Email | null>(null);
   const [currentCompanyForDeal, setCurrentCompanyForDeal] = useState<{id: number; name: string} | null>(null);
   const [selectedEmailForAction, setSelectedEmailForAction] = useState<Email | null>(null);
+  const [showEmailDetail, setShowEmailDetail] = useState(false);
   
   // Recupera gli account email configurati
   const { data: accounts, isLoading: isLoadingAccounts } = useAccounts();
@@ -218,34 +221,88 @@ export default function EntityEmailInbox({
     );
   }
   
+  // Renderizza l'interfaccia di risposta alle email quando attiva
+  if (showReplyModal && selectedReplyEmail) {
+    return (
+      <EmailReplyComposer
+        originalEmail={selectedReplyEmail}
+        onCancel={() => setShowReplyModal(false)}
+        onSent={() => {
+          setShowReplyModal(false);
+          // Invalida la query per ricaricare le email
+          queryClient.invalidateQueries({
+            queryKey: [`/api/email/filter/${entityType}/${entityId}`],
+          });
+          toast({
+            title: T(t, "email.replySent", "Risposta inviata"),
+            description: T(t, "email.replySentDescription", "La tua risposta è stata inviata con successo"),
+          });
+        }}
+        entityId={entityId}
+        entityType={entityType}
+        entityEmail={entityEmail}
+      />
+    );
+  }
+  
+  // Funzione per rispondere a un'email
+  const handleReplyEmail = (email: Email, e: React.MouseEvent) => {
+    e.stopPropagation(); // Previene l'apertura del dettaglio dell'email
+    setSelectedReplyEmail(email);
+    setShowReplyModal(true);
+  };
+
+  // Funzione per visualizzare il dettaglio di un'email
+  const handleViewEmailDetail = (email: Email) => {
+    setSelectedEmailForAction(email);
+    setShowEmailDetail(true);
+  };
+
   // Funzione per renderizzare le azioni aggiuntive per email
   const renderEmailActions = (email: Email) => {
-    // Mostra azioni aggiuntive solo per contatti e lead
-    if (entityType === 'contact' || entityType === 'lead') {
-      return (
-        <div className="mt-2 flex space-x-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => handleCreateTask(email)}
-            className="text-xs"
-          >
-            <FileText className="h-3 w-3 mr-1" />
-            {T(t, "email.createTask", "Crea attività")}
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => handleCreateDeal(email)}
-            className="text-xs"
-          >
-            <Briefcase className="h-3 w-3 mr-1" />
-            {T(t, "email.createDeal", "Crea opportunità")}
-          </Button>
-        </div>
-      );
-    }
-    return null;
+    return (
+      <div className="mt-2 flex flex-wrap gap-2">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={(e) => handleReplyEmail(email, e)}
+          className="text-xs"
+        >
+          <Reply className="h-3 w-3 mr-1" />
+          {T(t, "email.reply", "Rispondi")}
+        </Button>
+        
+        {/* Mostra azioni specifiche solo per contatti e lead */}
+        {(entityType === 'contact' || entityType === 'lead') && (
+          <>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleCreateTask(email);
+              }}
+              className="text-xs"
+            >
+              <FileText className="h-3 w-3 mr-1" />
+              {T(t, "email.createTask", "Crea attività")}
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleCreateDeal(email);
+              }}
+              className="text-xs"
+            >
+              <Briefcase className="h-3 w-3 mr-1" />
+              {T(t, "email.createDeal", "Crea opportunità")}
+            </Button>
+          </>
+        )}
+      </div>
+    );
   };
   
   // Funzione per renderizzare i badge degli account email
@@ -292,7 +349,7 @@ export default function EntityEmailInbox({
             <div
               key={email.id}
               className={`p-4 border rounded-md hover:bg-muted/50 cursor-pointer ${getEmailStyle(email)}`}
-              onClick={() => setSelectedEmailForAction(email)}
+              onClick={() => handleViewEmailDetail(email)}
             >
               <div className="flex justify-between items-start">
                 <div>
@@ -314,6 +371,114 @@ export default function EntityEmailInbox({
           ))}
         </div>
       )}
+      
+      {/* Email Detail Dialog */}
+      <Dialog open={showEmailDetail} onOpenChange={setShowEmailDetail}>
+        {selectedEmailForAction && (
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-xl">{selectedEmailForAction.subject}</DialogTitle>
+            </DialogHeader>
+            
+            <div className="mt-4 space-y-4">
+              {/* Intestazioni email */}
+              <div className="grid grid-cols-[auto,1fr] gap-x-3 gap-y-1">
+                <div className="text-sm font-medium">{T(t, "email.from", "Da")}:</div>
+                <div className="text-sm">
+                  {selectedEmailForAction.fromName ? 
+                    `${selectedEmailForAction.fromName} <${selectedEmailForAction.from}>` : 
+                    selectedEmailForAction.from}
+                </div>
+                
+                <div className="text-sm font-medium">{T(t, "email.to", "A")}:</div>
+                <div className="text-sm">
+                  {selectedEmailForAction.to.join(", ")}
+                </div>
+                
+                {selectedEmailForAction.cc && selectedEmailForAction.cc.length > 0 && (
+                  <>
+                    <div className="text-sm font-medium">{T(t, "email.cc", "CC")}:</div>
+                    <div className="text-sm">
+                      {selectedEmailForAction.cc.join(", ")}
+                    </div>
+                  </>
+                )}
+                
+                <div className="text-sm font-medium">{T(t, "email.date", "Data")}:</div>
+                <div className="text-sm">
+                  {new Date(selectedEmailForAction.date).toLocaleString()}
+                </div>
+              </div>
+              
+              {/* Separatore */}
+              <div className="h-px bg-border"></div>
+              
+              {/* Corpo email */}
+              <div className="min-h-[200px] p-4 border rounded-md bg-muted/10">
+                {/* Provare a rendere l'HTML se disponibile, altrimenti mostrare testo semplice */}
+                {selectedEmailForAction.body.includes("<") ? (
+                  <div 
+                    className="prose prose-sm max-w-none" 
+                    dangerouslySetInnerHTML={{ __html: selectedEmailForAction.body }}
+                  />
+                ) : (
+                  <div className="whitespace-pre-wrap">
+                    {selectedEmailForAction.body}
+                  </div>
+                )}
+              </div>
+              
+              {/* Pulsanti azione */}
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={() => setShowEmailDetail(false)}>
+                  <X className="h-4 w-4 mr-2" />
+                  {T(t, "common.close", "Chiudi")}
+                </Button>
+                
+                <div className="flex gap-2">
+                  <Button 
+                    variant="default" 
+                    onClick={() => {
+                      setShowEmailDetail(false);
+                      setSelectedReplyEmail(selectedEmailForAction);
+                      setShowReplyModal(true);
+                    }}
+                  >
+                    <Reply className="h-4 w-4 mr-2" />
+                    {T(t, "email.reply", "Rispondi")}
+                  </Button>
+                  
+                  {(entityType === 'contact' || entityType === 'lead') && (
+                    <>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => {
+                          setShowEmailDetail(false);
+                          handleCreateTask(selectedEmailForAction);
+                        }}
+                      >
+                        <FileText className="h-4 w-4 mr-2" />
+                        {T(t, "email.createTask", "Crea attività")}
+                      </Button>
+                      
+                      <Button 
+                        variant="outline" 
+                        onClick={() => {
+                          setShowEmailDetail(false);
+                          handleCreateDeal(selectedEmailForAction);
+                        }}
+                      >
+                        <Briefcase className="h-4 w-4 mr-2" />
+                        {T(t, "email.createDeal", "Crea opportunità")}
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        )}
+      </Dialog>
       
       {/* Task Modal */}
       {showTaskModal && selectedTaskEmail && (

@@ -50,7 +50,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useUserProfile } from "@/hooks/useUserProfile";
-import EmailAccountForm from "@/components/email/EmailAccountForm";
+import { EmailAccountForm } from "@/components/email/EmailAccountForm";
 
 export default function SettingsPage() {
   const { toast } = useToast();

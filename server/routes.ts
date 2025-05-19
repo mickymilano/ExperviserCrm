@@ -2557,6 +2557,224 @@ export function registerRoutes(app: any) {
     }
   });
 
+  // Recupera email filtrate per tipo di entità e ID
+  app.get('/api/email/filter/:entityType/:entityId', authenticate, async (req, res) => {
+    try {
+      const { entityType, entityId } = req.params;
+      
+      // Assicuriamoci che entityType sia valido
+      const validEntityTypes = ['contact', 'company', 'lead', 'deal', 'branch'];
+      if (!validEntityTypes.includes(entityType)) {
+        return res.status(400).json({ error: 'Tipo di entità non valido' });
+      }
+      
+      // Assicuriamoci che entityId sia un numero valido
+      const parsedEntityId = parseInt(entityId);
+      if (isNaN(parsedEntityId)) {
+        return res.status(400).json({ error: 'ID entità non valido' });
+      }
+      
+      // In questa versione MVP, per velocizzare lo sviluppo, il filtraggio avviene sul frontend
+      // Qui restituiamo tutte le email che verranno poi filtrate sul client
+      // In una versione produzione, implementeremmo il filtraggio sul backend
+      const emails = await storage.getEmails();
+      
+      res.json(Array.isArray(emails) ? emails : []);
+    } catch (error) {
+      console.error('Error fetching filtered emails:', error);
+      res.status(500).json({ error: 'Errore nel recupero delle email filtrate' });
+    }
+  });
+
+  // Invia una nuova email
+  app.post('/api/email/send', authenticate, async (req, res) => {
+    try {
+      const { accountId, to, cc, bcc, subject, body, entityId, entityType, inReplyTo } = req.body;
+      
+      if (!accountId || !to || !Array.isArray(to) || !subject || !body) {
+        return res.status(400).json({ error: 'Dati email mancanti o non validi' });
+      }
+      
+      // Recupera l'account email
+      const account = await storage.getEmailAccount(accountId);
+      if (!account) {
+        return res.status(404).json({ error: 'Account email non trovato' });
+      }
+
+      // Utilizziamo SendGrid per l'invio delle email se è configurato
+      if (process.env.SENDGRID_API_KEY) {
+        const sgMail = require('@sendgrid/mail');
+        sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+        
+        const emailData = {
+          from: account.email,
+          to: to,
+          subject: subject,
+          text: body.replace(/<[^>]*>/g, ""), // Versione testuale
+          html: body, // Versione HTML
+        };
+        
+        // Aggiungi CC e BCC se presenti
+        if (cc && Array.isArray(cc) && cc.length > 0) {
+          emailData.cc = cc;
+        }
+        
+        if (bcc && Array.isArray(bcc) && bcc.length > 0) {
+          emailData.bcc = bcc;
+        }
+        
+        // Se è una risposta, aggiungi l'intestazione In-Reply-To
+        if (inReplyTo) {
+          emailData.headers = {
+            'In-Reply-To': `<email-${inReplyTo}@expervisercrm.com>`,
+            'References': `<email-${inReplyTo}@expervisercrm.com>`
+          };
+        }
+        
+        await sgMail.send(emailData);
+        
+        // Salva l'email inviata nel database
+        const newEmail = {
+          accountId,
+          from: account.email,
+          to,
+          cc: cc || [],
+          bcc: bcc || [],
+          subject,
+          body,
+          date: new Date().toISOString(),
+          read: true,
+          hasAttachments: false,
+          folder: 'SENT',
+          inReplyTo: inReplyTo || null,
+          entityId: entityId || null,
+          entityType: entityType || null
+        };
+        
+        const savedEmail = await storage.createEmail(newEmail);
+        
+        res.json({ success: true, email: savedEmail });
+      } else {
+        // Se non c'è SendGrid, simula l'invio e registra comunque l'email
+        console.log('SENDGRID_API_KEY non configurata, simulo invio email:', {
+          from: account.email,
+          to,
+          subject,
+          body: body.substring(0, 100) + '...' // Log solo una parte del corpo per brevità
+        });
+        
+        // Salva comunque l'email nel database come se fosse stata inviata
+        const newEmail = {
+          accountId,
+          from: account.email,
+          to,
+          cc: cc || [],
+          bcc: bcc || [],
+          subject,
+          body,
+          date: new Date().toISOString(),
+          read: true,
+          hasAttachments: false,
+          folder: 'SENT',
+          inReplyTo: inReplyTo || null,
+          entityId: entityId || null,
+          entityType: entityType || null
+        };
+        
+        const savedEmail = await storage.createEmail(newEmail);
+        
+        res.json({ 
+          success: true, 
+          email: savedEmail,
+          warning: 'Email registrata ma non inviata realmente (SENDGRID_API_KEY non configurata)'
+        });
+      }
+    } catch (error) {
+      console.error('Errore nell\'invio dell\'email:', error);
+      res.status(500).json({ error: 'Errore nell\'invio dell\'email' });
+    }
+  });
+
+  // Endpoint per generare risposte alle email con AI
+  app.post('/api/ai/generate-email-response', authenticate, async (req, res) => {
+    try {
+      const { originalEmail, entityType, entityId } = req.body;
+      
+      // Verifica che OpenAI API key sia configurata
+      if (!process.env.OPENAI_API_KEY) {
+        return res.status(500).json({ 
+          error: 'OpenAI API key non configurata', 
+          message: 'Per utilizzare la generazione AI, configura la variabile d\'ambiente OPENAI_API_KEY'
+        });
+      }
+      
+      const OpenAI = require('openai');
+      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      
+      // Recupera informazioni sull'entità se disponibili
+      let entityInfo = null;
+      if (entityId && entityType) {
+        try {
+          if (entityType === 'contact') {
+            entityInfo = await storage.getContact(entityId);
+          } else if (entityType === 'company') {
+            entityInfo = await storage.getCompany(entityId);
+          } else if (entityType === 'lead') {
+            entityInfo = await storage.getLead(entityId);
+          } else if (entityType === 'deal') {
+            entityInfo = await storage.getDeal(entityId);
+          } else if (entityType === 'branch') {
+            entityInfo = await storage.getBranch(entityId);
+          }
+        } catch (entityError) {
+          console.error(`Error fetching ${entityType} with ID ${entityId}:`, entityError);
+        }
+      }
+      
+      // Prepara il prompt per OpenAI
+      const systemPrompt = `Sei un assistente professionale che aiuta a scrivere risposte a email nel contesto di un CRM. 
+      Scrivi risposte cortesi, concise e professionali. Non includere saluti iniziali come "Gentile [Nome]" o finali come "Cordiali saluti".
+      Limita la risposta a massimo 150 parole e mantieni un tono professionale.`;
+      
+      const userPrompt = `Genera una risposta professionale alla seguente email:
+      
+      Email originale da: ${originalEmail.from}
+      Oggetto: ${originalEmail.subject}
+      Corpo: ${originalEmail.body}
+      
+      ${entityInfo ? `Informazioni aggiuntive sulla ${entityType}:
+      ${JSON.stringify(entityInfo)}` : ''}
+      
+      Rispondi in italiano. Sii conciso e professionale.`;
+      
+      // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 200,
+      });
+      
+      const generatedResponse = response.choices[0].message.content;
+      
+      res.json({ 
+        success: true, 
+        generatedResponse,
+        tokens: {
+          prompt: response.usage.prompt_tokens,
+          completion: response.usage.completion_tokens,
+          total: response.usage.total_tokens
+        }
+      });
+    } catch (error) {
+      console.error('Error generating AI email response:', error);
+      res.status(500).json({ error: 'Errore nella generazione della risposta AI' });
+    }
+  });
+
   app.patch('/api/emails/:id/read', authenticate, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
