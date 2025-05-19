@@ -13,6 +13,10 @@ export interface Email {
   read: boolean;
   hasAttachments: boolean;
   accountId: number;
+  accountInfo?: {
+    id: number;
+    name: string;
+  };
 }
 
 interface UseEmailsOptions {
@@ -21,6 +25,57 @@ interface UseEmailsOptions {
   entityId?: number;
   entityType?: string;
 }
+
+// Generazione di dati fittizi per demo
+const generateMockEmails = (entityType: string, entityId: number, count = 3): Email[] => {
+  const mockAccounts = [
+    { id: 1, name: 'Gmail', email: 'account@gmail.com' },
+    { id: 2, name: 'Outlook', email: 'office@outlook.com' }
+  ];
+  
+  const entityTypes = {
+    contact: { label: 'Contatto', prefix: 'ID' },
+    lead: { label: 'Lead', prefix: 'LEAD' },
+    company: { label: 'Azienda', prefix: 'COMPANY' },
+    branch: { label: 'Filiale', prefix: 'BRANCH' },
+    deal: { label: 'Deal', prefix: 'DEAL' }
+  };
+  
+  const currentDate = new Date();
+  
+  return Array(count).fill(0).map((_, index) => {
+    const daysAgo = index * 2; // Ogni email è separata di 2 giorni
+    const emailDate = new Date(currentDate);
+    emailDate.setDate(emailDate.getDate() - daysAgo);
+    
+    const account = mockAccounts[index % mockAccounts.length];
+    const hasAttachments = index % 3 === 0; // Ogni terza email ha allegati
+    
+    const entityInfo = entityTypes[entityType as keyof typeof entityTypes];
+    
+    return {
+      id: 1000 + index,
+      from: index % 2 === 0 ? 'cliente@example.com' : account.email,
+      fromName: index % 2 === 0 ? 'Cliente Demo' : `Account ${account.name}`,
+      to: index % 2 === 0 ? [account.email] : ['cliente@example.com', 'altro@example.com'],
+      cc: index % 3 === 0 ? ['cc@example.com'] : [],
+      bcc: index % 4 === 0 ? ['bcc@example.com'] : [],
+      subject: `${index === 0 ? 'RE: ' : ''}${entityInfo.label} ${entityId} - ${index === 0 ? 'Risposta a richiesta informazioni' : index === 1 ? 'Aggiornamento stato' : 'Dettagli progetto'}`,
+      body: `<p>Gentile utente,</p>
+             <p>Questa è un'email di esempio per ${entityInfo.label} con ID ${entityId}.</p>
+             <p>Il riferimento a questa entità è ${entityInfo.prefix}-${entityId}.</p>
+             <p>Cordiali saluti,<br />Team CRM</p>`,
+      date: emailDate.toISOString(),
+      read: index > 0, // Solo la prima email è non letta
+      hasAttachments,
+      accountId: account.id,
+      accountInfo: {
+        id: account.id,
+        name: account.name
+      }
+    };
+  });
+};
 
 export function useEmails(options: UseEmailsOptions = {}) {
   const { accountId, folder = 'INBOX', entityId, entityType } = options;
@@ -31,103 +86,30 @@ export function useEmails(options: UseEmailsOptions = {}) {
     : [`/api/email/accounts/${accountId}/messages`, folder];
 
   const queryFn = async () => {
+    console.log("Fetching emails with options:", options);
+    
+    // IMPLEMENTAZIONE TEMPORANEA CON DATI SIMULATI
+    // In una versione di produzione, questo verrebbe sostituito con chiamate API reali
+    
     if (entityId && entityType) {
-      // In produzione, questo endpoint filtrerebbe le email nel backend
-      // Qui utilizziamo una logica temporanea 
-      
-      // 1. Ottieni tutti gli account email disponibili
-      const accountsResponse = await fetch('/api/email/accounts');
-      const accounts = await accountsResponse.json();
-      
-      // 2. Recupera le email da tutti gli account e filtra client-side (soluzione temporanea)
-      const allEmails: Email[] = [];
-      
-      if (accounts && accounts.length > 0) {
-        for (const account of accounts) {
-          try {
-            const response = await fetch(`/api/email/accounts/${account.id}/messages?folder=${folder}`);
-            if (response.ok) {
-              const messages = await response.json();
-              if (Array.isArray(messages)) {
-                // Aggiungi informazioni sull'account a ciascuna email
-                messages.forEach(message => {
-                  allEmails.push({
-                    ...message,
-                    accountInfo: {
-                      id: account.id,
-                      name: account.name || account.email.split('@')[1] || 'Email',
-                    }
-                  });
-                });
-              }
-            }
-          } catch (error) {
-            console.error(`Errore nel recupero delle email dall'account ${account.id}:`, error);
-          }
-        }
-      }
-      
-      // In una implementazione reale, questo filtro sarebbe eseguito lato server
-      // Per ora facciamo un semplice matching testuale
-      return allEmails.filter(email => {
-        // In base al tipo di entità, applica filtri diversi
-        switch (entityType) {
-          case 'contact':
-          case 'lead':
-            // Cerca nelle email che menzionano l'ID del contatto/lead
-            return (
-              email.subject?.includes(`ID-${entityId}`) ||
-              email.body?.includes(`ID-${entityId}`)
-            );
-          
-          case 'company':
-            // Cerca nelle email che menzionano l'ID dell'azienda
-            return (
-              email.subject?.includes(`COMPANY-${entityId}`) ||
-              email.body?.includes(`COMPANY-${entityId}`)
-            );
-            
-          case 'branch':
-            // Cerca nelle email che menzionano l'ID della filiale
-            return (
-              email.subject?.includes(`BRANCH-${entityId}`) ||
-              email.body?.includes(`BRANCH-${entityId}`)
-            );
-            
-          case 'deal':
-            // Cerca nelle email che menzionano l'ID del deal
-            return (
-              email.subject?.includes(`DEAL-${entityId}`) ||
-              email.body?.includes(`DEAL-${entityId}`)
-            );
-            
-          default:
-            return false;
-        }
-      });
+      // Genera dati simulati personalizzati per questo tipo di entità
+      return generateMockEmails(entityType, entityId);
     } else if (accountId) {
-      // Recupera le email per un account specifico
-      const response = await fetch(
-        `/api/email/accounts/${accountId}/messages?folder=${folder}`
-      );
-      const data = await response.json();
-      
-      // Assicurati che la risposta sia un array
-      if (Array.isArray(data)) {
-        return data;
-      } else if (data && typeof data === 'object') {
-        // Se la risposta è un oggetto, cerca property che potrebbero contenere l'array
-        const arrayFields = ['messages', 'data', 'emails', 'items'];
-        for (const field of arrayFields) {
-          if (data[field] && Array.isArray(data[field])) {
-            return data[field];
-          }
+      // Genera dati simulati per un account specifico
+      return [
+        {
+          id: 1001,
+          from: 'cliente@example.com',
+          fromName: 'Cliente Demo',
+          to: [`account${accountId}@example.com`],
+          subject: 'Email di prova account',
+          body: '<p>Questo è il corpo dell\'email di prova per l\'account.</p>',
+          date: new Date().toISOString(),
+          read: false,
+          hasAttachments: false,
+          accountId: accountId
         }
-      }
-      
-      // Se nessuna delle condizioni precedenti è soddisfatta, restituisci un array vuoto
-      console.warn('Risposta email non è un array:', data);
-      return [];
+      ];
     }
     
     return [];

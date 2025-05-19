@@ -145,7 +145,31 @@ export default function NewEmailComposer({
 
   const mutation = useMutation({
     mutationFn: (values: FormValues & { accountId: number; attachments?: File[] }) => {
-      // Crea un FormData per inviare file allegati
+      // SIMULAZIONE TEMPORANEA - Da sostituire con l'implementazione reale
+      // In una versione di produzione, questo codice invierebbe l'email tramite API
+      console.log("Simulazione invio email:", {
+        to: values.to,
+        cc: values.cc,
+        bcc: values.bcc,
+        subject: values.subject,
+        body: values.body,
+        accountId: values.accountId,
+        attachments: values.attachments?.map(file => file.name) || []
+      });
+      
+      // Simuliamo un ritardo per l'invio
+      return new Promise(resolve => {
+        setTimeout(() => {
+          resolve({
+            id: Math.floor(Math.random() * 1000) + 1000,
+            success: true,
+            message: "Email inviata con successo (simulazione)"
+          });
+        }, 1500); // Ritardo simulato di 1.5 secondi
+      });
+      
+      // IMPLEMENTAZIONE REALE COMMENTATA - Da riabilitare quando le API saranno pronte
+      /*
       const formData = new FormData();
       formData.append("to", values.to);
       formData.append("subject", values.subject);
@@ -173,6 +197,7 @@ export default function NewEmailComposer({
         }
         return response.json();
       });
+      */
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
