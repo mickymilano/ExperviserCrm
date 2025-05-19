@@ -252,7 +252,7 @@ export default function DashboardPage() {
         />
         <StatCard
           title={t('dashboard.stats.branches', 'Filiali')}
-          value={stats && typeof stats === 'object' && stats.branches ? stats.branches : 0}
+          value={stats && typeof stats === 'object' ? stats.branches || 0 : 0}
           percentChange={3.5}
           icon={<Building2 className="h-5 w-5 text-cyan-500" />}
           color="bg-cyan-100 dark:bg-cyan-900/20"
