@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -29,7 +29,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Switch } from "@/components/ui/switch";
-import { useCreateEmailAccount } from "@/hooks/useEmailAccounts";
+import { useCreateEmailAccount, useUpdateEmailAccount, EmailAccount } from "@/hooks/useEmailAccounts";
 import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
@@ -57,28 +57,58 @@ const providerOptions = [
 interface EmailAccountFormProps {
   onSuccess: () => void;
   onCancel: () => void;
+  accountToEdit?: EmailAccount | null;
+  isEditing?: boolean;
 }
 
-export default function EmailAccountForm({ onSuccess, onCancel }: EmailAccountFormProps) {
+export default function EmailAccountForm({ onSuccess, onCancel, accountToEdit, isEditing = false }: EmailAccountFormProps) {
   const { t } = useTranslation();
-  const [useCustomSettings, setUseCustomSettings] = useState(false);
+  const [useCustomSettings, setUseCustomSettings] = useState(accountToEdit?.serverSettings ? true : false);
+  
+  // Utilizziamo createAccount per gli account nuovi, updateAccount per le modifiche
   const createAccountMutation = useCreateEmailAccount();
+  const updateAccountMutation = useUpdateEmailAccount();
+
+  // Valori predefiniti per il form, che verranno sovrascritti se si sta modificando un account esistente
+  const defaultValues = {
+    name: accountToEdit?.name || "",
+    email: accountToEdit?.email || "",
+    password: "",  // Non possiamo caricare la password per motivi di sicurezza
+    provider: accountToEdit?.provider || "",
+    useCustomServers: accountToEdit?.serverSettings ? true : false,
+    incomingServer: accountToEdit?.serverSettings?.incomingServer || "",
+    incomingPort: accountToEdit?.serverSettings?.incomingPort?.toString() || "",
+    outgoingServer: accountToEdit?.serverSettings?.outgoingServer || "",
+    outgoingPort: accountToEdit?.serverSettings?.outgoingPort?.toString() || "",
+    security: (accountToEdit?.serverSettings?.security as any) || "ssl",
+  };
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      password: "",
-      provider: "",
-      useCustomServers: false,
-      incomingServer: "",
-      incomingPort: "",
-      outgoingServer: "",
-      outgoingPort: "",
-      security: "ssl",
-    },
+    defaultValues,
   });
+
+  // Quando cambia l'account da modificare, aggiorniamo i valori del form
+  useEffect(() => {
+    if (accountToEdit) {
+      form.reset({
+        name: accountToEdit.name,
+        email: accountToEdit.email,
+        password: "",  // Non carichiamo la password per motivi di sicurezza
+        provider: accountToEdit.provider,
+        useCustomServers: accountToEdit.serverSettings ? true : false,
+        incomingServer: accountToEdit.serverSettings?.incomingServer || "",
+        incomingPort: accountToEdit.serverSettings?.incomingPort?.toString() || "",
+        outgoingServer: accountToEdit.serverSettings?.outgoingServer || "",
+        outgoingPort: accountToEdit.serverSettings?.outgoingPort?.toString() || "",
+        security: (accountToEdit.serverSettings?.security as any) || "ssl",
+      });
+      
+      if (accountToEdit.serverSettings) {
+        setUseCustomSettings(true);
+      }
+    }
+  }, [accountToEdit, form]);
 
   const onSubmit = (values: FormValues) => {
     const formData = {

@@ -79,9 +79,12 @@ export default function SettingsPage() {
   // Email accounts state and handlers
   const { data: accounts, isLoading } = useEmailAccounts();
   const deleteAccountMutation = useDeleteEmailAccount();
+  const updateAccountMutation = useUpdateEmailAccount();
   const [showEmailModal, setShowEmailModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [accountToDelete, setAccountToDelete] = useState<EmailAccount | null>(null);
+  const [accountToEdit, setAccountToEdit] = useState<EmailAccount | null>(null);
   
   // Initialize profile form with user data when loaded
   useEffect(() => {
@@ -113,6 +116,11 @@ export default function SettingsPage() {
       ...passwordForm,
       [name]: value,
     });
+  };
+
+  const handleEditAccount = (account: EmailAccount) => {
+    setAccountToEdit(account);
+    setShowEditModal(true);
   };
 
   const handleDeleteAccount = (account: EmailAccount) => {
