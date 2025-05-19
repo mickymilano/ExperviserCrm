@@ -2620,8 +2620,8 @@ export function registerRoutes(app: any) {
   // Applichiamo il middleware di autenticazione a tutte le rotte email
   app.use('/api/email', authenticate, emailRoutes);
   
-  // Utilizziamo la nuova implementazione per le firme email
-  app.use('/api/email-signatures', authenticate, emailSignatureRoutes);
+  // Utilizziamo la nuova implementazione per le firme email, mantenendola sotto il percorso /api/email
+  app.use('/api/email/sign', authenticate, emailSignatureRoutes);
   
   // --- ROTTE PER SETTORI, SOTTOSETTORI E JOB TITLES ---
   

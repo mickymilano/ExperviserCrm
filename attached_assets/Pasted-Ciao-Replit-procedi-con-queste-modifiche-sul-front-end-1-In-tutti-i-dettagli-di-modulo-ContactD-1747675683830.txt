@@ -1,0 +1,25 @@
+Ciao Replit, procedi con queste modifiche sul front-end:
+
+1. In tutti i dettagli di modulo (ContactDetails, LeadDetails, CompanyDetails, BranchDetails, DealDetails) aggiungi una nuova tab “Email” che:
+   • Carichi e mostri l’InboxEmailComponent già implementato (client/src/components/email/EmailInbox.tsx)  
+   • Mostri, per ogni riga di email, un badge con il nome dell’account (es. “Gmail”, “Hotmail”, “Outlook”) da cui è arrivata o da cui è stata inviata  
+   • Filtri le email in entrata e uscita per destinatario (to), cc, bcc che corrispondono all’ID del record corrente (contactId, leadId, companyId, branchId o dealId)  
+   • Visualizzi mittente, destinatario, oggetto, data e badge “account”, raggruppandole per thread  
+
+2. All’interno di quella stessa tab Email, aggiungi accanto all’Inbox un pulsante “Nuova Email” che apra il NewEmailComposer pre-associato:  
+   • l’account selezionato deve di default essere l’ultimo usato o, se specificato, l’account “primario” di quel modulo  
+
+3. Nei pannelli CompanyDetails e BranchDetails, quando mostri le email, evidenzia con colore diverso quelle scambiate col dominio dell’azienda o della filiale (basandoti su fullAddress o country se presente), mantenendo sempre visibile il badge dell’account  
+
+4. Su ContactDetails e LeadDetails, sotto ogni email elencata aggiungi due pulsanti:  
+   • “Crea Task” → apre TaskModal con il corpo dell’email pre-inserito in notes  
+   • “Crea Deal” → se il contatto/lead ha un’unica azienda associata la utilizza; altrimenti apre un autocomplete per scegliere l’azienda, crea un deal via API e apre DealModal  
+
+5. Per la selezione di un’azienda usa autocomplete basato su ricerca testuale con suggerimenti (es. Algolia InstantSearch o simili), non dropdown statici  
+
+6. Aggiungi test manuali/basilari per ogni modulo:  
+   • La tab Email appare e carica le email corrette, col badge account giusto  
+   • “Nuova Email” apre il composer e pre-seleziona l’account corretto  
+   • “Crea Task” e “Crea Deal” aprono i modali e spediscono i payload corretti  
+
+Non procedere con altre modifiche finché non confermi l’avvenuta integrazione completa.

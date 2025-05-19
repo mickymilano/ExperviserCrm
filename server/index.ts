@@ -63,6 +63,7 @@ async function initialize() {
     // Configurazione client in base all'ambiente
     if (process.env.NODE_ENV === 'development') {
       // In development, configura Vite per il client
+      // Configuriamo Vite direttamente
       await setupVite(app, server);
     } else {
       // In production, servi i file statici
