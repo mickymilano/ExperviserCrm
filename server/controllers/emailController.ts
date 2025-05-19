@@ -400,19 +400,21 @@ export const emailController = {
       const filters: any[] = [eq(emails.accountId, accountId)];
       
       if (req.query.isRead === 'true') {
-        filters.push(eq(emails.isRead, true));
+        filters.push(eq(emails.read, true));
       } else if (req.query.isRead === 'false') {
-        filters.push(eq(emails.isRead, false));
+        filters.push(eq(emails.read, false));
       }
       
-      if (req.query.direction) {
+      // Nota: Il campo direction non esiste nel database attuale
+      // Rimuoviamo temporaneamente questo filtro
+      /* if (req.query.direction) {
         filters.push(eq(emails.direction, req.query.direction as string));
-      }
+      } */
       
       if (req.query.search) {
         const searchTerm = `%${req.query.search}%`;
         filters.push(
-          sql`(${emails.subject} LIKE ${searchTerm} OR ${emails.textBody} LIKE ${searchTerm})`
+          sql`(${emails.subject} LIKE ${searchTerm} OR ${emails.body} LIKE ${searchTerm})`
         );
       }
       
@@ -424,19 +426,17 @@ export const emailController = {
           from: emails.from,
           to: emails.to,
           subject: emails.subject,
-          receivedDate: emails.receivedDate,
-          sentDate: emails.sentDate,
-          isRead: emails.isRead,
-          hasAttachments: emails.hasAttachments,
-          direction: emails.direction,
-          status: emails.status,
+          date: emails.date, // Utilizziamo il campo date esistente
+          read: emails.read, // Utilizziamo il campo read invece di isRead
+          body: emails.body,
           dealId: emails.dealId,
           contactId: emails.contactId,
-          companyId: emails.companyId
+          companyId: emails.companyId,
+          accountId: emails.accountId
         })
         .from(emails)
         .where(and(...filters))
-        .orderBy(desc(emails.receivedDate))
+        .orderBy(desc(emails.date))
         .limit(limit)
         .offset(offset);
         
