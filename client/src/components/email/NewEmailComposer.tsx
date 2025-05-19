@@ -1,6 +1,11 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
+
+// Helper di traduzione con fallback
+const T = (t: any, key: string, fallback: string) => {
+  return t(key, fallback);
+};
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
@@ -287,7 +292,7 @@ export default function NewEmailComposer({
         <div className="mb-6 flex items-center justify-between">
           <Button variant="ghost" onClick={onCancel} className="pl-0">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            {t("email.back", "Indietro")}
+            {T(t, "email.back", "Indietro")}
           </Button>
           <div>
             <Button
@@ -298,12 +303,12 @@ export default function NewEmailComposer({
               {mutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {t("email.sending", "Invio in corso...")}
+                  {T(t, "email.sending", "Invio in corso...")}
                 </>
               ) : (
                 <>
                   <Send className="mr-2 h-4 w-4" />
-                  {t("email.send", "Invia")}
+                  {T(t, "email.send", "Invia")}
                 </>
               )}
             </Button>
@@ -317,7 +322,7 @@ export default function NewEmailComposer({
               name="to"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("email.to", "A")}</FormLabel>
+                  <FormLabel>{T(t, "email.to", "A")}</FormLabel>
                   <FormControl>
                     <Input {...field} placeholder="nome@esempio.com" />
                   </FormControl>
@@ -332,7 +337,7 @@ export default function NewEmailComposer({
               render={({ field }) => (
                 <FormItem>
                   <div className="flex items-center justify-between">
-                    <FormLabel>{t("email.cc", "Cc")}</FormLabel>
+                    <FormLabel>{T(t, "email.cc", "Cc")}</FormLabel>
                     <Popover open={ccPopoverOpen} onOpenChange={setCcPopoverOpen}>
                       <PopoverTrigger asChild>
                         <Button 
