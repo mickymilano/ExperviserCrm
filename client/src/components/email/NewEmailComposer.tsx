@@ -1,12 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
-
-// Helper di traduzione migliorato con fallback
-const T = (t: any, key: string, fallback: string) => {
-  const translation = t(key, { defaultValue: fallback });
-  return translation === key ? fallback : translation;
-};
+import { T } from "@/lib/translationHelper";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";

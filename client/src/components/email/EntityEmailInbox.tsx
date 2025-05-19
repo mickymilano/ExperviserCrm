@@ -13,6 +13,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import DealModal from "@/components/modals/DealModal";
 import TaskModal from "@/components/modals/TaskModal";
+import { T } from "@/lib/translationHelper";
 
 // Tipo per i tipi di entità supportate
 type EntityType = "contact" | "lead" | "company" | "branch" | "deal";
