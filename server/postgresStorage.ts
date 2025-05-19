@@ -3793,6 +3793,8 @@ export class PostgresStorage implements IStorage {
       const result = await db
         .select({ count: sql<number>`count(*)` })
         .from(branches);
+      
+      console.log(`PostgresStorage.getBranchesCount: Found ${result[0].count} branches`);
       return result[0].count;
     } catch (err) {
       console.error('Error counting branches:', err);
