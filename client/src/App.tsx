@@ -23,12 +23,15 @@ const CompanyDetailPage = lazy(() => import('@/pages/companies/[id]'));
 const DealsPage = lazy(() => import('@/pages/deals'));
 const DealDetailPage = lazy(() => import('@/pages/deals/[id]'));
 
+// Email
+const EmailPage = lazy(() => import('@/pages/email'));
+const EmailSignaturesPage = lazy(() => import('@/pages/email/signatures'));
+
 // Other modules
 const LeadsPage = lazy(() => import('@/pages/leads'));
 const SynergiesPage = lazy(() => import('@/pages/synergies'));
 const TasksPage = lazy(() => import('@/pages/tasks'));
 const CalendarPage = lazy(() => import('@/pages/calendar'));
-const EmailPage = lazy(() => import('@/pages/email'));
 const SettingsPage = lazy(() => import('@/pages/settings'));
 const HelpPage = lazy(() => import('@/pages/help'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
@@ -156,14 +159,19 @@ export default function App() {
           </Route>
           
           {/* Routes for Email */}
-          <Route path="/emails">
+          <Route path="/emails/signatures">
             <ProtectedRoute>
-              <LayoutPage component={EmailPage} />
+              <LayoutPage component={EmailSignaturesPage} />
             </ProtectedRoute>
           </Route>
           <Route path="/emails/accounts">
             <ProtectedRoute>
               <LayoutPage component={lazy(() => import('@/pages/email/accounts'))} />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/emails">
+            <ProtectedRoute>
+              <LayoutPage component={EmailPage} />
             </ProtectedRoute>
           </Route>
           <Route path="/emails/settings">
