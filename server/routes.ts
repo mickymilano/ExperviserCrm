@@ -2619,7 +2619,7 @@ export function registerRoutes(app: any) {
   // Integrazione API Email e firme email
   // Applichiamo il middleware di autenticazione a tutte le rotte email
   app.use('/api/email', authenticate, emailRoutes);
-  app.use('/api/email', authenticate, emailSignatureRoutes);
+  app.use('/api/email/signatures', authenticate, emailSignatureRoutes);
   
   // --- ROTTE PER SETTORI, SOTTOSETTORI E JOB TITLES ---
   

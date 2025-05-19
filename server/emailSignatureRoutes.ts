@@ -6,12 +6,13 @@ import { emailSignatureController } from './controllers/emailSignatureController
 const router = express.Router();
 
 // Rotte per le firme email
-router.get('/signatures', emailSignatureController.getEmailSignatures);
-router.get('/signatures/:id', emailSignatureController.getEmailSignatureById);
-router.post('/signatures', emailSignatureController.createEmailSignature);
-router.patch('/signatures/:id', emailSignatureController.updateEmailSignature);
-router.delete('/signatures/:id', emailSignatureController.deleteEmailSignature);
-router.patch('/signatures/:id/default', emailSignatureController.setDefaultSignature);
-router.get('/signatures/default', emailSignatureController.getDefaultSignature);
+// Non utilizziamo più il prefisso '/signatures' poiché è già gestito dal file routes.ts
+router.get('/', emailSignatureController.getEmailSignatures);
+router.get('/default', emailSignatureController.getDefaultSignature);
+router.get('/:id', emailSignatureController.getEmailSignatureById);
+router.post('/', emailSignatureController.createEmailSignature);
+router.patch('/:id', emailSignatureController.updateEmailSignature);
+router.delete('/:id', emailSignatureController.deleteEmailSignature);
+router.patch('/:id/default', emailSignatureController.setDefaultSignature);
 
 export default router;

@@ -24,7 +24,7 @@ export const emailSignatureController = {
       const signaturesList = await db
         .select()
         .from(signatures)
-        .where(eq(signatures.userId, userId))
+        .where(eq(signatures.userId, Number(userId)))
         .orderBy(signatures.name);
       
       res.json(signaturesList);
@@ -48,7 +48,7 @@ export const emailSignatureController = {
         .where(
           and(
             eq(signatures.id, parseInt(id)), 
-            eq(signatures.userId, userId)
+            eq(signatures.userId, Number(userId))
           )
         )
         .limit(1);
