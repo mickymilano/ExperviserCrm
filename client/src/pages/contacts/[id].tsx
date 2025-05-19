@@ -23,6 +23,7 @@ import { SynergiesList } from "@/components/synergies/SynergiesList";
 import { Link } from "wouter";
 import { LinkCompanyButton } from "@/components/forms/LinkCompanyButton";
 import { useTranslation } from "react-i18next";
+import EntityEmailInbox from "@/components/email/EntityEmailInbox";
 
 export default function ContactDetail() {
   const params = useParams();
@@ -159,12 +160,16 @@ export default function ContactDetail() {
       
       {/* Tabs Navigation */}
       <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5 md:w-auto md:inline-flex">
+        <TabsList className="grid w-full grid-cols-6 md:w-auto md:inline-flex">
           <TabsTrigger value="overview">{t('company.contacts.detail.tabs.overview')}</TabsTrigger>
           <TabsTrigger value="companies">{t('company.contacts.detail.tabs.companies')}</TabsTrigger>
           <TabsTrigger value="deals">{t('company.contacts.detail.tabs.deals')}</TabsTrigger>
           <TabsTrigger value="synergies">{t('tab.synergies')}</TabsTrigger>
           <TabsTrigger value="activities">{t('company.contacts.detail.tabs.activities')}</TabsTrigger>
+          <TabsTrigger value="email">
+            <Mail className="h-4 w-4 mr-2" />
+            Email
+          </TabsTrigger>
         </TabsList>
         
         {/* Overview Tab */}
@@ -617,6 +622,16 @@ export default function ContactDetail() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+        
+        {/* Email Tab */}
+        <TabsContent value="email" className="space-y-4">
+          <EntityEmailInbox
+            entityId={contactId}
+            entityType="contact"
+            entityName={`${contact.firstName} ${contact.lastName}`}
+            entityEmail={contact.email || contact.companyEmail || contact.privateEmail}
+          />
         </TabsContent>
       </Tabs>
       
