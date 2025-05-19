@@ -4,8 +4,8 @@
  */
 import jwt from 'jsonwebtoken';
 
-// Chiave segreta per JWT (deve corrispondere a quella in routes.ts)
-const JWT_SECRET = process.env.JWT_SECRET || 'experviser-dev-secret';
+// Chiave segreta per JWT (deve corrispondere a quella in secureAuth.ts)
+const JWT_SECRET = process.env.JWT_SECRET || 'experviser-secure-auth-secret-key';
 
 // Crea un utente di test predefinito
 const testUser = {
