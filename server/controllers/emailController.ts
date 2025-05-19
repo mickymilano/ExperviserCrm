@@ -102,21 +102,29 @@ export const emailController = {
         displayName: validatedData.name, // Mappa da name a displayName
       };
       
+      // Crea un oggetto senza il campo name per l'inserimento nel database
+      const dbData = { ...emailAccountData };
+      // @ts-ignore
+      delete dbData.name;
+      
       // Inserisci nel database
       const [newAccount] = await db
         .insert(emailAccounts)
-        .values(emailAccountData)
+        .values(dbData)
         .returning();
         
-      // Adatta i nomi dei campi per il frontend
-      newAccount.name = newAccount.displayName;
+      // Adatta i nomi dei campi per il frontend (aggiungi name per retrocompatibilità)
+      const accountWithName = {
+        ...newAccount,
+        name: newAccount.displayName
+      };
         
       // Pianifica la sincronizzazione
       if (newAccount.isActive) {
         await scheduleSyncJob(newAccount.id, newAccount.syncFrequency || 5);
       }
       
-      res.status(201).json(newAccount);
+      res.status(201).json(accountWithName);
     } catch (error) {
       console.error('Errore durante la creazione dell\'account email:', error);
       

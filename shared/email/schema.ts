@@ -116,7 +116,11 @@ export const insertEmailAccountSchema = createInsertSchema(emailAccounts, {
   email: z.string().email("Indirizzo email non valido"),
   imapPort: z.number().optional(),
   smtpPort: z.number().optional(),
-}).omit({ id: true, createdAt: true, updatedAt: true });
+}).omit({ id: true, createdAt: true, updatedAt: true })
+// Aggiungiamo name per retrocompatibilità con il frontend
+.extend({
+  name: z.string().min(1, "Il nome dell'account è obbligatorio")
+});
 
 export const insertEmailSchema = createInsertSchema(emails).omit({ 
   id: true, createdAt: true, updatedAt: true 
