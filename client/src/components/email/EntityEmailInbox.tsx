@@ -10,7 +10,7 @@ import { useEmails } from "@/hooks/useEmails";
 import { useAccounts } from "@/hooks/useAccounts";
 import EmailInbox from "./EmailInbox";
 import NewEmailComposer from "./NewEmailComposer";
-import EmailReplyComposer from "./EmailReplyComposer";
+import { EmailReplyComposer } from "./EmailReplyComposer";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import DealModal from "@/components/modals/DealModal";
@@ -505,6 +505,17 @@ export default function EntityEmailInbox({
             contactId: entityType === 'contact' ? entityId : undefined,
             companyId: currentCompanyForDeal?.id,
           }}
+        />
+      )}
+      
+      {/* Email Reply Modal */}
+      {showReplyModal && selectedReplyEmail && (
+        <EmailReplyComposer
+          isOpen={showReplyModal}
+          onClose={() => setShowReplyModal(false)}
+          originalEmail={selectedReplyEmail}
+          entityId={entityId}
+          entityType={entityType}
         />
       )}
     </>

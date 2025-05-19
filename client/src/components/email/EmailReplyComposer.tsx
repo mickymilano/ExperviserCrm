@@ -1,32 +1,37 @@
-import { useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
-import { useForm } from "react-hook-form";
-import { T } from "@/lib/translationHelper";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { EmailAccountSelector } from "@/components/email/EmailAccountSelector";
-import { useEmailAccounts } from "@/hooks/useEmailAccounts";
-import { ArrowLeft, PaperclipIcon, Send, X, Loader2 } from "lucide-react";
-import { 
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import React, { useState, useEffect } from 'react';
+import { X, Send, Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from '@/hooks/use-toast';
 
-// Interfaccia per rappresentare un'email
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Tiptap } from '@/components/tiptap-editor';
+import { EmailAccountSelector } from './EmailAccountSelector';
+import { Badge } from '@/components/ui/badge';
+import { useEmailAccounts } from '@/hooks/useEmailAccounts';
+import { T } from "@/lib/i18n-utils";
+
+const formSchema = z.object({
+  accountId: z.number().min(1, "Seleziona un account di posta elettronica"),
+  to: z.array(z.string()).min(1, "Inserisci almeno un destinatario"),
+  cc: z.array(z.string()).optional().default([]),
+  bcc: z.array(z.string()).optional().default([]),
+  subject: z.string().min(1, "Inserisci un oggetto"),
+  body: z.string().min(1, "Inserisci il corpo dell'email"),
+});
+
+type FormValues = z.infer<typeof formSchema>;
+
 interface Email {
   id: number;
-  accountId: number;
   from: string;
   fromName?: string;
   to: string[];
@@ -37,307 +42,326 @@ interface Email {
   date: string;
   read: boolean;
   hasAttachments: boolean;
+  accountId: number;
+  accountInfo?: {
+    id: number;
+    name: string;
+  };
 }
 
-// Interfaccia per entità correlate alle email
-export type EntityType = "contact" | "company" | "lead" | "deal" | "branch";
-
-const formSchema = z.object({
-  accountId: z.number({
-    required_error: "Seleziona un account email",
-  }),
-  to: z.string().min(1, { message: "Destinatario obbligatorio" }),
-  cc: z.string().optional(),
-  bcc: z.string().optional(),
-  subject: z.string().min(1, { message: "Oggetto obbligatorio" }),
-  body: z.string().min(1, { message: "Corpo del messaggio obbligatorio" }),
-});
-
-// Proprietà del componente
 interface EmailReplyComposerProps {
-  originalEmail: Email;
-  onCancel: () => void;
-  onSent: () => void;
+  isOpen: boolean;
+  onClose: () => void;
+  originalEmail: Email | null;
   entityId?: number;
-  entityType?: EntityType;
-  entityEmail?: string;
+  entityType?: string;
 }
 
-export default function EmailReplyComposer({
+export function EmailReplyComposer({
+  isOpen,
+  onClose,
   originalEmail,
-  onCancel,
-  onSent,
   entityId,
-  entityType,
-  entityEmail
+  entityType
 }: EmailReplyComposerProps) {
   const { t } = useTranslation();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [isAiAssisted, setIsAiAssisted] = useState(false);
-  const [isGeneratingResponse, setIsGeneratingResponse] = useState(false);
-  const { data: accounts } = useEmailAccounts();
+  const { emailAccounts, isLoading: isLoadingAccounts } = useEmailAccounts();
+  const [isGeneratingAIResponse, setIsGeneratingAIResponse] = useState(false);
 
-  // Prepara il corpo dell'email con la citazione originale
-  const prepareReplyBody = (originalEmail: Email) => {
-    const date = new Date(originalEmail.date).toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-    return `\n\n\n------------------\n${T(t, "email.originalMessage", "Messaggio originale")}:\n${T(t, "email.from", "Da")}: ${originalEmail.fromName || originalEmail.from}\n${T(t, "email.date", "Data")}: ${date}\n${T(t, "email.subject", "Oggetto")}: ${originalEmail.subject}\n\n${originalEmail.body.replace(/<[^>]*>/g, "")}`;
-  };
-
-  // Prepara l'oggetto dell'email di risposta
-  const prepareReplySubject = (subject: string) => {
+  // Formattazione della risposta
+  const getReplySubject = (subject: string) => {
+    if (!subject) return "";
     return subject.startsWith("Re:") ? subject : `Re: ${subject}`;
   };
 
-  // Trova l'account che ha ricevuto l'email originale
-  const findMatchingAccount = () => {
-    if (!accounts || accounts.length === 0) return null;
-    // Se l'email originale specifica un accountId, controlla se è presente
-    const originalAccount = accounts.find(acc => acc.id === originalEmail.accountId);
-    if (originalAccount) return originalAccount.id;
-    // Altrimenti, prendi il primo account disponibile
-    return accounts[0].id;
+  const getReplyTo = (email: Email | null) => {
+    if (!email) return [];
+    // Rispondi all'email originale mittente
+    return [email.from];
   };
 
-  // Prepara i valori predefiniti del form
-  const defaultValues = {
-    accountId: findMatchingAccount() || 0,
-    to: originalEmail.from,
-    cc: "",
-    bcc: "",
-    subject: prepareReplySubject(originalEmail.subject),
-    body: prepareReplyBody(originalEmail),
+  const getReplyBody = (email: Email | null) => {
+    if (!email) return "";
+    const fromName = email.fromName || email.from.split('@')[0];
+    const date = new Date(email.date).toLocaleDateString();
+
+    return `<p></p><p></p><hr /><p><i>${T(t, "email.originalMessage", "Messaggio originale")} - ${date}</i></p>
+    <p><b>${T(t, "email.from", "Da")}: ${fromName} &lt;${email.from}&gt;</b></p>
+    <p><b>${T(t, "email.subject", "Oggetto")}: ${email.subject}</b></p>
+    <p><b>${T(t, "email.to", "A")}: ${email.to.join(", ")}</b></p>
+    ${email.body}`;
   };
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues,
+    defaultValues: {
+      accountId: 0,
+      to: [],
+      cc: [],
+      bcc: [],
+      subject: "",
+      body: "",
+    }
   });
 
-  // Mutazione per inviare l'email
+  useEffect(() => {
+    if (originalEmail && isOpen) {
+      // Imposta valori iniziali in base all'email originale
+      const defaultAccountId = originalEmail.accountId || (emailAccounts.length > 0 ? emailAccounts[0].id : 0);
+
+      form.reset({
+        accountId: defaultAccountId,
+        to: getReplyTo(originalEmail),
+        cc: [],
+        bcc: [],
+        subject: getReplySubject(originalEmail.subject),
+        body: getReplyBody(originalEmail),
+      });
+    }
+  }, [originalEmail, isOpen, emailAccounts, form]);
+
   const sendEmailMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof formSchema>) => {
-      // Prepara i destinatari come array
-      const formattedData = {
-        ...data,
-        to: data.to.split(",").map(email => email.trim()),
-        cc: data.cc ? data.cc.split(",").map(email => email.trim()) : [],
-        bcc: data.bcc ? data.bcc.split(",").map(email => email.trim()) : [],
-        inReplyTo: originalEmail.id,
-        entityId,
-        entityType,
-      };
-      return apiRequest('POST', '/api/email/send', formattedData);
+    mutationFn: async (data: FormValues) => {
+      const response = await fetch('/api/email/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...data,
+          entityId,
+          entityType,
+          inReplyTo: originalEmail?.id
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Errore nell\'invio dell\'email');
+      }
+
+      return response.json();
     },
     onSuccess: () => {
-      // Invalida le query per aggiornare la visualizzazione delle email
-      if (entityId && entityType) {
-        queryClient.invalidateQueries({ queryKey: [`/api/email/filter/${entityType}/${entityId}`] });
-      }
       toast({
-        title: T(t, "email.sentSuccess", "Email inviata"),
-        description: T(t, "email.sentSuccessDescription", "La tua email è stata inviata con successo"),
+        title: T(t, "email.sentSuccessfully", "Email inviata con successo"),
+        variant: "default",
       });
-      onSent();
+      queryClient.invalidateQueries({ queryKey: ['/api/emails'] });
+      onClose();
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast({
-        title: T(t, "email.sendError", "Errore nell'invio"),
-        description: error.message || T(t, "email.sendErrorDescription", "Si è verificato un errore durante l'invio dell'email"),
+        title: T(t, "email.sendError", "Errore nell'invio dell'email"),
+        description: error.message,
         variant: "destructive",
       });
-    },
+    }
   });
 
-  // Funzione per generare una risposta assistita dall'AI
-  const generateAiResponse = async () => {
-    if (!process.env.OPENAI_API_KEY) {
-      toast({
-        title: T(t, "email.aiUnavailable", "AI non disponibile"),
-        description: T(t, "email.aiUnavailableDescription", "La chiave API OpenAI non è configurata"),
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsGeneratingResponse(true);
+  const generateAIResponse = async () => {
+    if (!originalEmail) return;
+    
+    setIsGeneratingAIResponse(true);
     try {
-      // Prepara il contesto per l'AI
-      const context = {
-        originalEmail: {
-          subject: originalEmail.subject,
-          body: originalEmail.body.replace(/<[^>]*>/g, ""),
-          from: originalEmail.fromName || originalEmail.from,
-        },
-        entityType,
-        entityId,
-      };
+      const response = await fetch('/api/ai/generate-email-response', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          originalEmail,
+          entityType,
+          entityId
+        }),
+      });
 
-      // Richiedi una risposta generata dall'AI
-      const response = await apiRequest('POST', '/api/ai/generate-email-response', context);
-      
-      if (response && response.generatedResponse) {
-        // Aggiungi la risposta generata dall'AI al corpo dell'email
-        const currentBody = form.getValues("body");
-        const aiResponseWithSignature = response.generatedResponse + "\n\n" + currentBody;
-        form.setValue("body", aiResponseWithSignature);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Errore nella generazione della risposta AI');
       }
-    } catch (error: any) {
-      console.error("Errore nella generazione della risposta AI:", error);
+
+      const data = await response.json();
+      
+      // Ottieni il testo del corpo attuale
+      const currentBody = form.getValues('body');
+      
+      // Inserisci la risposta generata all'inizio del corpo
+      const bodyWithAIResponse = `<p>${data.generatedResponse}</p>${currentBody}`;
+      
+      // Aggiorna il corpo nel form
+      form.setValue('body', bodyWithAIResponse, { shouldValidate: true });
+      
       toast({
-        title: T(t, "email.aiGenerationError", "Errore AI"),
-        description: error.message || T(t, "email.aiGenerationErrorDescription", "Impossibile generare una risposta assistita dall'AI"),
+        title: T(t, "email.aiResponseGenerated", "Risposta AI generata"),
+        description: T(t, "email.aiResponseHelp", "La risposta è stata inserita nell'editor. Puoi modificarla prima di inviare."),
+        variant: "default",
+      });
+    } catch (error: any) {
+      toast({
+        title: T(t, "email.aiResponseError", "Errore nella generazione della risposta AI"),
+        description: error.message,
         variant: "destructive",
       });
     } finally {
-      setIsGeneratingResponse(false);
+      setIsGeneratingAIResponse(false);
     }
   };
 
-  // Funzione per inviare l'email
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    await sendEmailMutation.mutateAsync(values);
+  const onSubmit = (values: FormValues) => {
+    sendEmailMutation.mutate(values);
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-        <CardTitle className="text-xl">{T(t, "email.replyToEmail", "Rispondi all'email")}</CardTitle>
-        <Button variant="ghost" size="icon" onClick={onCancel}>
-          <X className="h-5 w-5" />
-        </Button>
-      </CardHeader>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-4">
-            {/* Selezione account email */}
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>
+            {T(t, "email.replyEmail", "Rispondi all'email")}
+          </DialogTitle>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
               name="accountId"
               render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>{T(t, "email.fromAccount", "Account mittente")}</FormLabel>
-                  <EmailAccountSelector
-                    value={field.value}
-                    onChange={(value) => field.onChange(value)}
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Destinatario */}
-            <FormField
-              control={form.control}
-              name="to"
-              render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{T(t, "email.to", "A")}</FormLabel>
+                  <Label>{T(t, "email.fromAccount", "Dal tuo account")}</Label>
                   <FormControl>
-                    <Input {...field} placeholder="email@esempio.com" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* CC */}
-            <FormField
-              control={form.control}
-              name="cc"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{T(t, "email.cc", "CC")}</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="email@esempio.com, altro@esempio.com" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Oggetto */}
-            <FormField
-              control={form.control}
-              name="subject"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{T(t, "email.subject", "Oggetto")}</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Corpo email */}
-            <FormField
-              control={form.control}
-              name="body"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{T(t, "email.message", "Messaggio")}</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      {...field}
-                      rows={10}
-                      className="resize-none"
+                    <EmailAccountSelector
+                      value={field.value}
+                      onChange={field.onChange}
+                      disabled={isLoadingAccounts || sendEmailMutation.isPending}
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-          </CardContent>
-          <CardFooter className="flex justify-between">
-            <div className="flex space-x-2">
+
+            <FormField
+              control={form.control}
+              name="to"
+              render={({ field }) => (
+                <FormItem>
+                  <Label>{T(t, "email.to", "A")}</Label>
+                  <div className="flex flex-wrap gap-2 p-2 border rounded-md">
+                    {field.value.map((email, index) => (
+                      <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                        {email}
+                        <X 
+                          className="h-3 w-3 cursor-pointer" 
+                          onClick={() => {
+                            const newEmails = [...field.value];
+                            newEmails.splice(index, 1);
+                            field.onChange(newEmails);
+                          }}
+                        />
+                      </Badge>
+                    ))}
+                    <Input
+                      className="flex-1 border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                      placeholder={T(t, "email.addRecipient", "Aggiungi destinatario...")}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && e.currentTarget.value) {
+                          e.preventDefault();
+                          const email = e.currentTarget.value.trim();
+                          if (email && !field.value.includes(email)) {
+                            field.onChange([...field.value, email]);
+                            e.currentTarget.value = '';
+                          }
+                        }
+                      }}
+                      disabled={sendEmailMutation.isPending}
+                    />
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="subject"
+              render={({ field }) => (
+                <FormItem>
+                  <Label>{T(t, "email.subject", "Oggetto")}</Label>
+                  <FormControl>
+                    <Input 
+                      {...field} 
+                      disabled={sendEmailMutation.isPending}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="body"
+              render={({ field }) => (
+                <FormItem>
+                  <Label>{T(t, "email.message", "Messaggio")}</Label>
+                  <div className="border rounded-md">
+                    <FormControl>
+                      <Tiptap
+                        value={field.value}
+                        onChange={(html) => field.onChange(html)}
+                        editable={!sendEmailMutation.isPending}
+                      />
+                    </FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="flex justify-between pt-4">
+              <div className="flex gap-2">
+                <Button
+                  type="button" 
+                  variant="outline" 
+                  onClick={onClose}
+                  disabled={sendEmailMutation.isPending}
+                >
+                  {T(t, "common.cancel", "Annulla")}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={generateAIResponse}
+                  disabled={sendEmailMutation.isPending || isGeneratingAIResponse || !originalEmail}
+                >
+                  {isGeneratingAIResponse ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      {T(t, "email.generatingResponse", "Generazione risposta...")}
+                    </>
+                  ) : (
+                    T(t, "email.generateAIResponse", "Genera risposta con AI")
+                  )}
+                </Button>
+              </div>
               <Button 
-                type="button" 
-                variant="outline" 
-                onClick={onCancel}
+                type="submit" 
+                disabled={sendEmailMutation.isPending}
               >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                {T(t, "common.cancel", "Annulla")}
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={generateAiResponse}
-                disabled={isGeneratingResponse}
-              >
-                {isGeneratingResponse ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                {sendEmailMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    {T(t, "email.sending", "Invio in corso...")}
+                  </>
                 ) : (
-                  <span className="mr-2">AI</span>
+                  <>
+                    <Send className="h-4 w-4 mr-2" />
+                    {T(t, "email.send", "Invia")}
+                  </>
                 )}
-                {isGeneratingResponse 
-                  ? T(t, "email.generatingResponse", "Generazione risposta...") 
-                  : T(t, "email.generateAiResponse", "Genera risposta AI")}
               </Button>
             </div>
-            <Button 
-              type="submit" 
-              disabled={sendEmailMutation.isPending}
-            >
-              {sendEmailMutation.isPending ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4 mr-2" />
-              )}
-              {sendEmailMutation.isPending 
-                ? T(t, "email.sending", "Invio in corso...") 
-                : T(t, "email.send", "Invia")}
-            </Button>
-          </CardFooter>
-        </form>
-      </Form>
-    </Card>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
   );
 }

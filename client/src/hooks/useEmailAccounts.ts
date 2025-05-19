@@ -1,251 +1,190 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
 import { toast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { useTranslation } from 'react-i18next';
 
 export interface EmailAccount {
   id: number;
+  userId: number;
   name: string;
   email: string;
-  provider: string;
-  isDefault: boolean;
-  userId: number;
-  createdAt: string;
-  updatedAt: string;
-  serverSettings?: {
-    incomingServer: string;
-    incomingPort: number;
-    outgoingServer: string;
-    outgoingPort: number;
-    security: 'none' | 'ssl' | 'tls';
-  };
+  imapHost?: string;
+  imapPort?: number;
+  imapSecure?: boolean;
+  imapUsername?: string;
+  imapPassword?: string;
+  smtpHost?: string;
+  smtpPort?: number;
+  smtpSecure?: boolean;
+  smtpUsername?: string;
+  smtpPassword?: string;
+  provider?: string;
+  isPrimary?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-/**
- * Hook per recuperare gli account email configurati nel sistema
- * Utile per selezionare l'account da usare per inviare email
- */
-export function useEmailAccounts() {
-  return useQuery({
+interface UseEmailAccountsResult {
+  emailAccounts: EmailAccount[];
+  isLoading: boolean;
+  error: Error | null;
+  addAccount: (account: Omit<EmailAccount, 'id'>) => Promise<EmailAccount>;
+  updateAccount: (id: number, account: Partial<EmailAccount>) => Promise<EmailAccount>;
+  deleteAccount: (id: number) => Promise<void>;
+  syncAccounts: () => Promise<void>;
+  setPrimaryAccount: (id: number) => Promise<void>;
+}
+
+export function useEmailAccounts(): UseEmailAccountsResult {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+
+  // Fetch email accounts
+  const { 
+    data: emailAccounts = [], 
+    isLoading, 
+    error 
+  } = useQuery({
     queryKey: ['/api/email/accounts'],
     queryFn: async () => {
-      try {
-        // Utilizziamo l'API reale per recuperare gli account email
-        const response = await fetch('/api/email/accounts');
-        if (!response.ok) {
-          throw new Error('Errore nel caricamento degli account email');
-        }
-        return response.json();
-      } catch (error) {
-        console.error('Error fetching email accounts:', error);
-        return [];
+      const response = await fetch('/api/email/accounts');
+      if (!response.ok) {
+        throw new Error('Failed to fetch email accounts');
       }
+      return response.json();
     },
-    staleTime: 5 * 60 * 1000, // 5 minuti
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
-}
 
-/**
- * Interfaccia per i dati necessari per creare un nuovo account email
- */
-export interface CreateEmailAccountData {
-  name: string;
-  email: string;
-  password: string;
-  provider: string;
-  serverSettings?: {
-    incomingServer: string;
-    incomingPort: number;
-    outgoingServer: string;
-    outgoingPort: number;
-    security: 'none' | 'ssl' | 'tls';
-  };
-}
-
-/**
- * Hook per creare un nuovo account email
- */
-export function useCreateEmailAccount() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async (data: CreateEmailAccountData) => {
-      // Utilizziamo l'API reale per creare un nuovo account email
-      return apiRequest('POST', '/api/email/accounts', data);
+  // Add a new email account
+  const addAccountMutation = useMutation({
+    mutationFn: async (account: Omit<EmailAccount, 'id'>) => {
+      const response = await apiRequest('/api/email/accounts', {
+        method: 'POST',
+        body: JSON.stringify(account),
+      });
+      return response;
     },
     onSuccess: () => {
-      // Invalida la cache degli account email per forzare un aggiornamento
       queryClient.invalidateQueries({ queryKey: ['/api/email/accounts'] });
-      
-      // Mostra una notifica di successo
       toast({
-        title: "Account email aggiunto",
-        description: "Il tuo account email è stato configurato correttamente",
+        title: t('email.accountAdded', 'Account email aggiunto'),
+        description: t('email.accountAddedDescription', 'Il tuo account email è stato aggiunto con successo'),
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
-        title: "Errore durante l'aggiunta dell'account email",
-        description: error.message || "Controlla i dettagli dell'account e riprova",
-        variant: "destructive",
+        title: t('email.accountAddError', 'Errore'),
+        description: error.message || t('email.accountAddErrorDescription', 'Si è verificato un errore durante l\'aggiunta dell\'account email'),
+        variant: 'destructive',
       });
-    }
+    },
   });
-}
 
-/**
- * Hook per eliminare un account email
- */
-export function useDeleteEmailAccount() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async (accountId: number) => {
-      // Utilizziamo l'API reale per eliminare l'account email
-      return apiRequest('DELETE', `/api/email/accounts/${accountId}`);
+  // Update an email account
+  const updateAccountMutation = useMutation({
+    mutationFn: async ({ id, account }: { id: number; account: Partial<EmailAccount> }) => {
+      const response = await apiRequest(`/api/email/accounts/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(account),
+      });
+      return response;
     },
     onSuccess: () => {
-      // Invalida la cache degli account email per forzare un aggiornamento
       queryClient.invalidateQueries({ queryKey: ['/api/email/accounts'] });
-      
-      // Mostra una notifica di successo
       toast({
-        title: "Account email rimosso",
-        description: "L'account email è stato rimosso con successo",
+        title: t('email.accountUpdated', 'Account email aggiornato'),
+        description: t('email.accountUpdatedDescription', 'Il tuo account email è stato aggiornato con successo'),
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
-        title: "Errore",
-        description: error.message || "Impossibile rimuovere l'account email",
-        variant: "destructive",
+        title: t('email.accountUpdateError', 'Errore'),
+        description: error.message || t('email.accountUpdateErrorDescription', 'Si è verificato un errore durante l\'aggiornamento dell\'account email'),
+        variant: 'destructive',
       });
-    }
+    },
   });
-}
 
-/**
- * Hook per aggiornare un account email
- */
-export function useUpdateEmailAccount() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async ({ id, data }: { id: number, data: Partial<EmailAccount> }) => {
-      // Utilizziamo l'API reale per aggiornare l'account email
-      return apiRequest('PATCH', `/api/email/accounts/${id}`, data);
+  // Delete an email account
+  const deleteAccountMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest(`/api/email/accounts/${id}`, {
+        method: 'DELETE',
+      });
     },
     onSuccess: () => {
-      // Invalida la cache degli account email per forzare un aggiornamento
       queryClient.invalidateQueries({ queryKey: ['/api/email/accounts'] });
-      
-      // Mostra una notifica di successo
       toast({
-        title: "Account email aggiornato",
-        description: "Le impostazioni dell'account email sono state aggiornate",
+        title: t('email.accountDeleted', 'Account email eliminato'),
+        description: t('email.accountDeletedDescription', 'Il tuo account email è stato eliminato con successo'),
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
-        title: "Errore",
-        description: error.message || "Impossibile aggiornare l'account email",
-        variant: "destructive",
+        title: t('email.accountDeleteError', 'Errore'),
+        description: error.message || t('email.accountDeleteErrorDescription', 'Si è verificato un errore durante l\'eliminazione dell\'account email'),
+        variant: 'destructive',
       });
-    }
+    },
   });
-}
 
-/**
- * Hook per sincronizzare le email di un account specifico
- */
-export function useSyncEmailAccount() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async (accountId: number) => {
-      // Utilizziamo l'API reale per sincronizzare le email
-      return apiRequest('POST', `/api/email/accounts/${accountId}/sync`);
+  // Sync email accounts
+  const syncAccountsMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest('/api/email/accounts/sync', {
+        method: 'POST',
+      });
     },
     onSuccess: () => {
-      // Invalida la cache delle email per forzare un aggiornamento
-      queryClient.invalidateQueries({ queryKey: ['/api/email'] });
-      
-      // Mostra una notifica di successo
+      queryClient.invalidateQueries({ queryKey: ['/api/email/accounts'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/emails'] });
       toast({
-        title: "Sincronizzazione avviata",
-        description: "La sincronizzazione delle email è stata avviata. Le nuove email saranno disponibili a breve.",
+        title: t('email.accountsSynced', 'Account email sincronizzati'),
+        description: t('email.accountsSyncedDescription', 'I tuoi account email sono stati sincronizzati con successo'),
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
-        title: "Errore di sincronizzazione",
-        description: error.message || "Impossibile sincronizzare le email. Riprova più tardi.",
-        variant: "destructive",
+        title: t('email.accountsSyncError', 'Errore'),
+        description: error.message || t('email.accountsSyncErrorDescription', 'Si è verificato un errore durante la sincronizzazione degli account email'),
+        variant: 'destructive',
       });
-    }
+    },
   });
-}
 
-/**
- * Hook per sincronizzare le email di tutti gli account configurati
- */
-export function useSyncAllEmailAccounts() {
-  const queryClient = useQueryClient();
-  const { data: accounts } = useEmailAccounts();
-  const syncAccount = useSyncEmailAccount();
-  
-  const syncAll = async () => {
-    if (!accounts || accounts.length === 0) {
-      toast({
-        title: "Nessun account configurato",
-        description: "Non ci sono account email configurati da sincronizzare.",
-        variant: "destructive",
+  // Set primary account
+  const setPrimaryAccountMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest(`/api/email/accounts/${id}/primary`, {
+        method: 'PATCH',
       });
-      return;
-    }
-    
-    try {
-      // Avvia la sincronizzazione per ogni account
-      for (const account of accounts) {
-        await syncAccount.mutateAsync(account.id);
-      }
-      
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/email/accounts'] });
       toast({
-        title: "Sincronizzazione completata",
-        description: `Sincronizzazione avviata per ${accounts.length} account email.`,
+        title: t('email.primaryAccountSet', 'Account primario impostato'),
+        description: t('email.primaryAccountSetDescription', 'Il tuo account email primario è stato impostato con successo'),
       });
-    } catch (error: any) {
+    },
+    onError: (error: Error) => {
       toast({
-        title: "Errore di sincronizzazione",
-        description: error.message || "Impossibile sincronizzare alcuni account email.",
-        variant: "destructive",
+        title: t('email.primaryAccountSetError', 'Errore'),
+        description: error.message || t('email.primaryAccountSetErrorDescription', 'Si è verificato un errore durante l\'impostazione dell\'account email primario'),
+        variant: 'destructive',
       });
-    }
-  };
-  
+    },
+  });
+
+  // Return the hook result
   return {
-    syncAll,
-    isSyncing: syncAccount.isPending
+    emailAccounts,
+    isLoading,
+    error,
+    addAccount: (account) => addAccountMutation.mutateAsync(account),
+    updateAccount: (id, account) => updateAccountMutation.mutateAsync({ id, account }),
+    deleteAccount: (id) => deleteAccountMutation.mutateAsync(id),
+    syncAccounts: () => syncAccountsMutation.mutateAsync(),
+    setPrimaryAccount: (id) => setPrimaryAccountMutation.mutateAsync(id),
   };
-}
-
-/**
- * Hook per recuperare i dettagli di un singolo account email
- */
-export function useEmailAccount(id: number) {
-  return useQuery({
-    queryKey: [`/api/email/accounts/${id}`],
-    queryFn: async () => {
-      try {
-        const response = await fetch(`/api/email/accounts/${id}`);
-        if (!response.ok) {
-          throw new Error("Errore nel caricamento dei dettagli dell'account email");
-        }
-        return response.json();
-      } catch (error) {
-        console.error('Error fetching email account details:', error);
-        return null;
-      }
-    },
-    enabled: !!id,
-  });
 }
