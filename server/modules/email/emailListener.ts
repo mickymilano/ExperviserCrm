@@ -218,9 +218,12 @@ async function processEmail(message: ImapSimple.Message, accountId: number, conn
 export async function getEmailAccounts(): Promise<EmailAccount[]> {
   try {
     // Utilizziamo la query SQL nativa per ottenere solo gli account attivi
-    const accounts = await db.execute<EmailAccountDb>(
+    const result = await db.execute<EmailAccountDb>(
       sql`SELECT * FROM email_accounts WHERE is_active = true`
     );
+    
+    // Assicuriamoci che il risultato sia un array
+    const accounts = Array.isArray(result) ? result : result?.rows || [];
     
     console.log(`[EmailListener] Trovati ${accounts.length} account email attivi`);
     
