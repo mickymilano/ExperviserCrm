@@ -16,7 +16,10 @@
     "adding": "Aggiunta...",
     "success": "Successo",
     "searchNoResults": "Prova a modificare i termini di ricerca.",
-    "actions": "Azioni"
+    "actions": "Azioni",
+    "home": "Home",
+    "retry": "Riprova",
+    "soon": "Presto"
   },
   
   "dashboard": {
@@ -749,5 +752,55 @@
       "valueConversionError": "Errore nella conversione del valore. Assicurati che sia un numero valido",
       "invalidData": "Dati non validi. Controlla tutti i campi obbligatori"
     }
+  },
+  
+  "emailSignatures": {
+    "title": "Firme Email",
+    "pageTitle": "Gestione Firme Email",
+    "pageDescription": "Crea e gestisci le tue firme email professionali",
+    "description": "Crea, modifica ed elimina le tue firme email personalizzate. Assegna firme diverse ai tuoi account email.",
+    "createNew": "Crea Nuova Firma",
+    "createFirst": "Crea la tua prima firma",
+    "noSignatures": "Non hai ancora creato firme email",
+    "default": "Predefinita",
+    "personalTab": "Firme Personali",
+    "teamTab": "Firme Team",
+    "teamFeatureSoon": "Firme di Team in arrivo",
+    "teamFeatureDescription": "Presto potrai creare e gestire firme condivise per il tuo team, garantendo coerenza nella comunicazione aziendale.",
+    "createTitle": "Crea Nuova Firma Email",
+    "editTitle": "Modifica Firma Email",
+    "modalDescription": "Personalizza la tua firma email con testo formattato, immagini e link.",
+    "nameLabel": "Nome firma",
+    "contentLabel": "Contenuto firma",
+    "defaultLabel": "Imposta come firma predefinita",
+    "deleteConfirmTitle": "Eliminare questa firma?",
+    "deleteConfirmDescription": "Questa azione non può essere annullata. La firma verrà rimossa definitivamente.",
+    "errorLoading": "Errore nel caricamento delle firme",
+    "deleteSuccess": "Firma eliminata",
+    "deleteSuccessDescription": "La firma è stata eliminata con successo",
+    "deleteError": "Errore eliminazione",
+    "defaultSuccess": "Firma predefinita aggiornata",
+    "defaultSuccessDescription": "La firma predefinita è stata aggiornata con successo",
+    "defaultError": "Errore impostazione predefinita",
+    "createSuccess": "Firma creata",
+    "createSuccessDescription": "La nuova firma è stata creata con successo",
+    "createError": "Errore creazione",
+    "updateSuccess": "Firma aggiornata",
+    "updateSuccessDescription": "La firma è stata aggiornata con successo",
+    "updateError": "Errore aggiornamento",
+    "setAsDefault": "Imposta come predefinita",
+    "editorTab": "Editor",
+    "previewTab": "Anteprima",
+    "previewButton": "Visualizza anteprima",
+    "previewDescription": "Questo è come apparirà la tua firma nell'email:",
+    "editButton": "Torna all'editor",
+    "addLink": "Aggiungi Link",
+    "addLinkDescription": "Inserisci l'URL del link che vuoi aggiungere",
+    "addLinkButton": "Aggiungi Link",
+    "addImage": "Aggiungi Immagine",
+    "addImageDescription": "Inserisci l'URL dell'immagine che vuoi aggiungere",
+    "addImageButton": "Inserisci Immagine",
+    "textColor": "Colore Testo",
+    "textColorDescription": "Seleziona un colore per il testo selezionato"
   }
 }

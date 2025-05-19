@@ -123,7 +123,14 @@ export function RichTextEditor({ editor }: RichTextEditorProps) {
       <Toggle
         size="sm"
         pressed={editor.isActive('underline')}
-        onPressedChange={() => editor.chain().focus().toggleUnderline().run()}
+        onPressedChange={() => {
+          // Workaround since toggleUnderline is not available in StarterKit
+          if (editor.isActive('underline')) {
+            editor.chain().focus().unsetMark('underline').run();
+          } else {
+            editor.chain().focus().setMark('underline').run();
+          }
+        }}
         aria-label="Underline"
       >
         <Underline className="h-4 w-4" />
