@@ -32,16 +32,33 @@ export const emailSignatureController = {
       const { id } = req.params;
       const userId = req.user?.id || 1;
       
+      console.log(`Retrieving signature with ID: ${id} for user ID: ${userId}`);
+      
+      // Parse the ID safely
+      let signatureId;
+      try {
+        signatureId = parseInt(id);
+        if (isNaN(signatureId)) {
+          console.log('Invalid signature ID format:', id);
+          return res.status(400).json({ error: 'ID firma non valido' });
+        }
+      } catch (parseError) {
+        console.log('Error parsing signature ID:', parseError);
+        return res.status(400).json({ error: 'Formato ID non valido' });
+      }
+      
       const [signature] = await db
         .select()
         .from(signatures)
         .where(
           and(
-            eq(signatures.id, parseInt(id)), 
+            eq(signatures.id, signatureId), 
             eq(signatures.userId, Number(userId))
           )
         )
         .limit(1);
+      
+      console.log('Retrieved signature:', signature || 'Not found');
       
       if (!signature) {
         return res.status(404).json({ error: 'Firma email non trovata' });
@@ -49,7 +66,7 @@ export const emailSignatureController = {
       
       res.json(signature);
     } catch (error) {
-      console.error('Errore durante il recupero della firma email:', error);
+      console.error('Errore dettagliato durante il recupero della firma email:', error);
       res.status(500).json({ error: 'Errore interno del server' });
     }
   },
@@ -247,6 +264,8 @@ export const emailSignatureController = {
     try {
       const userId = req.user?.id || 1;
       
+      console.log(`Retrieving default signature for user ID: ${userId}`);
+      
       const [defaultSignature] = await db
         .select()
         .from(signatures)
@@ -258,13 +277,15 @@ export const emailSignatureController = {
         )
         .limit(1);
       
+      console.log('Retrieved default signature:', defaultSignature || 'Not found');
+      
       if (!defaultSignature) {
         return res.status(404).json({ error: 'Nessuna firma email predefinita trovata' });
       }
       
       res.json(defaultSignature);
     } catch (error) {
-      console.error('Errore durante il recupero della firma predefinita:', error);
+      console.error('Errore dettagliato durante il recupero della firma predefinita:', error);
       res.status(500).json({ error: 'Errore interno del server' });
     }
   }
