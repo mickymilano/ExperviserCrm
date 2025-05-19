@@ -2950,6 +2950,9 @@ export function registerRoutes(app: any) {
   // Elimina un job title
   app.delete('/api/subsectors/:subSectorId/jobtitles/:id', authenticate, isAdmin, deleteJobTitle);
   
+  // Registra le rotte email per l'integrazione con le pagine di dettaglio
+  app.use('/', require('./emailRoutes').default);
+  
   // Crea il server HTTP
   const httpServer = createServer(app);
   
