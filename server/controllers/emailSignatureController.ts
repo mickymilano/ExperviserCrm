@@ -1,8 +1,7 @@
 import { Request, Response } from 'express';
 import { db } from '../db';
-import { emailSignatures } from '../../shared/schema';
-import { eq, and, sql } from 'drizzle-orm';
-import { SQL } from 'drizzle-orm/sql';
+import { signatures } from '../../shared/schema';
+import { eq, and } from 'drizzle-orm';
 import { z } from 'zod';
 
 // Schema di validazione per la creazione/aggiornamento delle firme email
@@ -22,13 +21,13 @@ export const emailSignatureController = {
       // In modalità sviluppo, usa sempre l'utente 1 simulato
       const userId = req.user?.id || 1;
       
-      const signatures = await db
+      const signaturesList = await db
         .select()
-        .from(emailSignatures)
-        .where(eq(emailSignatures.userId, String(userId)))
-        .orderBy(emailSignatures.name);
+        .from(signatures)
+        .where(eq(signatures.userId, userId))
+        .orderBy(signatures.name);
       
-      res.json(signatures);
+      res.json(signaturesList);
     } catch (error) {
       console.error('Errore durante il recupero delle firme email:', error);
       res.status(500).json({ error: 'Errore interno del server' });
@@ -45,11 +44,11 @@ export const emailSignatureController = {
       
       const [signature] = await db
         .select()
-        .from(emailSignatures)
+        .from(signatures)
         .where(
           and(
-            eq(emailSignatures.id, parseInt(id)), 
-            eq(emailSignatures.userId, String(userId))
+            eq(signatures.id, parseInt(id)), 
+            eq(signatures.userId, userId)
           )
         )
         .limit(1);
@@ -77,14 +76,14 @@ export const emailSignatureController = {
       // Se questa firma è impostata come predefinita, ripristina tutte le altre
       if (validatedData.isDefault) {
         await db
-          .update(emailSignatures)
+          .update(signatures)
           .set({ isDefault: false })
-          .where(eq(emailSignatures.userId, String(userId)));
+          .where(eq(signatures.userId, userId));
       }
       
       // Crea la nuova firma
       const [newSignature] = await db
-        .insert(emailSignatures)
+        .insert(signatures)
         .values({
           userId: userId,
           name: validatedData.name,
@@ -122,11 +121,11 @@ export const emailSignatureController = {
       // Verifica che la firma esista e appartenga all'utente
       const [existingSignature] = await db
         .select()
-        .from(emailSignatures)
+        .from(signatures)
         .where(
           and(
-            eq(emailSignatures.id, signatureId),
-            eq(emailSignatures.userId, userId)
+            eq(signatures.id, signatureId),
+            eq(signatures.userId, userId)
           )
         )
         .limit(1);
@@ -141,14 +140,14 @@ export const emailSignatureController = {
       // Se questa firma è impostata come predefinita, ripristina tutte le altre
       if (validatedData.isDefault && !existingSignature.isDefault) {
         await db
-          .update(emailSignatures)
+          .update(signatures)
           .set({ isDefault: false })
-          .where(eq(emailSignatures.userId, userId));
+          .where(eq(signatures.userId, userId));
       }
       
       // Aggiorna la firma
       const [updatedSignature] = await db
-        .update(emailSignatures)
+        .update(signatures)
         .set({
           name: validatedData.name,
           content: validatedData.content,
@@ -157,8 +156,8 @@ export const emailSignatureController = {
         })
         .where(
           and(
-            eq(emailSignatures.id, signatureId),
-            eq(emailSignatures.userId, userId)
+            eq(signatures.id, signatureId),
+            eq(signatures.userId, userId)
           )
         )
         .returning();
@@ -190,11 +189,11 @@ export const emailSignatureController = {
       // Verifica che la firma esista e appartenga all'utente
       const [existingSignature] = await db
         .select()
-        .from(emailSignatures)
+        .from(signatures)
         .where(
           and(
-            eq(emailSignatures.id, signatureId),
-            eq(emailSignatures.userId, userId)
+            eq(signatures.id, signatureId),
+            eq(signatures.userId, userId)
           )
         )
         .limit(1);
@@ -205,11 +204,11 @@ export const emailSignatureController = {
       
       // Elimina la firma
       await db
-        .delete(emailSignatures)
+        .delete(signatures)
         .where(
           and(
-            eq(emailSignatures.id, signatureId),
-            eq(emailSignatures.userId, userId)
+            eq(signatures.id, signatureId),
+            eq(signatures.userId, userId)
           )
         );
       
@@ -232,11 +231,11 @@ export const emailSignatureController = {
       // Verifica che la firma esista e appartenga all'utente
       const [existingSignature] = await db
         .select()
-        .from(emailSignatures)
+        .from(signatures)
         .where(
           and(
-            eq(emailSignatures.id, signatureId),
-            eq(emailSignatures.userId, userId)
+            eq(signatures.id, signatureId),
+            eq(signatures.userId, userId)
           )
         )
         .limit(1);
@@ -247,18 +246,18 @@ export const emailSignatureController = {
       
       // Ripristina tutte le firme
       await db
-        .update(emailSignatures)
+        .update(signatures)
         .set({ isDefault: false })
-        .where(eq(emailSignatures.userId, userId));
+        .where(eq(signatures.userId, userId));
       
       // Imposta questa firma come predefinita
       const [updatedSignature] = await db
-        .update(emailSignatures)
+        .update(signatures)
         .set({ isDefault: true, updatedAt: new Date() })
         .where(
           and(
-            eq(emailSignatures.id, signatureId),
-            eq(emailSignatures.userId, userId)
+            eq(signatures.id, signatureId),
+            eq(signatures.userId, userId)
           )
         )
         .returning();
@@ -279,11 +278,11 @@ export const emailSignatureController = {
       
       const [signature] = await db
         .select()
-        .from(emailSignatures)
+        .from(signatures)
         .where(
           and(
-            eq(emailSignatures.userId, userId),
-            eq(emailSignatures.isDefault, true)
+            eq(signatures.userId, userId),
+            eq(signatures.isDefault, true)
           )
         )
         .limit(1);
