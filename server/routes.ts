@@ -28,6 +28,7 @@ import {
 import branchRoutes from './branchRoutes';
 import emailRoutes from './emailRoutes';
 import emailSignatureRoutes from './emailSignatureRoutes';
+import mockEmailRoutes from './mockEmailRoutes';
 import { getSectors, createSector } from './controllers/sectorController';
 import { getSubSectors, createSubSector } from './controllers/subSectorController';
 import { getJobTitles, getJobTitle, createJobTitle, updateJobTitle, deleteJobTitle } from './controllers/jobTitleController';
@@ -2617,11 +2618,14 @@ export function registerRoutes(app: any) {
   app.use('/api/branches', branchRoutes);
   
   // Integrazione API Email
-  // Applichiamo il middleware di autenticazione a tutte le rotte email
-  app.use('/api/email', authenticate, emailRoutes);
+  // Utilizziamo l'implementazione di mock per test end-to-end
+  app.use('/api/email', authenticate, mockEmailRoutes);
   
-  // Utilizziamo la nuova implementazione per le firme email, mantenendola sotto il percorso /api/email
-  app.use('/api/email/sign', authenticate, emailSignatureRoutes);
+  // Le implementazioni originali sono commentate in attesa di completamento backend
+  // app.use('/api/email', authenticate, emailRoutes);
+  
+  // Implementazione per le firme email - commentata temporaneamente
+  // app.use('/api/email/sign', authenticate, emailSignatureRoutes);
   
   // --- ROTTE PER SETTORI, SOTTOSETTORI E JOB TITLES ---
   
