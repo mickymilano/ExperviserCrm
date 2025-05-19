@@ -2840,7 +2840,10 @@ export function registerRoutes(app: any) {
   app.use('/api/branches', branchRoutes);
   
   // Integrazione API Email
-  app.use('/api/email', authenticate, mockEmailRoutes);
+  app.use('/api/email', authenticate, emailRoutes);
+  
+  // Integrazione API Email di test
+  app.use('/api', authenticate, mockEmailRoutes);
   
   // API per gestire le email reali
   app.post('/api/email/accounts/test-connection', authenticate, async (req, res) => {
