@@ -10,6 +10,13 @@ export interface EmailAccount {
   userId: number;
   createdAt: string;
   updatedAt: string;
+  serverSettings?: {
+    incomingServer: string;
+    incomingPort: number;
+    outgoingServer: string;
+    outgoingPort: number;
+    security: 'none' | 'ssl' | 'tls';
+  };
 }
 
 /**

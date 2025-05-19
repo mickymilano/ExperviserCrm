@@ -131,11 +131,35 @@ export default function EmailAccountForm({ onSuccess, onCancel, accountToEdit, i
       });
     }
 
-    createAccountMutation.mutate(formData as any, {
-      onSuccess: () => {
-        onSuccess();
-      },
-    });
+    // Gestione diversa in base a se stiamo modificando o creando un account
+    if (isEditing && accountToEdit) {
+      // In caso di modifica, usiamo updateAccountMutation
+      // Nota: per l'aggiornamento dobbiamo includere l'ID dell'account
+      updateAccountMutation.mutate(
+        { 
+          id: accountToEdit.id, 
+          ...formData 
+        } as any, 
+        {
+          onSuccess: () => {
+            onSuccess();
+          },
+          onError: (error) => {
+            console.error("Errore nella modifica dell'account:", error);
+          }
+        }
+      );
+    } else {
+      // In caso di creazione, usiamo createAccountMutation
+      createAccountMutation.mutate(formData as any, {
+        onSuccess: () => {
+          onSuccess();
+        },
+        onError: (error) => {
+          console.error("Errore nella creazione dell'account:", error);
+        }
+      });
+    }
   };
 
   const handleProviderChange = (provider: string) => {
@@ -363,14 +387,17 @@ export default function EmailAccountForm({ onSuccess, onCancel, accountToEdit, i
           <Button variant="outline" type="button" onClick={onCancel}>
             {T(t, "common.cancel", "Annulla")}
           </Button>
-          <Button type="submit" disabled={createAccountMutation.isPending}>
-            {createAccountMutation.isPending ? (
+          <Button 
+            type="submit" 
+            disabled={createAccountMutation.isPending || updateAccountMutation.isPending}
+          >
+            {createAccountMutation.isPending || updateAccountMutation.isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 {T(t, "common.saving", "Salvataggio...")}
               </>
             ) : (
-              T(t, "common.save", "Salva")
+              isEditing ? T(t, "common.update", "Aggiorna") : T(t, "common.save", "Salva")
             )}
           </Button>
         </div>
