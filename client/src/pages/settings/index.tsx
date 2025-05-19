@@ -138,14 +138,8 @@ export default function SettingsPage() {
   
   // Save profile settings
   const saveProfile = () => {
-    updateProfile.mutate(profileForm, {
-      onSuccess: () => {
-        toast({
-          title: "Profile updated",
-          description: "Your profile has been updated successfully",
-        });
-      }
-    });
+    // Il toast viene già mostrato nel hook useUserProfile, quindi non lo aggiungiamo qui
+    updateProfile.mutate(profileForm);
   };
   
   // Save password settings
@@ -685,10 +679,7 @@ export default function SettingsPage() {
           <EmailAccountForm 
             onSuccess={() => {
               setShowEmailModal(false);
-              toast({
-                title: "Account email aggiunto",
-                description: "Il tuo account email è stato configurato correttamente",
-              });
+              // La notifica viene gestita all'interno di useEmailAccounts
             }}
             onCancel={() => setShowEmailModal(false)}
           />
@@ -709,10 +700,7 @@ export default function SettingsPage() {
             onSuccess={() => {
               setShowEditModal(false);
               setAccountToEdit(null);
-              toast({
-                title: "Account email aggiornato",
-                description: "Le impostazioni del tuo account email sono state aggiornate",
-              });
+              // La notifica viene gestita all'interno di useEmailAccounts
             }}
             onCancel={() => {
               setShowEditModal(false);
