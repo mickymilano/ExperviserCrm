@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { generateMockEmails } from '@/mock/mockEmailData';
 
 export interface Email {
   id: number;
@@ -17,6 +18,11 @@ export interface Email {
     id: number;
     name: string;
   };
+  attachments?: {
+    name: string;
+    size: number;
+    type: string;
+  }[];
 }
 
 interface UseEmailsOptions {
@@ -25,57 +31,6 @@ interface UseEmailsOptions {
   entityId?: number;
   entityType?: string;
 }
-
-// Generazione di dati fittizi per demo
-const generateMockEmails = (entityType: string, entityId: number, count = 3): Email[] => {
-  const mockAccounts = [
-    { id: 1, name: 'Gmail', email: 'account@gmail.com' },
-    { id: 2, name: 'Outlook', email: 'office@outlook.com' }
-  ];
-  
-  const entityTypes = {
-    contact: { label: 'Contatto', prefix: 'ID' },
-    lead: { label: 'Lead', prefix: 'LEAD' },
-    company: { label: 'Azienda', prefix: 'COMPANY' },
-    branch: { label: 'Filiale', prefix: 'BRANCH' },
-    deal: { label: 'Deal', prefix: 'DEAL' }
-  };
-  
-  const currentDate = new Date();
-  
-  return Array(count).fill(0).map((_, index) => {
-    const daysAgo = index * 2; // Ogni email è separata di 2 giorni
-    const emailDate = new Date(currentDate);
-    emailDate.setDate(emailDate.getDate() - daysAgo);
-    
-    const account = mockAccounts[index % mockAccounts.length];
-    const hasAttachments = index % 3 === 0; // Ogni terza email ha allegati
-    
-    const entityInfo = entityTypes[entityType as keyof typeof entityTypes];
-    
-    return {
-      id: 1000 + index,
-      from: index % 2 === 0 ? 'cliente@example.com' : account.email,
-      fromName: index % 2 === 0 ? 'Cliente Demo' : `Account ${account.name}`,
-      to: index % 2 === 0 ? [account.email] : ['cliente@example.com', 'altro@example.com'],
-      cc: index % 3 === 0 ? ['cc@example.com'] : [],
-      bcc: index % 4 === 0 ? ['bcc@example.com'] : [],
-      subject: `${index === 0 ? 'RE: ' : ''}${entityInfo.label} ${entityId} - ${index === 0 ? 'Risposta a richiesta informazioni' : index === 1 ? 'Aggiornamento stato' : 'Dettagli progetto'}`,
-      body: `<p>Gentile utente,</p>
-             <p>Questa è un'email di esempio per ${entityInfo.label} con ID ${entityId}.</p>
-             <p>Il riferimento a questa entità è ${entityInfo.prefix}-${entityId}.</p>
-             <p>Cordiali saluti,<br />Team CRM</p>`,
-      date: emailDate.toISOString(),
-      read: index > 0, // Solo la prima email è non letta
-      hasAttachments,
-      accountId: account.id,
-      accountInfo: {
-        id: account.id,
-        name: account.name
-      }
-    };
-  });
-};
 
 export function useEmails(options: UseEmailsOptions = {}) {
   const { accountId, folder = 'INBOX', entityId, entityType } = options;
