@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useEmailAccounts, useDeleteEmailAccount, EmailAccount } from "@/hooks/useEmailAccounts";
+import { useEmailAccounts, useDeleteEmailAccount, useUpdateEmailAccount, EmailAccount } from "@/hooks/useEmailAccounts";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,7 +17,8 @@ import {
   Shield, 
   Trash2, 
   Plus,
-  Info
+  Info,
+  Edit
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -378,6 +379,14 @@ export default function SettingsPage() {
                           </div>
                         </div>
                         <div className="flex space-x-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleEditAccount(account)}
+                          >
+                            <Edit className="h-4 w-4 mr-1" />
+                            Modifica
+                          </Button>
                           <Button 
                             variant="destructive" 
                             size="sm"

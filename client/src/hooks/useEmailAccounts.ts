@@ -104,19 +104,8 @@ export function useUpdateEmailAccount() {
   
   return useMutation({
     mutationFn: async ({ id, data }: { id: number, data: Partial<EmailAccount> }) => {
-      // In un ambiente reale, questa sarebbe una chiamata API
-      // Per ora, simuliamo la risposta
-      return {
-        success: true,
-        account: {
-          id,
-          ...data,
-          updatedAt: new Date().toISOString()
-        }
-      };
-      
-      // Versione per ambiente di produzione:
-      // return apiRequest('PATCH', `/api/email/accounts/${id}`, data);
+      // Utilizziamo l'API reale per aggiornare l'account email
+      return apiRequest('PATCH', `/api/email/accounts/${id}`, data);
     },
     onSuccess: () => {
       // Invalida la cache degli account email per forzare un aggiornamento
