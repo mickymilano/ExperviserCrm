@@ -271,10 +271,12 @@ export function registerRoutes(app: any) {
   // Login
   app.post('/api/auth/login', async (req, res) => {
     try {
-      const { username, password } = req.body;
+      // Supporto per entrambi i formati (sia username che email)
+      const username = req.body.username || req.body.email;
+      const { password } = req.body;
       
       if (!username || !password) {
-        return res.status(400).json({ message: 'Username e password sono richiesti' });
+        return res.status(400).json({ message: 'Username/Email e password sono richiesti' });
       }
       
       // In modalità sviluppo, bypass dell'autenticazione per qualsiasi credenziale
