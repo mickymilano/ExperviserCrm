@@ -71,6 +71,8 @@ export default function App() {
         <Switch>
           {/* Pagina di login (senza layout AppLayout) */}
           <Route path="/login" component={LoginPage} />
+          {/* Aggiungiamo anche il percorso alternativo per il login */}
+          <Route path="/auth/login" component={LoginPage} />
           
           {/* Pagine protette (con layout AppLayout) */}
           <Route path="/">
