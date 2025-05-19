@@ -1,5 +1,5 @@
 import express from 'express';
-import { emailSignatureController } from './controllers/emailSignatureController';
+import { emailSignatureController } from './controllers/fixedEmailSignatureController';
 // Non importiamo authenticateJWT da routes per evitare dipendenze circolari
 // Useremo l'authenticate standard che sarà già applicato nel file routes.ts
 
