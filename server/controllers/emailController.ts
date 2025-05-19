@@ -7,8 +7,8 @@ import {
   emailAssociations
 } from '../../shared/email/schema';
 import { eq, and, desc, like, sql } from 'drizzle-orm';
-import { EmailReceiver, ImapConfig } from '../modules/email/emailReceiver';
-import { EmailSender, SmtpConfig } from '../modules/email/emailSender';
+import { EmailReceiver, ImapConfig, testImapConnection } from '../modules/email/emailReceiver';
+import { EmailSender, SmtpConfig, testSmtpConnection } from '../modules/email/emailSender';
 import { 
   emailSyncQueue, 
   emailProcessQueue, 
@@ -319,7 +319,7 @@ export const emailController = {
         }
       };
       
-      const imapSuccess = await EmailReceiver.testImapConnection(imapConfig);
+      const imapSuccess = await testImapConnection(imapConfig);
       
       // Testa la connessione SMTP
       const smtpConfig: SmtpConfig = {
@@ -332,7 +332,7 @@ export const emailController = {
         }
       };
       
-      const smtpSuccess = await EmailSender.testSmtpConnection(smtpConfig);
+      const smtpSuccess = await testSmtpConnection(smtpConfig);
       
       res.json({
         imap: imapSuccess,
