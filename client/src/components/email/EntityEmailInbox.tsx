@@ -200,7 +200,7 @@ export function EntityEmailInbox({ entityId, entityType, entityEmail }: EntityEm
     if (selectedEmails.length === emails.length) {
       setSelectedEmails([]);
     } else {
-      setSelectedEmails(emails.map(email => email.id));
+      setSelectedEmails(emails.map((email: Email) => email.id));
     }
   };
 

@@ -59,10 +59,7 @@ export function useEmailAccounts(): UseEmailAccountsResult {
   // Add a new email account
   const addAccountMutation = useMutation({
     mutationFn: async (account: Omit<EmailAccount, 'id'>) => {
-      const response = await apiRequest('/api/email/accounts', {
-        method: 'POST',
-        body: JSON.stringify(account),
-      });
+      const response = await apiRequest('/api/email/accounts', { method: 'POST', body: account });
       return response;
     },
     onSuccess: () => {
@@ -84,10 +81,7 @@ export function useEmailAccounts(): UseEmailAccountsResult {
   // Update an email account
   const updateAccountMutation = useMutation({
     mutationFn: async ({ id, account }: { id: number; account: Partial<EmailAccount> }) => {
-      const response = await apiRequest(`/api/email/accounts/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify(account),
-      });
+      const response = await apiRequest(`/api/email/accounts/${id}`, { method: 'PATCH', body: account });
       return response;
     },
     onSuccess: () => {
@@ -109,9 +103,7 @@ export function useEmailAccounts(): UseEmailAccountsResult {
   // Delete an email account
   const deleteAccountMutation = useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest(`/api/email/accounts/${id}`, {
-        method: 'DELETE',
-      });
+      await apiRequest(`/api/email/accounts/${id}`, 'DELETE');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/email/accounts'] });
@@ -132,9 +124,7 @@ export function useEmailAccounts(): UseEmailAccountsResult {
   // Sync email accounts
   const syncAccountsMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest('/api/email/accounts/sync', {
-        method: 'POST',
-      });
+      await apiRequest('/api/email/accounts/sync', 'POST');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/email/accounts'] });
@@ -156,9 +146,7 @@ export function useEmailAccounts(): UseEmailAccountsResult {
   // Set primary account
   const setPrimaryAccountMutation = useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest(`/api/email/accounts/${id}/primary`, {
-        method: 'PATCH',
-      });
+      await apiRequest(`/api/email/accounts/${id}/primary`, 'PATCH');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/email/accounts'] });
