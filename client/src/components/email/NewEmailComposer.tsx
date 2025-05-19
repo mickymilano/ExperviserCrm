@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -20,7 +20,24 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
-import { ArrowLeft, Paperclip, Send, X, Loader2 } from "lucide-react";
+import { 
+  ArrowLeft, 
+  Paperclip, 
+  Send, 
+  X, 
+  Loader2, 
+  Search, 
+  User,
+  Plus,
+  UserPlus
+} from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 
 const formSchema = z.object({
   to: z.string().min(1, { message: "Destinatario obbligatorio" }),
@@ -31,6 +48,22 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+interface Contact {
+  id: number;
+  fullName: string;
+  email: string;
+  company?: {
+    name: string;
+  };
+}
+
+interface ContactOption {
+  id: number;
+  label: string;
+  value: string;
+  company?: string;
+}
 
 interface NewEmailComposerProps {
   accountId: number;
@@ -54,6 +87,26 @@ export default function NewEmailComposer({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [ccRecipients, setCcRecipients] = useState<ContactOption[]>([]);
+  const [bccRecipients, setBccRecipients] = useState<ContactOption[]>([]);
+  const [ccPopoverOpen, setCcPopoverOpen] = useState(false);
+  const [bccPopoverOpen, setBccPopoverOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Carica i contatti dal CRM
+  const { data: contacts, isLoading: isLoadingContacts } = useQuery({
+    queryKey: ["/api/contacts"],
+    select: (data: any) => {
+      return data.map((contact: any) => ({
+        id: contact.id,
+        fullName: contact.firstName && contact.lastName 
+          ? `${contact.firstName} ${contact.lastName}`
+          : contact.firstName || "Contatto",
+        email: contact.email,
+        company: contact.company
+      }));
+    }
+  });
 
   // Prepara i valori predefiniti per il form
   let defaultSubject = "";
@@ -78,6 +131,17 @@ export default function NewEmailComposer({
       body: defaultBody,
     },
   });
+
+  // Aggiorna i campi CC e BCC quando vengono modificati i destinatari
+  useEffect(() => {
+    const ccEmails = ccRecipients.map(r => r.value).join(", ");
+    form.setValue("cc", ccEmails);
+  }, [ccRecipients, form]);
+
+  useEffect(() => {
+    const bccEmails = bccRecipients.map(r => r.value).join(", ");
+    form.setValue("bcc", bccEmails);
+  }, [bccRecipients, form]);
 
   const mutation = useMutation({
     mutationFn: (values: FormValues & { accountId: number; attachments?: File[] }) => {
@@ -153,6 +217,45 @@ export default function NewEmailComposer({
     return (bytes / (1024 * 1024)).toFixed(1) + " MB";
   };
 
+  const addCcRecipient = (contact: ContactOption) => {
+    if (!ccRecipients.some(r => r.id === contact.id)) {
+      setCcRecipients([...ccRecipients, contact]);
+    }
+    setCcPopoverOpen(false);
+  };
+
+  const removeCcRecipient = (id: number) => {
+    setCcRecipients(ccRecipients.filter(r => r.id !== id));
+  };
+
+  const addBccRecipient = (contact: ContactOption) => {
+    if (!bccRecipients.some(r => r.id === contact.id)) {
+      setBccRecipients([...bccRecipients, contact]);
+    }
+    setBccPopoverOpen(false);
+  };
+
+  const removeBccRecipient = (id: number) => {
+    setBccRecipients(bccRecipients.filter(r => r.id !== id));
+  };
+
+  // Filtra i contatti basandosi sulla query di ricerca
+  const filteredContacts = contacts?.filter((contact: Contact) => {
+    if (!contact.email) return false;
+    
+    const fullName = contact.fullName?.toLowerCase() || "";
+    const email = contact.email.toLowerCase();
+    const company = contact.company?.name?.toLowerCase() || "";
+    const query = searchQuery.toLowerCase();
+    
+    return fullName.includes(query) || email.includes(query) || company.includes(query);
+  }).map((contact: Contact) => ({
+    id: contact.id,
+    label: contact.fullName,
+    value: contact.email,
+    company: contact.company?.name
+  })) || [];
+
   return (
     <Card>
       <CardContent className="pt-6">
@@ -203,7 +306,75 @@ export default function NewEmailComposer({
               name="cc"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("email.cc")}</FormLabel>
+                  <div className="flex items-center justify-between">
+                    <FormLabel>{t("email.cc")}</FormLabel>
+                    <Popover open={ccPopoverOpen} onOpenChange={setCcPopoverOpen}>
+                      <PopoverTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="h-8"
+                          type="button"
+                        >
+                          <UserPlus className="h-3.5 w-3.5 mr-1" />
+                          {t("email.addRecipient")}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="p-0" align="end" side="right" sideOffset={5}>
+                        <Command className="w-[250px]">
+                          <CommandInput 
+                            placeholder={t("email.searchContacts")} 
+                            onValueChange={setSearchQuery}
+                          />
+                          <CommandList>
+                            <CommandEmpty>{t("email.noContactsFound")}</CommandEmpty>
+                            <CommandGroup>
+                              {filteredContacts.map((contact) => (
+                                <CommandItem
+                                  key={contact.id}
+                                  onSelect={() => addCcRecipient(contact)}
+                                  className="flex items-center"
+                                >
+                                  <Avatar className="h-6 w-6 mr-2">
+                                    <User className="h-4 w-4" />
+                                  </Avatar>
+                                  <div className="flex flex-col">
+                                    <span className="text-sm">{contact.label}</span>
+                                    <span className="text-xs text-muted-foreground">{contact.value}</span>
+                                    {contact.company && (
+                                      <span className="text-xs text-muted-foreground">{contact.company}</span>
+                                    )}
+                                  </div>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  
+                  {/* Visualizzazione dei destinatari in CC */}
+                  {ccRecipients.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-2">
+                      {ccRecipients.map(recipient => (
+                        <Badge key={recipient.id} variant="secondary" className="flex items-center gap-1">
+                          {recipient.label}
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-4 w-4 p-0 text-muted-foreground hover:text-foreground"
+                            onClick={() => removeCcRecipient(recipient.id)}
+                          >
+                            <X className="h-3 w-3" />
+                            <span className="sr-only">Rimuovi</span>
+                          </Button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+
                   <FormControl>
                     <Input {...field} placeholder="nome@esempio.com" />
                   </FormControl>
@@ -217,7 +388,75 @@ export default function NewEmailComposer({
               name="bcc"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("email.bcc")}</FormLabel>
+                  <div className="flex items-center justify-between">
+                    <FormLabel>{t("email.bcc")}</FormLabel>
+                    <Popover open={bccPopoverOpen} onOpenChange={setBccPopoverOpen}>
+                      <PopoverTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="h-8"
+                          type="button"
+                        >
+                          <UserPlus className="h-3.5 w-3.5 mr-1" />
+                          {t("email.addRecipient")}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="p-0" align="end" side="right" sideOffset={5}>
+                        <Command className="w-[250px]">
+                          <CommandInput 
+                            placeholder={t("email.searchContacts")} 
+                            onValueChange={setSearchQuery}
+                          />
+                          <CommandList>
+                            <CommandEmpty>{t("email.noContactsFound")}</CommandEmpty>
+                            <CommandGroup>
+                              {filteredContacts.map((contact) => (
+                                <CommandItem
+                                  key={contact.id}
+                                  onSelect={() => addBccRecipient(contact)}
+                                  className="flex items-center"
+                                >
+                                  <Avatar className="h-6 w-6 mr-2">
+                                    <User className="h-4 w-4" />
+                                  </Avatar>
+                                  <div className="flex flex-col">
+                                    <span className="text-sm">{contact.label}</span>
+                                    <span className="text-xs text-muted-foreground">{contact.value}</span>
+                                    {contact.company && (
+                                      <span className="text-xs text-muted-foreground">{contact.company}</span>
+                                    )}
+                                  </div>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  
+                  {/* Visualizzazione dei destinatari in BCC */}
+                  {bccRecipients.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-2">
+                      {bccRecipients.map(recipient => (
+                        <Badge key={recipient.id} variant="secondary" className="flex items-center gap-1">
+                          {recipient.label}
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-4 w-4 p-0 text-muted-foreground hover:text-foreground"
+                            onClick={() => removeBccRecipient(recipient.id)}
+                          >
+                            <X className="h-3 w-3" />
+                            <span className="sr-only">Rimuovi</span>
+                          </Button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+
                   <FormControl>
                     <Input {...field} placeholder="nome@esempio.com" />
                   </FormControl>
