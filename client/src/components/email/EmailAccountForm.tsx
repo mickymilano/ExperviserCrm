@@ -38,6 +38,15 @@ const formSchema = z.object({
   password: z.string().optional().transform(val => {
     // Converti stringhe vuote in undefined per campi opzionali
     return val === "" ? undefined : val;
+  }).superRefine((val, ctx) => {
+    // Se non siamo in modalità modifica e la password è vuota, è un errore
+    if (ctx.path.includes('password') && !ctx.parent.isEditing && !val) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Password obbligatoria per nuovi account",
+        path: []
+      });
+    }
   }),
   // Campo aggiuntivo per indicare se stiamo modificando un account esistente
   isEditing: z.boolean().default(false),
@@ -86,6 +95,7 @@ export default function EmailAccountForm({ onSuccess, onCancel, accountToEdit, i
     outgoingServer: accountToEdit?.serverSettings?.outgoingServer || "",
     outgoingPort: accountToEdit?.serverSettings?.outgoingPort?.toString() || "",
     security: (accountToEdit?.serverSettings?.security as any) || "ssl",
+    isEditing: isEditing, // Impostiamo la modalità di editing per la validazione condizionale
   };
 
   const form = useForm<FormValues>({
@@ -107,6 +117,7 @@ export default function EmailAccountForm({ onSuccess, onCancel, accountToEdit, i
         outgoingServer: accountToEdit.serverSettings?.outgoingServer || "",
         outgoingPort: accountToEdit.serverSettings?.outgoingPort?.toString() || "",
         security: (accountToEdit.serverSettings?.security as any) || "ssl",
+        isEditing: true, // Impostiamo sempre su true quando è in modalità modifica
       });
       
       if (accountToEdit.serverSettings) {
