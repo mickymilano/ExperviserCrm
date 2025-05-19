@@ -391,6 +391,9 @@
     "confirmDelete": "Sei sicuro di voler eliminare questo account email?",
     "subjectPlaceholder": "Oggetto dell'email",
     "bodyPlaceholder": "Scrivi il tuo messaggio qui...",
+    "addRecipient": "Aggiungi destinatario",
+    "searchContacts": "Cerca contatti...",
+    "noContactsFound": "Nessun contatto trovato",
     
     "syncSuccess": "Sincronizzazione completata",
     "syncSuccessDescription": "Le email sono state sincronizzate con successo",
