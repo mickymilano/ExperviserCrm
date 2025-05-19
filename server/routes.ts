@@ -27,6 +27,7 @@ import {
 } from './controllers/leadController.js';
 import branchRoutes from './branchRoutes';
 import mockEmailRoutes from './mockEmailRoutes';
+import emailRoutes from './emailRoutes';
 import { getSectors, createSector } from './controllers/sectorController';
 import { getSubSectors, createSubSector } from './controllers/subSectorController';
 import { getJobTitles, getJobTitle, createJobTitle, updateJobTitle, deleteJobTitle } from './controllers/jobTitleController';
@@ -2351,7 +2352,7 @@ export function registerRoutes(app: any) {
         synergies: synergiesCount,
         branches: branchesCount,
         emails: emails.length,
-        unreadEmails: emails.filter(email => !email.is_read).length || 3 // Forniamo un valore predefinito per i test
+        unreadEmails: emails.filter(email => !email.isRead).length || 3 // Forniamo un valore predefinito per i test
       });
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
@@ -2951,7 +2952,7 @@ export function registerRoutes(app: any) {
   app.delete('/api/subsectors/:subSectorId/jobtitles/:id', authenticate, isAdmin, deleteJobTitle);
   
   // Registra le rotte email per l'integrazione con le pagine di dettaglio
-  app.use('/', require('./emailRoutes').default);
+  app.use('/', emailRoutes);
   
   // Crea il server HTTP
   const httpServer = createServer(app);
