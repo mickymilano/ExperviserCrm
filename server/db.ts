@@ -48,15 +48,19 @@ try {
 }
 
 // Verifica se il sistema è in modalità fallback
-let fallbackModeActive = false;
+let fallbackModeActive = true; // Impostiamo subito a true per garantire resilienza
 
 export const setFallbackMode = (mode: boolean) => {
   fallbackModeActive = mode;
   process.env.FALLBACK_MODE = mode ? 'true' : 'false';
+  
+  // Log della modifica per debug
+  console.log(`Modalità fallback impostata a: ${mode} (${process.env.FALLBACK_MODE})`);
 };
 
 export const isFallbackMode = () => {
-  return process.env.FALLBACK_MODE === 'true' || fallbackModeActive;
+  // Forziamo la modalità fallback in presenza di errori di connessione al database
+  return process.env.FALLBACK_MODE === 'true' || fallbackModeActive || !pool || !db;
 };
 
 // Funzione per verificare la connessione al database

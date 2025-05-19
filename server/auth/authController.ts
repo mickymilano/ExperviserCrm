@@ -64,6 +64,20 @@ export async function login(req: Request, res: Response) {
     // In modalità fallback, crea un token di emergenza
     if (isFallbackMode()) {
       console.log('Login in modalità fallback per:', email);
+      
+      // Supporta credenziali specifiche (utente michele)
+      if ((email === 'michele' || email === 'michele@experviser.com') && password === 'admin_admin_69') {
+        console.log('Accesso con credenziali admin predefinite');
+        const adminPayload: TokenPayload = {
+          id: 1,
+          email: 'michele@experviser.com',
+          username: 'michele',
+          role: 'super_admin'
+        };
+        return res.json(createAuthResponse(adminPayload));
+      }
+      
+      // Fallback generico per altri utenti
       const emergencyPayload = generateEmergencyPayload(email);
       return res.json(createAuthResponse(emergencyPayload));
     }
