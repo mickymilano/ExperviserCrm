@@ -21,29 +21,8 @@ export function useEmailAccounts() {
     queryKey: ['/api/email/accounts'],
     queryFn: async () => {
       try {
-        // Simulazione temporanea fino all'implementazione del backend reale
-        return [
-          {
-            id: 1,
-            name: 'Gmail',
-            email: 'user@gmail.com',
-            provider: 'gmail',
-            isDefault: true,
-            userId: 1,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          },
-          {
-            id: 2,
-            name: 'Outlook',
-            email: 'user@outlook.com',
-            provider: 'outlook',
-            isDefault: false,
-            userId: 1,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          }
-        ];
+        // Nessun account preconfiguraro - permettiamo all'utente di aggiungere i propri account
+        return [];
 
         // Implementazione reale da attivare quando il backend sarà pronto
         /*

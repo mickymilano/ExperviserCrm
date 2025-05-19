@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { EmailAccount, insertEmailAccountSchema } from '@shared/schema';
-import { useCreateEmailAccount, useUpdateEmailAccount } from '@/hooks/useEmailAccounts';
-import { useLocation } from 'wouter';
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { T } from "@/lib/translationHelper";
 
 import {
   Form,
@@ -13,387 +12,339 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2 } from 'lucide-react';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Switch } from "@/components/ui/switch";
+import { useCreateEmailAccount } from "@/hooks/useEmailAccounts";
+import { Loader2 } from "lucide-react";
 
-// Extend the insertEmailAccountSchema with validation
-const formSchema = insertEmailAccountSchema.extend({
-  password: z.string().min(1, 'Password is required'),
-  confirmPassword: z.string().min(1, 'Please confirm your password')
-}).refine((data) => data.password === data.confirmPassword, {
-  message: 'Passwords do not match',
-  path: ['confirmPassword'],
-});
-
-// For edit mode, make password and confirmPassword optional
-const editFormSchema = insertEmailAccountSchema.extend({
-  password: z.string().optional(),
-  confirmPassword: z.string().optional()
-}).refine((data) => !data.password || !data.confirmPassword || data.password === data.confirmPassword, {
-  message: 'Passwords do not match',
-  path: ['confirmPassword'],
+const formSchema = z.object({
+  name: z.string().min(1, { message: "Nome account obbligatorio" }),
+  email: z.string().email({ message: "Formato email non valido" }),
+  password: z.string().min(1, { message: "Password obbligatoria" }),
+  provider: z.string().min(1, { message: "Seleziona un provider" }),
+  useCustomServers: z.boolean().default(false),
+  incomingServer: z.string().optional(),
+  incomingPort: z.string().optional(),
+  outgoingServer: z.string().optional(),
+  outgoingPort: z.string().optional(),
+  security: z.enum(["none", "ssl", "tls"]).optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
-type EditFormValues = z.infer<typeof editFormSchema>;
+
+const providerOptions = [
+  { value: "gmail", label: "Gmail" },
+  { value: "outlook", label: "Outlook / Office 365" },
+  { value: "yahoo", label: "Yahoo Mail" },
+  { value: "imap", label: "IMAP/SMTP Generico" },
+];
 
 interface EmailAccountFormProps {
-  onSuccess?: () => void;
-  account?: EmailAccount;
+  onSuccess: () => void;
+  onCancel: () => void;
 }
 
-export function EmailAccountForm({ onSuccess, account }: EmailAccountFormProps) {
-  const [, navigate] = useLocation();
-  const isEditMode = !!account;
-  const createAccount = useCreateEmailAccount();
-  const updateAccount = useUpdateEmailAccount();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+export default function EmailAccountForm({ onSuccess, onCancel }: EmailAccountFormProps) {
+  const { t } = useTranslation();
+  const [useCustomSettings, setUseCustomSettings] = useState(false);
+  const createAccountMutation = useCreateEmailAccount();
 
-  const defaultValues: Partial<FormValues | EditFormValues> = {
-    displayName: '',
-    email: '',
-    username: '',
-    password: '',
-    confirmPassword: '',
-    imapHost: '',
-    imapPort: 993,
-    imapSecure: true,
-    smtpHost: '',
-    smtpPort: 587,
-    smtpSecure: true,
-    userId: 1, // Default user ID - in a real app this would come from the auth context
-  };
-
-  const form = useForm<FormValues | EditFormValues>({
-    resolver: zodResolver(isEditMode ? editFormSchema : formSchema),
-    defaultValues: isEditMode && account 
-      ? {
-          ...account,
-          password: '',
-          confirmPassword: '',
-        }
-      : defaultValues,
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      provider: "",
+      useCustomServers: false,
+      incomingServer: "",
+      incomingPort: "",
+      outgoingServer: "",
+      outgoingPort: "",
+      security: "ssl",
+    },
   });
 
-  // When in edit mode and account changes, update form values
-  useEffect(() => {
-    if (isEditMode && account) {
-      form.reset({
-        ...account,
-        password: '',
-        confirmPassword: '',
+  const onSubmit = (values: FormValues) => {
+    const formData = {
+      name: values.name,
+      email: values.email,
+      password: values.password,
+      provider: values.provider,
+    };
+
+    // Se sono abilitati i server personalizzati, aggiungi quelle impostazioni
+    if (values.useCustomServers) {
+      Object.assign(formData, {
+        serverSettings: {
+          incomingServer: values.incomingServer,
+          incomingPort: parseInt(values.incomingPort || "993", 10),
+          outgoingServer: values.outgoingServer,
+          outgoingPort: parseInt(values.outgoingPort || "587", 10),
+          security: values.security,
+        },
       });
     }
-  }, [account, form, isEditMode]);
 
-  async function onSubmit(data: FormValues | EditFormValues) {
-    setIsSubmitting(true);
-    try {
-      // Remove confirmPassword as it's not in the server schema
-      const { confirmPassword, ...accountData } = data;
-
-      if (isEditMode && account) {
-        // Remove password if empty (don't update password)
-        const updateData = { ...accountData };
-        if (!updateData.password) {
-          delete updateData.password;
-        }
-        
-        await updateAccount.mutateAsync({ 
-          id: account.id, 
-          accountData: updateData 
-        });
-        
-        // Redirect back to email settings after successful update
-        navigate('/email/settings');
-      } else {
-        // Create new account - ensure required fields are present
-        if (!accountData.password) {
-          console.error('Password is required for new accounts');
-          setIsSubmitting(false);
-          return;
-        }
-        
-        // Make sure all fields are properly typed
-        const newAccountData = {
-          displayName: accountData.displayName,
-          email: accountData.email,
-          username: accountData.username,
-          password: accountData.password, // This is required
-          imapHost: accountData.imapHost,
-          imapPort: accountData.imapPort,
-          imapSecure: accountData.imapSecure ?? true,
-          smtpHost: accountData.smtpHost,
-          smtpPort: accountData.smtpPort,
-          smtpSecure: accountData.smtpSecure ?? true,
-          userId: accountData.userId
-        };
-        
-        await createAccount.mutateAsync(newAccountData);
-        
-        // Reset form after creation
-        form.reset(defaultValues);
-      }
-      
-      if (onSuccess) {
+    createAccountMutation.mutate(formData as any, {
+      onSuccess: () => {
         onSuccess();
-      }
-    } catch (error) {
-      console.error(`Failed to ${isEditMode ? 'update' : 'add'} email account:`, error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
+      },
+    });
+  };
 
-  // Helper to detect common email providers and auto-fill server details
-  const detectProvider = (email: string) => {
-    const domain = email.split('@')[1]?.toLowerCase();
-    
-    if (!domain) return;
-    
-    if (domain === 'gmail.com') {
-      form.setValue('imapHost', 'imap.gmail.com');
-      form.setValue('imapPort', 993);
-      form.setValue('imapSecure', true);
-      form.setValue('smtpHost', 'smtp.gmail.com');
-      form.setValue('smtpPort', 587);
-      form.setValue('smtpSecure', true);
-    } else if (domain === 'outlook.com' || domain === 'hotmail.com') {
-      form.setValue('imapHost', 'outlook.office365.com');
-      form.setValue('imapPort', 993);
-      form.setValue('imapSecure', true);
-      form.setValue('smtpHost', 'smtp.office365.com');
-      form.setValue('smtpPort', 587);
-      form.setValue('smtpSecure', true);
-    } else if (domain === 'yahoo.com') {
-      form.setValue('imapHost', 'imap.mail.yahoo.com');
-      form.setValue('imapPort', 993);
-      form.setValue('imapSecure', true);
-      form.setValue('smtpHost', 'smtp.mail.yahoo.com');
-      form.setValue('smtpPort', 587);
-      form.setValue('smtpSecure', true);
-    } else if (domain === 'experviser.com') {
-      // For demo/testing purposes with experviser.com domain
-      form.setValue('imapHost', 'imap.experviser.com');
-      form.setValue('imapPort', 993);
-      form.setValue('imapSecure', true);
-      form.setValue('smtpHost', 'smtp.experviser.com');
-      form.setValue('smtpPort', 587);
-      form.setValue('smtpSecure', true);
-    }
-    
-    // Auto-fill username if it's empty
-    if (!form.getValues('username')) {
-      form.setValue('username', email);
+  const handleProviderChange = (provider: string) => {
+    form.setValue("provider", provider);
+
+    // Imposta valori predefiniti in base al provider selezionato
+    if (provider === "gmail") {
+      form.setValue("incomingServer", "imap.gmail.com");
+      form.setValue("incomingPort", "993");
+      form.setValue("outgoingServer", "smtp.gmail.com");
+      form.setValue("outgoingPort", "587");
+      form.setValue("security", "ssl");
+    } else if (provider === "outlook") {
+      form.setValue("incomingServer", "outlook.office365.com");
+      form.setValue("incomingPort", "993");
+      form.setValue("outgoingServer", "smtp.office365.com");
+      form.setValue("outgoingPort", "587");
+      form.setValue("security", "ssl");
+    } else if (provider === "yahoo") {
+      form.setValue("incomingServer", "imap.mail.yahoo.com");
+      form.setValue("incomingPort", "993");
+      form.setValue("outgoingServer", "smtp.mail.yahoo.com");
+      form.setValue("outgoingPort", "587");
+      form.setValue("security", "ssl");
     }
   };
 
   return (
-    <div className="w-full">
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <FormField
-            control={form.control}
-            name="displayName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Display Name</FormLabel>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{T(t, "emailSettings.accountName", "Nome account")}</FormLabel>
+              <FormControl>
+                <Input placeholder={T(t, "emailSettings.accountNamePlaceholder", "Es: Gmail personale")} {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="provider"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{T(t, "emailSettings.provider", "Provider")}</FormLabel>
+              <Select
+                onValueChange={(value) => {
+                  field.onChange(value);
+                  handleProviderChange(value);
+                }}
+                defaultValue={field.value}
+              >
                 <FormControl>
-                  <Input placeholder="John Doe" {...field} />
+                  <SelectTrigger>
+                    <SelectValue placeholder={T(t, "emailSettings.selectProvider", "Seleziona provider")} />
+                  </SelectTrigger>
                 </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email Address</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="john@example.com" 
-                    {...field} 
-                    onBlur={(e) => {
-                      field.onBlur();
-                      detectProvider(e.target.value);
-                    }}
+                <SelectContent>
+                  {providerOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{T(t, "emailSettings.emailAddress", "Indirizzo email")}</FormLabel>
+              <FormControl>
+                <Input type="email" placeholder="nome@example.com" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="password"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{T(t, "emailSettings.password", "Password")}</FormLabel>
+              <FormControl>
+                <Input type="password" placeholder="••••••••" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="useCustomServers"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <FormLabel className="text-base">
+                  {T(t, "emailSettings.advancedSettings", "Impostazioni avanzate")}
+                </FormLabel>
+                <p className="text-sm text-muted-foreground">
+                  {T(t, "emailSettings.advancedSettingsDescription", "Configura server IMAP/SMTP personalizzati")}
+                </p>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={(checked) => {
+                    field.onChange(checked);
+                    setUseCustomSettings(checked);
+                  }}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+        {useCustomSettings && (
+          <Accordion type="single" collapsible defaultValue="serverSettings">
+            <AccordionItem value="serverSettings">
+              <AccordionTrigger>
+                {T(t, "emailSettings.serverSettings", "Impostazioni server")}
+              </AccordionTrigger>
+              <AccordionContent className="space-y-4 pt-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="incomingServer"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{T(t, "emailSettings.incomingServer", "Server IMAP")}</FormLabel>
+                        <FormControl>
+                          <Input placeholder="imap.example.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="username"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Username</FormLabel>
-                <FormControl>
-                  <Input placeholder="Usually your full email address" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <div className="grid grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <Input type="password" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="confirmPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Confirm Password</FormLabel>
-                  <FormControl>
-                    <Input type="password" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          
-          <div className="border-t pt-4 mt-4">
-            <h3 className="text-sm font-medium mb-3">IMAP Settings</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="imapHost"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>IMAP Host</FormLabel>
-                    <FormControl>
-                      <Input placeholder="imap.example.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="imapPort"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>IMAP Port</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        {...field} 
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 993)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <FormField
-              control={form.control}
-              name="imapSecure"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center gap-2 mt-2">
-                  <FormControl>
-                    <Checkbox 
-                      checked={!!field.value} 
-                      onCheckedChange={(checked) => field.onChange(!!checked)}
-                    />
-                  </FormControl>
-                  <FormLabel className="!mt-0">Use secure connection (TLS)</FormLabel>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          
-          <div className="border-t pt-4 mt-4">
-            <h3 className="text-sm font-medium mb-3">SMTP Settings</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="smtpHost"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>SMTP Host</FormLabel>
-                    <FormControl>
-                      <Input placeholder="smtp.example.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="smtpPort"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>SMTP Port</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        {...field} 
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 587)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <FormField
-              control={form.control}
-              name="smtpSecure"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center gap-2 mt-2">
-                  <FormControl>
-                    <Checkbox 
-                      checked={!!field.value} 
-                      onCheckedChange={(checked) => field.onChange(!!checked)}
-                    />
-                  </FormControl>
-                  <FormLabel className="!mt-0">Use secure connection (TLS)</FormLabel>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          
-          <Button type="submit" className="w-full mt-4" disabled={isSubmitting}>
-            {isSubmitting ? (
+
+                  <FormField
+                    control={form.control}
+                    name="incomingPort"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{T(t, "emailSettings.incomingPort", "Porta IMAP")}</FormLabel>
+                        <FormControl>
+                          <Input placeholder="993" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="outgoingServer"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{T(t, "emailSettings.outgoingServer", "Server SMTP")}</FormLabel>
+                        <FormControl>
+                          <Input placeholder="smtp.example.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="outgoingPort"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{T(t, "emailSettings.outgoingPort", "Porta SMTP")}</FormLabel>
+                        <FormControl>
+                          <Input placeholder="587" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="security"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{T(t, "emailSettings.security", "Sicurezza")}</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={T(t, "emailSettings.selectSecurity", "Seleziona sicurezza")} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="ssl">SSL/TLS</SelectItem>
+                          <SelectItem value="tls">STARTTLS</SelectItem>
+                          <SelectItem value="none">{T(t, "emailSettings.none", "Nessuna")}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        )}
+
+        <div className="flex justify-end space-x-2">
+          <Button variant="outline" type="button" onClick={onCancel}>
+            {T(t, "common.cancel", "Annulla")}
+          </Button>
+          <Button type="submit" disabled={createAccountMutation.isPending}>
+            {createAccountMutation.isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {isEditMode ? 'Updating Account...' : 'Adding Account...'}
+                {T(t, "common.saving", "Salvataggio...")}
               </>
             ) : (
-              isEditMode ? 'Update Email Account' : 'Add Email Account'
+              T(t, "common.save", "Salva")
             )}
           </Button>
-        </form>
-      </Form>
-    </div>
+        </div>
+      </form>
+    </Form>
   );
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useEmailAccounts, useDeleteEmailAccount, useCreateEmailAccount } from "@/hooks/useEmailAccounts";
+import { useEmailAccounts, useDeleteEmailAccount, useCreateEmailAccount, EmailAccount } from "@/hooks/useEmailAccounts";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -21,7 +21,6 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { EmailAccount } from "@/types";
 import { 
   Dialog, 
   DialogContent, 
@@ -51,6 +50,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useUserProfile } from "@/hooks/useUserProfile";
+import EmailAccountForm from "@/components/email/EmailAccountForm";
 
 export default function SettingsPage() {
   const { toast } = useToast();
@@ -98,18 +98,6 @@ export default function SettingsPage() {
     }
   }, [user]);
   
-  // Form state for email account
-  const [emailForm, setEmailForm] = useState({
-    email: "",
-    displayName: "",
-    imapHost: "",
-    imapPort: 993,
-    smtpHost: "",
-    smtpPort: 587,
-    username: "",
-    password: "",
-  });
-
   // Handle profile form changes
   const handleProfileFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -125,36 +113,6 @@ export default function SettingsPage() {
     setPasswordForm({
       ...passwordForm,
       [name]: value,
-    });
-  };
-
-  const handleEmailFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setEmailForm({
-      ...emailForm,
-      [name]: name === "imapPort" || name === "smtpPort" ? parseInt(value) : value,
-    });
-  };
-
-  const handleEmailFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    createAccountMutation.mutate({
-      ...emailForm,
-      userId: 1, // Assuming user ID 1 for demo
-    }, {
-      onSuccess: () => {
-        setShowEmailModal(false);
-        setEmailForm({
-          email: "",
-          displayName: "",
-          imapHost: "",
-          imapPort: 993,
-          smtpHost: "",
-          smtpPort: 587,
-          username: "",
-          password: "",
-        });
-      }
     });
   };
 
@@ -434,9 +392,9 @@ export default function SettingsPage() {
                   <Mail className="h-5 w-5 mr-2" />
                   Email Accounts
                 </h3>
-                <Button disabled title="Funzionalità in fase di sviluppo">
+                <Button onClick={() => setShowEmailModal(true)}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Account
+                  Aggiungi Account
                 </Button>
               </div>
               
@@ -448,39 +406,25 @@ export default function SettingsPage() {
                 </div>
               ) : accounts && Array.isArray(accounts) && accounts.length > 0 ? (
                 <div className="space-y-4">
-                  {/* Mostra un messaggio che indica che la funzionalità è temporaneamente disabilitata */}
-                  <div className="bg-blue-50 border border-blue-200 text-blue-800 p-4 rounded-lg mb-4">
-                    <div className="flex">
-                      <Info className="h-5 w-5 mr-2 mt-0.5" />
-                      <div>
-                        <h3 className="font-medium">Funzionalità in fase di sviluppo</h3>
-                        <p className="text-sm mt-1">
-                          La gestione degli account email è temporaneamente disabilitata durante l'aggiornamento del sistema.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Mostra gli account in modalità di sola lettura */}
                   {accounts.map(account => (
                     <Card key={account.id}>
                       <CardContent className="p-4 flex justify-between items-center">
                         <div>
-                          <h4 className="font-medium">{account.displayName}</h4>
+                          <h4 className="font-medium">{account.name}</h4>
                           <p className="text-sm text-muted-foreground">{account.email}</p>
                           <div className="mt-1 flex items-center">
                             <div className="h-2 w-2 rounded-full bg-green-500 mr-2" />
-                            <span className="text-xs text-muted-foreground">Connected</span>
+                            <span className="text-xs text-muted-foreground">Connesso</span>
                           </div>
                         </div>
                         <div className="flex space-x-2">
-                          <Button variant="outline" size="sm" disabled>Edit</Button>
                           <Button 
                             variant="destructive" 
                             size="sm"
-                            disabled
+                            onClick={() => handleDeleteAccount(account)}
                           >
-                            Remove
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            Rimuovi
                           </Button>
                         </div>
                       </CardContent>
@@ -491,13 +435,13 @@ export default function SettingsPage() {
                 <Card>
                   <CardContent className="p-6 flex flex-col items-center justify-center">
                     <Mail className="h-10 w-10 text-muted-foreground mb-2" />
-                    <h3 className="text-lg font-medium mb-1">No Email Accounts</h3>
+                    <h3 className="text-lg font-medium mb-1">Nessun Account Email</h3>
                     <p className="text-sm text-muted-foreground mb-4 text-center">
-                      Connect your email accounts to send and receive emails directly from the CRM.
+                      Connetti i tuoi account email per inviare e ricevere email direttamente dal CRM.
                     </p>
                     <Button onClick={() => setShowEmailModal(true)}>
                       <Plus className="h-4 w-4 mr-2" />
-                      Add Email Account
+                      Aggiungi Account Email
                     </Button>
                   </CardContent>
                 </Card>
