@@ -1,10 +1,9 @@
 import React from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { useToast } from '@/hooks/use-toast';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 import { Trash, Edit, Star, StarOff } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { queryClient } from '@/lib/queryClient';
@@ -35,26 +34,20 @@ export default function EmailSignaturesList() {
   // Delete signature mutation
   const deleteSignatureMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await fetch(`/api/email/signatures/${id}`, {
-        method: 'DELETE',
-      });
-      if (!response.ok) {
-        throw new Error('Errore durante l\'eliminazione della firma');
-      }
-      return response.json();
+      return await apiRequest('DELETE', `/api/email/signatures/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/email/signatures'] });
       toast({
         title: t('emailSignatures.deleteSuccess'),
         description: t('emailSignatures.deleteSuccessDescription'),
       });
+      queryClient.invalidateQueries({ queryKey: ['/api/email/signatures'] });
     },
     onError: (error) => {
       toast({
-        title: t('emailSignatures.deleteError'),
-        description: error.message,
         variant: 'destructive',
+        title: t('emailSignatures.deleteError'),
+        description: error.toString(),
       });
     },
   });
@@ -62,26 +55,20 @@ export default function EmailSignaturesList() {
   // Set default signature mutation
   const setDefaultSignatureMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await fetch(`/api/email/signatures/${id}/default`, {
-        method: 'POST',
-      });
-      if (!response.ok) {
-        throw new Error('Errore durante l\'impostazione della firma predefinita');
-      }
-      return response.json();
+      return await apiRequest('PATCH', `/api/email/signatures/${id}/default`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/email/signatures'] });
       toast({
         title: t('emailSignatures.defaultSuccess'),
         description: t('emailSignatures.defaultSuccessDescription'),
       });
+      queryClient.invalidateQueries({ queryKey: ['/api/email/signatures'] });
     },
     onError: (error) => {
       toast({
-        title: t('emailSignatures.defaultError'),
-        description: error.message,
         variant: 'destructive',
+        title: t('emailSignatures.defaultError'),
+        description: error.toString(),
       });
     },
   });
@@ -99,6 +86,11 @@ export default function EmailSignaturesList() {
     setDefaultSignatureMutation.mutate(id);
   };
 
+  const handleAddNew = () => {
+    setSelectedSignature(null);
+    setIsModalOpen(true);
+  };
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedSignature(null);
@@ -106,45 +98,17 @@ export default function EmailSignaturesList() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold">{t('emailSignatures.title')}</h2>
-          <Skeleton className="h-10 w-40" />
-        </div>
-        {[1, 2, 3].map((i) => (
-          <Card key={i}>
-            <CardHeader>
-              <Skeleton className="h-6 w-40" />
-              <Skeleton className="h-4 w-24" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-20 w-full" />
-            </CardContent>
-            <CardFooter>
-              <div className="flex gap-2">
-                <Skeleton className="h-10 w-10" />
-                <Skeleton className="h-10 w-10" />
-                <Skeleton className="h-10 w-10" />
-              </div>
-            </CardFooter>
-          </Card>
-        ))}
+      <div className="flex justify-center items-center h-60">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-4 bg-destructive/10 rounded-md">
-        <h2 className="text-xl font-semibold text-destructive">
-          {t('emailSignatures.errorLoading')}
-        </h2>
-        <p className="text-destructive/80">{(error as Error).message}</p>
-        <Button 
-          variant="outline" 
-          className="mt-2"
-          onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/email/signatures'] })}
-        >
+      <div className="text-center p-6">
+        <p className="text-destructive mb-2">{t('emailSignatures.errorLoading')}</p>
+        <Button variant="outline" onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/email/signatures'] })}>
           {t('common.retry')}
         </Button>
       </div>
@@ -152,10 +116,9 @@ export default function EmailSignaturesList() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">{t('emailSignatures.title')}</h2>
-        <Button onClick={() => setIsModalOpen(true)}>
+    <div className="space-y-6">
+      <div className="flex justify-end">
+        <Button onClick={handleAddNew}>
           {t('emailSignatures.createNew')}
         </Button>
       </div>
@@ -177,71 +140,79 @@ export default function EmailSignaturesList() {
             <CardHeader>
               <div className="flex justify-between items-start">
                 <div>
-                  <CardTitle>{signature.name}</CardTitle>
-                  <CardDescription>
-                    {new Date(signature.updatedAt).toLocaleDateString()}
-                  </CardDescription>
+                  <CardTitle className="flex items-center">
+                    {signature.name}
+                    {signature.isDefault && (
+                      <span className="ml-2 px-2 py-1 text-xs bg-primary text-primary-foreground rounded-full">
+                        {t('emailSignatures.default')}
+                      </span>
+                    )}
+                  </CardTitle>
                 </div>
-                {signature.isDefault && (
-                  <Badge variant="outline" className="border-primary text-primary">
-                    {t('emailSignatures.default')}
-                  </Badge>
-                )}
+                <div className="flex space-x-2">
+                  {!signature.isDefault && (
+                    <Button 
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleSetDefault(signature.id)}
+                      className="flex items-center gap-1"
+                    >
+                      <Star className="h-4 w-4" />
+                      <span className="hidden sm:inline">{t('emailSignatures.setAsDefault')}</span>
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleEdit(signature)}
+                    className="flex items-center gap-1"
+                  >
+                    <Edit className="h-4 w-4" />
+                    <span className="hidden sm:inline">{t('common.edit')}</span>
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-1 text-destructive hover:text-destructive focus:text-destructive"
+                      >
+                        <Trash className="h-4 w-4" />
+                        <span className="hidden sm:inline">{t('common.delete')}</span>
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>{t('emailSignatures.deleteConfirmTitle')}</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          {t('emailSignatures.deleteConfirmDescription')}
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDelete(signature.id)}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          {t('common.delete')}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
-              <div 
-                className="signature-preview border rounded-md p-3 max-h-32 overflow-auto"
-                dangerouslySetInnerHTML={{ __html: signature.content }}
-              />
-            </CardContent>
-            <CardFooter>
-              <div className="flex gap-2">
-                <Button variant="outline" size="icon" onClick={() => handleEdit(signature)}>
-                  <Edit className="h-4 w-4" />
-                </Button>
-                {!signature.isDefault && (
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
-                    onClick={() => handleSetDefault(signature.id)}
-                    title={t('emailSignatures.setAsDefault')}
-                  >
-                    <Star className="h-4 w-4" />
-                  </Button>
-                )}
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="outline" size="icon">
-                      <Trash className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>{t('emailSignatures.deleteConfirmTitle')}</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        {t('emailSignatures.deleteConfirmDescription')}
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-                      <AlertDialogAction 
-                        onClick={() => handleDelete(signature.id)}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      >
-                        {t('common.delete')}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+              <div className="border rounded p-4 bg-white">
+                <div dangerouslySetInnerHTML={{ __html: signature.content }} />
               </div>
-            </CardFooter>
+            </CardContent>
           </Card>
         ))
       )}
 
       <NewEmailSignatureModal 
-        isOpen={isModalOpen} 
+        isOpen={isModalOpen}
         onClose={handleCloseModal}
         signature={selectedSignature}
       />

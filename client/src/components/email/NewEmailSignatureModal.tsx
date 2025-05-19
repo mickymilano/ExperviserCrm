@@ -1,30 +1,24 @@
-import React from 'react';
-import { useForm } from 'react-hook-form';
-import { useMutation } from '@tanstack/react-query';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useToast } from '@/hooks/use-toast';
-import { useTranslation } from 'react-i18next';
-import { queryClient } from '@/lib/queryClient';
-
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+import React, { useState } from 'react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { useToast } from '@/hooks/use-toast';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import { useTranslation } from 'react-i18next';
+import { RichTextEditor } from '@/components/email/RichTextEditor';
 
-// TipTap imports
-import { useEditor, EditorContent } from '@tiptap/react';
+// Import TipTap extensions
 import StarterKit from '@tiptap/starter-kit';
-import Image from '@tiptap/extension-image';
-import Link from '@tiptap/extension-link';
 import TextAlign from '@tiptap/extension-text-align';
 import TextStyle from '@tiptap/extension-text-style';
 import Color from '@tiptap/extension-color';
 import FontFamily from '@tiptap/extension-font-family';
-import { RichTextEditor } from '@/components/email/RichTextEditor';
 
 interface EmailSignature {
   id: number;
@@ -42,9 +36,10 @@ interface NewEmailSignatureModalProps {
   signature?: EmailSignature | null;
 }
 
+// Form schema per la validazione
 const formSchema = z.object({
-  name: z.string().min(1, { message: 'Il nome della firma è obbligatorio' }),
-  content: z.string().min(1, { message: 'Il contenuto della firma è obbligatorio' }),
+  name: z.string().min(1, { message: 'Il nome è obbligatorio' }),
+  content: z.string().min(1, { message: 'Il contenuto è obbligatorio' }),
   isDefault: z.boolean().default(false),
 });
 
@@ -53,31 +48,8 @@ type FormValues = z.infer<typeof formSchema>;
 export default function NewEmailSignatureModal({ isOpen, onClose, signature }: NewEmailSignatureModalProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = React.useState<string>('editor');
-  
-  // Initialize TipTap editor
-  const editor = useEditor({
-    extensions: [
-      StarterKit,
-      Image,
-      Link.configure({
-        openOnClick: false,
-      }),
-      TextAlign.configure({
-        types: ['heading', 'paragraph'],
-      }),
-      TextStyle,
-      Color,
-      FontFamily,
-    ],
-    content: signature?.content || '',
-  });
-  
-  React.useEffect(() => {
-    if (editor && signature?.content) {
-      editor.commands.setContent(signature.content);
-    }
-  }, [editor, signature?.content]);
+  const queryClient = useQueryClient();
+  const isEditing = !!signature;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -86,120 +58,73 @@ export default function NewEmailSignatureModal({ isOpen, onClose, signature }: N
       content: signature?.content || '',
       isDefault: signature?.isDefault || false,
     },
-    mode: 'onChange',
   });
 
-  // Update form when signature changes
-  React.useEffect(() => {
-    if (signature) {
-      form.reset({
-        name: signature.name,
-        content: signature.content,
-        isDefault: signature.isDefault,
+  // Mutation per creare una nuova firma
+  const createSignatureMutation = useMutation({
+    mutationFn: async (values: FormValues) => {
+      return await apiRequest('POST', '/api/email/signatures', values);
+    },
+    onSuccess: () => {
+      toast({
+        title: t('emailSignatures.createSuccess'),
+        description: t('emailSignatures.createSuccessDescription'),
       });
-    } else {
+      queryClient.invalidateQueries({ queryKey: ['/api/email/signatures'] });
+      onClose();
       form.reset({
         name: '',
         content: '',
         isDefault: false,
       });
-    }
-  }, [form, signature]);
-
-  // Create or update signature mutation
-  const mutation = useMutation({
-    mutationFn: async (values: FormValues) => {
-      // Get content from editor
-      if (editor) {
-        values.content = editor.getHTML();
-      }
-
-      const url = signature 
-        ? `/api/email/signatures/${signature.id}` 
-        : '/api/email/signatures';
-        
-      const method = signature ? 'PUT' : 'POST';
-      
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(values),
+    },
+    onError: (error) => {
+      toast({
+        variant: 'destructive',
+        title: t('emailSignatures.createError'),
+        description: error.toString(),
       });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Si è verificato un errore');
-      }
-      
-      return response.json();
+    }
+  });
+
+  // Mutation per aggiornare una firma esistente
+  const updateSignatureMutation = useMutation({
+    mutationFn: async (values: FormValues) => {
+      return await apiRequest('PATCH', `/api/email/signatures/${signature?.id}`, values);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/email/signatures'] });
       toast({
-        title: signature 
-          ? t('emailSignatures.updateSuccess') 
-          : t('emailSignatures.createSuccess'),
-        description: signature 
-          ? t('emailSignatures.updateSuccessDescription') 
-          : t('emailSignatures.createSuccessDescription'),
+        title: t('emailSignatures.updateSuccess'),
+        description: t('emailSignatures.updateSuccessDescription'),
       });
+      queryClient.invalidateQueries({ queryKey: ['/api/email/signatures'] });
       onClose();
     },
     onError: (error) => {
       toast({
-        title: signature 
-          ? t('emailSignatures.updateError') 
-          : t('emailSignatures.createError'),
-        description: error.message,
         variant: 'destructive',
+        title: t('emailSignatures.updateError'),
+        description: error.toString(),
       });
-    },
+    }
   });
 
   const onSubmit = (values: FormValues) => {
-    // Update content from editor
-    if (editor) {
-      values.content = editor.getHTML();
+    if (isEditing) {
+      updateSignatureMutation.mutate(values);
+    } else {
+      createSignatureMutation.mutate(values);
     }
-    
-    mutation.mutate(values);
   };
 
-  // Preview the signature
-  const handlePreviewClick = () => {
-    setActiveTab('preview');
-  };
-
-  // Go back to editor
-  const handleEditClick = () => {
-    setActiveTab('editor');
-  };
-
-  // Effect to update form content from editor
-  React.useEffect(() => {
-    if (editor) {
-      const updateContent = () => {
-        form.setValue('content', editor.getHTML());
-      };
-      
-      editor.on('update', updateContent);
-      
-      return () => {
-        editor.off('update', updateContent);
-      };
-    }
-  }, [editor, form]);
+  const isPending = createSignatureMutation.isPending || updateSignatureMutation.isPending;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[700px]">
         <DialogHeader>
           <DialogTitle>
-            {signature 
-              ? t('emailSignatures.editTitle') 
-              : t('emailSignatures.createTitle')}
+            {isEditing ? t('emailSignatures.editTitle') : t('emailSignatures.createTitle')}
           </DialogTitle>
           <DialogDescription>
             {t('emailSignatures.modalDescription')}
@@ -208,99 +133,58 @@ export default function NewEmailSignatureModal({ isOpen, onClose, signature }: N
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('emailSignatures.nameLabel')}</FormLabel>
-                  <FormControl>
-                    <Input {...field} autoComplete="off" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="space-y-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('emailSignatures.nameLabel')}</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="mb-4">
-                <TabsTrigger value="editor">{t('emailSignatures.editorTab')}</TabsTrigger>
-                <TabsTrigger value="preview">{t('emailSignatures.previewTab')}</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="editor" className="flex flex-col space-y-2">
-                <FormField
-                  control={form.control}
-                  name="content"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('emailSignatures.contentLabel')}</FormLabel>
-                      <FormControl>
-                        <div className="border rounded-md">
-                          <RichTextEditor editor={editor} />
-                          <EditorContent editor={editor} className="p-3 min-h-[150px]" />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <div className="flex justify-end">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={handlePreviewClick}
-                  >
-                    {t('emailSignatures.previewButton')}
-                  </Button>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="preview">
-                <div className="border rounded-md p-4">
-                  <div className="mb-2 text-sm text-muted-foreground">
-                    {t('emailSignatures.previewDescription')}
-                  </div>
-                  <div 
-                    className="p-4 border rounded-md"
-                    dangerouslySetInnerHTML={{ __html: editor?.getHTML() || '' }}
-                  />
-                </div>
-                
-                <div className="flex justify-end mt-2">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={handleEditClick}
-                  >
-                    {t('emailSignatures.editButton')}
-                  </Button>
-                </div>
-              </TabsContent>
-            </Tabs>
+              <FormField
+                control={form.control}
+                name="content"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('emailSignatures.contentLabel')}</FormLabel>
+                    <FormControl>
+                      <RichTextEditor 
+                        content={field.value} 
+                        onChange={field.onChange} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <div className="flex items-center space-x-2">
               <FormField
                 control={form.control}
                 name="isDefault"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center space-x-2">
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 mt-4">
                     <FormControl>
-                      <Switch
+                      <Checkbox
                         checked={field.value}
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>
-                    <Label htmlFor="isDefault">
-                      {t('emailSignatures.defaultLabel')}
-                    </Label>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>{t('emailSignatures.defaultLabel')}</FormLabel>
+                    </div>
                   </FormItem>
                 )}
               />
             </div>
 
-            <div className="flex justify-end space-x-2">
+            <DialogFooter>
               <Button 
                 type="button" 
                 variant="outline" 
@@ -310,15 +194,11 @@ export default function NewEmailSignatureModal({ isOpen, onClose, signature }: N
               </Button>
               <Button 
                 type="submit" 
-                disabled={mutation.isPending || !form.formState.isValid}
+                disabled={isPending}
               >
-                {mutation.isPending 
-                  ? t('common.saving') 
-                  : signature 
-                    ? t('common.save') 
-                    : t('common.create')}
+                {isPending ? t('common.saving') : t('common.save')}
               </Button>
-            </div>
+            </DialogFooter>
           </form>
         </Form>
       </DialogContent>

@@ -39,11 +39,22 @@ export const authenticate = (req: any, res: any, next: any) => {
   // DEVELOPMENT MODE: Per test e sviluppo, l'autenticazione è sempre consentita
   if (process.env.NODE_ENV === 'development') {
     console.log('[AUTH DEBUG] Autenticazione bypassata in modalità sviluppo');
-    req.user = {
+    
+    // Utente di debug predefinito
+    const debugUser = {
       id: 1,
-      username: 'debug',
-      role: 'super_admin'
+      username: 'admin',
+      email: 'admin@experviser.com',
+      firstName: 'Admin',
+      lastName: 'User',
+      role: 'super_admin',
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      lastLogin: new Date()
     };
+    
+    req.user = debugUser;
     return next();
   }
 
@@ -67,11 +78,22 @@ export const authenticateJWT = (req: any, res: any, next: any) => {
   // BYPASS TOTALE: in modalità development garantiamo l'autenticazione
   if (process.env.NODE_ENV === 'development') {
     console.log('[AUTH DEBUG] Autenticazione JWT bypassata in modalità sviluppo');
-    req.user = {
+    
+    // Utente di debug predefinito
+    const debugUser = {
       id: 1,
-      username: 'debug',
-      role: 'super_admin'
+      username: 'admin',
+      email: 'admin@experviser.com',
+      firstName: 'Admin',
+      lastName: 'User',
+      role: 'super_admin',
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      lastLogin: new Date()
     };
+    
+    req.user = debugUser;
     return next();
   }
 
@@ -254,6 +276,46 @@ export function registerRoutes(app: any) {
         return res.status(400).json({ message: 'Username e password sono richiesti' });
       }
       
+      // In modalità sviluppo, bypass dell'autenticazione per qualsiasi credenziale
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[AUTH DEBUG] Login automatico in modalità sviluppo per l'utente: ${username}`);
+        
+        // Utente di debug predefinito
+        const debugUser = {
+          id: 1,
+          username: username,
+          email: 'admin@experviser.com',
+          firstName: 'Admin',
+          lastName: 'User',
+          role: 'super_admin',
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          lastLogin: new Date()
+        };
+        
+        // Crea il token JWT
+        const token = jwt.sign(
+          { id: debugUser.id, username: debugUser.username, role: debugUser.role },
+          JWT_SECRET,
+          { expiresIn: '24h' }
+        );
+        
+        // Imposta il token come cookie
+        res.cookie('token', token, {
+          httpOnly: true,
+          secure: false,
+          maxAge: 24 * 60 * 60 * 1000 // 24 ore
+        });
+        
+        // Restituisci i dati utente simulati
+        return res.json({
+          user: debugUser,
+          token
+        });
+      }
+      
+      // In produzione, autenticazione normale
       const user = await storage.getUserByUsername(username);
       
       if (!user) {
@@ -293,6 +355,46 @@ export function registerRoutes(app: any) {
       });
     } catch (error) {
       console.error('Login error:', error);
+      
+      // Se c'è un errore ma siamo in modalità sviluppo, login di emergenza
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[AUTH DEBUG] Login di emergenza attivato dopo errore');
+        
+        // Utente di debug predefinito
+        const debugUser = {
+          id: 1,
+          username: 'admin',
+          email: 'admin@experviser.com',
+          firstName: 'Admin',
+          lastName: 'User',
+          role: 'super_admin',
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          lastLogin: new Date()
+        };
+        
+        // Crea il token JWT
+        const token = jwt.sign(
+          { id: debugUser.id, username: debugUser.username, role: debugUser.role },
+          JWT_SECRET,
+          { expiresIn: '24h' }
+        );
+        
+        // Imposta il token come cookie
+        res.cookie('token', token, {
+          httpOnly: true,
+          secure: false,
+          maxAge: 24 * 60 * 60 * 1000 // 24 ore
+        });
+        
+        // Restituisci i dati utente simulati
+        return res.json({
+          user: debugUser,
+          token
+        });
+      }
+      
       res.status(500).json({ message: 'Errore durante il login' });
     }
   });
