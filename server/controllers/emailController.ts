@@ -26,7 +26,7 @@ export const emailController = {
       const allAccounts = await db
         .select({
           id: emailAccounts.id,
-          name: emailAccounts.name,
+          name: emailAccounts.displayName, // Usa display_name invece di name
           email: emailAccounts.email,
           provider: emailAccounts.provider,
           isActive: emailAccounts.isActive,
@@ -35,7 +35,7 @@ export const emailController = {
           createdAt: emailAccounts.createdAt
         })
         .from(emailAccounts)
-        .orderBy(emailAccounts.name);
+        .orderBy(emailAccounts.displayName);
         
       res.json(allAccounts);
     } catch (error) {
@@ -54,7 +54,7 @@ export const emailController = {
       const [account] = await db
         .select({
           id: emailAccounts.id,
-          name: emailAccounts.name,
+          name: emailAccounts.displayName, // Usiamo display_name ma mappiamo a name per il frontend
           email: emailAccounts.email,
           provider: emailAccounts.provider,
           imapHost: emailAccounts.imapHost,
@@ -91,16 +91,25 @@ export const emailController = {
   createEmailAccount: async (req: Request, res: Response) => {
     try {
       // Validate input
-      const emailAccountData = insertEmailAccountSchema.parse({
+      const validatedData = insertEmailAccountSchema.parse({
         ...req.body,
         userId: 1, // TODO: recuperare l'utente autenticato
       });
+      
+      // Adatta i nomi dei campi per il database
+      const emailAccountData = {
+        ...validatedData,
+        displayName: validatedData.name, // Mappa da name a displayName
+      };
       
       // Inserisci nel database
       const [newAccount] = await db
         .insert(emailAccounts)
         .values(emailAccountData)
         .returning();
+        
+      // Adatta i nomi dei campi per il frontend
+      newAccount.name = newAccount.displayName;
         
       // Pianifica la sincronizzazione
       if (newAccount.isActive) {

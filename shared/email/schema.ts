@@ -15,7 +15,7 @@ import { z } from "zod";
 export const emailAccounts = pgTable("email_accounts", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
-  name: varchar("name", { length: 255 }).notNull(), // Nome descrittivo dell'account
+  displayName: varchar("display_name", { length: 255 }).notNull(), // Nome descrittivo dell'account
   email: varchar("email", { length: 255 }).notNull(),
   provider: varchar("provider", { length: 50 }).notNull(), // gmail, outlook, imap, ecc.
   
