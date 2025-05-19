@@ -161,6 +161,16 @@ export default function App() {
           </Route>
           
           {/* Routes for Email */}
+          <Route path="/emails/inbox">
+            <ProtectedRoute>
+              <LayoutPage component={lazy(() => import('@/pages/email/inbox'))} />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/emails/compose">
+            <ProtectedRoute>
+              <LayoutPage component={lazy(() => import('@/pages/email/compose'))} />
+            </ProtectedRoute>
+          </Route>
           <Route path="/emails/signatures">
             <ProtectedRoute>
               <LayoutPage component={EmailSignaturesPage} />
@@ -171,14 +181,14 @@ export default function App() {
               <LayoutPage component={lazy(() => import('@/pages/email/accounts'))} />
             </ProtectedRoute>
           </Route>
-          <Route path="/emails">
-            <ProtectedRoute>
-              <LayoutPage component={EmailPage} />
-            </ProtectedRoute>
-          </Route>
           <Route path="/emails/settings">
             <ProtectedRoute>
               <LayoutPage component={lazy(() => import('@/pages/email/settings'))} />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/emails">
+            <ProtectedRoute>
+              <LayoutPage component={EmailPage} />
             </ProtectedRoute>
           </Route>
           
