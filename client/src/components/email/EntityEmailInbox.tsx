@@ -131,9 +131,8 @@ export function EntityEmailInbox({ entityId, entityType, entityEmail }: EntityEm
   // Mutation per segnare le email come lette
   const markAsReadMutation = useMutation({
     mutationFn: async (emailIds: number[]) => {
-      return await apiRequest('/api/email/mark-read', {
-        method: 'POST',
-        body: JSON.stringify({ emailIds }),
+      return await apiRequest('/api/email/mark-read', 'POST', { 
+        emailIds 
       });
     },
     onSuccess: () => {
@@ -155,9 +154,8 @@ export function EntityEmailInbox({ entityId, entityType, entityEmail }: EntityEm
   // Mutation per eliminare le email
   const deleteEmailsMutation = useMutation({
     mutationFn: async (emailIds: number[]) => {
-      return await apiRequest('/api/email/delete', {
-        method: 'POST',
-        body: JSON.stringify({ emailIds }),
+      return await apiRequest('/api/email/delete', 'POST', { 
+        emailIds 
       });
     },
     onSuccess: () => {

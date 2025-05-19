@@ -2833,15 +2833,8 @@ export function registerRoutes(app: any) {
   // Integrazione API filiali/sedi (Branch)
   app.use('/api/branches', branchRoutes);
   
-  // Integrazione API Email
-  // Disattiviamo l'implementazione di mock e utilizziamo quella reale
-  // app.use('/api/email', authenticate, mockEmailRoutes);
-  
-  // Attiviamo le implementazioni reali
-  app.use('/api/email', authenticate, emailRoutes);
-  
-  // Implementazione per le firme email
-  app.use('/api/email/sign', authenticate, emailSignatureRoutes);
+  // Integrazione API Email - Utilizziamo la versione mockup per lo sviluppo
+  app.use('/api/email', authenticate, mockEmailRoutes);
   
   // --- ROTTE PER SETTORI, SOTTOSETTORI E JOB TITLES ---
   
