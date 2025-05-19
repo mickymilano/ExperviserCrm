@@ -51,14 +51,16 @@ const formSchema = z.object({
     .number()
     .min(1, { message: "Porta IMAP non valida" })
     .max(65535, { message: "Porta IMAP non valida" }),
+  imapSecurity: z.enum(["ssl", "tls", "none"]).default("ssl"),
   smtpServer: z.string().min(1, { message: "Server SMTP obbligatorio" }),
   smtpPort: z.coerce
     .number()
     .min(1, { message: "Porta SMTP non valida" })
     .max(65535, { message: "Porta SMTP non valida" }),
+  smtpSecurity: z.enum(["ssl", "tls", "none"]).default("tls"),
   username: z.string().min(1, { message: "Username obbligatorio" }),
   password: z.string().min(1, { message: "Password obbligatoria" }),
-  useSSL: z.boolean().default(true),
+  useSSL: z.boolean().default(true), // Manteniamo per compatibilità
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -85,8 +87,10 @@ export default function NewEmailAccountModal({
       provider: "",
       imapServer: "",
       imapPort: 993,
+      imapSecurity: "ssl",
       smtpServer: "",
       smtpPort: 587,
+      smtpSecurity: "tls",
       username: "",
       password: "",
       useSSL: true,
@@ -283,6 +287,35 @@ export default function NewEmailAccountModal({
               />
             </div>
 
+            <FormField
+              control={form.control}
+              name="imapSecurity"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Sicurezza IMAP</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleziona tipo di connessione" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="ssl">SSL/TLS</SelectItem>
+                      <SelectItem value="tls">STARTTLS</SelectItem>
+                      <SelectItem value="none">Nessuna (non sicura)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    SSL/TLS è raccomandato per la maggior parte dei server.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -315,6 +348,35 @@ export default function NewEmailAccountModal({
                 )}
               />
             </div>
+
+            <FormField
+              control={form.control}
+              name="smtpSecurity"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Sicurezza SMTP</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleziona tipo di connessione" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="ssl">SSL/TLS</SelectItem>
+                      <SelectItem value="tls">STARTTLS</SelectItem>
+                      <SelectItem value="none">Nessuna (non sicura)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    STARTTLS è raccomandato per la maggior parte dei server SMTP.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}

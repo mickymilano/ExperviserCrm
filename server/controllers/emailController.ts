@@ -62,7 +62,6 @@ export const emailController = {
           id: emailAccounts.id,
           name: emailAccounts.displayName, // Usiamo display_name ma mappiamo a name per il frontend
           email: emailAccounts.email,
-          // Rimosso provider che non esiste nel database
           imapHost: emailAccounts.imapHost,
           imapPort: emailAccounts.imapPort,
           imapSecure: emailAccounts.imapSecure,
@@ -71,8 +70,6 @@ export const emailController = {
           smtpSecure: emailAccounts.smtpSecure,
           username: emailAccounts.username,
           isActive: emailAccounts.isActive,
-          lastSyncedAt: emailAccounts.lastSyncedAt,
-          syncFrequency: emailAccounts.syncFrequency,
           createdAt: emailAccounts.createdAt,
           updatedAt: emailAccounts.updatedAt
         })
@@ -84,13 +81,15 @@ export const emailController = {
         return res.status(404).json({ error: 'Account email non trovato' });
       }
       
-      // Aggiunge il campo provider per compatibilità con il frontend
-      const accountWithProvider = {
+      // Aggiunge campi mancanti per compatibilità con il frontend
+      const accountWithDefaults = {
         ...account,
-        provider: 'imap' // Valore predefinito
+        provider: 'imap', // Valore predefinito
+        lastSyncedAt: null, // Valore predefinito
+        syncFrequency: 5 // Valore predefinito in minuti
       };
       
-      res.json(accountWithProvider);
+      res.json(accountWithDefaults);
     } catch (error) {
       console.error('Errore durante il recupero dell\'account email:', error);
       res.status(500).json({ error: 'Errore interno del server' });
