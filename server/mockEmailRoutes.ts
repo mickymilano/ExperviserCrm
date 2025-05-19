@@ -1,126 +1,119 @@
-import express from 'express';
-import { format } from 'date-fns';
+import { Router } from 'express';
+import { makeGenericId } from './utils';
 
-const router = express.Router();
+const router = Router();
 
-// Dati mockup per gli account email
+// Dati di esempio per account email
 const mockEmailAccounts = [
   {
     id: 1,
-    name: 'Account principale',
-    email: 'mario.rossi@experviser.com',
-    isPrimary: true,
     userId: 1,
-    createdAt: new Date(2024, 0, 1).toISOString(),
-    updatedAt: new Date(2024, 0, 1).toISOString()
+    name: 'Lavoro',
+    email: 'user@example.com',
+    isPrimary: true,
+    smtpHost: 'smtp.example.com',
+    smtpPort: 587,
+    smtpUsername: 'user@example.com',
+    imapHost: 'imap.example.com',
+    imapPort: 993,
+    imapUsername: 'user@example.com',
+    useSSL: true,
+    lastSynced: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   },
   {
     id: 2,
-    name: 'Account secondario',
-    email: 'support@experviser.com',
-    isPrimary: false,
     userId: 1,
-    createdAt: new Date(2024, 0, 5).toISOString(),
-    updatedAt: new Date(2024, 0, 5).toISOString()
+    name: 'Personale',
+    email: 'personal@example.com',
+    isPrimary: false,
+    smtpHost: 'smtp.personal.com',
+    smtpPort: 587,
+    smtpUsername: 'personal@example.com',
+    imapHost: 'imap.personal.com',
+    imapPort: 993,
+    imapUsername: 'personal@example.com',
+    useSSL: true,
+    lastSynced: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   }
 ];
 
-// Dati mockup per le firme email
+// Dati di esempio per firme email
 const mockEmailSignatures = [
   {
     id: 1,
-    name: 'Firma standard',
-    content: '<p>Cordiali saluti,</p><p>Mario Rossi</p><p>Experviser CRM</p><p>Tel: +39 123 456 7890</p>',
+    userId: 1,
+    name: 'Firma professionale',
+    content: '<p>Cordiali saluti,</p><p>Nome Cognome</p><p>Responsabile Vendite | Azienda ABC</p><p>Tel: +39 123 456 7890</p>',
     isDefault: true,
-    userId: 1,
-    createdAt: new Date(2024, 0, 1).toISOString(),
-    updatedAt: new Date(2024, 0, 1).toISOString()
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   },
   {
     id: 2,
+    userId: 1,
     name: 'Firma breve',
-    content: '<p>Saluti,</p><p>Mario</p>',
+    content: '<p>Saluti,</p><p>Nome Cognome</p>',
     isDefault: false,
-    userId: 1,
-    createdAt: new Date(2024, 0, 10).toISOString(),
-    updatedAt: new Date(2024, 0, 10).toISOString()
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   }
 ];
 
-// Dati mockup per le email
-const mockEmails = [
-  {
-    id: 1,
-    from: 'mario.rossi@example.com',
-    fromName: 'Mario Rossi',
-    to: ['utente@experviser.com'],
-    subject: 'Richiesta informazioni prodotto',
-    body: '<p>Buongiorno,</p><p>Sarei interessato a ricevere maggiori informazioni sul vostro prodotto XYZ. Potremmo organizzare una chiamata la prossima settimana?</p><p>Cordiali saluti,<br>Mario Rossi</p>',
-    date: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // Ieri
-    read: true,
-    hasAttachments: false,
-    accountId: 1
-  },
-  {
-    id: 2,
-    from: 'laura.bianchi@example.com',
-    fromName: 'Laura Bianchi',
-    to: ['utente@experviser.com'],
-    subject: 'Conferma appuntamento',
-    body: '<p>Gentile utente,</p><p>Confermo l\'appuntamento per il giorno 25 maggio alle ore 15:00 presso la nostra sede.</p><p>Cordiali saluti,<br>Laura Bianchi</p>',
-    date: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 ore fa
-    read: false,
-    hasAttachments: false,
-    accountId: 1
-  },
-  {
-    id: 3,
-    from: 'giovanni.verdi@example.com',
-    fromName: 'Giovanni Verdi',
-    to: ['utente@experviser.com'],
-    cc: ['responsabile@example.com'],
-    subject: 'Documentazione richiesta',
-    body: '<p>Buongiorno,</p><p>In allegato troverà la documentazione richiesta per il progetto.</p><p>Rimango a disposizione per qualsiasi chiarimento.</p><p>Cordiali saluti,<br>Giovanni Verdi</p>',
-    date: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minuti fa
-    read: false,
-    hasAttachments: true,
-    accountId: 1
-  },
-  {
-    id: 4,
-    from: 'utente@experviser.com',
-    fromName: 'Utente Experviser',
-    to: ['cliente@example.com'],
-    subject: 'Re: Richiesta informazioni',
-    body: '<p>Gentile Cliente,</p><p>In risposta alla sua richiesta, le confermo che i nostri prodotti sono disponibili con consegna in 3-5 giorni lavorativi.</p><p>Per ulteriori informazioni, non esiti a contattarci.</p><p>Cordiali saluti,<br>Utente Experviser</p>',
-    date: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), // 5 ore fa
-    read: true,
-    hasAttachments: false,
-    accountId: 1
-  },
-  {
-    id: 5,
-    from: 'newsletter@tech-news.com',
-    fromName: 'Tech News',
-    to: ['utente@experviser.com'],
-    subject: 'Newsletter settimanale: Novità tecnologiche',
-    body: '<p>Scopri le ultime novità nel mondo della tecnologia:</p><ul><li>Intelligenza artificiale: nuovi sviluppi</li><li>Cloud computing: tendenze emergenti</li><li>Sicurezza informatica: consigli pratici</li></ul><p>Grazie per essere iscritto alla nostra newsletter!</p>',
-    date: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), // 2 giorni fa
-    read: true,
-    hasAttachments: false,
-    accountId: 1
+// Funzione per generare email di esempio per un'entità
+function generateMockEmails(entityType: string, entityId: number, count = 5) {
+  const emails = [];
+  const now = new Date();
+  
+  for (let i = 0; i < count; i++) {
+    const isIncoming = i % 2 === 0;
+    const date = new Date(now);
+    date.setDate(date.getDate() - i);
+    
+    emails.push({
+      id: makeGenericId(),
+      accountId: 1,
+      subject: `Email ${i+1} riguardo ${entityType} #${entityId}`,
+      body: `<p>Questa è un'email di esempio ${i+1} per ${entityType} con ID ${entityId}.</p><p>Potrebbe contenere dettagli importanti sul ${entityType} in questione.</p><p>Cordiali saluti,</p><p>${isIncoming ? 'Cliente Esterno' : 'Il tuo nome'}</p>`,
+      bodyType: 'text/html',
+      from: isIncoming ? 'cliente@esempio.com' : 'user@example.com',
+      fromName: isIncoming ? 'Cliente Esterno' : 'Il tuo nome',
+      to: isIncoming ? ['user@example.com'] : ['cliente@esempio.com'],
+      cc: [],
+      bcc: [],
+      messageId: `msg_${makeGenericId()}@mail.example.com`,
+      date: date.toISOString(),
+      receivedDate: isIncoming ? date.toISOString() : null,
+      sentDate: !isIncoming ? date.toISOString() : null,
+      isRead: i > 1,
+      isSent: !isIncoming,
+      isDraft: false,
+      isStarred: i === 0,
+      isTrash: false,
+      isSpam: false,
+      folder: isIncoming ? 'inbox' : 'sent',
+      hasAttachments: i === 1,
+      createdAt: date.toISOString(),
+      updatedAt: date.toISOString()
+    });
   }
-];
+  
+  return emails;
+}
 
-// Route per ottenere tutti gli account email
+// Endpoint per ottenere gli account email dell'utente
 router.get('/accounts', (req, res) => {
   res.json(mockEmailAccounts);
 });
 
-// Route per creare un nuovo account email
+// Endpoint per creare un nuovo account email
 router.post('/accounts', (req, res) => {
   const newAccount = {
     id: mockEmailAccounts.length + 1,
+    userId: 1,
     ...req.body,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
@@ -130,46 +123,67 @@ router.post('/accounts', (req, res) => {
   res.status(201).json(newAccount);
 });
 
-// Route per aggiornare un account email
+// Endpoint per aggiornare un account email
 router.patch('/accounts/:id', (req, res) => {
   const id = parseInt(req.params.id);
   const accountIndex = mockEmailAccounts.findIndex(acc => acc.id === id);
   
   if (accountIndex === -1) {
-    return res.status(404).json({ error: 'Account not found' });
+    return res.status(404).json({ error: 'Account email non trovato' });
   }
   
-  mockEmailAccounts[accountIndex] = {
+  const updatedAccount = {
     ...mockEmailAccounts[accountIndex],
     ...req.body,
     updatedAt: new Date().toISOString()
   };
   
-  res.json(mockEmailAccounts[accountIndex]);
+  mockEmailAccounts[accountIndex] = updatedAccount;
+  res.json(updatedAccount);
 });
 
-// Route per eliminare un account email
+// Endpoint per eliminare un account email
 router.delete('/accounts/:id', (req, res) => {
   const id = parseInt(req.params.id);
   const accountIndex = mockEmailAccounts.findIndex(acc => acc.id === id);
   
   if (accountIndex === -1) {
-    return res.status(404).json({ error: 'Account not found' });
+    return res.status(404).json({ error: 'Account email non trovato' });
   }
   
   mockEmailAccounts.splice(accountIndex, 1);
   res.json({ success: true });
 });
 
-// Route per ottenere le firme email
-router.get('/sign', (req, res) => {
+// Endpoint per impostare un account email come primario
+router.post('/accounts/:id/set-primary', (req, res) => {
+  const id = parseInt(req.params.id);
+  
+  // Rimuovi lo stato primario da tutti gli account
+  mockEmailAccounts.forEach(account => {
+    account.isPrimary = false;
+  });
+  
+  // Imposta come primario l'account specificato
+  const account = mockEmailAccounts.find(acc => acc.id === id);
+  if (!account) {
+    return res.status(404).json({ error: 'Account email non trovato' });
+  }
+  
+  account.isPrimary = true;
+  res.json(account);
+});
+
+// Endpoint per ottenere le firme email dell'utente
+router.get('/signatures', (req, res) => {
   res.json(mockEmailSignatures);
 });
 
-// Route per creare una nuova firma email
-router.post('/sign', (req, res) => {
+// Endpoint per creare una nuova firma email
+router.post('/signatures', (req, res) => {
   const newSignature = {
     id: mockEmailSignatures.length + 1,
+    userId: 1,
     ...req.body,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
@@ -179,137 +193,145 @@ router.post('/sign', (req, res) => {
   res.status(201).json(newSignature);
 });
 
-// Route per ottenere le email filtrate
+// Endpoint per ottenere email filtrate per entità
 router.get('/', (req, res) => {
-  const { entityId, entityType, read, unread, hasAttachments, searchText } = req.query;
+  const entityId = parseInt(req.query.entityId as string);
+  const entityType = req.query.entityType as string;
   
-  let filteredEmails = [...mockEmails];
-  
-  // Applica filtri in base ai parametri
-  if (read === 'true') {
-    filteredEmails = filteredEmails.filter(email => email.read);
+  if (!entityId || !entityType) {
+    return res.status(400).json({ error: 'Sono richiesti entityId e entityType' });
   }
   
-  if (unread === 'true') {
-    filteredEmails = filteredEmails.filter(email => !email.read);
+  const emails = generateMockEmails(entityType, entityId);
+  
+  // Applica filtri se presenti
+  let filteredEmails = [...emails];
+  
+  if (req.query.read === 'true') {
+    filteredEmails = filteredEmails.filter(email => email.isRead);
   }
   
-  if (hasAttachments === 'true') {
+  if (req.query.unread === 'true') {
+    filteredEmails = filteredEmails.filter(email => !email.isRead);
+  }
+  
+  if (req.query.hasAttachments === 'true') {
     filteredEmails = filteredEmails.filter(email => email.hasAttachments);
   }
   
-  if (searchText) {
-    const searchLower = String(searchText).toLowerCase();
+  if (req.query.sentByMe === 'true') {
+    filteredEmails = filteredEmails.filter(email => email.isSent);
+  }
+  
+  if (req.query.receivedByMe === 'true') {
+    filteredEmails = filteredEmails.filter(email => !email.isSent);
+  }
+  
+  if (req.query.searchText) {
+    const searchText = (req.query.searchText as string).toLowerCase();
     filteredEmails = filteredEmails.filter(email => 
-      email.subject.toLowerCase().includes(searchLower) ||
-      email.body.toLowerCase().includes(searchLower) ||
-      email.from.toLowerCase().includes(searchLower) ||
-      (email.fromName && email.fromName.toLowerCase().includes(searchLower))
+      email.subject.toLowerCase().includes(searchText) || 
+      email.body.toLowerCase().includes(searchText) ||
+      email.from.toLowerCase().includes(searchText) ||
+      email.fromName?.toLowerCase().includes(searchText)
     );
   }
   
   res.json(filteredEmails);
 });
 
-// Route per inviare una nuova email
+// Endpoint per inviare una nuova email
 router.post('/send', (req, res) => {
-  const newEmailId = mockEmails.length + 1;
+  const { to, cc, bcc, subject, body, accountId, entityType, entityId } = req.body;
+  
+  if (!to || !subject || !body || !accountId) {
+    return res.status(400).json({ error: 'Destinatario, oggetto, corpo e accountId sono campi obbligatori' });
+  }
   
   const newEmail = {
-    id: newEmailId,
-    from: req.body.from || 'utente@experviser.com',
-    fromName: req.body.fromName || 'Utente Experviser',
-    to: req.body.to || [],
-    cc: req.body.cc || [],
-    bcc: req.body.bcc || [],
-    subject: req.body.subject || '(Nessun oggetto)',
-    body: req.body.body || '',
+    id: makeGenericId(),
+    accountId,
+    subject,
+    body,
+    bodyType: 'text/html',
+    from: mockEmailAccounts.find(acc => acc.id === accountId)?.email || 'user@example.com',
+    fromName: 'Il tuo nome',
+    to,
+    cc: cc || [],
+    bcc: bcc || [],
+    messageId: `msg_${makeGenericId()}@mail.example.com`,
     date: new Date().toISOString(),
-    read: true, // le email inviate sono già lette
+    sentDate: new Date().toISOString(),
+    isRead: true,
+    isSent: true,
+    isDraft: false,
+    isStarred: false,
+    isTrash: false,
+    isSpam: false,
+    folder: 'sent',
     hasAttachments: false,
-    accountId: req.body.accountId || 1
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   };
   
-  mockEmails.push(newEmail);
-  
-  res.status(201).json({
-    success: true,
-    emailId: newEmailId,
-    message: 'Email inviata con successo'
-  });
+  res.status(201).json(newEmail);
 });
 
-// Route per marcare le email come lette
+// Endpoint per marcare le email come lette
 router.post('/mark-read', (req, res) => {
   const { emailIds } = req.body;
   
-  if (!Array.isArray(emailIds) || emailIds.length === 0) {
-    return res.status(400).json({ error: 'Nessun ID email fornito' });
+  if (!emailIds || !Array.isArray(emailIds)) {
+    return res.status(400).json({ error: 'emailIds deve essere un array di ID email' });
   }
   
-  emailIds.forEach(id => {
-    const email = mockEmails.find(e => e.id === id);
-    if (email) {
-      email.read = true;
-    }
-  });
-  
-  res.json({ success: true });
+  res.json({ success: true, markedCount: emailIds.length });
 });
 
-// Route per eliminare le email
+// Endpoint per eliminare le email
 router.post('/delete', (req, res) => {
   const { emailIds } = req.body;
   
-  if (!Array.isArray(emailIds) || emailIds.length === 0) {
-    return res.status(400).json({ error: 'Nessun ID email fornito' });
+  if (!emailIds || !Array.isArray(emailIds)) {
+    return res.status(400).json({ error: 'emailIds deve essere un array di ID email' });
   }
   
-  emailIds.forEach(id => {
-    const index = mockEmails.findIndex(e => e.id === id);
-    if (index !== -1) {
-      mockEmails.splice(index, 1);
-    }
-  });
-  
-  res.json({ success: true });
+  res.json({ success: true, deletedCount: emailIds.length });
 });
 
-// Route per generare una risposta AI
-router.post('/ai-reply', (req, res) => {
-  const { emailBody, emailSubject } = req.body;
+// Endpoint per generare una risposta automatica con AI
+router.post('/generate-ai-reply', async (req, res) => {
+  const { emailContent } = req.body;
   
-  // Simulazione risposta generata da AI
-  const aiReply = `
-<p>Gentile cliente,</p>
-<p>Grazie per averci contattato riguardo a "${emailSubject}".</p>
-<p>Abbiamo ricevuto la sua richiesta e siamo lieti di fornirle le informazioni necessarie. Apprezziamo il suo interesse nei nostri servizi.</p>
-<p>Saremo felici di organizzare una chiamata la prossima settimana per discutere in dettaglio delle vostre esigenze. Potrebbe indicarci la sua disponibilità?</p>
-<p>Rimaniamo a disposizione per qualsiasi ulteriore chiarimento.</p>
-<p>Cordiali saluti,<br>Team Experviser</p>
-  `;
+  if (!emailContent) {
+    return res.status(400).json({ error: 'emailContent è un campo obbligatorio' });
+  }
   
+  // Simula una risposta AI senza usare effettivamente OpenAI
+  const aiReply = `Grazie per il tuo messaggio riguardo "${emailContent.subject}".
+  
+Ho esaminato attentamente quanto mi hai scritto e vorrei risponderti punto per punto.
+
+${emailContent.body.length > 50 ? 'Da quanto ho capito, stai chiedendo informazioni specifiche su un nostro prodotto/servizio. Ti confermo che...' : 'Ho preso nota della tua richiesta e provvederò a gestirla al più presto.'}
+
+Rimango a disposizione per qualsiasi chiarimento o informazione aggiuntiva.
+
+Cordiali saluti,
+[Il tuo nome]`;
+
+  // Simula un leggero ritardo per rendere più realistica la risposta AI
   setTimeout(() => {
-    res.json({ generatedReply: aiReply });
-  }, 1000); // Aggiungiamo un ritardo per simulare l'elaborazione dell'AI
+    res.json({ reply: aiReply });
+  }, 1500);
 });
 
-// Route per sincronizzare gli account email
+// Endpoint per sincronizzare gli account email
 router.post('/sync', (req, res) => {
-  // Simulazione sincronizzazione
-  const syncResults = mockEmailAccounts.map(account => ({
-    accountId: account.id,
-    success: true,
-    newEmails: Math.floor(Math.random() * 5), // 0-4 nuove email
-    message: `Account ${account.email} sincronizzato con successo`
-  }));
-  
-  setTimeout(() => {
-    res.json({
-      success: true,
-      syncResults
-    });
-  }, 1500); // Ritardo simulato
+  res.json({ 
+    success: true, 
+    message: 'Sincronizzazione avviata', 
+    newEmails: Math.floor(Math.random() * 5) // Simula da 0 a 4 nuove email
+  });
 });
 
 export default router;
