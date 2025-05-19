@@ -142,7 +142,7 @@ function MenuItem({ item, isOpen }: { item: MenuItemProps; isOpen: boolean }) {
           <div className="flex-1 flex items-center justify-between">
             <span className={isActive ? 'font-medium' : ''}>{item.label}</span>
             {item.badge && (
-              <span className="px-2 py-0.5 text-xs bg-primary/10 text-primary rounded-full">
+              <span className="px-2 py-0.5 text-xs bg-red-600 text-white font-medium rounded-full">
                 {item.badge}
               </span>
             )}
