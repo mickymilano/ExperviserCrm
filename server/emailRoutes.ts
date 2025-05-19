@@ -404,48 +404,7 @@ router.patch('/email/messages/:id/read', authenticateJWT, async (req, res) => {
   }
 });
 
-/**
- * Endpoint di test e2e per il modulo email
- */
-router.get('/email/messages/e2e-test', authenticateJWT, async (req, res) => {
-  try {
-    // Simula una lista di email per test
-    const testEmails = [
-      {
-        id: 9999,
-        subject: '[TEST] Test Email 1',
-        from: 'test@example.com',
-        to: ['user@yourcompany.com'],
-        body: '<p>Questa è un\'email di test per verificare la funzionalità del modulo email.</p>',
-        date: new Date(),
-        isRead: false,
-        hasAttachments: false,
-        account_email: 'user@yourcompany.com',
-        account_display_name: 'Test Account'
-      },
-      {
-        id: 9998,
-        subject: '[TEST] Test Email 2 con allegato',
-        from: 'client@example.com',
-        to: ['user@yourcompany.com'],
-        body: '<p>Questa è un\'altra email di test con allegato simulato.</p>',
-        date: new Date(Date.now() - 3600000), // 1 ora fa
-        isRead: true,
-        hasAttachments: true,
-        account_email: 'user@yourcompany.com',
-        account_display_name: 'Test Account',
-        attachments: [
-          { id: 999, filename: 'test.pdf', contentType: 'application/pdf', size: 12345 }
-        ]
-      }
-    ];
-    
-    res.json(testEmails);
-  } catch (error) {
-    console.error('[API] Errore nel test e2e:', error);
-    res.status(500).json({ error: 'Errore nel test e2e' });
-  }
-});
+// L'endpoint di test e2e per il modulo email è implementato in mockEmailRoutes.ts
 
 /**
  * Associa un'email a un'entità (contatto, azienda, deal, lead, branch)
