@@ -483,22 +483,18 @@ export const emailController = {
       }
       
       // Segna l'email come letta se non lo è già
-      if (!emailData.isRead) {
+      if (!emailData.read) {
         await db
           .update(emails)
-          .set({ isRead: true })
+          .set({ read: true })
           .where(eq(emails.id, emailId));
       }
       
-      // Recupera le associazioni
-      const associations = await db
-        .select()
-        .from(emailAssociations)
-        .where(eq(emailAssociations.emailId, emailId));
-        
+      // Nota: La tabella email_associations non esiste ancora 
+      // Invio solo i dati dell'email senza associazioni per ora
       res.json({
         ...emailData,
-        associations
+        associations: [] // Array vuoto fino a quando non avremo la tabella
       });
     } catch (error) {
       console.error('Errore durante il recupero dei dettagli dell\'email:', error);
