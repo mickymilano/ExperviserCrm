@@ -35,7 +35,14 @@ import { Loader2 } from "lucide-react";
 const formSchema = z.object({
   name: z.string().min(1, { message: "Nome account obbligatorio" }),
   email: z.string().email({ message: "Formato email non valido" }),
-  password: z.string().min(1, { message: "Password obbligatoria" }),
+  password: z.string().refine((val, ctx) => {
+    // Se è una modifica e la password è vuota, è ok (non verrà cambiata)
+    if (ctx.path && ctx.path[0] === "password" && ctx.data && "isEditing" in (ctx.data as any) && (ctx.data as any).isEditing && !val) {
+      return true;
+    }
+    // Altrimenti è richiesta
+    return val.length > 0;
+  }, { message: "Password obbligatoria" }),
   provider: z.string().min(1, { message: "Seleziona un provider" }),
   useCustomServers: z.boolean().default(false),
   incomingServer: z.string().optional(),

@@ -695,6 +695,35 @@ export default function SettingsPage() {
         </DialogContent>
       </Dialog>
       
+      {/* Dialog per la modifica di un account email */}
+      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Modifica account email</DialogTitle>
+            <DialogDescription>
+              Modifica le impostazioni del tuo account email. Lascia vuota la password se non vuoi cambiarla.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <EmailAccountForm 
+            onSuccess={() => {
+              setShowEditModal(false);
+              setAccountToEdit(null);
+              toast({
+                title: "Account email aggiornato",
+                description: "Le impostazioni del tuo account email sono state aggiornate",
+              });
+            }}
+            onCancel={() => {
+              setShowEditModal(false);
+              setAccountToEdit(null);
+            }}
+            accountToEdit={accountToEdit}
+            isEditing={true}
+          />
+        </DialogContent>
+      </Dialog>
+      
       {/* Alert per la conferma di eliminazione account */}
       <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
         <AlertDialogContent>
