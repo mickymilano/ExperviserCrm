@@ -46,9 +46,10 @@ interface Email {
 interface EmailInboxProps {
   accountId: number;
   folder: string;
+  onReply?: (email: Email) => void;
 }
 
-export default function EmailInbox({ accountId, folder }: EmailInboxProps) {
+export default function EmailInbox({ accountId, folder, onReply }: EmailInboxProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -184,8 +185,11 @@ export default function EmailInbox({ accountId, folder }: EmailInboxProps) {
         email={selectedEmail}
         onBack={() => setSelectedEmail(null)}
         onReply={() => {
-          // Implementare risposta
-          console.log("Reply to", selectedEmail.id);
+          if (onReply) {
+            onReply(selectedEmail);
+          } else {
+            console.log("Reply to", selectedEmail.id);
+          }
         }}
         onForward={() => {
           // Implementare inoltro

@@ -5,12 +5,13 @@ import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PlusCircle, Settings, Inbox, Send, Archive, Trash } from "lucide-react";
+import { PlusCircle, Settings, Inbox, Send, Archive, Trash, Edit } from "lucide-react";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink } from "@/components/ui/breadcrumb";
 import { Skeleton } from "@/components/ui/skeleton";
 import EmailAccountsList from "@/components/email/EmailAccountsList";
 import NewEmailAccountModal from "@/components/email/NewEmailAccountModal";
 import EmailInbox from "@/components/email/EmailInbox";
+import NewEmailComposer from "@/components/email/NewEmailComposer";
 import { EmptyState } from "@/components/ui/empty-state";
 
 export default function EmailPage() {
@@ -18,6 +19,13 @@ export default function EmailPage() {
   const [showNewAccountModal, setShowNewAccountModal] = useState(false);
   const [activeTab, setActiveTab] = useState("inbox");
   const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null);
+  const [isComposing, setIsComposing] = useState(false);
+  const [replyToEmail, setReplyToEmail] = useState<{
+    id: number;
+    from: string;
+    to: string[];
+    subject: string;
+  } | undefined>(undefined);
 
   const { data: accounts, isLoading: isLoadingAccounts } = useQuery({
     queryKey: ["/api/email/accounts"],
@@ -41,10 +49,18 @@ export default function EmailPage() {
           <h1 className="text-3xl font-bold mt-2">{t("email.title")}</h1>
           <p className="text-muted-foreground">{t("email.description")}</p>
         </div>
-        <Button onClick={() => setShowNewAccountModal(true)}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          {t("email.addAccount")}
-        </Button>
+        <div className="flex gap-2">
+          {selectedAccountId && (
+            <Button onClick={() => setIsComposing(true)}>
+              <Edit className="mr-2 h-4 w-4" />
+              {t("email.compose")}
+            </Button>
+          )}
+          <Button onClick={() => setShowNewAccountModal(true)}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            {t("email.addAccount")}
+          </Button>
+        </div>
       </div>
 
       <Separator className="my-6" />
@@ -119,38 +135,62 @@ export default function EmailPage() {
 
         {/* Main content */}
         <div className="col-span-12 md:col-span-9">
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                {selectedAccountId ? (
-                  <>
-                    {activeTab === "inbox" && t("email.inbox")}
-                    {activeTab === "sent" && t("email.sent")}
-                    {activeTab === "archive" && t("email.archive")}
-                    {activeTab === "trash" && t("email.trash")}
-                  </>
+          {isComposing && selectedAccountId ? (
+            <NewEmailComposer 
+              accountId={selectedAccountId}
+              onCancel={() => setIsComposing(false)}
+              onSent={() => {
+                setIsComposing(false);
+                // Se necessario, qui possiamo aggiornare la lista delle email inviate
+              }}
+              replyToEmail={replyToEmail}
+            />
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  {selectedAccountId ? (
+                    <>
+                      {activeTab === "inbox" && t("email.inbox")}
+                      {activeTab === "sent" && t("email.sent")}
+                      {activeTab === "archive" && t("email.archive")}
+                      {activeTab === "trash" && t("email.trash")}
+                    </>
+                  ) : (
+                    t("email.noAccountSelected")
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {!selectedAccountId ? (
+                  <EmptyState
+                    icon={<Settings className="h-10 w-10" />}
+                    title={t("email.noAccountSelectedTitle")}
+                    description={t("email.noAccountSelectedDescription")}
+                    action={
+                      <Button onClick={() => setShowNewAccountModal(true)}>
+                        {t("email.addAccount")}
+                      </Button>
+                    }
+                  />
                 ) : (
-                  t("email.noAccountSelected")
+                  <EmailInbox 
+                    accountId={selectedAccountId} 
+                    folder={activeTab}
+                    onReply={(email) => {
+                      setReplyToEmail({
+                        id: email.id,
+                        from: email.from,
+                        to: email.to,
+                        subject: email.subject
+                      });
+                      setIsComposing(true);
+                    }}
+                  />
                 )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {!selectedAccountId ? (
-                <EmptyState
-                  icon={<Settings className="h-10 w-10" />}
-                  title={t("email.noAccountSelectedTitle")}
-                  description={t("email.noAccountSelectedDescription")}
-                  action={
-                    <Button onClick={() => setShowNewAccountModal(true)}>
-                      {t("email.addAccount")}
-                    </Button>
-                  }
-                />
-              ) : (
-                <EmailInbox accountId={selectedAccountId} folder={activeTab} />
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
 
