@@ -61,13 +61,27 @@ export default function EmailInbox({ accountId, folder, onReply }: EmailInboxPro
     queryKey: [`/api/email/accounts/${accountId}/messages`, folder],
     queryFn: async () => {
       try {
-        const response = await apiRequest(
+        const response = await fetch(
           `/api/email/accounts/${accountId}/messages?folder=${folder}${
             searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ""
-          }`,
-          { method: "GET" }
-        );
-        return response;
+          }`
+        ).then(res => res.json());
+        // Assicuriamoci che la risposta sia un array
+        if (response && Array.isArray(response)) {
+          return response;
+        } else if (response && typeof response === 'object') {
+          // Se la risposta è un oggetto con una proprietà che contiene l'array
+          // Per esempio {messages: [...], total: 10}
+          const possibleArrayProps = ['messages', 'data', 'emails', 'items'];
+          for (const prop of possibleArrayProps) {
+            if (response[prop] && Array.isArray(response[prop])) {
+              return response[prop];
+            }
+          }
+        }
+        // Se non troviamo un array, restituiamo un array vuoto
+        console.warn("Response is not an array:", response);
+        return [];
       } catch (error) {
         console.error("Error fetching emails:", error);
         return [];
@@ -78,8 +92,13 @@ export default function EmailInbox({ accountId, folder, onReply }: EmailInboxPro
 
   const syncMutation = useMutation({
     mutationFn: () => {
-      return apiRequest(`/api/email/accounts/${accountId}/sync`, {
-        method: "POST",
+      return fetch(`/api/email/accounts/${accountId}/sync`, {
+        method: "POST"
+      }).then(response => {
+        if (!response.ok) {
+          throw new Error('Errore nella sincronizzazione delle email');
+        }
+        return response.json();
       });
     },
     onSuccess: () => {
@@ -249,7 +268,7 @@ export default function EmailInbox({ accountId, folder, onReply }: EmailInboxPro
             </div>
           ))}
         </div>
-      ) : !emails || emails.length === 0 ? (
+      ) : !emails || !Array.isArray(emails) || emails.length === 0 ? (
         <EmptyState
           icon={<Mail className="h-10 w-10" />}
           title={t("email.noEmails")}

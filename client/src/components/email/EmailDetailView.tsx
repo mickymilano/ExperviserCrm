@@ -56,8 +56,13 @@ export default function EmailDetailView({
   // Mutation per segnare l'email come letta se non lo è già
   const markAsReadMutation = useMutation({
     mutationFn: () => {
-      return apiRequest(`/api/email/messages/${email.id}/read`, {
-        method: "POST",
+      return fetch(`/api/email/messages/${email.id}/read`, {
+        method: "POST"
+      }).then(response => {
+        if (!response.ok) {
+          throw new Error('Errore nel segnare l\'email come letta');
+        }
+        return response.json();
       });
     },
     onSuccess: () => {

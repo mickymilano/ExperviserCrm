@@ -98,12 +98,16 @@ export default function NewEmailComposer({
         });
       }
 
-      return apiRequest("/api/email/send", {
+      // Utilizziamo il metodo fetch direttamente per FormData
+      return fetch("/api/email/send", {
         method: "POST",
-        data: formData,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+        body: formData,
+        // La Content-Type viene impostata automaticamente con il boundary corretto
+      }).then(response => {
+        if (!response.ok) {
+          throw new Error('Errore nell\'invio dell\'email');
+        }
+        return response.json();
       });
     },
     onSuccess: () => {
