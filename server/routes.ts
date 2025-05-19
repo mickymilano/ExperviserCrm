@@ -2511,7 +2511,8 @@ export function registerRoutes(app: any) {
   app.use('/api/branches', branchRoutes);
   
   // Integrazione API Email
-  app.use('/api/email', emailRoutes);
+  // Applichiamo il middleware di autenticazione a tutte le rotte email
+  app.use('/api/email', authenticate, emailRoutes);
   
   // --- ROTTE PER SETTORI, SOTTOSETTORI E JOB TITLES ---
   

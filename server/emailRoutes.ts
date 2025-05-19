@@ -1,21 +1,20 @@
 import express from 'express';
 import { emailController } from './controllers/emailController';
-import { authenticate } from './routes';
 
 const router = express.Router();
 
 // Account email routes
-router.get('/accounts', authenticate, emailController.getEmailAccounts);
-router.get('/accounts/:id', authenticate, emailController.getEmailAccountById);
-router.post('/accounts', authenticate, emailController.createEmailAccount);
-router.put('/accounts/:id', authenticate, emailController.updateEmailAccount);
-router.delete('/accounts/:id', authenticate, emailController.deleteEmailAccount);
-router.post('/accounts/:id/test', authenticate, emailController.testEmailConnection);
-router.post('/accounts/:id/sync', authenticate, emailController.syncEmailAccount);
+router.get('/accounts', emailController.getEmailAccounts);
+router.get('/accounts/:id', emailController.getEmailAccountById);
+router.post('/accounts', emailController.createEmailAccount);
+router.put('/accounts/:id', emailController.updateEmailAccount);
+router.delete('/accounts/:id', emailController.deleteEmailAccount);
+router.post('/accounts/:id/test', emailController.testEmailConnection);
+router.post('/accounts/:id/sync', emailController.syncEmailAccount);
 
 // Email messages routes
-router.get('/accounts/:id/messages', authenticate, emailController.getEmailsByAccount);
-router.get('/messages/:id', authenticate, emailController.getEmailById);
-router.post('/send', authenticate, emailController.sendEmail);
+router.get('/accounts/:id/messages', emailController.getEmailsByAccount);
+router.get('/messages/:id', emailController.getEmailById);
+router.post('/send', emailController.sendEmail);
 
 export default router;
