@@ -28,22 +28,22 @@ export const emailController = {
           id: emailAccounts.id,
           name: emailAccounts.displayName, // Usa display_name invece di name
           email: emailAccounts.email,
-          // Rimuovo il riferimento a provider che non esiste nel database
           isActive: emailAccounts.isActive,
-          lastSyncedAt: emailAccounts.lastSyncedAt,
-          syncFrequency: emailAccounts.syncFrequency,
+          // Rimuovi campi che non esistono nel database
           createdAt: emailAccounts.createdAt
         })
         .from(emailAccounts)
         .orderBy(emailAccounts.displayName);
         
-      // Aggiungiamo un provider predefinito per compatibilità con il frontend
-      const accountsWithProvider = allAccounts.map(account => ({
+      // Aggiungiamo valori predefiniti per i campi mancanti nel database
+      const accountsWithDefaults = allAccounts.map(account => ({
         ...account,
-        provider: 'imap' // Valore predefinito
+        provider: 'imap', // Valore predefinito
+        lastSyncedAt: null, // Valore predefinito
+        syncFrequency: 5, // Valore predefinito in minuti
       }));
         
-      res.json(accountsWithProvider);
+      res.json(accountsWithDefaults);
     } catch (error) {
       console.error('Errore durante il recupero degli account email:', error);
       res.status(500).json({ error: 'Errore interno del server' });
@@ -106,6 +106,7 @@ export const emailController = {
       const validatedData = insertEmailAccountSchema.parse({
         ...req.body,
         userId: 1, // TODO: recuperare l'utente autenticato
+        provider: 'imap', // Valore predefinito per compatibilità con lo schema Zod
       });
       
       // Adatta i nomi dei campi per il database
@@ -114,10 +115,16 @@ export const emailController = {
         displayName: validatedData.name, // Mappa da name a displayName
       };
       
-      // Crea un oggetto senza il campo name per l'inserimento nel database
+      // Crea un oggetto senza i campi che non esistono nel database
       const dbData = { ...emailAccountData };
       // @ts-ignore
       delete dbData.name;
+      // @ts-ignore - rimuoviamo provider che non esiste nel database
+      delete dbData.provider;
+      // @ts-ignore - rimuoviamo syncFrequency che non esiste nel database
+      delete dbData.syncFrequency;
+      // @ts-ignore - rimuoviamo lastSyncedAt che non esiste nel database
+      delete dbData.lastSyncedAt;
       
       // Inserisci nel database
       const [newAccount] = await db
@@ -128,12 +135,15 @@ export const emailController = {
       // Adatta i nomi dei campi per il frontend (aggiungi name per retrocompatibilità)
       const accountWithName = {
         ...newAccount,
-        name: newAccount.displayName
+        name: newAccount.displayName,
+        provider: 'imap', // Valore predefinito per il frontend
+        syncFrequency: 5, // Valore predefinito per il frontend
+        lastSyncedAt: null // Valore predefinito per il frontend
       };
         
-      // Pianifica la sincronizzazione
+      // Pianifica la sincronizzazione (ignora syncFrequency che non esiste nel database)
       if (newAccount.isActive) {
-        await scheduleSyncJob(newAccount.id, newAccount.syncFrequency || 5);
+        await scheduleSyncJob(newAccount.id, 5); // Usa un valore fisso di 5 minuti
       }
       
       res.status(201).json(accountWithName);
