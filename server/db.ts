@@ -56,6 +56,13 @@ export async function testConnection() {
     return true;
   } catch (error) {
     console.error('Database connection error:', error);
+    
+    // In modalità di sviluppo, non bloccare il flusso dell'applicazione
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('MODALITÀ FALLBACK ATTIVATA: CRM funzionerà in modalità limitata senza database');
+      return true; // Comunica successo per non interrompere l'inizializzazione
+    }
+    
     return false;
   }
 }

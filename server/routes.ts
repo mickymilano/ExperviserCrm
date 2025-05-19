@@ -40,8 +40,9 @@ export const authenticate = (req: any, res: any, next: any) => {
   if (process.env.NODE_ENV === 'development') {
     console.log('[AUTH DEBUG] Autenticazione bypassata in modalità sviluppo');
     
-    // Utente di debug predefinito
-    const debugUser = {
+    // Usa sempre un token hardcoded per l'utente di sviluppo
+    // Questo garantisce che anche se il database non è disponibile, l'utente può comunque accedere
+    req.user = {
       id: 1,
       username: 'admin',
       email: 'admin@experviser.com',
@@ -54,7 +55,7 @@ export const authenticate = (req: any, res: any, next: any) => {
       lastLogin: new Date()
     };
     
-    req.user = debugUser;
+    // Salta completamente la verifica del database
     return next();
   }
 

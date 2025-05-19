@@ -5,6 +5,8 @@ import path from 'path';
 import { initializePostgresDb, closeDbConnections } from './initPostgresDb';
 import { registerRoutes } from './routes';
 import { setupVite, serveStatic } from './vite';
+// Importa le rotte di autenticazione sicura
+import authRoutes from './auth/authRoutes';
 import { 
   initializeErrorTracking,
   sentryRequestHandler,
@@ -52,6 +54,12 @@ async function initialize() {
   try {
     // Inizializza il database PostgreSQL
     await initializePostgresDb();
+    
+    // Importa le rotte di autenticazione sicura
+    import authRoutes from './auth/authRoutes';
+    
+    // Registra le rotte di autenticazione sicura
+    app.use('/api/auth', authRoutes);
     
     // Registra le rotte API
     const server = registerRoutes(app);

@@ -1,30 +1,36 @@
-// Questo script genera un token di autenticazione JWT che può essere usato
-// per accedere al CRM quando ci sono problemi di database
-// Usa: node create_auth_token.js
+/**
+ * Script per generare un token di autenticazione di test
+ * Utile per accedere al CRM anche quando il database non è disponibile
+ */
+import jwt from 'jsonwebtoken';
 
-// In Node.js, usa require in CommonJS
-// Per eseguire questo file, salva con estensione .cjs o usa node --commonjs
-const jwt = require('jsonwebtoken');
+// Chiave segreta per JWT (deve corrispondere a quella in routes.ts)
+const JWT_SECRET = process.env.JWT_SECRET || 'experviser-dev-secret';
 
-// La stessa chiave segreta usata nel server
-const JWT_SECRET = 'experviser-dev-secret';
+// Crea un utente di test predefinito
+const testUser = {
+  id: 1,
+  username: 'admin',
+  email: 'admin@experviser.com',
+  role: 'super_admin',
+  iat: Math.floor(Date.now() / 1000),
+  exp: Math.floor(Date.now() / 1000) + (30 * 24 * 60 * 60) // 30 giorni
+};
 
-// Crea un token per un utente admin
-const token = jwt.sign(
-  { 
-    id: 1, 
-    username: 'admin', 
-    role: 'super_admin'
-  }, 
-  JWT_SECRET,
-  { expiresIn: '30d' } // 30 giorni
-);
+// Genera il token
+const token = jwt.sign(testUser, JWT_SECRET);
 
-console.log('\n=== TOKEN JWT PER AUTENTICAZIONE DI SVILUPPO ===');
+console.log('-------------------------------------');
+console.log('TOKEN DI AUTENTICAZIONE DI EMERGENZA');
+console.log('-------------------------------------');
+console.log();
+console.log('Token generato (valido per 30 giorni):');
 console.log(token);
-console.log('\n=== ISTRUZIONI ===');
-console.log('Per utilizzare questo token e accedere al CRM:');
-console.log('1. Vai alla console del browser nel tuo CRM (F12 > Console)');
-console.log('2. Incolla ed esegui questo comando:');
+console.log();
+console.log('Istruzioni per l\'uso:');
+console.log('1. Apri la console del browser con F12');
+console.log('2. Copia e incolla il comando seguente:');
 console.log(`localStorage.setItem('auth_token', '${token}');`);
-console.log('3. Ricarica la pagina per accedere automaticamente.\n');
+console.log('3. Ricarica la pagina del CRM');
+console.log();
+console.log('IMPORTANTE: Questo token funziona anche con database non disponibile');
