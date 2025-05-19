@@ -38,10 +38,19 @@ import {
   type InsertTask,
   type EmailAccount,
   type InsertEmailAccount,
+} from "../shared/schema";
+
+import {
+  emailAccounts,
+  emailSignatures,
+  emailAccountSignatures,
+  emails,
+  type EmailSignature,
+  type InsertEmailSignature,
+  type EmailAccountSignature,
+  type InsertEmailAccountSignature,
   type Email,
   type InsertEmail,
-  type Signature,
-  type InsertSignature,
   type AccountSignature,
   type InsertAccountSignature,
   type Activity,

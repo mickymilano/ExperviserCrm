@@ -6,7 +6,9 @@ import {
   timestamp, 
   integer, 
   boolean, 
-  jsonb 
+  jsonb,
+  primaryKey,
+  uniqueIndex
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -59,6 +61,29 @@ export const emails = pgTable("emails", {
   messageId: text("message_id"),
 });
 
+// Tabella per memorizzare le firme email
+export const emailSignatures = pgTable("email_signatures", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  name: text("name").notNull(), // Nome descrittivo della firma
+  content: text("content").notNull(), // Contenuto HTML della firma
+  isDefault: boolean("is_default").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Tabella per associare firme con account email
+export const emailAccountSignatures = pgTable("email_account_signatures", {
+  id: serial("id").primaryKey(),
+  accountId: integer("account_id").notNull().references(() => emailAccounts.id, { onDelete: 'cascade' }),
+  signatureId: integer("signature_id").notNull().references(() => emailSignatures.id, { onDelete: 'cascade' }),
+  isDefault: boolean("is_default").default(false), // Indica se questa è la firma predefinita per questo account
+}, (table) => {
+  return {
+    accountSignatureUnique: uniqueIndex("account_signature_unique_idx").on(table.accountId, table.signatureId),
+  };
+});
+
 // NOTA: La tabella email_associations non esiste ancora nel database
 // Questa definizione è pronta per quando verrà creata la tabella
 /*
@@ -101,9 +126,24 @@ export const insertEmailSchema = createInsertSchema(emails).omit({
   id: true
 });
 
+export const insertEmailSignatureSchema = createInsertSchema(emailSignatures, {
+  name: z.string().min(1, "Il nome della firma è obbligatorio"),
+  content: z.string().min(1, "Il contenuto della firma è obbligatorio"),
+}).omit({ id: true, createdAt: true, updatedAt: true });
+
+export const insertEmailAccountSignatureSchema = createInsertSchema(emailAccountSignatures).omit({
+  id: true
+});
+
 // Tipi inferiti
 export type EmailAccount = typeof emailAccounts.$inferSelect;
 export type InsertEmailAccount = typeof emailAccounts.$inferInsert;
 
 export type Email = typeof emails.$inferSelect;
 export type InsertEmail = typeof emails.$inferInsert;
+
+export type EmailSignature = typeof emailSignatures.$inferSelect;
+export type InsertEmailSignature = typeof emailSignatures.$inferInsert;
+
+export type EmailAccountSignature = typeof emailAccountSignatures.$inferSelect;
+export type InsertEmailAccountSignature = typeof emailAccountSignatures.$inferInsert;
