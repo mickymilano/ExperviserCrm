@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useEmailAccounts, useDeleteEmailAccount, useCreateEmailAccount, EmailAccount } from "@/hooks/useEmailAccounts";
+import { useEmailAccounts, useDeleteEmailAccount, EmailAccount } from "@/hooks/useEmailAccounts";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -26,8 +26,7 @@ import {
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
-  DialogDescription,
-  DialogFooter
+  DialogDescription
 } from "@/components/ui/dialog";
 import { useTheme } from "@/components/layouts/ThemeProvider";
 import {
@@ -79,7 +78,6 @@ export default function SettingsPage() {
   // Email accounts state and handlers
   const { data: accounts, isLoading } = useEmailAccounts();
   const deleteAccountMutation = useDeleteEmailAccount();
-  const createAccountMutation = useCreateEmailAccount();
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [accountToDelete, setAccountToDelete] = useState<EmailAccount | null>(null);
@@ -299,20 +297,6 @@ export default function SettingsPage() {
                           <SelectItem value="Asia/Bangkok">Asia/Bangkok</SelectItem>
                           <SelectItem value="Asia/Seoul">Asia/Seoul</SelectItem>
                         </SelectGroup>
-                        <SelectGroup>
-                          <SelectLabel>Australia/Pacific</SelectLabel>
-                          <SelectItem value="Australia/Sydney">Australia/Sydney</SelectItem>
-                          <SelectItem value="Australia/Melbourne">Australia/Melbourne</SelectItem>
-                          <SelectItem value="Australia/Perth">Australia/Perth</SelectItem>
-                          <SelectItem value="Pacific/Auckland">Pacific/Auckland</SelectItem>
-                        </SelectGroup>
-                        <SelectGroup>
-                          <SelectLabel>Africa</SelectLabel>
-                          <SelectItem value="Africa/Cairo">Africa/Cairo</SelectItem>
-                          <SelectItem value="Africa/Johannesburg">Africa/Johannesburg</SelectItem>
-                          <SelectItem value="Africa/Lagos">Africa/Lagos</SelectItem>
-                          <SelectItem value="Africa/Nairobi">Africa/Nairobi</SelectItem>
-                        </SelectGroup>
                       </SelectContent>
                     </Select>
                   </div>
@@ -339,30 +323,6 @@ export default function SettingsPage() {
                           <SelectItem value="French">French</SelectItem>
                           <SelectItem value="German">German</SelectItem>
                           <SelectItem value="Spanish">Spanish</SelectItem>
-                          <SelectItem value="Portuguese">Portuguese</SelectItem>
-                          <SelectItem value="Dutch">Dutch</SelectItem>
-                          <SelectItem value="Greek">Greek</SelectItem>
-                          <SelectItem value="Swedish">Swedish</SelectItem>
-                          <SelectItem value="Polish">Polish</SelectItem>
-                          <SelectItem value="Russian">Russian</SelectItem>
-                        </SelectGroup>
-                        <SelectGroup>
-                          <SelectLabel>Asia</SelectLabel>
-                          <SelectItem value="Chinese">Chinese</SelectItem>
-                          <SelectItem value="Japanese">Japanese</SelectItem>
-                          <SelectItem value="Korean">Korean</SelectItem>
-                          <SelectItem value="Hindi">Hindi</SelectItem>
-                          <SelectItem value="Arabic">Arabic</SelectItem>
-                          <SelectItem value="Turkish">Turkish</SelectItem>
-                          <SelectItem value="Thai">Thai</SelectItem>
-                          <SelectItem value="Vietnamese">Vietnamese</SelectItem>
-                        </SelectGroup>
-                        <SelectGroup>
-                          <SelectLabel>Other</SelectLabel>
-                          <SelectItem value="Afrikaans">Afrikaans</SelectItem>
-                          <SelectItem value="Swahili">Swahili</SelectItem>
-                          <SelectItem value="Hebrew">Hebrew</SelectItem>
-                          <SelectItem value="Malay">Malay</SelectItem>
                         </SelectGroup>
                       </SelectContent>
                     </Select>
@@ -404,7 +364,7 @@ export default function SettingsPage() {
                     <Skeleton key={i} className="h-20 w-full" />
                   ))}
                 </div>
-              ) : accounts && Array.isArray(accounts) && accounts.length > 0 ? (
+              ) : accounts && accounts.length > 0 ? (
                 <div className="space-y-4">
                   {accounts.map(account => (
                     <Card key={account.id}>
@@ -454,27 +414,33 @@ export default function SettingsPage() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label>Email Signature</Label>
+                      <Label>Email Notifications</Label>
                       <p className="text-sm text-muted-foreground">
-                        Set your default email signature
+                        Receive email notifications for important events
                       </p>
                     </div>
-                    <Button variant="outline">Edit Signature</Button>
+                    <Switch />
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label>Default Send Behavior</Label>
+                      <Label>Default Signature</Label>
                       <p className="text-sm text-muted-foreground">
-                        Choose when to send emails by default
+                        Select your default email signature
                       </p>
                     </div>
-                    <Input className="w-64" defaultValue="Send immediately" />
+                    <Select defaultValue="default">
+                      <SelectTrigger className="w-64">
+                        <SelectValue placeholder="Select signature" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="default">Professional Signature</SelectItem>
+                        <SelectItem value="casual">Casual Signature</SelectItem>
+                        <SelectItem value="minimal">Minimal Signature</SelectItem>
+                        <SelectItem value="none">No Signature</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
-              </div>
-              
-              <div className="flex justify-end">
-                <Button onClick={saveSettings}>Save Changes</Button>
               </div>
             </CardContent>
           </Card>
@@ -486,48 +452,39 @@ export default function SettingsPage() {
             <CardHeader>
               <CardTitle>Notification Settings</CardTitle>
               <CardDescription>
-                Manage how and when you receive notifications
+                Manage when and how you get notified
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
                 <h3 className="text-lg font-medium flex items-center">
                   <Bell className="h-5 w-5 mr-2" />
-                  Notification Preferences
+                  In-App Notifications
                 </h3>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label>Email Notifications</Label>
+                      <Label>New Task Assigned</Label>
                       <p className="text-sm text-muted-foreground">
-                        Receive notifications via email
+                        Get notified when you are assigned a new task
                       </p>
                     </div>
                     <Switch defaultChecked />
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label>Browser Notifications</Label>
+                      <Label>New Deals</Label>
                       <p className="text-sm text-muted-foreground">
-                        Receive notifications in your browser
+                        Get notified when new deals are created
                       </p>
                     </div>
                     <Switch defaultChecked />
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label>Task Reminders</Label>
+                      <Label>Appointment Reminders</Label>
                       <p className="text-sm text-muted-foreground">
-                        Get reminded about upcoming tasks
-                      </p>
-                    </div>
-                    <Switch defaultChecked />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>Meeting Reminders</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Get reminded about upcoming meetings
+                        Get reminders for upcoming appointments
                       </p>
                     </div>
                     <Switch defaultChecked />
@@ -535,8 +492,24 @@ export default function SettingsPage() {
                 </div>
               </div>
               
-              <div className="flex justify-end">
-                <Button onClick={saveSettings}>Save Changes</Button>
+              <Separator />
+              
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium flex items-center">
+                  <Share2 className="h-5 w-5 mr-2" />
+                  Push Notifications
+                </h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label>Enable Push Notifications</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Allow notifications on your device
+                      </p>
+                    </div>
+                    <Switch />
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -596,15 +569,6 @@ export default function SettingsPage() {
                     </div>
                     <Switch />
                   </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>Sidebar Width</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Adjust the width of the sidebar
-                      </p>
-                    </div>
-                    <Input className="w-64" defaultValue="Default" />
-                  </div>
                 </div>
               </div>
               
@@ -642,9 +606,6 @@ export default function SettingsPage() {
                         onChange={handlePasswordFormChange}
                       />
                     </div>
-                    <div className="md:col-span-2">
-                      <Separator />
-                    </div>
                     <div className="space-y-2">
                       <Label htmlFor="newPassword">New Password</Label>
                       <Input 
@@ -666,9 +627,7 @@ export default function SettingsPage() {
                       />
                     </div>
                   </div>
-                  <Button type="submit" disabled={updatePassword.isPending}>
-                    {updatePassword.isPending ? "Updating..." : "Change Password"}
-                  </Button>
+                  <Button type="submit">Update Password</Button>
                 </form>
               </div>
               
@@ -677,7 +636,7 @@ export default function SettingsPage() {
               <div className="space-y-4">
                 <h3 className="text-lg font-medium flex items-center">
                   <Shield className="h-5 w-5 mr-2" />
-                  Security Options
+                  Account Security
                 </h3>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
@@ -687,36 +646,7 @@ export default function SettingsPage() {
                         Add an extra layer of security to your account
                       </p>
                     </div>
-                    <Button variant="outline">Setup</Button>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>Session Management</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Manage active sessions and sign out remotely
-                      </p>
-                    </div>
-                    <Button variant="outline">Manage</Button>
-                  </div>
-                </div>
-              </div>
-              
-              <Separator />
-              
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium flex items-center text-destructive">
-                  <Trash2 className="h-5 w-5 mr-2" />
-                  Danger Zone
-                </h3>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label className="text-destructive">Delete Account</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Permanently delete your account and all your data
-                      </p>
-                    </div>
-                    <Button variant="destructive">Delete Account</Button>
+                    <Switch />
                   </div>
                 </div>
               </div>
@@ -725,148 +655,43 @@ export default function SettingsPage() {
         </TabsContent>
       </Tabs>
       
-      {/* Email Account Modal */}
+      {/* Dialog per l'aggiunta di account email */}
       <Dialog open={showEmailModal} onOpenChange={setShowEmailModal}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>Add Email Account</DialogTitle>
+            <DialogTitle>Aggiungi Account Email</DialogTitle>
             <DialogDescription>
-              Connect your email account to send and receive emails in the CRM.
+              Connetti il tuo account email per inviare e ricevere messaggi direttamente dal CRM.
             </DialogDescription>
           </DialogHeader>
           
-          <form onSubmit={handleEmailFormSubmit}>
-            <div className="grid gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  value={emailForm.email}
-                  onChange={handleEmailFormChange}
-                  placeholder="you@example.com"
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="displayName">Display Name</Label>
-                <Input
-                  id="displayName"
-                  name="displayName"
-                  value={emailForm.displayName}
-                  onChange={handleEmailFormChange}
-                  placeholder="Your Name"
-                  required
-                />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="imapHost">IMAP Server</Label>
-                  <Input
-                    id="imapHost"
-                    name="imapHost"
-                    value={emailForm.imapHost}
-                    onChange={handleEmailFormChange}
-                    placeholder="imap.example.com"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="imapPort">IMAP Port</Label>
-                  <Input
-                    id="imapPort"
-                    name="imapPort"
-                    type="number"
-                    value={emailForm.imapPort}
-                    onChange={handleEmailFormChange}
-                    required
-                  />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="smtpHost">SMTP Server</Label>
-                  <Input
-                    id="smtpHost"
-                    name="smtpHost"
-                    value={emailForm.smtpHost}
-                    onChange={handleEmailFormChange}
-                    placeholder="smtp.example.com"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="smtpPort">SMTP Port</Label>
-                  <Input
-                    id="smtpPort"
-                    name="smtpPort"
-                    type="number"
-                    value={emailForm.smtpPort}
-                    onChange={handleEmailFormChange}
-                    required
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
-                <Input
-                  id="username"
-                  name="username"
-                  value={emailForm.username}
-                  onChange={handleEmailFormChange}
-                  placeholder="you@example.com"
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  value={emailForm.password}
-                  onChange={handleEmailFormChange}
-                  placeholder="••••••••••"
-                  required
-                />
-                <p className="text-xs text-muted-foreground flex items-center mt-1">
-                  <Info className="h-3 w-3 mr-1" />
-                  For Gmail, you may need to create an App Password.
-                </p>
-              </div>
-            </div>
-            
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setShowEmailModal(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={createAccountMutation.isPending}>
-                {createAccountMutation.isPending ? "Connecting..." : "Connect Account"}
-              </Button>
-            </DialogFooter>
-          </form>
+          <EmailAccountForm 
+            onSuccess={() => {
+              setShowEmailModal(false);
+              toast({
+                title: "Account email aggiunto",
+                description: "Il tuo account email è stato configurato correttamente",
+              });
+            }}
+            onCancel={() => setShowEmailModal(false)}
+          />
         </DialogContent>
       </Dialog>
       
-      {/* Delete Account Alert */}
+      {/* Alert per la conferma di eliminazione account */}
       <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>Sei sicuro?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will remove the email account "{accountToDelete?.email}" from your CRM.
-              You can always add it back later.
+              Questa azione rimuoverà l'account email "{accountToDelete?.email}" dal tuo CRM.
+              Potrai sempre aggiungerlo nuovamente in seguito.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Annulla</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDeleteAccount} className="bg-destructive text-destructive-foreground">
-              {deleteAccountMutation.isPending ? "Removing..." : "Remove Account"}
+              {deleteAccountMutation.isPending ? "Rimozione in corso..." : "Rimuovi Account"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
