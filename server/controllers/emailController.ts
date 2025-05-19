@@ -3,10 +3,10 @@ import { db } from '../db';
 import { 
   emails,
   emailAccounts,
-  emailSignatures,
   emailAccountSignatures,
   insertEmailAccountSchema
 } from '../../shared/email/schema';
+import { signatures } from '../../shared/schema';
 import { eq, and, desc, like, sql, asc, ne } from 'drizzle-orm';
 import { EmailReceiver, ImapConfig, testImapConnection } from '../modules/email/emailReceiver';
 import { EmailSender, SmtpConfig, testSmtpConnection } from '../modules/email/emailSender';
@@ -605,13 +605,13 @@ export const emailController = {
     try {
       // In un'app reale, utilizzare l'ID dell'utente autenticato
       const userId = 1;
-      const signatures = await db
+      const signaturesList = await db
         .select()
-        .from(emailSignatures)
-        .where(eq(emailSignatures.userId, userId))
-        .orderBy(desc(emailSignatures.isDefault), emailSignatures.name);
+        .from(signatures)
+        .where(eq(signatures.userId, Number(userId)))
+        .orderBy(desc(signatures.isDefault), signatures.name);
 
-      res.json(signatures);
+      res.json(signaturesList);
     } catch (error) {
       console.error('Errore durante il recupero delle firme email:', error);
       res.status(500).json({ error: 'Errore interno del server' });
