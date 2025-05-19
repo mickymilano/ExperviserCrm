@@ -98,29 +98,33 @@ export const emailController = {
    */
   createEmailAccount: async (req: Request, res: Response) => {
     try {
-      // Validate input
+      // Validate input with the updated schema
       const validatedData = insertEmailAccountSchema.parse({
         ...req.body,
         userId: 1, // TODO: recuperare l'utente autenticato
-        provider: 'imap', // Valore predefinito per compatibilità con lo schema Zod
       });
       
-      // Adatta i nomi dei campi per il database
-      const emailAccountData = {
-        ...validatedData,
-        displayName: validatedData.name, // Mappa da name a displayName
+      // Prepara i dati per il database
+      const dbData = {
+        userId: 1, // Utilizzare l'ID dell'utente autenticato
+        displayName: validatedData.name,
+        email: validatedData.email,
+        imapHost: validatedData.imapHost,
+        imapPort: validatedData.imapPort,
+        imapSecure: validatedData.imapSecure !== undefined ? validatedData.imapSecure : 
+                   (validatedData.imapSecurity === 'ssl'),
+        smtpHost: validatedData.smtpHost,
+        smtpPort: validatedData.smtpPort,
+        smtpSecure: validatedData.smtpSecure !== undefined ? validatedData.smtpSecure : 
+                   (validatedData.smtpSecurity === 'ssl'),
+        username: validatedData.username,
+        password: validatedData.password,
+        isActive: validatedData.isActive !== undefined ? validatedData.isActive : true,
+        isPrimary: false, 
+        status: 'active'
       };
       
-      // Crea un oggetto senza i campi che non esistono nel database
-      const dbData = { ...emailAccountData };
-      // @ts-ignore
-      delete dbData.name;
-      // @ts-ignore - rimuoviamo provider che non esiste nel database
-      delete dbData.provider;
-      // @ts-ignore - rimuoviamo syncFrequency che non esiste nel database
-      delete dbData.syncFrequency;
-      // @ts-ignore - rimuoviamo lastSyncedAt che non esiste nel database
-      delete dbData.lastSyncedAt;
+      console.log('Dati account email preparati per il database:', dbData);
       
       // Inserisci nel database
       const [newAccount] = await db
@@ -128,21 +132,23 @@ export const emailController = {
         .values(dbData)
         .returning();
         
-      // Adatta i nomi dei campi per il frontend (aggiungi name per retrocompatibilità)
-      const accountWithName = {
+      // Adatta i nomi dei campi per il frontend (aggiungi campi virtuali per retrocompatibilità)
+      const accountWithVirtualFields = {
         ...newAccount,
         name: newAccount.displayName,
         provider: 'imap', // Valore predefinito per il frontend
-        syncFrequency: 5, // Valore predefinito per il frontend
-        lastSyncedAt: null // Valore predefinito per il frontend
+        imapSecurity: newAccount.imapSecure ? 'ssl' : 'none',
+        smtpSecurity: newAccount.smtpSecure ? 'ssl' : 'none',
+        lastSyncedAt: newAccount.lastSyncTime || null, // Mappa lastSyncTime a lastSyncedAt
+        syncFrequency: 5 // Valore predefinito per il frontend
       };
         
-      // Pianifica la sincronizzazione (ignora syncFrequency che non esiste nel database)
+      // Pianifica la sincronizzazione
       if (newAccount.isActive) {
         await scheduleSyncJob(newAccount.id, 5); // Usa un valore fisso di 5 minuti
       }
       
-      res.status(201).json(accountWithName);
+      res.status(201).json(accountWithVirtualFields);
     } catch (error) {
       console.error('Errore durante la creazione dell\'account email:', error);
       

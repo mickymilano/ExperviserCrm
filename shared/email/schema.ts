@@ -12,40 +12,32 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 // Tabella per memorizzare gli account email configurati
+// NOTA: Questo schema riflette la struttura reale del database
 export const emailAccounts = pgTable("email_accounts", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
-  displayName: varchar("display_name", { length: 255 }).notNull(), // Nome descrittivo dell'account
-  email: varchar("email", { length: 255 }).notNull(),
-  provider: varchar("provider", { length: 50 }).notNull(), // gmail, outlook, imap, ecc.
+  displayName: text("display_name").notNull(), // Nome descrittivo dell'account
+  email: text("email").notNull(),
   
   // Dati di configurazione SMTP/IMAP
-  imapHost: varchar("imap_host", { length: 255 }),
-  imapPort: integer("imap_port"),
+  imapHost: text("imap_host").notNull(),
+  imapPort: integer("imap_port").notNull(),
   imapSecure: boolean("imap_secure").default(true),
   
-  smtpHost: varchar("smtp_host", { length: 255 }),
-  smtpPort: integer("smtp_port"),
+  smtpHost: text("smtp_host").notNull(),
+  smtpPort: integer("smtp_port").notNull(),
   smtpSecure: boolean("smtp_secure").default(true),
   
   // Credenziali - in produzione andrebbero criptate
-  username: varchar("username", { length: 255 }),
-  password: varchar("password", { length: 255 }),
-  
-  // Supporto per OAuth2
-  oauthEnabled: boolean("oauth_enabled").default(false),
-  oauthRefreshToken: text("oauth_refresh_token"),
-  oauthAccessToken: text("oauth_access_token"),
-  oauthExpiry: timestamp("oauth_expiry"),
+  username: text("username").notNull(),
+  password: text("password").notNull(),
   
   // Stato e configurazioni
+  isPrimary: boolean("is_primary").default(false),
   isActive: boolean("is_active").default(true),
-  lastSyncedAt: timestamp("last_synced_at"),
-  syncFrequency: integer("sync_frequency").default(5), // Minuti tra una sincronizzazione e l'altra
-  
-  // Tracking
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  status: text("status").default("unknown"),
+  lastSyncTime: timestamp("last_sync_time"),
+  lastError: text("last_error"),
 });
 
 // Tabella per memorizzare i messaggi email
@@ -114,12 +106,21 @@ export const emailAssociations = pgTable("email_associations", {
 // Schema Zod per validazione dati
 export const insertEmailAccountSchema = createInsertSchema(emailAccounts, {
   email: z.string().email("Indirizzo email non valido"),
-  imapPort: z.number().optional(),
-  smtpPort: z.number().optional(),
-}).omit({ id: true, createdAt: true, updatedAt: true })
+  imapPort: z.number(),
+  smtpPort: z.number(),
+  imapHost: z.string().min(1, "Server IMAP obbligatorio"),
+  smtpHost: z.string().min(1, "Server SMTP obbligatorio"),
+  username: z.string().min(1, "Username obbligatorio"),
+  password: z.string().min(1, "Password obbligatoria"),
+}).omit({ id: true })
 // Aggiungiamo name per retrocompatibilità con il frontend
 .extend({
-  name: z.string().min(1, "Il nome dell'account è obbligatorio")
+  name: z.string().min(1, "Il nome dell'account è obbligatorio"),
+  
+  // Campi virtuali per il frontend
+  provider: z.string().default("imap").optional(),
+  imapSecurity: z.enum(["ssl", "tls", "none"]).optional(),
+  smtpSecurity: z.enum(["ssl", "tls", "none"]).optional(),
 });
 
 export const insertEmailSchema = createInsertSchema(emails).omit({ 
