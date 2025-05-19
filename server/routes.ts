@@ -27,6 +27,7 @@ import {
 } from './controllers/leadController.js';
 import branchRoutes from './branchRoutes';
 import emailRoutes from './emailRoutes';
+import emailSignatureRoutes from './emailSignatureRoutes';
 import { getSectors, createSector } from './controllers/sectorController';
 import { getSubSectors, createSubSector } from './controllers/subSectorController';
 import { getJobTitles, getJobTitle, createJobTitle, updateJobTitle, deleteJobTitle } from './controllers/jobTitleController';
@@ -2615,9 +2616,10 @@ export function registerRoutes(app: any) {
   // Integrazione API filiali/sedi (Branch)
   app.use('/api/branches', branchRoutes);
   
-  // Integrazione API Email
+  // Integrazione API Email e firme email
   // Applichiamo il middleware di autenticazione a tutte le rotte email
   app.use('/api/email', authenticate, emailRoutes);
+  app.use('/api/email', authenticate, emailSignatureRoutes);
   
   // --- ROTTE PER SETTORI, SOTTOSETTORI E JOB TITLES ---
   
