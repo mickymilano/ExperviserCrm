@@ -131,7 +131,7 @@ export function EntityEmailInbox({ entityId, entityType, entityEmail }: EntityEm
   // Mutation per segnare le email come lette
   const markAsReadMutation = useMutation({
     mutationFn: async (emailIds: number[]) => {
-      return await apiRequest('/api/email/mark-read', 'POST', { 
+      return await apiRequest('POST', '/api/email/mark-read', { 
         emailIds 
       });
     },
