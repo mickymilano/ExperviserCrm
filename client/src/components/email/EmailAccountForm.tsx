@@ -38,15 +38,9 @@ const formSchema = z.object({
   password: z.string().optional().transform(val => {
     // Converti stringhe vuote in undefined per campi opzionali
     return val === "" ? undefined : val;
-  }).superRefine((val, ctx) => {
-    // Per nuovi account, la password è obbligatoria
-    if (!ctx.parent.isEditing && !val) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Password obbligatoria",
-      });
-    }
   }),
+  // Campo aggiuntivo per indicare se stiamo modificando un account esistente
+  isEditing: z.boolean().default(false),
   provider: z.string().min(1, { message: "Seleziona un provider" }),
   useCustomServers: z.boolean().default(false),
   incomingServer: z.string().optional(),

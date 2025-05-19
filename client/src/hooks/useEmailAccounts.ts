@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { toast } from '@/hooks/use-toast';
 
 export interface EmailAccount {
   id: number;
@@ -74,6 +75,19 @@ export function useCreateEmailAccount() {
     onSuccess: () => {
       // Invalida la cache degli account email per forzare un aggiornamento
       queryClient.invalidateQueries({ queryKey: ['/api/email/accounts'] });
+      
+      // Mostra una notifica di successo
+      toast({
+        title: "Account email aggiunto",
+        description: "Il tuo account email è stato configurato correttamente",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Errore durante l'aggiunta dell'account email",
+        description: error.message || "Controlla i dettagli dell'account e riprova",
+        variant: "destructive",
+      });
     }
   });
 }
@@ -99,6 +113,19 @@ export function useDeleteEmailAccount() {
     onSuccess: () => {
       // Invalida la cache degli account email per forzare un aggiornamento
       queryClient.invalidateQueries({ queryKey: ['/api/email/accounts'] });
+      
+      // Mostra una notifica di successo
+      toast({
+        title: "Account email rimosso",
+        description: "L'account email è stato rimosso con successo",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Errore",
+        description: error.message || "Impossibile rimuovere l'account email",
+        variant: "destructive",
+      });
     }
   });
 }
@@ -117,6 +144,19 @@ export function useUpdateEmailAccount() {
     onSuccess: () => {
       // Invalida la cache degli account email per forzare un aggiornamento
       queryClient.invalidateQueries({ queryKey: ['/api/email/accounts'] });
+      
+      // Mostra una notifica di successo
+      toast({
+        title: "Account email aggiornato",
+        description: "Le impostazioni dell'account email sono state aggiornate",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Errore",
+        description: error.message || "Impossibile aggiornare l'account email",
+        variant: "destructive",
+      });
     }
   });
 }
