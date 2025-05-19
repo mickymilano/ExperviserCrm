@@ -1,0 +1,85 @@
+apply_patch << 'EOF'
+*** Begin Patch
+*** Aggiorna server/routes.ts: registra le rotte email sotto autenticazione JWT
+@@
+-app.use('/api', router);
++import emailRoutes from './emailRoutes';
++app.use('/api', authenticate, emailRoutes);
++app.use('/api', router);
+
+*** End Patch
+EOF
+
+apply_patch << 'EOF'
+*** Begin Patch
+*** Aggiungi tab “Email” in tutte le pagine di dettaglio CRM
+*** File: client/src/components/company/CompanyDetailTabs.tsx
+@@
+   <Tab label={t('Dettagli')} />
++  <Tab label={t('Email')} />
+*** End Patch
+EOF
+
+apply_patch << 'EOF'
+*** Begin Patch
+*** Aggiungi contenuto tab Email nella pagina CompanyDetail
+*** File: client/src/pages/companies/[id].tsx
+@@ render() {
+     {value === 2 && <ContactsTab companyId={companyId} />}
++    {value === 3 && <EmailInbox filter={{ companyId }} />}
+*** End Patch
+EOF
+
+apply_patch << 'EOF'
+*** Begin Patch
+*** Ripeti la stessa aggiunta di tab e contenuto Email per DealDetail, LeadDetail e BranchDetail
+*** File: client/src/pages/deals/[id].tsx, client/src/pages/leads/[id].tsx, client/src/pages/branches/[id].tsx
+@@ render() {
++    <Tab label={t('Email')} />
+@@ render() {
++    {value === X && <EmailInbox filter={{ dealId }} />}
+*** End Patch
+EOF
+
+apply_patch << 'EOF'
+*** Begin Patch
+*** Aggiorna EmailInbox per supportare filtro per contatto, lead, company, branch e deal
+*** File: client/src/components/email/EmailInbox.tsx
+@@ export function EmailInbox({ filter }) {
+-  const { data: emails } = useEmails();
++  const { data: emails } = useEmails({ filter });
+*** End Patch
+EOF
+
+apply_patch << 'EOF'
+*** Begin Patch
+*** Aggiungi pulsanti “Crea Task” e “Crea Deal” in EmailDetailView
+*** File: client/src/components/email/EmailDetailView.tsx
+@@ render() {
+-  <Button onClick={() => {}}>Rispondi</Button>
++  <Button onClick={() => onCreateTask(email)}>Crea Task</Button>
++  <Button onClick={() => onCreateDeal(email)}>Crea Deal</Button>
+*** End Patch
+EOF
+
+apply_patch << 'EOF'
+*** Begin Patch
+*** Aggiorna useEmails hook per includere account, associazioni e destinatari
+*** File: client/src/hooks/useEmails.ts
+@@ export function useEmails(opts) {
+-  return useQuery(['emails'], () => api.get('/api/email/messages'));
++  return useQuery(['emails', opts], () => api.get('/api/email/messages', { params: opts }));
+*** End Patch
+EOF
+
+apply_patch << 'EOF'
+*** Begin Patch
+*** Aggiungi endpoint di test E2E per email in server/emailRoutes.ts
+*** File: server/emailRoutes.ts
+@@ router.post('/accounts/:id/test', authenticate, emailController.testConnection);
++router.get('/messages/e2e-test', authenticate, emailController.e2eTest);
+*** End Patch
+EOF
+
+# infine, esegui una batteria di test automatici
+npm run test:e2e -- --module email
