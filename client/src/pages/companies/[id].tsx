@@ -177,12 +177,13 @@ export default function CompanyDetail() {
       
       {/* Main content with tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-5 md:w-fit mb-4">
+        <TabsList className="grid grid-cols-6 md:w-fit mb-4">
           <TabsTrigger value="overview">{t("company.companyDetail.tabs.overview")}</TabsTrigger>
           <TabsTrigger value="contacts">{t("company.companyDetail.tabs.contacts")}</TabsTrigger>
           <TabsTrigger value="deals">{t("company.companyDetail.tabs.deals")}</TabsTrigger>
           <TabsTrigger value="branches">{t("company.companyDetail.tabs.branches")}</TabsTrigger>
           <TabsTrigger value="activities">{t("company.companyDetail.tabs.activities")}</TabsTrigger>
+          <TabsTrigger value="email">Email</TabsTrigger>
         </TabsList>
         
         {/* Overview Tab */}

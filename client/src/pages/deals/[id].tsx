@@ -22,6 +22,7 @@ import { useQuery } from "@tanstack/react-query";
 import { SynergiesList } from "@/components/synergies/SynergiesList";
 // Importazione di i18n per le traduzioni
 import { useTranslation } from "react-i18next";
+import EntityEmailInbox from "@/components/email/EntityEmailInbox";
 
 export default function DealDetail() {
   const params = useParams();
@@ -137,9 +138,10 @@ export default function DealDetail() {
       
       {/* Tabs Navigation */}
       <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2 md:w-auto md:inline-flex">
+        <TabsList className="grid w-full grid-cols-3 md:w-auto md:inline-flex">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="activities">Activities</TabsTrigger>
+          <TabsTrigger value="email">Email</TabsTrigger>
         </TabsList>
         
         {/* Overview Tab */}
@@ -340,6 +342,15 @@ export default function DealDetail() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+        
+        {/* Email Tab */}
+        <TabsContent value="email" className="space-y-4">
+          <EntityEmailInbox
+            entityId={dealId}
+            entityType="deal"
+            entityName={deal.name}
+          />
         </TabsContent>
       </Tabs>
       
