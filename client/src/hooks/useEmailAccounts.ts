@@ -59,7 +59,7 @@ export function useEmailAccounts(): UseEmailAccountsResult {
   // Add a new email account
   const addAccountMutation = useMutation({
     mutationFn: async (account: Omit<EmailAccount, 'id'>) => {
-      const response = await apiRequest('/api/email/accounts', { method: 'POST', body: account });
+      const response = await apiRequest('POST', '/api/email/accounts', account);
       return response;
     },
     onSuccess: () => {
@@ -81,7 +81,7 @@ export function useEmailAccounts(): UseEmailAccountsResult {
   // Update an email account
   const updateAccountMutation = useMutation({
     mutationFn: async ({ id, account }: { id: number; account: Partial<EmailAccount> }) => {
-      const response = await apiRequest(`/api/email/accounts/${id}`, { method: 'PATCH', body: account });
+      const response = await apiRequest('PATCH', `/api/email/accounts/${id}`, account);
       return response;
     },
     onSuccess: () => {
@@ -103,7 +103,7 @@ export function useEmailAccounts(): UseEmailAccountsResult {
   // Delete an email account
   const deleteAccountMutation = useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest(`/api/email/accounts/${id}`, 'DELETE');
+      await apiRequest('DELETE', `/api/email/accounts/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/email/accounts'] });
@@ -124,7 +124,7 @@ export function useEmailAccounts(): UseEmailAccountsResult {
   // Sync email accounts
   const syncAccountsMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest('/api/email/accounts/sync', 'POST');
+      await apiRequest('POST', '/api/email/accounts/sync');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/email/accounts'] });
@@ -146,7 +146,7 @@ export function useEmailAccounts(): UseEmailAccountsResult {
   // Set primary account
   const setPrimaryAccountMutation = useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest(`/api/email/accounts/${id}/primary`, 'PATCH');
+      await apiRequest('PATCH', `/api/email/accounts/${id}/primary`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/email/accounts'] });

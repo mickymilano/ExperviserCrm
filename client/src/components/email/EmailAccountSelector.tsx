@@ -69,7 +69,7 @@ export function EmailAccountSelector({
   };
 
   // Formatta il nome dell'account per la visualizzazione
-  const formatAccountName = (account) => {
+  const formatAccountName = (account: { name: string; email: string }) => {
     return (
       <div className="flex flex-col">
         <span className="font-medium">{account.name}</span>
