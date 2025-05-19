@@ -107,14 +107,14 @@ export default function EmailInbox({ accountId, folder, onReply }: EmailInboxPro
         queryKey: [`/api/email/accounts/${accountId}/messages`],
       });
       toast({
-        title: t("email.syncSuccess"),
-        description: t("email.syncSuccessDescription"),
+        title: T(t, "email.syncSuccess", "Sincronizzazione completata"),
+        description: T(t, "email.syncSuccessDescription", "Le email sono state sincronizzate con successo"),
       });
     },
     onError: () => {
       toast({
-        title: t("email.syncError"),
-        description: t("email.syncErrorDescription"),
+        title: T(t, "email.syncError", "Errore sincronizzazione"),
+        description: T(t, "email.syncErrorDescription", "Non è stato possibile sincronizzare le email. Riprova più tardi."),
         variant: "destructive",
       });
     },
@@ -231,7 +231,7 @@ export default function EmailInbox({ accountId, folder, onReply }: EmailInboxPro
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
-            placeholder={t("email.search")}
+            placeholder={T(t, "email.search", "Cerca email...")}
             className="pl-8"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -251,7 +251,7 @@ export default function EmailInbox({ accountId, folder, onReply }: EmailInboxPro
           </Button>
           <Button onClick={() => setComposingEmail(true)}>
             <PlusCircle className="mr-2 h-4 w-4" />
-            {t("email.compose")}
+            {T(t, "email.compose", "Scrivi Email")}
           </Button>
         </div>
       </div>
@@ -272,12 +272,12 @@ export default function EmailInbox({ accountId, folder, onReply }: EmailInboxPro
       ) : !emails || !Array.isArray(emails) || emails.length === 0 ? (
         <EmptyState
           icon={<Mail className="h-10 w-10" />}
-          title={t("email.noEmails")}
-          description={t("email.noEmailsDescription")}
+          title={T(t, "email.noEmails", "Nessuna email trovata")}
+          description={T(t, "email.noEmailsDescription", "Non ci sono email da visualizzare in questo momento")}
           action={
             <Button onClick={handleSync}>
               <RefreshCw className="mr-2 h-4 w-4" />
-              {t("email.sync")}
+              {T(t, "email.sync", "Sincronizza")}
             </Button>
           }
         />
@@ -311,7 +311,7 @@ export default function EmailInbox({ accountId, folder, onReply }: EmailInboxPro
                 <div className="flex items-center mt-1 space-x-2">
                   {email.hasAttachments && (
                     <Badge variant="outline" className="text-xs">
-                      {t("email.attachment")}
+                      {T(t, "email.attachment", "Allegato")}
                     </Badge>
                   )}
                 </div>
