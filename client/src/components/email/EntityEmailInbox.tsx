@@ -240,10 +240,10 @@ export default function EntityEmailInbox({
   return (
     <>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">{t("email.relatedEmails")}</h2>
+        <h2 className="text-xl font-semibold">{t("email.relatedEmails", "Email correlate")}</h2>
         <Button onClick={handleComposeEmail}>
           <PlusCircle className="mr-2 h-4 w-4" />
-          {t("email.compose")}
+          {t("email.compose", "Scrivi Email")}
         </Button>
       </div>
       
