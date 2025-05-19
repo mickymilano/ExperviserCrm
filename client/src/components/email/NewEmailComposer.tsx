@@ -209,15 +209,15 @@ export default function NewEmailComposer({
         queryKey: [`/api/email/accounts/${accountId}/messages`],
       });
       toast({
-        title: t("email.sentSuccess"),
-        description: t("email.sentSuccessDescription"),
+        title: T(t, "email.sentSuccess", "Email inviata"),
+        description: T(t, "email.sentSuccessDescription", "La tua email è stata inviata con successo"),
       });
       onSent();
     },
     onError: (error) => {
       toast({
-        title: t("email.sentError"),
-        description: t("email.sentErrorDescription"),
+        title: T(t, "email.sentError", "Errore invio"),
+        description: T(t, "email.sentErrorDescription", "Non è stato possibile inviare l'email. Riprova più tardi."),
         variant: "destructive",
       });
     },
@@ -419,7 +419,7 @@ export default function NewEmailComposer({
               render={({ field }) => (
                 <FormItem>
                   <div className="flex items-center justify-between">
-                    <FormLabel>{t("email.bcc")}</FormLabel>
+                    <FormLabel>{T(t, "email.bcc", "Ccn")}</FormLabel>
                     <Popover open={bccPopoverOpen} onOpenChange={setBccPopoverOpen}>
                       <PopoverTrigger asChild>
                         <Button 
@@ -500,9 +500,9 @@ export default function NewEmailComposer({
               name="subject"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("email.subject")}</FormLabel>
+                  <FormLabel>{T(t, "email.subject", "Oggetto")}</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder={t("email.subjectPlaceholder")} />
+                    <Input {...field} placeholder={T(t, "email.subjectPlaceholder", "Oggetto dell'email")} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
