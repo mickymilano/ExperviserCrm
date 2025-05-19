@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
+import { debugContext } from '@/lib/debugContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -18,10 +19,20 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   });
   
   useEffect(() => {
+    // Controlla se siamo in modalità dev (per gestire il bypass di autenticazione)
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    
     // Se non stiamo ancora caricando e c'è un errore (utente non autenticato)
     if (!isLoading && isError) {
-      // Reindirizza alla pagina di login
-      setLocation('/login');
+      // In development, possiamo bypassare l'errore di autenticazione
+      if (isDevelopment) {
+        // Log per development
+        console.log('Bypassando errore di autenticazione in development');
+        setIsChecking(false);
+      } else {
+        // In produzione, reindirizza alla pagina di login
+        setLocation('/login');
+      }
     } else if (!isLoading) {
       // Abbiamo finito il controllo
       setIsChecking(false);
@@ -37,6 +48,6 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
   
-  // Se abbiamo un utente, mostra il contenuto della pagina
+  // Se abbiamo un utente o siamo in development, mostra il contenuto della pagina
   return <>{children}</>;
 }

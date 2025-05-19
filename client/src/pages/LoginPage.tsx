@@ -49,7 +49,13 @@ export default function LoginPage() {
       
       return await response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Salva il token in localStorage per le future richieste API
+      if (data && data.token) {
+        localStorage.setItem("auth_token", data.token);
+        console.log("Token salvato correttamente");
+      }
+      
       setLocation('/');
     },
     onError: (error: Error) => {
