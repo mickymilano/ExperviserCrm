@@ -17,6 +17,26 @@ import TaskModal from "@/components/modals/TaskModal";
 // Tipo per i tipi di entità supportate
 type EntityType = "contact" | "lead" | "company" | "branch" | "deal";
 
+// Interfaccia per le email
+interface Email {
+  id: number;
+  from: string;
+  fromName?: string;
+  to: string[];
+  cc?: string[];
+  bcc?: string[];
+  subject: string;
+  body: string;
+  date: string;
+  read: boolean;
+  hasAttachments: boolean;
+  accountId: number;
+  accountInfo?: {
+    id: number;
+    name: string;
+  };
+}
+
 interface EntityEmailInboxProps {
   entityId: number;
   entityType: EntityType;
