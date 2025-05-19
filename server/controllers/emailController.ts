@@ -162,11 +162,21 @@ export const emailController = {
       const updateSchema = insertEmailAccountSchema.partial();
       const accountData = updateSchema.parse(req.body);
       
+      // Adatta i nomi dei campi per il database
+      const dbData = { ...accountData };
+      
+      // Se è presente il campo name, usalo per displayName
+      if (dbData.name) {
+        dbData.displayName = dbData.name;
+        // @ts-ignore
+        delete dbData.name;
+      }
+      
       // Aggiorna il database
       const [updatedAccount] = await db
         .update(emailAccounts)
         .set({
-          ...accountData,
+          ...dbData,
           updatedAt: new Date()
         })
         .where(eq(emailAccounts.id, accountId))
@@ -191,7 +201,13 @@ export const emailController = {
         }
       }
       
-      res.json(updatedAccount);
+      // Adatta i nomi dei campi per il frontend (aggiungi name per retrocompatibilità)
+      const accountWithName = {
+        ...updatedAccount,
+        name: updatedAccount.displayName
+      };
+      
+      res.json(accountWithName);
     } catch (error) {
       console.error('Errore durante l\'aggiornamento dell\'account email:', error);
       
