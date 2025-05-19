@@ -6,7 +6,7 @@ import { emailSignatureController } from './controllers/fixedEmailSignatureContr
 const router = express.Router();
 
 // Rotte per le firme email
-// Non utilizziamo più il prefisso '/signatures' poiché è già gestito dal file routes.ts
+// Ora utilizziamo il percorso '/api/email-signatures' separato da email
 router.get('/', emailSignatureController.getEmailSignatures);
 router.get('/default', emailSignatureController.getDefaultSignature);
 router.get('/:id', emailSignatureController.getEmailSignatureById);

@@ -2616,10 +2616,12 @@ export function registerRoutes(app: any) {
   // Integrazione API filiali/sedi (Branch)
   app.use('/api/branches', branchRoutes);
   
-  // Integrazione API Email e firme email
+  // Integrazione API Email
   // Applichiamo il middleware di autenticazione a tutte le rotte email
   app.use('/api/email', authenticate, emailRoutes);
-  app.use('/api/email/signatures', authenticate, emailSignatureRoutes);
+  
+  // Utilizziamo la nuova implementazione per le firme email
+  app.use('/api/email-signatures', authenticate, emailSignatureRoutes);
   
   // --- ROTTE PER SETTORI, SOTTOSETTORI E JOB TITLES ---
   
