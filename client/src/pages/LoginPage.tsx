@@ -8,7 +8,7 @@ import { useMutation } from '@tanstack/react-query';
 
 // Schema di validazione
 const loginSchema = z.object({
-  username: z.string().min(1, 'Username richiesto'),
+  email: z.string().min(1, 'Email richiesta'),
   password: z.string().min(1, 'Password richiesta'),
   remember: z.boolean().optional(),
 });
@@ -24,7 +24,7 @@ export default function LoginPage() {
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      username: '',
+      email: '',
       password: '',
       remember: false,
     },
@@ -101,21 +101,21 @@ export default function LoginPage() {
               </div>
             )}
             
-            {/* Campo username */}
+            {/* Campo email */}
             <div className="space-y-2">
-              <label htmlFor="username" className="block text-sm font-medium">
-                Username
+              <label htmlFor="email" className="block text-sm font-medium">
+                Email
               </label>
               <input
-                {...form.register('username')}
-                id="username"
-                type="text"
+                {...form.register('email')}
+                id="email"
+                type="email"
                 className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
-                placeholder="Inserisci username"
+                placeholder="Inserisci email"
               />
-              {form.formState.errors.username && (
+              {form.formState.errors.email && (
                 <p className="text-destructive text-sm">
-                  {form.formState.errors.username.message}
+                  {form.formState.errors.email.message}
                 </p>
               )}
             </div>
