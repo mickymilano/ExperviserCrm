@@ -14,6 +14,7 @@ import { formatDateToLocal, formatPhoneNumber } from "@/lib/utils";
 import { useLead, useConvertLeadToContact } from "@/hooks/useLeads";
 import LeadModal from "@/components/modals/LeadModal";
 import TaskList from "@/components/tasks/TaskList";
+import EntityEmailInbox from "@/components/email/EntityEmailInbox";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
@@ -131,6 +132,10 @@ export default function LeadDetail() {
         <TabsList className="mb-6">
           <TabsTrigger value="overview">{t('lead.detail.tabs.overview')}</TabsTrigger>
           <TabsTrigger value="activities">{t('lead.detail.tabs.activities')}</TabsTrigger>
+          <TabsTrigger value="email">
+            <Mail className="h-4 w-4 mr-2" />
+            Email
+          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview" className="space-y-6">
@@ -256,6 +261,16 @@ export default function LeadDetail() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Contenuto della tab Email */}
+        <TabsContent value="email" className="space-y-4">
+          <EntityEmailInbox
+            entityId={leadId}
+            entityType="lead"
+            entityName={leadName}
+            entityEmail={lead?.email}
+          />
         </TabsContent>
       </Tabs>
       
