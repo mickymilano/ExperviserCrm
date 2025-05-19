@@ -23,7 +23,7 @@ import { SynergiesList } from "@/components/synergies/SynergiesList";
 import { Link } from "wouter";
 import { LinkCompanyButton } from "@/components/forms/LinkCompanyButton";
 import { useTranslation } from "react-i18next";
-import EntityEmailInbox from "@/components/email/EntityEmailInbox";
+import { EntityEmailInbox } from "@/components/email/EntityEmailInbox";
 
 export default function ContactDetail() {
   const params = useParams();

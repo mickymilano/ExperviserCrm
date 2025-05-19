@@ -27,7 +27,7 @@ import { SynergiesList } from "@/components/synergies/SynergiesList";
 import CompanyBranchesList from "@/components/branches/CompanyBranchesList";
 import CompanyContactsTab from "@/components/company/CompanyContactsTab";
 import BranchContactsSection from "@/components/company/BranchContactsSection";
-import EntityEmailInbox from "@/components/email/EntityEmailInbox";
+import { EntityEmailInbox } from "@/components/email/EntityEmailInbox";
 
 export default function CompanyDetail() {
   const { t } = useTranslation();
