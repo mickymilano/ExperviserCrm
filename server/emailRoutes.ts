@@ -17,4 +17,18 @@ router.get('/accounts/:id/messages', emailController.getEmailsByAccount);
 router.get('/messages/:id', emailController.getEmailById);
 router.post('/send', emailController.sendEmail);
 
+// Email signatures routes
+router.get('/signatures', emailController.getEmailSignatures);
+router.get('/signatures/:id', emailController.getEmailSignatureById);
+router.post('/signatures', emailController.createEmailSignature);
+router.put('/signatures/:id', emailController.updateEmailSignature);
+router.delete('/signatures/:id', emailController.deleteEmailSignature);
+router.post('/signatures/:id/default', emailController.setDefaultSignature);
+
+// Email account signatures association routes
+router.get('/accounts/:accountId/signatures', emailController.getEmailAccountSignatures);
+router.post('/accounts/:accountId/signatures/:signatureId', emailController.addSignatureToAccount);
+router.delete('/accounts/:accountId/signatures/:signatureId', emailController.removeSignatureFromAccount);
+router.post('/accounts/:accountId/signatures/:signatureId/default', emailController.setDefaultSignatureForAccount);
+
 export default router;

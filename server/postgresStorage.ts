@@ -36,8 +36,6 @@ import {
   type InsertDeal,
   type Task,
   type InsertTask,
-  type EmailAccount,
-  type InsertEmailAccount,
 } from "../shared/schema";
 
 import {
@@ -45,27 +43,15 @@ import {
   emailSignatures,
   emailAccountSignatures,
   emails,
+  type EmailAccount,
+  type InsertEmailAccount,
   type EmailSignature,
   type InsertEmailSignature,
   type EmailAccountSignature,
   type InsertEmailAccountSignature,
   type Email,
   type InsertEmail,
-  type Activity,
-  type InsertActivity,
-  type Meeting,
-  type InsertMeeting,
-  type ContactEmail,
-  type InsertContactEmail,
-  type Branch,
-  type InsertBranch,
-  type Sector,
-  type InsertSector,
-  type SubSector,
-  type InsertSubSector,
-  type JobTitle,
-  type InsertJobTitle,
-} from "@shared/schema";
+} from "@shared/email/schema";
 import {
   eq,
   and,
@@ -2870,6 +2856,235 @@ export class PostgresStorage implements IStorage {
       .returning();
 
     return !!updatedAccount;
+  }
+
+  // EMAIL SIGNATURES
+  async getSignatures(userId: number): Promise<EmailSignature[]> {
+    try {
+      console.log(`Recupero firme per l'utente ID: ${userId}`);
+      const signatures = await db
+        .select()
+        .from(emailSignatures)
+        .where(eq(emailSignatures.userId, userId))
+        .orderBy(desc(emailSignatures.isDefault), asc(emailSignatures.name));
+
+      return signatures;
+    } catch (error) {
+      console.error("Errore nel recupero delle firme:", error);
+      throw error;
+    }
+  }
+
+  async getSignature(id: number): Promise<EmailSignature | undefined> {
+    try {
+      const [signature] = await db
+        .select()
+        .from(emailSignatures)
+        .where(eq(emailSignatures.id, id));
+
+      return signature;
+    } catch (error) {
+      console.error(`Errore nel recupero della firma ID ${id}:`, error);
+      throw error;
+    }
+  }
+
+  async createSignature(signature: InsertEmailSignature): Promise<EmailSignature> {
+    try {
+      // Se questa firma è impostata come default, assicuriamoci che le altre non lo siano
+      if (signature.isDefault) {
+        await db
+          .update(emailSignatures)
+          .set({ isDefault: false })
+          .where(eq(emailSignatures.userId, signature.userId));
+      }
+
+      // Creiamo la nuova firma
+      const [newSignature] = await db
+        .insert(emailSignatures)
+        .values({
+          ...signature,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+        .returning();
+
+      return newSignature;
+    } catch (error) {
+      console.error("Errore nella creazione della firma:", error);
+      throw error;
+    }
+  }
+
+  async updateSignature(
+    id: number,
+    signatureData: Partial<EmailSignature>
+  ): Promise<EmailSignature> {
+    try {
+      // Se questa firma è impostata come default, assicuriamoci che le altre non lo siano
+      if (signatureData.isDefault) {
+        // Prima otteniamo l'utente proprietario
+        const [currentSignature] = await db
+          .select()
+          .from(emailSignatures)
+          .where(eq(emailSignatures.id, id));
+
+        if (currentSignature) {
+          await db
+            .update(emailSignatures)
+            .set({ isDefault: false })
+            .where(
+              and(
+                eq(emailSignatures.userId, currentSignature.userId),
+                ne(emailSignatures.id, id)
+              )
+            );
+        }
+      }
+
+      // Aggiorniamo la firma
+      const [updatedSignature] = await db
+        .update(emailSignatures)
+        .set({
+          ...signatureData,
+          updatedAt: new Date()
+        })
+        .where(eq(emailSignatures.id, id))
+        .returning();
+
+      return updatedSignature;
+    } catch (error) {
+      console.error(`Errore nell'aggiornamento della firma ID ${id}:`, error);
+      throw error;
+    }
+  }
+
+  async deleteSignature(id: number): Promise<boolean> {
+    try {
+      const result = await db
+        .delete(emailSignatures)
+        .where(eq(emailSignatures.id, id));
+
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error(`Errore nella cancellazione della firma ID ${id}:`, error);
+      throw error;
+    }
+  }
+
+  async setDefaultSignature(id: number): Promise<boolean> {
+    try {
+      // Prima otteniamo la firma per trovare l'utente proprietario
+      const [signature] = await db
+        .select()
+        .from(emailSignatures)
+        .where(eq(emailSignatures.id, id));
+
+      if (!signature) {
+        return false;
+      }
+
+      // Rimuoviamo lo stato default da tutte le firme dell'utente
+      await db
+        .update(emailSignatures)
+        .set({ isDefault: false })
+        .where(eq(emailSignatures.userId, signature.userId));
+
+      // Impostiamo questa firma come default
+      const result = await db
+        .update(emailSignatures)
+        .set({ isDefault: true, updatedAt: new Date() })
+        .where(eq(emailSignatures.id, id));
+
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error(`Errore nell'impostazione della firma ${id} come default:`, error);
+      throw error;
+    }
+  }
+
+  // EMAIL ACCOUNT SIGNATURES
+  async getEmailAccountSignatures(accountId: number): Promise<EmailSignature[]> {
+    try {
+      const signatures = await db
+        .select({
+          signature: emailSignatures,
+          isAccountDefault: emailAccountSignatures.isDefault
+        })
+        .from(emailAccountSignatures)
+        .innerJoin(
+          emailSignatures,
+          eq(emailAccountSignatures.signatureId, emailSignatures.id)
+        )
+        .where(eq(emailAccountSignatures.accountId, accountId))
+        .orderBy(desc(emailAccountSignatures.isDefault), asc(emailSignatures.name));
+
+      // Mappiamo i risultati per mantenere la struttura di EmailSignature
+      // ma con l'override di isDefault dal valore nell'associazione
+      return signatures.map(r => ({
+        ...r.signature,
+        isDefault: r.isAccountDefault
+      }));
+    } catch (error) {
+      console.error(`Errore nel recupero delle firme per l'account ${accountId}:`, error);
+      throw error;
+    }
+  }
+
+  async addSignatureToEmailAccount(
+    accountId: number,
+    signatureId: number,
+    isDefault: boolean = false
+  ): Promise<EmailAccountSignature> {
+    try {
+      // Se questa associazione è impostata come default, rimuovi lo stato default dalle altre
+      if (isDefault) {
+        await db
+          .update(emailAccountSignatures)
+          .set({ isDefault: false })
+          .where(eq(emailAccountSignatures.accountId, accountId));
+      }
+
+      // Crea o aggiorna l'associazione
+      const [association] = await db
+        .insert(emailAccountSignatures)
+        .values({
+          accountId,
+          signatureId,
+          isDefault
+        })
+        .onConflictDoUpdate({
+          target: [emailAccountSignatures.accountId, emailAccountSignatures.signatureId],
+          set: { isDefault }
+        })
+        .returning();
+
+      return association;
+    } catch (error) {
+      console.error(`Errore nell'associazione della firma ${signatureId} all'account ${accountId}:`, error);
+      throw error;
+    }
+  }
+
+  async removeSignatureFromEmailAccount(
+    accountId: number,
+    signatureId: number
+  ): Promise<boolean> {
+    try {
+      const result = await db
+        .delete(emailAccountSignatures)
+        .where(
+          and(
+            eq(emailAccountSignatures.accountId, accountId),
+            eq(emailAccountSignatures.signatureId, signatureId)
+          )
+        );
+
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error(`Errore nella rimozione della firma ${signatureId} dall'account ${accountId}:`, error);
+      throw error;
+    }
   }
 
   // EMAILS

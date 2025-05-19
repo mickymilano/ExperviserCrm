@@ -1,11 +1,13 @@
 import { Request, Response } from 'express';
 import { db } from '../db';
 import { 
-  emails, 
-  emailAccounts, 
+  emails,
+  emailAccounts,
+  emailSignatures,
+  emailAccountSignatures,
   insertEmailAccountSchema
 } from '../../shared/email/schema';
-import { eq, and, desc, like, sql } from 'drizzle-orm';
+import { eq, and, desc, like, sql, asc, ne } from 'drizzle-orm';
 import { EmailReceiver, ImapConfig, testImapConnection } from '../modules/email/emailReceiver';
 import { EmailSender, SmtpConfig, testSmtpConnection } from '../modules/email/emailSender';
 import { 
@@ -592,6 +594,449 @@ export const emailController = {
         });
       }
       
+      res.status(500).json({ error: 'Errore interno del server' });
+    }
+  },
+  
+  /**
+   * Recupera tutte le firme email dell'utente corrente
+   */
+  getEmailSignatures: async (req: Request, res: Response) => {
+    try {
+      // In un'app reale, utilizzare l'ID dell'utente autenticato
+      const userId = 1;
+      const signatures = await db
+        .select()
+        .from(emailSignatures)
+        .where(eq(emailSignatures.userId, userId))
+        .orderBy(desc(emailSignatures.isDefault), emailSignatures.name);
+
+      res.json(signatures);
+    } catch (error) {
+      console.error('Errore durante il recupero delle firme email:', error);
+      res.status(500).json({ error: 'Errore interno del server' });
+    }
+  },
+
+  /**
+   * Recupera una firma email specifica per ID
+   */
+  getEmailSignatureById: async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const signatureId = parseInt(id);
+      
+      const [signature] = await db
+        .select()
+        .from(emailSignatures)
+        .where(eq(emailSignatures.id, signatureId))
+        .limit(1);
+        
+      if (!signature) {
+        return res.status(404).json({ error: 'Firma email non trovata' });
+      }
+      
+      res.json(signature);
+    } catch (error) {
+      console.error('Errore durante il recupero della firma email:', error);
+      res.status(500).json({ error: 'Errore interno del server' });
+    }
+  },
+
+  /**
+   * Crea una nuova firma email
+   */
+  createEmailSignature: async (req: Request, res: Response) => {
+    try {
+      const { name, content, isDefault } = req.body;
+      
+      // Validazione
+      if (!name || !content) {
+        return res.status(400).json({ 
+          error: 'Dati mancanti',
+          details: 'Nome e contenuto della firma sono obbligatori'
+        });
+      }
+      
+      // In un'app reale, utilizzare l'ID dell'utente autenticato
+      const userId = 1;
+      
+      // Se questa firma è impostata come default, rimuovi lo stato default dalle altre
+      if (isDefault) {
+        await db
+          .update(emailSignatures)
+          .set({ isDefault: false })
+          .where(eq(emailSignatures.userId, userId));
+      }
+      
+      // Crea la nuova firma
+      const [newSignature] = await db
+        .insert(emailSignatures)
+        .values({
+          userId,
+          name,
+          content,
+          isDefault: isDefault || false,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+        .returning();
+        
+      res.status(201).json(newSignature);
+    } catch (error) {
+      console.error('Errore durante la creazione della firma email:', error);
+      res.status(500).json({ error: 'Errore interno del server' });
+    }
+  },
+
+  /**
+   * Aggiorna una firma email esistente
+   */
+  updateEmailSignature: async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const signatureId = parseInt(id);
+      const { name, content, isDefault } = req.body;
+      
+      // Verifica che la firma esista
+      const [existingSignature] = await db
+        .select()
+        .from(emailSignatures)
+        .where(eq(emailSignatures.id, signatureId))
+        .limit(1);
+        
+      if (!existingSignature) {
+        return res.status(404).json({ error: 'Firma email non trovata' });
+      }
+      
+      // Se questa firma è impostata come default, rimuovi lo stato default dalle altre
+      if (isDefault && !existingSignature.isDefault) {
+        await db
+          .update(emailSignatures)
+          .set({ isDefault: false })
+          .where(
+            and(
+              eq(emailSignatures.userId, existingSignature.userId),
+              ne(emailSignatures.id, signatureId)
+            )
+          );
+      }
+      
+      // Aggiorna la firma
+      const [updatedSignature] = await db
+        .update(emailSignatures)
+        .set({
+          name: name || existingSignature.name,
+          content: content || existingSignature.content,
+          isDefault: isDefault !== undefined ? isDefault : existingSignature.isDefault,
+          updatedAt: new Date()
+        })
+        .where(eq(emailSignatures.id, signatureId))
+        .returning();
+        
+      res.json(updatedSignature);
+    } catch (error) {
+      console.error('Errore durante l\'aggiornamento della firma email:', error);
+      res.status(500).json({ error: 'Errore interno del server' });
+    }
+  },
+
+  /**
+   * Elimina una firma email
+   */
+  deleteEmailSignature: async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const signatureId = parseInt(id);
+      
+      // Verifica che la firma esista
+      const [existingSignature] = await db
+        .select()
+        .from(emailSignatures)
+        .where(eq(emailSignatures.id, signatureId))
+        .limit(1);
+        
+      if (!existingSignature) {
+        return res.status(404).json({ error: 'Firma email non trovata' });
+      }
+      
+      // Elimina la firma
+      await db
+        .delete(emailSignatures)
+        .where(eq(emailSignatures.id, signatureId));
+        
+      // Se era la firma predefinita, imposta un'altra firma come predefinita (se disponibile)
+      if (existingSignature.isDefault) {
+        const [anotherSignature] = await db
+          .select()
+          .from(emailSignatures)
+          .where(eq(emailSignatures.userId, existingSignature.userId))
+          .limit(1);
+          
+        if (anotherSignature) {
+          await db
+            .update(emailSignatures)
+            .set({ isDefault: true })
+            .where(eq(emailSignatures.id, anotherSignature.id));
+        }
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Errore durante l\'eliminazione della firma email:', error);
+      res.status(500).json({ error: 'Errore interno del server' });
+    }
+  },
+
+  /**
+   * Imposta una firma email come predefinita
+   */
+  setDefaultSignature: async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const signatureId = parseInt(id);
+      
+      // Verifica che la firma esista
+      const [signature] = await db
+        .select()
+        .from(emailSignatures)
+        .where(eq(emailSignatures.id, signatureId))
+        .limit(1);
+        
+      if (!signature) {
+        return res.status(404).json({ error: 'Firma email non trovata' });
+      }
+      
+      // Rimuovi lo stato default da tutte le firme dell'utente
+      await db
+        .update(emailSignatures)
+        .set({ isDefault: false })
+        .where(eq(emailSignatures.userId, signature.userId));
+        
+      // Imposta questa firma come default
+      const [updatedSignature] = await db
+        .update(emailSignatures)
+        .set({ 
+          isDefault: true,
+          updatedAt: new Date() 
+        })
+        .where(eq(emailSignatures.id, signatureId))
+        .returning();
+        
+      res.json(updatedSignature);
+    } catch (error) {
+      console.error('Errore durante l\'impostazione della firma predefinita:', error);
+      res.status(500).json({ error: 'Errore interno del server' });
+    }
+  },
+
+  /**
+   * Recupera tutte le firme associate a un account email
+   */
+  getEmailAccountSignatures: async (req: Request, res: Response) => {
+    try {
+      const { accountId } = req.params;
+      const emailAccountId = parseInt(accountId);
+      
+      const signatures = await db
+        .select({
+          signature: emailSignatures,
+          isAccountDefault: emailAccountSignatures.isDefault
+        })
+        .from(emailAccountSignatures)
+        .innerJoin(
+          emailSignatures,
+          eq(emailAccountSignatures.signatureId, emailSignatures.id)
+        )
+        .where(eq(emailAccountSignatures.accountId, emailAccountId))
+        .orderBy(desc(emailAccountSignatures.isDefault), asc(emailSignatures.name));
+        
+      // Mappa i risultati per restituire un formato più user-friendly
+      const formattedSignatures = signatures.map(row => ({
+        ...row.signature,
+        isDefault: row.isAccountDefault
+      }));
+        
+      res.json(formattedSignatures);
+    } catch (error) {
+      console.error('Errore durante il recupero delle firme dell\'account:', error);
+      res.status(500).json({ error: 'Errore interno del server' });
+    }
+  },
+
+  /**
+   * Associa una firma a un account email
+   */
+  addSignatureToAccount: async (req: Request, res: Response) => {
+    try {
+      const { accountId, signatureId } = req.params;
+      const { isDefault } = req.body;
+      
+      const emailAccountId = parseInt(accountId);
+      const emailSignatureId = parseInt(signatureId);
+      
+      // Verifica che l'account esista
+      const [account] = await db
+        .select()
+        .from(emailAccounts)
+        .where(eq(emailAccounts.id, emailAccountId))
+        .limit(1);
+        
+      if (!account) {
+        return res.status(404).json({ error: 'Account email non trovato' });
+      }
+      
+      // Verifica che la firma esista
+      const [signature] = await db
+        .select()
+        .from(emailSignatures)
+        .where(eq(emailSignatures.id, emailSignatureId))
+        .limit(1);
+        
+      if (!signature) {
+        return res.status(404).json({ error: 'Firma email non trovata' });
+      }
+      
+      // Se questa firma è impostata come default, rimuovi lo stato default dalle altre
+      if (isDefault) {
+        await db
+          .update(emailAccountSignatures)
+          .set({ isDefault: false })
+          .where(eq(emailAccountSignatures.accountId, emailAccountId));
+      }
+      
+      // Crea o aggiorna l'associazione
+      const [association] = await db
+        .insert(emailAccountSignatures)
+        .values({
+          accountId: emailAccountId,
+          signatureId: emailSignatureId,
+          isDefault: isDefault || false
+        })
+        .onConflictDoUpdate({
+          target: [emailAccountSignatures.accountId, emailAccountSignatures.signatureId],
+          set: { isDefault: isDefault || false }
+        })
+        .returning();
+        
+      res.status(201).json(association);
+    } catch (error) {
+      console.error('Errore durante l\'associazione della firma all\'account:', error);
+      res.status(500).json({ error: 'Errore interno del server' });
+    }
+  },
+
+  /**
+   * Rimuove l'associazione tra una firma e un account email
+   */
+  removeSignatureFromAccount: async (req: Request, res: Response) => {
+    try {
+      const { accountId, signatureId } = req.params;
+      
+      const emailAccountId = parseInt(accountId);
+      const emailSignatureId = parseInt(signatureId);
+      
+      // Verifica che l'associazione esista
+      const [association] = await db
+        .select()
+        .from(emailAccountSignatures)
+        .where(
+          and(
+            eq(emailAccountSignatures.accountId, emailAccountId),
+            eq(emailAccountSignatures.signatureId, emailSignatureId)
+          )
+        )
+        .limit(1);
+        
+      if (!association) {
+        return res.status(404).json({ error: 'Associazione non trovata' });
+      }
+      
+      // Rimuovi l'associazione
+      await db
+        .delete(emailAccountSignatures)
+        .where(
+          and(
+            eq(emailAccountSignatures.accountId, emailAccountId),
+            eq(emailAccountSignatures.signatureId, emailSignatureId)
+          )
+        );
+        
+      // Se questa era la firma predefinita, imposta un'altra firma come predefinita (se disponibile)
+      if (association.isDefault) {
+        const [anotherAssociation] = await db
+          .select()
+          .from(emailAccountSignatures)
+          .where(eq(emailAccountSignatures.accountId, emailAccountId))
+          .limit(1);
+          
+        if (anotherAssociation) {
+          await db
+            .update(emailAccountSignatures)
+            .set({ isDefault: true })
+            .where(
+              and(
+                eq(emailAccountSignatures.accountId, emailAccountId),
+                eq(emailAccountSignatures.signatureId, anotherAssociation.signatureId)
+              )
+            );
+        }
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Errore durante la rimozione dell\'associazione:', error);
+      res.status(500).json({ error: 'Errore interno del server' });
+    }
+  },
+
+  /**
+   * Imposta una firma come predefinita per un account email
+   */
+  setDefaultSignatureForAccount: async (req: Request, res: Response) => {
+    try {
+      const { accountId, signatureId } = req.params;
+      
+      const emailAccountId = parseInt(accountId);
+      const emailSignatureId = parseInt(signatureId);
+      
+      // Verifica che l'associazione esista
+      const [association] = await db
+        .select()
+        .from(emailAccountSignatures)
+        .where(
+          and(
+            eq(emailAccountSignatures.accountId, emailAccountId),
+            eq(emailAccountSignatures.signatureId, emailSignatureId)
+          )
+        )
+        .limit(1);
+        
+      if (!association) {
+        return res.status(404).json({ error: 'Associazione non trovata' });
+      }
+      
+      // Rimuovi lo stato default da tutte le firme dell'account
+      await db
+        .update(emailAccountSignatures)
+        .set({ isDefault: false })
+        .where(eq(emailAccountSignatures.accountId, emailAccountId));
+        
+      // Imposta questa firma come default
+      const [updatedAssociation] = await db
+        .update(emailAccountSignatures)
+        .set({ isDefault: true })
+        .where(
+          and(
+            eq(emailAccountSignatures.accountId, emailAccountId),
+            eq(emailAccountSignatures.signatureId, emailSignatureId)
+          )
+        )
+        .returning();
+        
+      res.json(updatedAssociation);
+    } catch (error) {
+      console.error('Errore durante l\'impostazione della firma predefinita per l\'account:', error);
       res.status(500).json({ error: 'Errore interno del server' });
     }
   }
