@@ -1,0 +1,84 @@
+apply_patch << 'EOF'
+*** Begin Patch
+*** Update File: server/modules/email/emailReceiver.ts
+@@ import Imap from 'imap-simple';
+-// Vecchia funzione di sync a polling
+-export async function syncEmailAccount(accountId: number) {
+-  // …
+-}
++// Nuova funzione: connessione IMAP live con IDLE
++import Imap from 'imap-simple';
++import { processNewMessage } from './contactProcessor'; // adatta al tuo import
++
++export async function startEmailListener(accountConfig: any) {
++  const config = {
++    imap: {
++      user: accountConfig.username,
++      password: accountConfig.password,
++      host: accountConfig.server,
++      port: accountConfig.port,
++      tls: accountConfig.tls,
++      authTimeout: 3000
++    }
++  };
++  const connection = await Imap.connect(config);
++  await connection.openBox('INBOX');
++
++  // alla prima connessione, processiamo tutte le mail non lette
++  const unseen = await connection.search([ 'UNSEEN' ], { bodies: ['HEADER.FIELDS (FROM TO SUBJECT DATE)'], markSeen: true });
++  for (const msg of unseen) {
++    await processNewMessage(accountConfig.id, msg);
++  }
++
++  // attiva IDLE e ascolta nuovi messaggi
++  connection.on('mail', async () => {
++    try {
++      const newMsgs = await connection.search([ 'UNSEEN' ], { bodies: [''], markSeen: true });
++      for (const msg of newMsgs) {
++        await processNewMessage(accountConfig.id, msg);
++      }
++    } catch (err) {
++      console.error('[EmailListener] errore processing new mail:', err);
++    }
++  });
++
++  console.log(\`[EmailListener] Listener IMAP attivo su account \${accountConfig.id}\`);
++}
+*** End Patch
+EOF
+
+# 2) Invochi questo listener all’avvio:
+apply_patch << 'EOF'
+*** Begin Patch
+*** Update File: server/index.ts
+@@
+-import './modules/email/emailScheduler';
++import { getEmailAccounts } from './modules/email/emailReceiver';
++import { startEmailListener } from './modules/email/emailReceiver';
++
++// Avvia connessioni IMAP live per ciascun account
++;(async () => {
++  const accounts = await getEmailAccounts();
++  for (const acct of accounts) {
++    startEmailListener(acct).catch(err =>
++      console.error(\`[EmailListener] impossibile avviare listener IMAP account \${acct.id}:\`, err)
++    );
++  }
++})();
+*** End Patch
+EOF
+
+# 3) Rimuovi o commenta eventuali scheduler cron:
+apply_patch << 'EOF'
+*** Begin Patch
+*** Update File: server/modules/email/emailScheduler.ts
+@@
+-// cron.schedule(…)
+-
+-console.log(\`[EmailScheduler] Job schedulato…\`);
++// disabilitato in favore di connessione IMAP live
+*** End Patch
+EOF
+
+# 4) Riavvia il server
+npm run dev

@@ -13,6 +13,8 @@ import {
   sentryErrorHandler,
   errorHandler as sentryCustomErrorHandler
 } from './errorHandling';
+// Importa il listener email IMAP
+import { getEmailAccounts, startEmailListener, closeAllConnections } from './modules/email/emailListener';
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -92,15 +94,36 @@ async function initialize() {
       console.warn('Il sistema funzionerà in modalità limitata');
     });
     
+    // Inizializza le connessioni IMAP in tempo reale per tutti gli account email
+    initializePostgresDb().then(async (dbSuccess) => {
+      if (dbSuccess) {
+        console.log('Database inizializzato con successo, avvio connessioni IMAP...');
+        try {
+          const accounts = await getEmailAccounts();
+          console.log(`[EmailListener] Trovati ${accounts.length} account email da connettere`);
+          
+          for (const account of accounts) {
+            startEmailListener(account).catch(err => {
+              console.error(`[EmailListener] Impossibile avviare il listener IMAP per l'account ${account.id}:`, err);
+            });
+          }
+        } catch (error) {
+          console.error('[EmailListener] Errore durante il recupero degli account email:', error);
+        }
+      }
+    });
+    
     // Gestione terminazione
     process.on('SIGTERM', async () => {
       console.log('SIGTERM ricevuto, chiusura del server...');
+      closeAllConnections(); // Chiudi tutte le connessioni IMAP
       await closeDbConnections();
       process.exit(0);
     });
     
     process.on('SIGINT', async () => {
       console.log('SIGINT ricevuto, chiusura del server...');
+      closeAllConnections(); // Chiudi tutte le connessioni IMAP
       await closeDbConnections();
       process.exit(0);
     });
