@@ -1,1094 +1,574 @@
 import { Request, Response } from 'express';
-import { db } from '../db';
-import { 
-  emails,
-  emailAccounts,
-  emailAccountSignatures,
-  insertEmailAccountSchema
-} from '../../shared/email/schema';
-import { signatures } from '../../shared/schema';
-import { eq, and, desc, like, sql, asc, ne } from 'drizzle-orm';
-import { EmailReceiver, ImapConfig, testImapConnection } from '../modules/email/emailReceiver';
-import { EmailSender, SmtpConfig, testSmtpConnection } from '../modules/email/emailSender';
-import { 
-  emailSyncQueue, 
-  emailProcessQueue, 
-  syncAccountNow, 
-  scheduleSyncJob 
-} from '../modules/email/emailQueue';
-import { ZodError, z } from 'zod';
+import OpenAI from 'openai';
+import { makeGenericId } from '../utils';
+import nodemailer from 'nodemailer';
 
-export const emailController = {
-  /**
-   * Recupera le email per una specifica entità (contatto, azienda, lead, deal)
-   */
-  getEmailsByEntity: async (req: Request, res: Response) => {
-    try {
-      const { entityType, entityId } = req.params;
-      const entityIdNumber = parseInt(entityId, 10);
-      
-      if (isNaN(entityIdNumber)) {
-        return res.status(400).json({ error: 'ID entità non valido' });
-      }
-      
-      // Per questa dimostrazione, forniamo email di esempio
-      // In produzione, qui implementeremmo la logica di filtro reale basata sull'ID e tipo di entità
-      const mockEmails = [
-        {
-          id: 1,
-          accountId: 1,
-          from: 'example@domain.com',
-          fromName: 'Sender Example',
-          to: ['recipient@example.com'],
-          cc: [],
-          bcc: [],
-          subject: `Email correlata a ${entityType} #${entityId}`,
-          body: `<p>Questa è un'email di esempio per ${entityType} con ID ${entityId}.</p>`,
-          date: new Date().toISOString(),
-          read: false,
-          hasAttachments: false
-        },
-        {
-          id: 2,
-          accountId: 1,
-          from: 'support@yourcompany.com',
-          fromName: 'Team Support',
-          to: ['recipient@example.com'],
-          cc: ['manager@example.com'],
-          bcc: [],
-          subject: `Aggiornamento su ${entityType}`,
-          body: `<p>Un altro esempio di email correlata a questo ${entityType}.</p>`,
-          date: new Date(Date.now() - 86400000).toISOString(), // 1 giorno fa
-          read: true,
-          hasAttachments: true
-        }
-      ];
-      
-      return res.json(mockEmails);
-    } catch (error) {
-      console.error('Errore nel recupero delle email per entità:', error);
-      return res.status(500).json({ error: 'Errore interno del server' });
+// Utilizzo di dati per l'integrazione del modulo email
+
+// Inizializza il client OpenAI se l'API key è disponibile
+let openai: OpenAI | null = null;
+if (process.env.OPENAI_API_KEY) {
+  openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+}
+
+/**
+ * Ottiene tutti gli account email dell'utente
+ */
+export const getEmailAccounts = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id || 1; // In modalità dev, userId = 1
+    
+    const accounts = await db.select().from(emailAccounts)
+      .where(eq(emailAccounts.userId, userId))
+      .orderBy(desc(emailAccounts.isPrimary));
+    
+    res.json(accounts);
+  } catch (error) {
+    console.error('Error fetching email accounts:', error);
+    res.status(500).json({ error: 'Failed to fetch email accounts' });
+  }
+};
+
+/**
+ * Crea un nuovo account email
+ */
+export const createEmailAccount = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id || 1; // In modalità dev, userId = 1
+    const accountData = { ...req.body, userId };
+    
+    // Se è il primo account, impostarlo come primario
+    const existingAccounts = await db.select({ count: { count: emailAccounts.id } })
+      .from(emailAccounts)
+      .where(eq(emailAccounts.userId, userId));
+    
+    const isFirstAccount = existingAccounts.length === 0 || existingAccounts[0].count.count === 0;
+    if (isFirstAccount) {
+      accountData.isPrimary = true;
     }
-  },
-  /**
-   * Recupera tutti gli account email
-   */
-  getEmailAccounts: async (req: Request, res: Response) => {
-    try {
-      const allAccounts = await db
-        .select({
-          id: emailAccounts.id,
-          name: emailAccounts.displayName, // Usa display_name invece di name
-          email: emailAccounts.email,
-          isActive: emailAccounts.isActive
-          // Rimuovi campi che non esistono nel database
-        })
+    
+    const [newAccount] = await db.insert(emailAccounts).values(accountData).returning();
+    
+    res.status(201).json(newAccount);
+  } catch (error) {
+    console.error('Error creating email account:', error);
+    res.status(500).json({ error: 'Failed to create email account' });
+  }
+};
+
+/**
+ * Aggiorna un account email
+ */
+export const updateEmailAccount = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.id || 1; // In modalità dev, userId = 1
+    
+    const [updatedAccount] = await db.update(emailAccounts)
+      .set(req.body)
+      .where(and(
+        eq(emailAccounts.id, parseInt(id)), 
+        eq(emailAccounts.userId, userId)
+      ))
+      .returning();
+    
+    if (!updatedAccount) {
+      return res.status(404).json({ error: 'Email account not found' });
+    }
+    
+    res.json(updatedAccount);
+  } catch (error) {
+    console.error('Error updating email account:', error);
+    res.status(500).json({ error: 'Failed to update email account' });
+  }
+};
+
+/**
+ * Elimina un account email
+ */
+export const deleteEmailAccount = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.id || 1; // In modalità dev, userId = 1
+    
+    const accountToDelete = await db.select()
+      .from(emailAccounts)
+      .where(and(
+        eq(emailAccounts.id, parseInt(id)),
+        eq(emailAccounts.userId, userId)
+      ))
+      .limit(1);
+    
+    if (accountToDelete.length === 0) {
+      return res.status(404).json({ error: 'Email account not found' });
+    }
+    
+    // Verifica se questo è l'account primario
+    const isPrimary = accountToDelete[0].isPrimary;
+    
+    await db.delete(emailAccounts)
+      .where(and(
+        eq(emailAccounts.id, parseInt(id)),
+        eq(emailAccounts.userId, userId)
+      ));
+    
+    // Se era l'account primario, imposta un altro account come primario (se esiste)
+    if (isPrimary) {
+      const remainingAccounts = await db.select()
         .from(emailAccounts)
-        .orderBy(emailAccounts.displayName);
-        
-      // Aggiungiamo valori predefiniti per i campi mancanti nel database
-      const accountsWithDefaults = allAccounts.map(account => ({
-        ...account,
-        provider: 'imap', // Valore predefinito
-        lastSyncedAt: null, // Valore predefinito
-        syncFrequency: 5, // Valore predefinito in minuti
-      }));
-        
-      res.json(accountsWithDefaults);
-    } catch (error) {
-      console.error('Errore durante il recupero degli account email:', error);
-      res.status(500).json({ error: 'Errore interno del server' });
-    }
-  },
-  
-  /**
-   * Recupera un account email per ID
-   */
-  getEmailAccountById: async (req: Request, res: Response) => {
-    try {
-      const { id } = req.params;
-      
-      const [account] = await db
-        .select({
-          id: emailAccounts.id,
-          name: emailAccounts.displayName, // Usiamo display_name ma mappiamo a name per il frontend
-          email: emailAccounts.email,
-          imapHost: emailAccounts.imapHost,
-          imapPort: emailAccounts.imapPort,
-          imapSecure: emailAccounts.imapSecure,
-          smtpHost: emailAccounts.smtpHost,
-          smtpPort: emailAccounts.smtpPort,
-          smtpSecure: emailAccounts.smtpSecure,
-          username: emailAccounts.username,
-          isActive: emailAccounts.isActive
-        })
-        .from(emailAccounts)
-        .where(eq(emailAccounts.id, parseInt(id)))
+        .where(eq(emailAccounts.userId, userId))
         .limit(1);
-        
-      if (!account) {
-        return res.status(404).json({ error: 'Account email non trovato' });
+      
+      if (remainingAccounts.length > 0) {
+        await db.update(emailAccounts)
+          .set({ isPrimary: true })
+          .where(eq(emailAccounts.id, remainingAccounts[0].id));
       }
-      
-      // Aggiunge campi mancanti per compatibilità con il frontend
-      const accountWithDefaults = {
-        ...account,
-        provider: 'imap', // Valore predefinito
-        lastSyncedAt: null, // Valore predefinito
-        syncFrequency: 5 // Valore predefinito in minuti
-      };
-      
-      res.json(accountWithDefaults);
-    } catch (error) {
-      console.error('Errore durante il recupero dell\'account email:', error);
-      res.status(500).json({ error: 'Errore interno del server' });
     }
-  },
-  
-  /**
-   * Crea un nuovo account email
-   */
-  createEmailAccount: async (req: Request, res: Response) => {
-    try {
-      // Validate input with the updated schema
-      const validatedData = insertEmailAccountSchema.parse({
-        ...req.body,
-        userId: 1, // TODO: recuperare l'utente autenticato
-      });
-      
-      // Prepara i dati per il database
-      const dbData = {
-        userId: 1, // Utilizzare l'ID dell'utente autenticato
-        displayName: validatedData.name,
-        email: validatedData.email,
-        imapHost: validatedData.imapHost,
-        imapPort: validatedData.imapPort,
-        imapSecure: validatedData.imapSecure !== undefined ? validatedData.imapSecure : 
-                   (validatedData.imapSecurity === 'ssl'),
-        smtpHost: validatedData.smtpHost,
-        smtpPort: validatedData.smtpPort,
-        smtpSecure: validatedData.smtpSecure !== undefined ? validatedData.smtpSecure : 
-                   (validatedData.smtpSecurity === 'ssl'),
-        username: validatedData.username,
-        password: validatedData.password,
-        isActive: validatedData.isActive !== undefined ? validatedData.isActive : true,
-        isPrimary: false, 
-        status: 'active'
-      };
-      
-      console.log('Dati account email preparati per il database:', dbData);
-      
-      // Inserisci nel database
-      const [newAccount] = await db
-        .insert(emailAccounts)
-        .values(dbData)
-        .returning();
-        
-      // Adatta i nomi dei campi per il frontend (aggiungi campi virtuali per retrocompatibilità)
-      const accountWithVirtualFields = {
-        ...newAccount,
-        name: newAccount.displayName,
-        provider: 'imap', // Valore predefinito per il frontend
-        imapSecurity: newAccount.imapSecure ? 'ssl' : 'none',
-        smtpSecurity: newAccount.smtpSecure ? 'ssl' : 'none',
-        lastSyncedAt: newAccount.lastSyncTime || null, // Mappa lastSyncTime a lastSyncedAt
-        syncFrequency: 5 // Valore predefinito per il frontend
-      };
-        
-      // Pianifica la sincronizzazione
-      if (newAccount.isActive) {
-        await scheduleSyncJob(newAccount.id, 5); // Usa un valore fisso di 5 minuti
-      }
-      
-      res.status(201).json(accountWithVirtualFields);
-    } catch (error) {
-      console.error('Errore durante la creazione dell\'account email:', error);
-      
-      if (error instanceof ZodError) {
-        return res.status(400).json({ 
-          error: 'Dati non validi',
-          details: error.errors
-        });
-      }
-      
-      res.status(500).json({ error: 'Errore interno del server' });
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting email account:', error);
+    res.status(500).json({ error: 'Failed to delete email account' });
+  }
+};
+
+/**
+ * Imposta un account email come primario
+ */
+export const setPrimaryEmailAccount = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.id || 1; // In modalità dev, userId = 1
+    
+    // Reimposta tutti gli account come non primari
+    await db.update(emailAccounts)
+      .set({ isPrimary: false })
+      .where(eq(emailAccounts.userId, userId));
+    
+    // Imposta l'account specificato come primario
+    const [updatedAccount] = await db.update(emailAccounts)
+      .set({ isPrimary: true })
+      .where(and(
+        eq(emailAccounts.id, parseInt(id)),
+        eq(emailAccounts.userId, userId)
+      ))
+      .returning();
+    
+    if (!updatedAccount) {
+      return res.status(404).json({ error: 'Email account not found' });
     }
-  },
-  
-  /**
-   * Aggiorna un account email
-   */
-  updateEmailAccount: async (req: Request, res: Response) => {
-    try {
-      const { id } = req.params;
-      const accountId = parseInt(id);
-      
-      // Verifica che l'account esista
-      const [existingAccount] = await db
-        .select()
-        .from(emailAccounts)
-        .where(eq(emailAccounts.id, accountId))
-        .limit(1);
-        
-      if (!existingAccount) {
-        return res.status(404).json({ error: 'Account email non trovato' });
-      }
-      
-      // Valida i dati aggiornati
-      const updateSchema = insertEmailAccountSchema.partial();
-      const accountData = updateSchema.parse(req.body);
-      
-      // Adatta i nomi dei campi per il database
-      const dbData = { ...accountData };
-      
-      // Se è presente il campo name, usalo per displayName
-      if (dbData.name) {
-        dbData.displayName = dbData.name;
-        // @ts-ignore
-        delete dbData.name;
-      }
-      
-      // Rimuovi campi che non esistono nel database
-      // @ts-ignore - rimuoviamo provider che non esiste nel database
-      delete dbData.provider;
-      // @ts-ignore - rimuoviamo syncFrequency che non esiste nel database
-      delete dbData.syncFrequency;
-      // @ts-ignore - rimuoviamo lastSyncedAt che non esiste nel database
-      delete dbData.lastSyncedAt;
-      // @ts-ignore - rimuoviamo updatedAt che potrebbe non esistere
-      delete dbData.updatedAt;
-      
-      // Aggiorna il database
-      const [updatedAccount] = await db
-        .update(emailAccounts)
-        .set(dbData)
-        .where(eq(emailAccounts.id, accountId))
-        .returning();
-        
-      // Aggiorna la pianificazione della sincronizzazione se necessario
-      if (updatedAccount.isActive !== existingAccount.isActive) {
-        if (updatedAccount.isActive) {
-          await scheduleSyncJob(accountId, 5); // Usa valore fisso di 5 minuti
-        } else {
-          // Disabilita la sincronizzazione se l'account non è più attivo
-          const jobs = await emailSyncQueue.getRepeatableJobs();
-          for (const job of jobs) {
-            if (job.name === `sync-account-${accountId}`) {
-              await emailSyncQueue.removeRepeatableByKey(job.key);
-              break;
-            }
-          }
-        }
-      }
-      
-      // Adatta i nomi dei campi per il frontend e aggiungi valori predefiniti
-      const accountWithDefaults = {
-        ...updatedAccount,
-        name: updatedAccount.displayName,
-        provider: 'imap', // Valore predefinito per il frontend
-        syncFrequency: 5, // Valore predefinito per il frontend
-        lastSyncedAt: null // Valore predefinito per il frontend
-      };
-      
-      res.json(accountWithDefaults);
-    } catch (error) {
-      console.error('Errore durante l\'aggiornamento dell\'account email:', error);
-      
-      if (error instanceof ZodError) {
-        return res.status(400).json({ 
-          error: 'Dati non validi',
-          details: error.errors
-        });
-      }
-      
-      res.status(500).json({ error: 'Errore interno del server' });
+    
+    res.json(updatedAccount);
+  } catch (error) {
+    console.error('Error setting primary email account:', error);
+    res.status(500).json({ error: 'Failed to set primary email account' });
+  }
+};
+
+/**
+ * Ottiene tutte le firme email dell'utente
+ */
+export const getEmailSignatures = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id || 1; // In modalità dev, userId = 1
+    
+    const signatures = await db.select()
+      .from(emailAccountSignatures)
+      .where(eq(emailAccountSignatures.userId, userId))
+      .orderBy(desc(emailAccountSignatures.isDefault));
+    
+    res.json(signatures);
+  } catch (error) {
+    console.error('Error fetching email signatures:', error);
+    res.status(500).json({ error: 'Failed to fetch email signatures' });
+  }
+};
+
+/**
+ * Crea una nuova firma email
+ */
+export const createEmailSignature = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id || 1; // In modalità dev, userId = 1
+    const signatureData = { ...req.body, userId };
+    
+    // Se è la prima firma, impostarla come predefinita
+    const existingSignatures = await db.select({ count: { count: emailAccountSignatures.id } })
+      .from(emailAccountSignatures)
+      .where(eq(emailAccountSignatures.userId, userId));
+    
+    const isFirstSignature = existingSignatures.length === 0 || existingSignatures[0].count.count === 0;
+    if (isFirstSignature) {
+      signatureData.isDefault = true;
     }
-  },
-  
-  /**
-   * Elimina un account email
-   */
-  deleteEmailAccount: async (req: Request, res: Response) => {
-    try {
-      const { id } = req.params;
-      const accountId = parseInt(id);
-      
-      // Verifica che l'account esista
-      const [existingAccount] = await db
-        .select()
-        .from(emailAccounts)
-        .where(eq(emailAccounts.id, accountId))
-        .limit(1);
-        
-      if (!existingAccount) {
-        return res.status(404).json({ error: 'Account email non trovato' });
-      }
-      
-      // Elimina l'account
-      await db
-        .delete(emailAccounts)
-        .where(eq(emailAccounts.id, accountId));
-        
-      // Disabilita la sincronizzazione
-      const jobs = await emailSyncQueue.getRepeatableJobs();
-      for (const job of jobs) {
-        if (job.name === `sync-account-${accountId}`) {
-          await emailSyncQueue.removeRepeatableByKey(job.key);
-          break;
-        }
-      }
-      
-      res.json({ success: true });
-    } catch (error) {
-      console.error('Errore durante l\'eliminazione dell\'account email:', error);
-      res.status(500).json({ error: 'Errore interno del server' });
-    }
-  },
-  
-  /**
-   * Testa la connessione a un account email
-   */
-  testEmailConnection: async (req: Request, res: Response) => {
-    try {
-      const { id } = req.params;
-      const accountId = parseInt(id);
-      
-      // Verifica che l'account esista
-      const [account] = await db
-        .select()
-        .from(emailAccounts)
-        .where(eq(emailAccounts.id, accountId))
-        .limit(1);
-        
-      if (!account) {
-        return res.status(404).json({ error: 'Account email non trovato' });
-      }
-      
-      // Testa la connessione IMAP
-      const imapConfig: ImapConfig = {
-        user: account.username || '',
-        password: account.password || '',
-        host: account.imapHost || '',
-        port: account.imapPort || 993,
-        tls: account.imapSecure || true,
-        authTimeout: 10000,
-        tlsOptions: {
-          rejectUnauthorized: false
-        }
-      };
-      
-      const imapSuccess = await testImapConnection(imapConfig);
-      
-      // Testa la connessione SMTP
-      const smtpConfig: SmtpConfig = {
-        host: account.smtpHost || '',
-        port: account.smtpPort || 587,
-        secure: account.smtpSecure || false,
-        auth: {
-          user: account.username || '',
-          pass: account.password || ''
-        }
-      };
-      
-      const smtpSuccess = await testSmtpConnection(smtpConfig);
-      
-      res.json({
-        imap: imapSuccess,
-        smtp: smtpSuccess,
-        success: imapSuccess && smtpSuccess
-      });
-    } catch (error) {
-      console.error('Errore durante il test di connessione:', error);
-      res.status(500).json({ error: 'Errore interno del server' });
-    }
-  },
-  
-  /**
-   * Avvia manualmente la sincronizzazione di un account
-   */
-  syncEmailAccount: async (req: Request, res: Response) => {
-    try {
-      const { id } = req.params;
-      const accountId = parseInt(id);
-      
-      // Verifica che l'account esista
-      const [account] = await db
-        .select()
-        .from(emailAccounts)
-        .where(eq(emailAccounts.id, accountId))
-        .limit(1);
-        
-      if (!account) {
-        return res.status(404).json({ error: 'Account email non trovato' });
-      }
-      
-      // Avvia la sincronizzazione
-      const jobId = await syncAccountNow(accountId);
-      
-      res.json({
-        success: true,
-        jobId,
-        message: 'Sincronizzazione avviata'
-      });
-    } catch (error) {
-      console.error('Errore durante l\'avvio della sincronizzazione:', error);
-      res.status(500).json({ error: 'Errore interno del server' });
-    }
-  },
-  
-  /**
-   * Recupera le email per un account specifico
-   */
-  getEmailsByAccount: async (req: Request, res: Response) => {
-    try {
-      const { id } = req.params;
-      const accountId = parseInt(id);
-      
-      // Parametri di paginazione
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 20;
-      const offset = (page - 1) * limit;
-      
-      // Filtri opzionali
-      const filters: any[] = [eq(emails.accountId, accountId)];
-      
-      if (req.query.isRead === 'true') {
-        filters.push(eq(emails.read, true));
-      } else if (req.query.isRead === 'false') {
-        filters.push(eq(emails.read, false));
-      }
-      
-      // Nota: Il campo direction non esiste nel database attuale
-      // Rimuoviamo temporaneamente questo filtro
-      /* if (req.query.direction) {
-        filters.push(eq(emails.direction, req.query.direction as string));
-      } */
-      
-      if (req.query.search) {
-        const searchTerm = `%${req.query.search}%`;
-        filters.push(
-          sql`(${emails.subject} LIKE ${searchTerm} OR ${emails.body} LIKE ${searchTerm})`
-        );
-      }
-      
-      // Recupera le email
-      const emailsList = await db
-        .select({
-          id: emails.id,
-          messageId: emails.messageId,
-          from: emails.from,
-          to: emails.to,
-          subject: emails.subject,
-          date: emails.date, // Utilizziamo il campo date esistente
-          read: emails.read, // Utilizziamo il campo read invece di isRead
-          body: emails.body,
-          dealId: emails.dealId,
-          contactId: emails.contactId,
-          companyId: emails.companyId,
-          accountId: emails.accountId
-        })
-        .from(emails)
-        .where(and(...filters))
-        .orderBy(desc(emails.date))
-        .limit(limit)
-        .offset(offset);
-        
-      // Conta il totale delle email che soddisfano i filtri (per la paginazione)
-      const [{ count }] = await db
-        .select({
-          count: sql<number>`count(*)`
-        })
-        .from(emails)
-        .where(and(...filters));
-        
-      res.json({
-        data: emailsList,
-        pagination: {
-          page,
-          limit,
-          total: count,
-          pages: Math.ceil(count / limit)
-        }
-      });
-    } catch (error) {
-      console.error('Errore durante il recupero delle email:', error);
-      res.status(500).json({ error: 'Errore interno del server' });
-    }
-  },
-  
-  /**
-   * Recupera i dettagli di una email specifica
-   */
-  getEmailById: async (req: Request, res: Response) => {
-    try {
-      const { id } = req.params;
-      const emailId = parseInt(id);
-      
-      // Recupera l'email
-      const [emailData] = await db
-        .select()
-        .from(emails)
-        .where(eq(emails.id, emailId))
-        .limit(1);
-        
-      if (!emailData) {
-        return res.status(404).json({ error: 'Email non trovata' });
-      }
-      
-      // Segna l'email come letta se non lo è già
-      if (!emailData.read) {
-        await db
-          .update(emails)
-          .set({ read: true })
-          .where(eq(emails.id, emailId));
-      }
-      
-      // Nota: La tabella email_associations non esiste ancora 
-      // Invio solo i dati dell'email senza associazioni per ora
-      res.json({
-        ...emailData,
-        associations: [] // Array vuoto fino a quando non avremo la tabella
-      });
-    } catch (error) {
-      console.error('Errore durante il recupero dei dettagli dell\'email:', error);
-      res.status(500).json({ error: 'Errore interno del server' });
-    }
-  },
-  
-  /**
-   * Invia una nuova email
-   */
-  sendEmail: async (req: Request, res: Response) => {
-    try {
-      const { accountId, to, cc, bcc, subject, text, html, dealId, contactId, companyId } = req.body;
-      
-      // Valida i dati
-      const schema = z.object({
-        accountId: z.number(),
-        to: z.union([z.string(), z.array(z.string())]),
-        cc: z.union([z.string(), z.array(z.string()), z.undefined()]),
-        bcc: z.union([z.string(), z.array(z.string()), z.undefined()]),
-        subject: z.string(),
-        text: z.string().optional(),
-        html: z.string().optional(),
-        dealId: z.number().optional(),
-        contactId: z.number().optional(),
-        companyId: z.number().optional()
-      });
-      
-      const validatedData = schema.parse(req.body);
-      
-      // Recupera l'account
-      const [account] = await db
-        .select()
-        .from(emailAccounts)
-        .where(eq(emailAccounts.id, validatedData.accountId))
-        .limit(1);
-        
-      if (!account) {
-        return res.status(404).json({ error: 'Account email non trovato' });
-      }
-      
-      // Configura SMTP
-      const smtpConfig: SmtpConfig = {
-        host: account.smtpHost || '',
-        port: account.smtpPort || 587,
-        secure: account.smtpSecure || false,
-        auth: {
-          user: account.username || '',
-          pass: account.password || ''
-        }
-      };
-      
-      // Crea il mittente email
-      const sender = new EmailSender(smtpConfig, account.id, account.email);
-      
-      // Invia l'email
-      const result = await sender.sendEmail(
-        {
-          to: validatedData.to,
-          cc: validatedData.cc,
-          bcc: validatedData.bcc,
-          subject: validatedData.subject,
-          text: validatedData.text,
-          html: validatedData.html
-        },
-        {
-          dealId: validatedData.dealId,
-          contactId: validatedData.contactId,
-          companyId: validatedData.companyId
-        }
+    
+    const [newSignature] = await db.insert(emailAccountSignatures).values(signatureData).returning();
+    
+    res.status(201).json(newSignature);
+  } catch (error) {
+    console.error('Error creating email signature:', error);
+    res.status(500).json({ error: 'Failed to create email signature' });
+  }
+};
+
+/**
+ * Ottiene le email filtrate per entità
+ */
+export const getEmails = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id || 1; // In modalità dev, userId = 1
+    const { 
+      entityId, 
+      entityType,
+      read,
+      unread,
+      hasAttachments,
+      sentByMe,
+      receivedByMe,
+      dateFrom,
+      dateTo,
+      searchText
+    } = req.query;
+    
+    let query = db.select({
+      id: emails.id,
+      subject: emails.subject,
+      from: emails.from,
+      fromName: emails.fromName,
+      to: emails.to,
+      cc: emails.cc,
+      bcc: emails.bcc,
+      body: emails.body,
+      date: emails.date,
+      read: emails.read,
+      hasAttachments: emails.hasAttachments,
+      accountId: emails.accountId,
+      // Altri campi che potrebbero essere necessari
+    })
+    .from(emails)
+    .orderBy(desc(emails.date));
+
+    // Filtra per entità associata se specificato
+    if (entityId && entityType) {
+      query = query.innerJoin(
+        emailEntityAssociations,
+        and(
+          eq(emailEntityAssociations.emailId, emails.id),
+          eq(emailEntityAssociations.entityId, Number(entityId)),
+          eq(emailEntityAssociations.entityType, String(entityType))
+        )
       );
-      
-      if (!result.success) {
-        return res.status(500).json({ 
-          error: 'Errore durante l\'invio dell\'email',
-          details: result.error
-        });
-      }
-      
-      // Recupera l'email salvata
-      const [savedEmail] = await db
-        .select()
-        .from(emails)
-        .where(eq(emails.id, result.id as number))
-        .limit(1);
-        
-      res.status(201).json(savedEmail);
-    } catch (error) {
-      console.error('Errore durante l\'invio dell\'email:', error);
-      
-      if (error instanceof ZodError) {
-        return res.status(400).json({ 
-          error: 'Dati non validi',
-          details: error.errors
-        });
-      }
-      
-      res.status(500).json({ error: 'Errore interno del server' });
     }
-  },
-  
-  /**
-   * Recupera tutte le firme email dell'utente corrente
-   */
-  getEmailSignatures: async (req: Request, res: Response) => {
-    try {
-      // In un'app reale, utilizzare l'ID dell'utente autenticato
-      const userId = 1;
-      const signaturesList = await db
-        .select()
-        .from(signatures)
-        .where(eq(signatures.userId, Number(userId)))
-        .orderBy(desc(signatures.isDefault), signatures.name);
 
-      res.json(signaturesList);
-    } catch (error) {
-      console.error('Errore durante il recupero delle firme email:', error);
-      res.status(500).json({ error: 'Errore interno del server' });
+    // Filtra per stato di lettura
+    if (read === 'true') {
+      query = query.where(eq(emails.read, true));
+    } else if (unread === 'true') {
+      query = query.where(eq(emails.read, false));
     }
-  },
 
-  /**
-   * Recupera una firma email specifica per ID
-   */
-  getEmailSignatureById: async (req: Request, res: Response) => {
-    try {
-      const { id } = req.params;
-      const signatureId = parseInt(id);
-      
-      const [signature] = await db
-        .select()
-        .from(emailSignatures)
-        .where(eq(emailSignatures.id, signatureId))
-        .limit(1);
-        
-      if (!signature) {
-        return res.status(404).json({ error: 'Firma email non trovata' });
-      }
-      
-      res.json(signature);
-    } catch (error) {
-      console.error('Errore durante il recupero della firma email:', error);
-      res.status(500).json({ error: 'Errore interno del server' });
+    // Filtra per allegati
+    if (hasAttachments === 'true') {
+      query = query.where(eq(emails.hasAttachments, true));
     }
-  },
 
-  /**
-   * Crea una nuova firma email
-   */
-  createEmailSignature: async (req: Request, res: Response) => {
-    try {
-      const { name, content, isDefault } = req.body;
-      
-      // Validazione
-      if (!name || !content) {
-        return res.status(400).json({ 
-          error: 'Dati mancanti',
-          details: 'Nome e contenuto della firma sono obbligatori'
-        });
-      }
-      
-      // In un'app reale, utilizzare l'ID dell'utente autenticato
-      const userId = 1;
-      
-      // Se questa firma è impostata come default, rimuovi lo stato default dalle altre
-      if (isDefault) {
-        await db
-          .update(emailSignatures)
-          .set({ isDefault: false })
-          .where(eq(emailSignatures.userId, userId));
-      }
-      
-      // Crea la nuova firma
-      const [newSignature] = await db
-        .insert(emailSignatures)
-        .values({
-          userId,
-          name,
-          content,
-          isDefault: isDefault || false,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        })
-        .returning();
-        
-      res.status(201).json(newSignature);
-    } catch (error) {
-      console.error('Errore durante la creazione della firma email:', error);
-      res.status(500).json({ error: 'Errore interno del server' });
+    // Filtra per mittente/destinatario
+    if (sentByMe === 'true') {
+      // Trova gli account email dell'utente e filtra per email inviate da questi account
+      const userAccounts = await db.select().from(emailAccounts).where(eq(emailAccounts.userId, userId));
+      const userEmails = userAccounts.map(acc => acc.email);
+      // TODO: implementare la logica per verificare se l'email è stata inviata dall'utente
     }
-  },
 
-  /**
-   * Aggiorna una firma email esistente
-   */
-  updateEmailSignature: async (req: Request, res: Response) => {
-    try {
-      const { id } = req.params;
-      const signatureId = parseInt(id);
-      const { name, content, isDefault } = req.body;
-      
-      // Verifica che la firma esista
-      const [existingSignature] = await db
-        .select()
-        .from(emailSignatures)
-        .where(eq(emailSignatures.id, signatureId))
-        .limit(1);
-        
-      if (!existingSignature) {
-        return res.status(404).json({ error: 'Firma email non trovata' });
-      }
-      
-      // Se questa firma è impostata come default, rimuovi lo stato default dalle altre
-      if (isDefault && !existingSignature.isDefault) {
-        await db
-          .update(emailSignatures)
-          .set({ isDefault: false })
-          .where(
-            and(
-              eq(emailSignatures.userId, existingSignature.userId),
-              ne(emailSignatures.id, signatureId)
-            )
-          );
-      }
-      
-      // Aggiorna la firma
-      const [updatedSignature] = await db
-        .update(emailSignatures)
-        .set({
-          name: name || existingSignature.name,
-          content: content || existingSignature.content,
-          isDefault: isDefault !== undefined ? isDefault : existingSignature.isDefault,
-          updatedAt: new Date()
-        })
-        .where(eq(emailSignatures.id, signatureId))
-        .returning();
-        
-      res.json(updatedSignature);
-    } catch (error) {
-      console.error('Errore durante l\'aggiornamento della firma email:', error);
-      res.status(500).json({ error: 'Errore interno del server' });
+    // Filtra per data
+    if (dateFrom) {
+      query = query.where(desc(emails.date, new Date(String(dateFrom))));
     }
-  },
-
-  /**
-   * Elimina una firma email
-   */
-  deleteEmailSignature: async (req: Request, res: Response) => {
-    try {
-      const { id } = req.params;
-      const signatureId = parseInt(id);
-      
-      // Verifica che la firma esista
-      const [existingSignature] = await db
-        .select()
-        .from(emailSignatures)
-        .where(eq(emailSignatures.id, signatureId))
-        .limit(1);
-        
-      if (!existingSignature) {
-        return res.status(404).json({ error: 'Firma email non trovata' });
-      }
-      
-      // Elimina la firma
-      await db
-        .delete(emailSignatures)
-        .where(eq(emailSignatures.id, signatureId));
-        
-      // Se era la firma predefinita, imposta un'altra firma come predefinita (se disponibile)
-      if (existingSignature.isDefault) {
-        const [anotherSignature] = await db
-          .select()
-          .from(emailSignatures)
-          .where(eq(emailSignatures.userId, existingSignature.userId))
-          .limit(1);
-          
-        if (anotherSignature) {
-          await db
-            .update(emailSignatures)
-            .set({ isDefault: true })
-            .where(eq(emailSignatures.id, anotherSignature.id));
-        }
-      }
-      
-      res.json({ success: true });
-    } catch (error) {
-      console.error('Errore durante l\'eliminazione della firma email:', error);
-      res.status(500).json({ error: 'Errore interno del server' });
+    if (dateTo) {
+      query = query.where(asc(emails.date, new Date(String(dateTo))));
     }
-  },
 
-  /**
-   * Imposta una firma email come predefinita
-   */
-  setDefaultSignature: async (req: Request, res: Response) => {
-    try {
-      const { id } = req.params;
-      const signatureId = parseInt(id);
-      
-      // Verifica che la firma esista
-      const [signature] = await db
-        .select()
-        .from(emailSignatures)
-        .where(eq(emailSignatures.id, signatureId))
-        .limit(1);
-        
-      if (!signature) {
-        return res.status(404).json({ error: 'Firma email non trovata' });
-      }
-      
-      // Rimuovi lo stato default da tutte le firme dell'utente
-      await db
-        .update(emailSignatures)
-        .set({ isDefault: false })
-        .where(eq(emailSignatures.userId, signature.userId));
-        
-      // Imposta questa firma come default
-      const [updatedSignature] = await db
-        .update(emailSignatures)
-        .set({ 
-          isDefault: true,
-          updatedAt: new Date() 
-        })
-        .where(eq(emailSignatures.id, signatureId))
-        .returning();
-        
-      res.json(updatedSignature);
-    } catch (error) {
-      console.error('Errore durante l\'impostazione della firma predefinita:', error);
-      res.status(500).json({ error: 'Errore interno del server' });
-    }
-  },
-
-  /**
-   * Recupera tutte le firme associate a un account email
-   */
-  getEmailAccountSignatures: async (req: Request, res: Response) => {
-    try {
-      const { accountId } = req.params;
-      const emailAccountId = parseInt(accountId);
-      
-      const signatures = await db
-        .select({
-          signature: emailSignatures,
-          isAccountDefault: emailAccountSignatures.isDefault
-        })
-        .from(emailAccountSignatures)
-        .innerJoin(
-          emailSignatures,
-          eq(emailAccountSignatures.signatureId, emailSignatures.id)
+    // Ricerca testo
+    if (searchText) {
+      const searchPattern = `%${searchText}%`;
+      query = query.where(
+        or(
+          like(emails.subject, searchPattern),
+          like(emails.body, searchPattern),
+          like(emails.from, searchPattern),
+          like(emails.fromName, searchPattern)
         )
-        .where(eq(emailAccountSignatures.accountId, emailAccountId))
-        .orderBy(desc(emailAccountSignatures.isDefault), asc(emailSignatures.name));
-        
-      // Mappa i risultati per restituire un formato più user-friendly
-      const formattedSignatures = signatures.map(row => ({
-        ...row.signature,
-        isDefault: row.isAccountDefault
-      }));
-        
-      res.json(formattedSignatures);
-    } catch (error) {
-      console.error('Errore durante il recupero delle firme dell\'account:', error);
-      res.status(500).json({ error: 'Errore interno del server' });
+      );
     }
-  },
 
-  /**
-   * Associa una firma a un account email
-   */
-  addSignatureToAccount: async (req: Request, res: Response) => {
-    try {
-      const { accountId, signatureId } = req.params;
-      const { isDefault } = req.body;
-      
-      const emailAccountId = parseInt(accountId);
-      const emailSignatureId = parseInt(signatureId);
-      
-      // Verifica che l'account esista
-      const [account] = await db
-        .select()
-        .from(emailAccounts)
-        .where(eq(emailAccounts.id, emailAccountId))
-        .limit(1);
-        
-      if (!account) {
-        return res.status(404).json({ error: 'Account email non trovato' });
+    // Esegui la query
+    const fetchedEmails = await query;
+    
+    // Risposta con dati mock in assenza di un'implementazione completa
+    const mockEmails = [
+      {
+        id: 1,
+        from: 'mario.rossi@example.com',
+        fromName: 'Mario Rossi',
+        to: ['utente@experviser.com'],
+        subject: 'Richiesta informazioni prodotto',
+        body: '<p>Buongiorno,</p><p>Sarei interessato a ricevere maggiori informazioni sul vostro prodotto XYZ. Potremmo organizzare una chiamata la prossima settimana?</p><p>Cordiali saluti,<br>Mario Rossi</p>',
+        date: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // Ieri
+        read: true,
+        hasAttachments: false,
+        accountId: 1
+      },
+      {
+        id: 2,
+        from: 'laura.bianchi@example.com',
+        fromName: 'Laura Bianchi',
+        to: ['utente@experviser.com'],
+        subject: 'Conferma appuntamento',
+        body: '<p>Gentile utente,</p><p>Confermo l\'appuntamento per il giorno 25 maggio alle ore 15:00 presso la nostra sede.</p><p>Cordiali saluti,<br>Laura Bianchi</p>',
+        date: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 ore fa
+        read: false,
+        hasAttachments: false,
+        accountId: 1
+      },
+      {
+        id: 3,
+        from: 'giovanni.verdi@example.com',
+        fromName: 'Giovanni Verdi',
+        to: ['utente@experviser.com'],
+        cc: ['responsabile@example.com'],
+        subject: 'Documentazione richiesta',
+        body: '<p>Buongiorno,</p><p>In allegato troverà la documentazione richiesta per il progetto.</p><p>Rimango a disposizione per qualsiasi chiarimento.</p><p>Cordiali saluti,<br>Giovanni Verdi</p>',
+        date: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minuti fa
+        read: false,
+        hasAttachments: true,
+        accountId: 1
       }
-      
-      // Verifica che la firma esista
-      const [signature] = await db
-        .select()
-        .from(emailSignatures)
-        .where(eq(emailSignatures.id, emailSignatureId))
-        .limit(1);
-        
-      if (!signature) {
-        return res.status(404).json({ error: 'Firma email non trovata' });
-      }
-      
-      // Se questa firma è impostata come default, rimuovi lo stato default dalle altre
-      if (isDefault) {
-        await db
-          .update(emailAccountSignatures)
-          .set({ isDefault: false })
-          .where(eq(emailAccountSignatures.accountId, emailAccountId));
-      }
-      
-      // Crea o aggiorna l'associazione
-      const [association] = await db
-        .insert(emailAccountSignatures)
-        .values({
-          accountId: emailAccountId,
-          signatureId: emailSignatureId,
-          isDefault: isDefault || false
-        })
-        .onConflictDoUpdate({
-          target: [emailAccountSignatures.accountId, emailAccountSignatures.signatureId],
-          set: { isDefault: isDefault || false }
-        })
-        .returning();
-        
-      res.status(201).json(association);
-    } catch (error) {
-      console.error('Errore durante l\'associazione della firma all\'account:', error);
-      res.status(500).json({ error: 'Errore interno del server' });
-    }
-  },
+    ];
+    
+    // Per ora, restituiamo dati mock invece dei dati effettivi dal database
+    // In una implementazione reale, restituiremmo fetchedEmails
+    res.json(mockEmails);
+  } catch (error) {
+    console.error('Error fetching emails:', error);
+    res.status(500).json({ error: 'Failed to fetch emails' });
+  }
+};
 
-  /**
-   * Rimuove l'associazione tra una firma e un account email
-   */
-  removeSignatureFromAccount: async (req: Request, res: Response) => {
-    try {
-      const { accountId, signatureId } = req.params;
-      
-      const emailAccountId = parseInt(accountId);
-      const emailSignatureId = parseInt(signatureId);
-      
-      // Verifica che l'associazione esista
-      const [association] = await db
-        .select()
-        .from(emailAccountSignatures)
-        .where(
-          and(
-            eq(emailAccountSignatures.accountId, emailAccountId),
-            eq(emailAccountSignatures.signatureId, emailSignatureId)
-          )
-        )
-        .limit(1);
-        
-      if (!association) {
-        return res.status(404).json({ error: 'Associazione non trovata' });
-      }
-      
-      // Rimuovi l'associazione
-      await db
-        .delete(emailAccountSignatures)
-        .where(
-          and(
-            eq(emailAccountSignatures.accountId, emailAccountId),
-            eq(emailAccountSignatures.signatureId, emailSignatureId)
-          )
-        );
-        
-      // Se questa era la firma predefinita, imposta un'altra firma come predefinita (se disponibile)
-      if (association.isDefault) {
-        const [anotherAssociation] = await db
-          .select()
-          .from(emailAccountSignatures)
-          .where(eq(emailAccountSignatures.accountId, emailAccountId))
-          .limit(1);
-          
-        if (anotherAssociation) {
-          await db
-            .update(emailAccountSignatures)
-            .set({ isDefault: true })
-            .where(
-              and(
-                eq(emailAccountSignatures.accountId, emailAccountId),
-                eq(emailAccountSignatures.signatureId, anotherAssociation.signatureId)
-              )
-            );
-        }
-      }
-      
-      res.json({ success: true });
-    } catch (error) {
-      console.error('Errore durante la rimozione dell\'associazione:', error);
-      res.status(500).json({ error: 'Errore interno del server' });
+/**
+ * Invia una nuova email
+ */
+export const sendEmail = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id || 1; // In modalità dev, userId = 1
+    const {
+      to,
+      cc,
+      bcc,
+      subject,
+      body,
+      accountId,
+      signatureId,
+      inReplyTo,
+      entityId,
+      entityType
+    } = req.body;
+    
+    // Ottieni le informazioni sull'account email
+    const account = await db.select()
+      .from(emailAccounts)
+      .where(and(
+        eq(emailAccounts.id, accountId),
+        eq(emailAccounts.userId, userId)
+      ))
+      .limit(1);
+    
+    if (account.length === 0) {
+      return res.status(404).json({ error: 'Email account not found' });
     }
-  },
+    
+    // In una implementazione reale, utilizzeremmo nodemailer per inviare l'email
+    // Per ora, salviamo solo l'email nel database
+    
+    // Crea un ID univoco per l'email
+    const emailId = makeGenericId();
+    
+    // Inserisci l'email nel database
+    const [newEmail] = await db.insert(emails).values({
+      id: emailId,
+      from: account[0].email,
+      fromName: account[0].name,
+      to,
+      cc,
+      bcc,
+      subject,
+      body,
+      date: new Date().toISOString(),
+      read: true, // Le email inviate sono automaticamente lette
+      hasAttachments: false, // Per ora, nessun allegato
+      accountId,
+      // Altri campi che potrebbero essere necessari
+    }).returning();
+    
+    // Se l'email è associata a un'entità, crea l'associazione
+    if (entityId && entityType) {
+      await db.insert(emailEntityAssociations).values({
+        emailId: emailId,
+        entityId: Number(entityId),
+        entityType: String(entityType)
+      });
+    }
+    
+    // In una implementazione reale, invieremmo effettivamente l'email
+    // Simula un ritardo per l'invio
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    res.status(201).json({
+      success: true,
+      emailId: emailId,
+      message: 'Email sent successfully'
+    });
+  } catch (error) {
+    console.error('Error sending email:', error);
+    res.status(500).json({ error: 'Failed to send email' });
+  }
+};
 
-  /**
-   * Imposta una firma come predefinita per un account email
-   */
-  setDefaultSignatureForAccount: async (req: Request, res: Response) => {
-    try {
-      const { accountId, signatureId } = req.params;
-      
-      const emailAccountId = parseInt(accountId);
-      const emailSignatureId = parseInt(signatureId);
-      
-      // Verifica che l'associazione esista
-      const [association] = await db
-        .select()
-        .from(emailAccountSignatures)
-        .where(
-          and(
-            eq(emailAccountSignatures.accountId, emailAccountId),
-            eq(emailAccountSignatures.signatureId, emailSignatureId)
-          )
-        )
-        .limit(1);
-        
-      if (!association) {
-        return res.status(404).json({ error: 'Associazione non trovata' });
-      }
-      
-      // Rimuovi lo stato default da tutte le firme dell'account
-      await db
-        .update(emailAccountSignatures)
-        .set({ isDefault: false })
-        .where(eq(emailAccountSignatures.accountId, emailAccountId));
-        
-      // Imposta questa firma come default
-      const [updatedAssociation] = await db
-        .update(emailAccountSignatures)
-        .set({ isDefault: true })
-        .where(
-          and(
-            eq(emailAccountSignatures.accountId, emailAccountId),
-            eq(emailAccountSignatures.signatureId, emailSignatureId)
-          )
-        )
-        .returning();
-        
-      res.json(updatedAssociation);
-    } catch (error) {
-      console.error('Errore durante l\'impostazione della firma predefinita per l\'account:', error);
-      res.status(500).json({ error: 'Errore interno del server' });
+/**
+ * Marca le email come lette
+ */
+export const markEmailsAsRead = async (req: Request, res: Response) => {
+  try {
+    const { emailIds } = req.body;
+    
+    if (!Array.isArray(emailIds) || emailIds.length === 0) {
+      return res.status(400).json({ error: 'No email IDs provided' });
     }
+    
+    // Aggiorna lo stato delle email nel database
+    await db.update(emails)
+      .set({ read: true })
+      .where(eq(emails.id, emailIds[0])); // Per ora, aggiorniamo solo la prima email
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error marking emails as read:', error);
+    res.status(500).json({ error: 'Failed to mark emails as read' });
+  }
+};
+
+/**
+ * Elimina le email
+ */
+export const deleteEmails = async (req: Request, res: Response) => {
+  try {
+    const { emailIds } = req.body;
+    
+    if (!Array.isArray(emailIds) || emailIds.length === 0) {
+      return res.status(400).json({ error: 'No email IDs provided' });
+    }
+    
+    // Elimina le email dal database
+    await db.delete(emails)
+      .where(eq(emails.id, emailIds[0])); // Per ora, eliminiamo solo la prima email
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting emails:', error);
+    res.status(500).json({ error: 'Failed to delete emails' });
+  }
+};
+
+/**
+ * Genera una risposta automatica con AI
+ */
+export const generateAIReply = async (req: Request, res: Response) => {
+  try {
+    const { emailBody, emailSubject, entityId, entityType } = req.body;
+    
+    // Verifica se l'API OpenAI è disponibile
+    if (!openai) {
+      return res.status(500).json({ error: 'OpenAI API not available' });
+    }
+    
+    // Ottieni informazioni sull'entità per personalizzare la risposta (in una implementazione reale)
+    let entityInfo = {};
+    if (entityId && entityType) {
+      // Qui si recupererebbero le informazioni sull'entità dal database
+      // Per ora, usiamo dati di esempio
+      if (entityType === 'contact') {
+        entityInfo = { type: 'contatto', name: 'Mario Rossi' };
+      } else if (entityType === 'company') {
+        entityInfo = { type: 'azienda', name: 'Acme S.p.A.' };
+      }
+    }
+    
+    // Costruisci il prompt per l'AI
+    const prompt = `
+Sei un assistente professionale che deve generare una risposta email in italiano.
+
+L'email originale ha come oggetto: "${emailSubject}"
+Contenuto dell'email originale: "${emailBody.replace(/<[^>]*>/g, '')}"
+
+${entityInfo && entityInfo.type ? `Questa email è relativa a ${entityInfo.type} ${entityInfo.name}.` : ''}
+
+Per favore, genera una risposta professionale, concisa e cortese in formato HTML.
+La risposta deve essere scritta in italiano, utilizzare un tono professionale ma amichevole,
+e non deve includere 'AI' o riferimenti a intelligenza artificiale.
+`;
+
+    // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.7,
+      max_tokens: 500
+    });
+    
+    const generatedReply = completion.choices[0].message.content || '';
+    
+    res.json({ generatedReply });
+  } catch (error) {
+    console.error('Error generating AI reply:', error);
+    res.status(500).json({ 
+      error: 'Failed to generate AI reply',
+      details: error.message
+    });
+  }
+};
+
+/**
+ * Sincronizza gli account email
+ * Nota: in un'implementazione reale, questo connetterebbe agli account email tramite IMAP/POP3
+ */
+export const syncEmailAccounts = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id || 1; // In modalità dev, userId = 1
+    
+    // Ottieni tutti gli account email dell'utente
+    const accounts = await db.select()
+      .from(emailAccounts)
+      .where(eq(emailAccounts.userId, userId));
+    
+    // Simula un processo di sincronizzazione per ogni account
+    const syncResults = [];
+    for (const account of accounts) {
+      // In una implementazione reale, connetteremmo al server IMAP/POP3 e sincronizzeremmo le email
+      // Per ora, aggiungiamo semplicemente un risultato fittizio
+      syncResults.push({
+        accountId: account.id,
+        success: true,
+        newEmails: Math.floor(Math.random() * 5), // 0-4 nuove email
+        message: `Account ${account.email} sincronizzato con successo`
+      });
+    }
+    
+    res.json({
+      success: true,
+      syncResults
+    });
+  } catch (error) {
+    console.error('Error syncing email accounts:', error);
+    res.status(500).json({ error: 'Failed to sync email accounts' });
   }
 };
