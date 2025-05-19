@@ -61,10 +61,10 @@ export default function EntityEmailInbox({
   const [selectedEmailId, setSelectedEmailId] = useState<number | null>(null);
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [showDealModal, setShowDealModal] = useState(false);
-  const [selectedTaskEmail, setSelectedTaskEmail] = useState<any>(null);
-  const [selectedDealEmail, setSelectedDealEmail] = useState<any>(null);
-  const [currentCompanyForDeal, setCurrentCompanyForDeal] = useState<any>(null);
-  const [selectedEmailForAction, setSelectedEmailForAction] = useState<any>(null);
+  const [selectedTaskEmail, setSelectedTaskEmail] = useState<Email | null>(null);
+  const [selectedDealEmail, setSelectedDealEmail] = useState<Email | null>(null);
+  const [currentCompanyForDeal, setCurrentCompanyForDeal] = useState<{id: number; name: string} | null>(null);
+  const [selectedEmailForAction, setSelectedEmailForAction] = useState<Email | null>(null);
   
   // Recupera gli account email configurati
   const { data: accounts, isLoading: isLoadingAccounts } = useAccounts();
@@ -154,13 +154,13 @@ export default function EntityEmailInbox({
   };
   
   // Funzione per gestire la creazione di un task da un'email
-  const handleCreateTask = (email) => {
+  const handleCreateTask = (email: Email) => {
     setSelectedTaskEmail(email);
     setShowTaskModal(true);
   };
   
   // Funzione per gestire la creazione di un deal da un'email
-  const handleCreateDeal = (email) => {
+  const handleCreateDeal = (email: Email) => {
     setSelectedDealEmail(email);
     
     // Se l'entità è un contatto, verifichiamo se ha un'azienda associata
@@ -181,11 +181,11 @@ export default function EntityEmailInbox({
   };
   
   // Stile condizionale per email con dominio aziendale
-  const getEmailStyle = (email) => {
+  const getEmailStyle = (email: Email): string => {
     if (companyDomain) {
       const isDomainEmail = 
         email.from?.includes(`@${companyDomain}`) ||
-        email.to?.some(to => to.includes(`@${companyDomain}`));
+        email.to?.some((to: string) => to.includes(`@${companyDomain}`));
       
       if (isDomainEmail) {
         return "border-l-4 border-primary"; // Evidenzia le email aziendali
@@ -216,7 +216,7 @@ export default function EntityEmailInbox({
   }
   
   // Funzione per renderizzare le azioni aggiuntive per email
-  const renderEmailActions = (email) => {
+  const renderEmailActions = (email: Email) => {
     // Mostra azioni aggiuntive solo per contatti e lead
     if (entityType === 'contact' || entityType === 'lead') {
       return (
@@ -246,7 +246,7 @@ export default function EntityEmailInbox({
   };
   
   // Funzione per renderizzare i badge degli account email
-  const renderAccountBadge = (email) => {
+  const renderAccountBadge = (email: Email) => {
     if (email.accountInfo) {
       return (
         <Badge variant="outline" className="ml-2">
