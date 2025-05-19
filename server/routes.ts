@@ -170,6 +170,7 @@ export function registerRoutes(app: any) {
       const dealsCount = await storage.getDealsCount({ status: 'active' });
       const leadsCount = await storage.getLeadsCount();
       const synergiesCount = await storage.getSynergiesCount();
+      const branchesCount = await storage.getBranchesCount();
       
       // Per ora simuliamo il conteggio delle attività
       const upcomingTasksCount = 8;
@@ -196,6 +197,10 @@ export function registerRoutes(app: any) {
         synergies: {
           count: synergiesCount,
           percentChange: 10.0
+        },
+        branches: {
+          count: branchesCount,
+          percentChange: 3.5
         },
         tasks: {
           upcomingCount: upcomingTasksCount,
