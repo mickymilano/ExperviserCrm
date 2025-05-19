@@ -7,26 +7,7 @@ import { sql } from 'drizzle-orm';
 import { getEmailAccounts } from './modules/email/emailListener';
 import { fetchAllEmails, fetchUnreadEmails, saveEmailToDatabase } from './modules/email/emailReceiver';
 import { EmailAccountDb } from './modules/email/types';
-import jwt from 'jsonwebtoken';
-
-// Implementiamo direttamente authenticateJWT qui per evitare dipendenze circolari
-const authenticateJWT = (req, res, next) => {
-  // Token può essere nel cookie o nell'header Authorization
-  const token = req.cookies?.token || req.headers.authorization?.split(' ')[1];
-  
-  if (!token) {
-    return res.status(401).json({ error: 'Autenticazione richiesta' });
-  }
-
-  try {
-    // Verifica del token con la chiave segreta
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret');
-    req.user = decoded;
-    next();
-  } catch (error) {
-    return res.status(403).json({ error: 'Token non valido o scaduto' });
-  }
-};
+import { authenticateJWT } from './middleware/auth';
 
 const router = express.Router();
 
