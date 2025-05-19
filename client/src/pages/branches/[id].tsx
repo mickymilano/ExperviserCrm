@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Building, Phone, Mail, MapPin, Info, Users, Edit } from "lucide-react";
 import BranchModal from "@/components/modals/BranchModal";
 import BranchManagersViewer from "@/components/branches/BranchManagersViewer";
+import EntityEmailInbox from "@/components/email/EntityEmailInbox";
 
 export default function BranchDetail() {
   const { t } = useTranslation();
@@ -125,6 +126,10 @@ export default function BranchDetail() {
           <TabsTrigger value="managers">
             <Users className="h-4 w-4 mr-2" />
             {t('branches.detail.tabs.managers')}
+          </TabsTrigger>
+          <TabsTrigger value="email">
+            <Mail className="h-4 w-4 mr-2" />
+            Email
           </TabsTrigger>
         </TabsList>
         
@@ -242,6 +247,16 @@ export default function BranchDetail() {
           <BranchManagersViewer 
             branch={branch}
             onUpdate={refetch}
+          />
+        </TabsContent>
+        
+        {/* Contenuto della scheda Email */}
+        <TabsContent value="email" className="space-y-4">
+          <EntityEmailInbox
+            entityId={branchId}
+            entityType="branch"
+            entityName={branch?.name}
+            entityEmail={branch?.email}
           />
         </TabsContent>
       </Tabs>
