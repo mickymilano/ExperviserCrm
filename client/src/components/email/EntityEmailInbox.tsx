@@ -187,8 +187,8 @@ export default function EntityEmailInbox({
             queryKey: [`/api/email/filter/${entityType}/${entityId}`],
           });
           toast({
-            title: t("email.sentSuccess"),
-            description: t("email.sentSuccessDescription"),
+            title: t("email.sentSuccess", "Email inviata"),
+            description: t("email.sentSuccessDescription", "La tua email è stata inviata con successo"),
           });
         }}
       />
@@ -208,7 +208,7 @@ export default function EntityEmailInbox({
             className="text-xs"
           >
             <FileText className="h-3 w-3 mr-1" />
-            {t("email.createTask")}
+            {t("email.createTask", "Crea attività")}
           </Button>
           <Button 
             variant="outline" 
@@ -217,7 +217,7 @@ export default function EntityEmailInbox({
             className="text-xs"
           >
             <Briefcase className="h-3 w-3 mr-1" />
-            {t("email.createDeal")}
+            {t("email.createDeal", "Crea opportunità")}
           </Button>
         </div>
       );
