@@ -100,15 +100,8 @@ export function useDeleteEmailAccount() {
   
   return useMutation({
     mutationFn: async (accountId: number) => {
-      // In un ambiente reale, questa sarebbe una chiamata API
-      // Per ora, simuliamo la risposta
-      return {
-        success: true,
-        message: 'Account email eliminato con successo'
-      };
-      
-      // Versione per ambiente di produzione:
-      // return apiRequest('DELETE', `/api/email/accounts/${accountId}`);
+      // Utilizziamo l'API reale per eliminare l'account email
+      return apiRequest('DELETE', `/api/email/accounts/${accountId}`);
     },
     onSuccess: () => {
       // Invalida la cache degli account email per forzare un aggiornamento
@@ -158,5 +151,101 @@ export function useUpdateEmailAccount() {
         variant: "destructive",
       });
     }
+  });
+}
+
+/**
+ * Hook per sincronizzare le email di un account specifico
+ */
+export function useSyncEmailAccount() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (accountId: number) => {
+      // Utilizziamo l'API reale per sincronizzare le email
+      return apiRequest('POST', `/api/email/accounts/${accountId}/sync`);
+    },
+    onSuccess: () => {
+      // Invalida la cache delle email per forzare un aggiornamento
+      queryClient.invalidateQueries({ queryKey: ['/api/email'] });
+      
+      // Mostra una notifica di successo
+      toast({
+        title: "Sincronizzazione avviata",
+        description: "La sincronizzazione delle email è stata avviata. Le nuove email saranno disponibili a breve.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Errore di sincronizzazione",
+        description: error.message || "Impossibile sincronizzare le email. Riprova più tardi.",
+        variant: "destructive",
+      });
+    }
+  });
+}
+
+/**
+ * Hook per sincronizzare le email di tutti gli account configurati
+ */
+export function useSyncAllEmailAccounts() {
+  const queryClient = useQueryClient();
+  const { data: accounts } = useEmailAccounts();
+  const syncAccount = useSyncEmailAccount();
+  
+  const syncAll = async () => {
+    if (!accounts || accounts.length === 0) {
+      toast({
+        title: "Nessun account configurato",
+        description: "Non ci sono account email configurati da sincronizzare.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      // Avvia la sincronizzazione per ogni account
+      for (const account of accounts) {
+        await syncAccount.mutateAsync(account.id);
+      }
+      
+      toast({
+        title: "Sincronizzazione completata",
+        description: `Sincronizzazione avviata per ${accounts.length} account email.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Errore di sincronizzazione",
+        description: error.message || "Impossibile sincronizzare alcuni account email.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  return {
+    syncAll,
+    isSyncing: syncAccount.isPending
+  };
+}
+
+/**
+ * Hook per recuperare i dettagli di un singolo account email
+ */
+export function useEmailAccount(id: number) {
+  return useQuery({
+    queryKey: [`/api/email/accounts/${id}`],
+    queryFn: async () => {
+      try {
+        const response = await fetch(`/api/email/accounts/${id}`);
+        if (!response.ok) {
+          throw new Error("Errore nel caricamento dei dettagli dell'account email");
+        }
+        return response.json();
+      } catch (error) {
+        console.error('Error fetching email account details:', error);
+        return null;
+      }
+    },
+    enabled: !!id,
   });
 }
