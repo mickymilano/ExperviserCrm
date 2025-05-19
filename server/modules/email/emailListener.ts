@@ -23,11 +23,13 @@ export interface ImapConfig {
 interface EmailAccount {
   id: number;
   email: string;
+  displayName?: string;
   username: string;
   password: string;
   server: string;
   port: number;
   tls: boolean;
+  isActive?: boolean;
 }
 
 // Registro delle connessioni attive
@@ -239,17 +241,22 @@ async function processEmail(message: ImapSimple.Message, accountId: number, conn
  */
 export async function getEmailAccounts(): Promise<EmailAccount[]> {
   try {
-    const accounts = await db.select().from(emailAccounts);
+    // Utilizziamo la query SQL nativa per ottenere solo gli account attivi
+    const accounts = await db.select().from(emailAccounts)
+      .where(eq(emailAccounts.is_active, true));
+    
+    console.log(`[EmailListener] Trovati ${accounts.length} account email attivi`);
     
     // Trasforma i record del DB in configurazioni IMAP
     return accounts.map(account => ({
       id: account.id,
       email: account.email,
-      username: account.imapUsername || account.email,
-      password: account.imapPassword || '',
+      username: account.username || account.email,
+      password: account.password || '',
       server: account.imapHost || '',
       port: account.imapPort || 993,
-      tls: account.imapSecure !== false
+      tls: account.imapSecure !== false,
+      displayName: account.displayName
     }));
   } catch (error) {
     console.error('[EmailListener] Errore nel recupero degli account email:', error);

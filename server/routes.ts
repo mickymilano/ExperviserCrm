@@ -2838,8 +2838,88 @@ export function registerRoutes(app: any) {
   // Integrazione API filiali/sedi (Branch)
   app.use('/api/branches', branchRoutes);
   
-  // Integrazione API Email - Utilizziamo la versione mockup per lo sviluppo
+  // Integrazione API Email
   app.use('/api/email', authenticate, mockEmailRoutes);
+  
+  // API per gestire le email reali
+  app.post('/api/email/accounts/test-connection', authenticate, async (req, res) => {
+    try {
+      const { username, password, server, port, tls } = req.body;
+      
+      if (!username || !password || !server || !port) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Parametri di connessione incompleti' 
+        });
+      }
+      
+      // Importa la funzione per testare la connessione IMAP
+      const { testImapConnection } = require('./modules/email/emailListener');
+      
+      // Testa la connessione
+      const result = await testImapConnection({
+        username,
+        password,
+        server,
+        port: parseInt(port),
+        tls: tls !== false
+      });
+      
+      res.json({
+        success: result,
+        message: result 
+          ? 'Connessione al server email riuscita' 
+          : 'Impossibile connettersi al server email'
+      });
+    } catch (error) {
+      console.error('Error testing email connection:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Errore durante il test di connessione',
+        error: error.message
+      });
+    }
+  });
+  
+  // API per avviare manualmente il listener IMAP per un account
+  app.post('/api/email/accounts/:id/start-listener', authenticate, async (req, res) => {
+    try {
+      const accountId = parseInt(req.params.id);
+      
+      // Importa le funzioni necessarie
+      const { getEmailAccounts, startEmailListener } = require('./modules/email/emailListener');
+      
+      // Ottieni tutti gli account
+      const accounts = await getEmailAccounts();
+      
+      // Trova l'account specifico
+      const account = accounts.find(acc => acc.id === accountId);
+      
+      if (!account) {
+        return res.status(404).json({
+          success: false,
+          message: 'Account email non trovato'
+        });
+      }
+      
+      // Avvia il listener
+      const result = await startEmailListener(account);
+      
+      res.json({
+        success: result,
+        message: result 
+          ? `Listener IMAP avviato per l'account ${account.email}` 
+          : `Impossibile avviare il listener per l'account ${account.email}`
+      });
+    } catch (error) {
+      console.error('Error starting email listener:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Errore durante l\'avvio del listener email',
+        error: error.message
+      });
+    }
+  });
   
   // --- ROTTE PER SETTORI, SOTTOSETTORI E JOB TITLES ---
   
