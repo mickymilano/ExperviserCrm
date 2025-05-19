@@ -245,32 +245,82 @@ async function createInitialPipelineStages() {
 export async function initializePostgresDb() {
   console.log('Initializing PostgreSQL database...');
   
-  // Verifica la connessione
-  const isConnected = await testConnection();
-  if (!isConnected) {
-    console.error('Failed to connect to PostgreSQL database');
+  try {
+    // In modalità sviluppo, gestiamo errori in modo più tollerante
+    if (process.env.NODE_ENV === 'development') {
+      try {
+        // Verifica la connessione
+        const isConnected = await testConnection();
+        if (!isConnected) {
+          console.warn('ATTENZIONE: Impossibile connettersi al database PostgreSQL');
+          console.warn('L\'applicazione funzionerà in modalità limitata senza database');
+          console.warn('Usa il token JWT generato per accedere comunque all\'interfaccia');
+          return true; // In sviluppo, continuiamo anche senza database
+        }
+        
+        // Se la connessione è riuscita, continua con l'inizializzazione
+        const tables = await tablesExist();
+        if (tables) {
+          console.log('Database tables already exist');
+        } else {
+          console.log('Database tables don\'t exist yet. This is normal if this is the first run.');
+          console.log('Schema will be applied during migration.');
+          
+          // Crea le tabelle
+          await createTables();
+          // Crea l'utente admin iniziale
+          await createInitialAdmin();
+          // Crea le fasi della pipeline iniziali
+          await createInitialPipelineStages();
+        }
+        
+        console.log('PostgreSQL database initialized successfully');
+        return true;
+      } catch (error) {
+        // In sviluppo, registriamo l'errore ma consentiamo all'app di avviarsi
+        console.error('Errore durante l\'inizializzazione del database in modalità sviluppo:', error);
+        console.warn('L\'applicazione funzionerà in modalità limitata senza accesso al database');
+        console.warn('Il login automatico e le funzionalità di base rimarranno disponibili');
+        return true;
+      }
+    } else {
+      // In produzione, il comportamento rimane invariato
+      // Verifica la connessione
+      const isConnected = await testConnection();
+      if (!isConnected) {
+        console.error('Failed to connect to PostgreSQL database');
+        return false;
+      }
+      
+      // Verifica se le tabelle esistono già
+      const tables = await tablesExist();
+      if (tables) {
+        console.log('Database tables already exist');
+      } else {
+        console.log('Database tables don\'t exist yet. This is normal if this is the first run.');
+        console.log('Schema will be applied during migration.');
+        // Crea le tabelle
+        await createTables();
+        // Crea l'utente admin iniziale
+        await createInitialAdmin();
+        // Crea le fasi della pipeline iniziali
+        await createInitialPipelineStages();
+      }
+      
+      console.log('PostgreSQL database initialized successfully');
+      return true;
+    }
+  } catch (error) {
+    console.error('Errore critico durante l\'inizializzazione del database:', error);
+    
+    // In sviluppo, consentiamo all'app di avviarsi anche in caso di errore
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('L\'applicazione continuerà in modalità limitata (solo frontend)');
+      return true;
+    }
+    
     return false;
   }
-  
-  // Verifica se le tabelle esistono già
-  const tables = await tablesExist();
-  if (tables) {
-    console.log('Database tables already exist');
-  } else {
-    console.log('Database tables don\'t exist yet. This is normal if this is the first run.');
-    console.log('Schema will be applied during migration.');
-    // Crea le tabelle
-    await createTables();
-    
-    // Crea l'utente admin iniziale
-    await createInitialAdmin();
-    
-    // Crea le fasi della pipeline iniziali
-    await createInitialPipelineStages();
-  }
-  
-  console.log('PostgreSQL database initialized successfully');
-  return true;
 }
 
 // Funzione per chiudere le connessioni

@@ -6,16 +6,46 @@ import * as schema from "@shared/schema";
 // Configura il supporto WebSocket
 neonConfig.webSocketConstructor = ws;
 
-// Verifica che l'URL del database sia definito
-if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?"
-  );
-}
+// In modalità sviluppo, evitiamo errori critici che possono bloccare l'avvio dell'app
+export let pool;
+export let db;
 
-// Crea il pool di connessione e l'istanza Drizzle
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-export const db = drizzle(pool, { schema });
+try {
+  // Verifica che l'URL del database sia definito
+  if (!process.env.DATABASE_URL) {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn("WARNING: DATABASE_URL non è definito, l'applicazione funzionerà in modalità limitata");
+    } else {
+      throw new Error(
+        "DATABASE_URL must be set. Did you forget to provision a database?"
+      );
+    }
+  } else {
+    // Crea il pool di connessione e l'istanza Drizzle
+    pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    db = drizzle(pool, { schema });
+    console.log("Database pool e istanza Drizzle creati correttamente");
+  }
+} catch (error) {
+  if (process.env.NODE_ENV === 'development') {
+    console.error("ERRORE durante l'inizializzazione del database:", error);
+    console.warn("L'applicazione funzionerà in modalità limitata senza database");
+    
+    // In development, creiamo un mock per evitare errori
+    pool = { 
+      query: async () => ({ rows: [{ now: new Date() }] }),
+      end: async () => console.log('Mock pool end chiamato'),
+    };
+    db = {
+      select: () => ({ from: () => ({ where: () => [] }) }),
+      insert: () => ({ values: () => ({}) }),
+      execute: async () => ({}),
+    };
+  } else {
+    // In produzione, l'errore è critico
+    throw error;
+  }
+}
 
 // Funzione per verificare la connessione al database
 export async function testConnection() {
