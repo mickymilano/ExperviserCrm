@@ -21,17 +21,12 @@ export function useEmailAccounts() {
     queryKey: ['/api/email/accounts'],
     queryFn: async () => {
       try {
-        // Nessun account preconfiguraro - permettiamo all'utente di aggiungere i propri account
-        return [];
-
-        // Implementazione reale da attivare quando il backend sarà pronto
-        /*
+        // Utilizziamo l'API reale per recuperare gli account email
         const response = await fetch('/api/email/accounts');
         if (!response.ok) {
           throw new Error('Errore nel caricamento degli account email');
         }
         return response.json();
-        */
       } catch (error) {
         console.error('Error fetching email accounts:', error);
         return [];
@@ -66,24 +61,8 @@ export function useCreateEmailAccount() {
   
   return useMutation({
     mutationFn: async (data: CreateEmailAccountData) => {
-      // In un ambiente reale, questa sarebbe una chiamata API
-      // Per ora, simuliamo la risposta
-      return {
-        success: true,
-        account: {
-          id: Math.floor(Math.random() * 1000) + 3,
-          name: data.name,
-          email: data.email,
-          provider: data.provider,
-          isDefault: false,
-          userId: 1,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        }
-      };
-      
-      // Versione per ambiente di produzione:
-      // return apiRequest('POST', '/api/email/accounts', data);
+      // Utilizziamo l'API reale per creare un nuovo account email
+      return apiRequest('POST', '/api/email/accounts', data);
     },
     onSuccess: () => {
       // Invalida la cache degli account email per forzare un aggiornamento
