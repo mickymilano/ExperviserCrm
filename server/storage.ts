@@ -11,6 +11,11 @@ import {
   branches, Branch, InsertBranch,
   Sector, SubSector, JobTitle
 } from '@shared/schema';
+
+import {
+  EmailSignature, InsertEmailSignature,
+  EmailAccountSignature, InsertEmailAccountSignature
+} from '@shared/email/schema';
 import { db } from './db';
 import { eq } from 'drizzle-orm';
 
@@ -125,6 +130,19 @@ export interface IStorage {
   createJobTitle(data: { subSectorId: number; name: string }): Promise<JobTitle>;
   updateJobTitle(id: number, data: { name: string }): Promise<JobTitle>;
   deleteJobTitle(id: number): Promise<void>;
+  
+  // Email Signature operations
+  getSignatures(userId: number): Promise<EmailSignature[]>;
+  getSignature(id: number): Promise<EmailSignature | undefined>;
+  createSignature(signature: InsertEmailSignature): Promise<EmailSignature>;
+  updateSignature(id: number, signature: Partial<EmailSignature>): Promise<EmailSignature>;
+  deleteSignature(id: number): Promise<boolean>;
+  setDefaultSignature(id: number): Promise<boolean>;
+  
+  // Email Account Signature operations
+  getEmailAccountSignatures(accountId: number): Promise<EmailSignature[]>;
+  addSignatureToEmailAccount(accountId: number, signatureId: number, isDefault?: boolean): Promise<EmailAccountSignature>;
+  removeSignatureFromEmailAccount(accountId: number, signatureId: number): Promise<boolean>;
 }
 
 /**

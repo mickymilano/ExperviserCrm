@@ -51,8 +51,6 @@ import {
   type InsertEmailAccountSignature,
   type Email,
   type InsertEmail,
-  type AccountSignature,
-  type InsertAccountSignature,
   type Activity,
   type InsertActivity,
   type Meeting,
