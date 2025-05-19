@@ -131,9 +131,11 @@ export function EntityEmailInbox({ entityId, entityType, entityEmail }: EntityEm
   // Mutation per segnare le email come lette
   const markAsReadMutation = useMutation({
     mutationFn: async (emailIds: number[]) => {
-      return await apiRequest('POST', '/api/email/mark-read', { 
-        emailIds 
-      });
+      // Utilizziamo PATCH sull'endpoint corretto come definito nel server
+      // Per ora gestiamo solo una email alla volta
+      if (emailIds.length === 0) return null;
+      const emailId = emailIds[0];
+      return await apiRequest('PATCH', `/api/email/messages/${emailId}/read`, {});
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/emails'] });
