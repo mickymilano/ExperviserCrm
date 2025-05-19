@@ -164,7 +164,11 @@ export function EmailAccountForm({ onSuccess, onCancel, accountToEdit, isEditing
     } else {
       // In caso di creazione, usiamo addAccount
       try {
-        await addAccount(formData as Omit<EmailAccount, 'id'>);
+        // Aggiungiamo userId fittizio che verrà sostituito dal backend
+        await addAccount({
+          ...formData,
+          userId: 1 // Questo valore verrà sovrascritto dal backend con l'ID utente effettivo
+        });
         onSuccess();
       } catch (error: any) {
         console.error("Errore nella creazione dell'account:", error);

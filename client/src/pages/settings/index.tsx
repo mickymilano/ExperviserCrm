@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useEmailAccounts, useDeleteEmailAccount, useUpdateEmailAccount, EmailAccount } from "@/hooks/useEmailAccounts";
+import { useEmailAccounts, EmailAccount } from "@/hooks/useEmailAccounts";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -77,9 +77,7 @@ export default function SettingsPage() {
   });
   
   // Email accounts state and handlers
-  const { data: accounts, isLoading } = useEmailAccounts();
-  const deleteAccountMutation = useDeleteEmailAccount();
-  const updateAccountMutation = useUpdateEmailAccount();
+  const { emailAccounts, isLoading, deleteAccount, updateAccount } = useEmailAccounts();
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
@@ -128,11 +126,23 @@ export default function SettingsPage() {
     setShowDeleteAlert(true);
   };
 
-  const confirmDeleteAccount = () => {
+  const confirmDeleteAccount = async () => {
     if (accountToDelete) {
-      deleteAccountMutation.mutate(accountToDelete.id);
-      setShowDeleteAlert(false);
-      setAccountToDelete(null);
+      try {
+        await deleteAccount(accountToDelete.id);
+        setShowDeleteAlert(false);
+        setAccountToDelete(null);
+        toast({
+          title: "Account email eliminato",
+          description: "L'account email è stato eliminato con successo.",
+        });
+      } catch (error: any) {
+        toast({
+          title: "Errore",
+          description: error.message || "Si è verificato un errore durante l'eliminazione dell'account email.",
+          variant: "destructive",
+        });
+      }
     }
   };
   
@@ -367,9 +377,9 @@ export default function SettingsPage() {
                     <Skeleton key={i} className="h-20 w-full" />
                   ))}
                 </div>
-              ) : accounts && accounts.length > 0 ? (
+              ) : emailAccounts && emailAccounts.length > 0 ? (
                 <div className="space-y-4">
-                  {accounts.map(account => (
+                  {emailAccounts.map(account => (
                     <Card key={account.id}>
                       <CardContent className="p-4 flex justify-between items-center">
                         <div>

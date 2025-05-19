@@ -188,14 +188,11 @@ export function EmailReplyComposer({
 
     setIsAiGenerating(true);
     try {
-      const response = await apiRequest('/api/email/generate-reply', {
-        method: 'POST',
-        body: JSON.stringify({
+      const response = await apiRequest('POST', '/api/email/generate-reply', {
           emailBody: originalEmail.body,
           emailSubject: originalEmail.subject,
           entityId,
           entityType,
-        }),
       });
 
       // Aggiorna il corpo dell'email con la risposta generata
