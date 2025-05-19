@@ -427,6 +427,24 @@ export type ContactEmail = typeof contactEmails.$inferSelect;
 export type InsertContactEmail = z.infer<typeof insertContactEmailSchema>;
 
 /**
+ * EMAIL SIGNATURES
+ * Tabella per le firme email
+ */
+export const emailSignatures = pgTable('email_signatures', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id),
+  name: varchar('name', { length: 100 }).notNull(),
+  content: text('content').notNull(),
+  isDefault: boolean('is_default').default(false),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const insertEmailSignatureSchema = createInsertSchema(emailSignatures).omit({ id: true, createdAt: true, updatedAt: true });
+export type EmailSignature = typeof emailSignatures.$inferSelect;
+export type InsertEmailSignature = z.infer<typeof insertEmailSignatureSchema>;
+
+/**
  * SECTOR HIERARCHY
  * Tabelle per la struttura gerarchica settori/sottosettori/job titles
  */
