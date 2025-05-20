@@ -183,3 +183,89 @@ export function useEmailAccounts(): UseEmailAccountsResult {
     setPrimaryAccount: (id) => setPrimaryAccountMutation.mutateAsync(id),
   };
 }
+
+/**
+ * Hook per eliminare un account email
+ */
+export function useDeleteEmailAccount() {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest('DELETE', `/api/email/accounts/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/email/accounts'] });
+      toast({
+        title: t('email.accountDeleted', 'Account email eliminato'),
+        description: t('email.accountDeletedDescription', 'L\'account email è stato eliminato con successo'),
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: t('email.accountDeleteError', 'Errore eliminazione'),
+        description: error.message || t('email.accountDeleteErrorDescription', 'Si è verificato un errore durante l\'eliminazione dell\'account email'),
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
+/**
+ * Hook per sincronizzare un singolo account email
+ */
+export function useSyncEmailAccount() {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest('POST', `/api/email/accounts/${id}/sync`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/email/accounts'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/emails'] });
+      toast({
+        title: t('email.accountSynced', 'Account sincronizzato'),
+        description: t('email.accountSyncedDescription', 'L\'account email è stato sincronizzato con successo'),
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: t('email.accountSyncError', 'Errore sincronizzazione'),
+        description: error.message || t('email.accountSyncErrorDescription', 'Si è verificato un errore durante la sincronizzazione dell\'account email'),
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
+/**
+ * Hook per sincronizzare tutti gli account email
+ */
+export function useSyncAllEmailAccounts() {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      await apiRequest('POST', '/api/email/accounts/sync');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/email/accounts'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/emails'] });
+      toast({
+        title: t('email.accountsSynced', 'Account sincronizzati'),
+        description: t('email.accountsSyncedDescription', 'Tutti gli account email sono stati sincronizzati con successo'),
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: t('email.accountsSyncError', 'Errore sincronizzazione'),
+        description: error.message || t('email.accountsSyncErrorDescription', 'Si è verificato un errore durante la sincronizzazione degli account email'),
+        variant: 'destructive',
+      });
+    },
+  });
+}

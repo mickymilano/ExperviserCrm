@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Building, Phone, Mail, MapPin, Info, Users, Edit } from "lucide-react";
 import BranchModal from "@/components/modals/BranchModal";
 import BranchManagersViewer from "@/components/branches/BranchManagersViewer";
-import EntityEmailInbox from "@/components/email/EntityEmailInbox";
+// import EntityEmailInbox from "@/components/email/EntityEmailInbox"; // Temporaneamente disabilitato
 
 export default function BranchDetail() {
   const { t } = useTranslation();
