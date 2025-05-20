@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { SignatureList } from '@/components/email/SignatureList';
+import { SignatureList } from '../../components/email/SignatureList';
 import { useTranslation } from 'react-i18next';
 
 export function EmailSignaturesPage() {
