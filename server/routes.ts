@@ -2881,8 +2881,9 @@ export function registerRoutes(app: any) {
   // Vecchio sistema email (legacy)
   app.use('/api/email-legacy', authenticate, emailRoutes);
   
-  // Nuovo sistema email con supporto per l'associazione alle entità
-  app.use('/api/email', authenticate, require('./routes/email-entity').default);
+  // Nuovo sistema email con supporto per l'associazione alle entità (versione CommonJS)
+  const simpleEmailEntity = require('./routes/simple-email-entity');
+  app.use('/api/email', authenticate, simpleEmailEntity);
   
   // Integrazione API Importazione/Esportazione
   app.use('/api/import-export', authenticate, importExportRoutes);
