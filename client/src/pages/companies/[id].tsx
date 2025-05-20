@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { useParams, useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
-import { useCompany, useCompanyContacts } from "@/hooks/useCompanies";
-import { useDeals } from "@/hooks/useDeals";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useCompany, useCompanyContacts } from "../../hooks/useCompanies";
+import { useDeals } from "../../hooks/useDeals";
+import { Button } from "../../components/ui/button";
+import { Skeleton } from "../../components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../../components/ui/card";
 import { 
   ArrowLeft, Building, Mail, Phone, Globe, MapPin, 
   Edit, Trash, Users, FileText, PenTool, Plus,
@@ -14,20 +14,20 @@ import {
   Calendar, Flag, Hash, Money, DollarSign, Award, MapPinned, Link,
   Handshake
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { formatPhoneNumber } from "@/lib/utils";
-import CompanyEditForm from "@/components/forms/CompanyEditForm";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { LinkContactButton } from "@/components/forms/LinkContactButton";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import TaskList from "@/components/tasks/TaskList";
-import ContactModal from "@/components/modals/ContactModal";
-import { SynergiesList } from "@/components/synergies/SynergiesList";
-import CompanyBranchesList from "@/components/branches/CompanyBranchesList";
-import CompanyContactsTab from "@/components/company/CompanyContactsTab";
-import BranchContactsSection from "@/components/company/BranchContactsSection";
-import EntityEmailInbox from "@/components/email/EntityEmailInbox";
+import { Badge } from "../../components/ui/badge";
+import { Separator } from "../../components/ui/separator";
+import { formatPhoneNumber } from "../../lib/utils";
+import CompanyEditForm from "../../components/forms/CompanyEditForm";
+import { ScrollArea } from "../../components/ui/scroll-area";
+import { LinkContactButton } from "../../components/forms/LinkContactButton";
+import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar";
+import TaskList from "../../components/tasks/TaskList";
+import ContactModal from "../../components/modals/ContactModal";
+import { SynergiesList } from "../../components/synergies/SynergiesList";
+import CompanyBranchesList from "../../components/branches/CompanyBranchesList";
+import CompanyContactsTab from "../../components/company/CompanyContactsTab";
+import BranchContactsSection from "../../components/company/BranchContactsSection";
+import EntityEmailInbox from "../../components/email/EntityEmailInbox";
 
 export default function CompanyDetail() {
   const { t } = useTranslation();
