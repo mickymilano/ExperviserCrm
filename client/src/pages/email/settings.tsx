@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { EmailAccountList } from '@/components/email/EmailAccountList';
-import { SignatureList } from '@/components/email/SignatureList';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
+import { EmailAccountList } from '../../components/email/EmailAccountList';
+import { SignatureList } from '../../components/email/SignatureList';
 import { useTranslation } from 'react-i18next';
 
 export function EmailSettingsPage() {

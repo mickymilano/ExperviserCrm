@@ -1,4 +1,4 @@
-import { toast } from "@/hooks/use-toast";
+import { toast } from "../hooks/use-toast";
 
 /**
  * Mostra una notifica di operazione completata con successo
