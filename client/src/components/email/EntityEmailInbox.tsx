@@ -35,6 +35,8 @@ interface EntityEmailInboxProps {
   entityId: number;
   entityType: EntityType;
   entityEmail?: string;
+  entityName?: string;
+  companyDomain?: string;
 }
 
 // Tipi di entità supportati
@@ -108,11 +110,16 @@ export function EntityEmailInbox({ entityId, entityType, entityEmail }: EntityEm
       if (filterOptions.dateTo) queryParams.append('dateTo', filterOptions.dateTo);
       if (filterOptions.searchText) queryParams.append('searchText', filterOptions.searchText);
 
-      const response = await fetch(`/api/email?${queryParams.toString()}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch emails');
+      try {
+        const response = await apiRequest({ 
+          url: `/api/email/messages`, 
+          params: Object.fromEntries(queryParams.entries())
+        });
+        return response || [];
+      } catch (error) {
+        console.error('Errore nel recupero delle email:', error);
+        throw new Error(t('Impossibile recuperare le email. Riprova più tardi.'));
       }
-      return response.json();
     },
     enabled: !!entityId,
     staleTime: 1000 * 60 * 5, // 5 minuti
