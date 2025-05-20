@@ -1,10 +1,10 @@
 import { BugIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useDebugConsoleStore } from "@/stores/debugConsoleStore";
-import { useDebugLogs } from "@/hooks/useDebugLogs";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "../ui/button";
+import { useDebugConsoleStore } from "../../stores/debugConsoleStore";
+import { useDebugLogs } from "../../hooks/useDebugLogs";
+import { Badge } from "../ui/badge";
 import { useState, useEffect } from "react";
-import { debugContext } from "@/lib/debugContext";
+import { debugContext } from "../../lib/debugContext";
 
 export default function DebugButton() {
   const { toggleVisibility, isVisible } = useDebugConsoleStore();
