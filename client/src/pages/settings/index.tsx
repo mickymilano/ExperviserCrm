@@ -197,12 +197,13 @@ export default function SettingsPage() {
       </div>
 
       <Tabs defaultValue="account" className="w-full">
-        <TabsList className="mb-6 grid w-full max-w-md grid-cols-5">
+        <TabsList className="mb-6 grid w-full max-w-md grid-cols-6">
           <TabsTrigger value="account">Account</TabsTrigger>
           <TabsTrigger value="email">Email</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="appearance">Appearance</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
+          <TabsTrigger value="datamgmt">Gestione Dati</TabsTrigger>
         </TabsList>
         
         {/* Account Settings */}
