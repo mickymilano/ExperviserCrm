@@ -92,42 +92,24 @@ export function EntityEmailInbox({ entityId, entityType, entityEmail }: EntityEm
   const generateTestEmails = () => {
     const currentDate = new Date();
     
-    // Genera un mittente in base al tipo di entità
-    const getSender = () => {
-      if (entityType === 'company' && entityName) {
-        return {
-          email: `info@${entityName.toLowerCase().replace(/\s+/g, '')}.com`,
-          name: `${entityName} Info`
-        };
-      } else if (entityType === 'contact' && entityName) {
-        const nameParts = entityName.split(' ');
-        const firstName = nameParts[0] || '';
-        const lastName = nameParts.length > 1 ? nameParts[1] : '';
-        return {
-          email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@example.com`,
-          name: entityName
-        };
-      } else {
-        return {
-          email: 'info@example.com',
-          name: 'Example Info'
-        };
-      }
-    };
+    // Genera un mittente in modo semplificato
+    let senderName = 'Info';
+    let senderEmail = 'info@example.com';
+    let domain = 'example.com';
     
-    // Genera un dominio per l'azienda, se disponibile
-    const getCompanyDomain = () => {
-      if (entityType === 'company' && entityName) {
-        return `${entityName.toLowerCase().replace(/\s+/g, '')}.com`;
-      } else if (companyDomain) {
-        return companyDomain;
-      } else {
-        return 'azienda.com';
-      }
-    };
+    // Se abbiamo un nome dell'entità lo usiamo
+    if (entityName) {
+      senderName = `${entityName} Info`;
+      const simplifiedName = entityName.toString().toLowerCase().replace(/\s+/g, '');
+      domain = `${simplifiedName}.com`;
+      senderEmail = `info@${domain}`;
+    }
     
-    const sender = getSender();
-    const domain = getCompanyDomain();
+    // Se abbiamo un dominio aziendale specifico, usiamo quello
+    if (companyDomain) {
+      domain = companyDomain;
+      senderEmail = `info@${domain}`;
+    }
     
     return [
       {

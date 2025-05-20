@@ -653,7 +653,7 @@ export default function CompanyDetail() {
             entityType="company"
             entityName={company.name}
             entityEmail={company.email}
-            companyDomain={company.domain}
+            companyDomain={company.website ? company.website.replace(/^https?:\/\//i, '') : undefined}
           />
         </TabsContent>
       </Tabs>
