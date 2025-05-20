@@ -85,9 +85,9 @@ export default function ModernLayout({ children }: ModernLayoutProps) {
             <nav className="space-y-1 px-2">
               {mainNavItems.map((item) => (
                 <Link key={item.href} href={item.href}>
-                  <a
+                  <div
                     className={cn(
-                      "group flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                      "group flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors cursor-pointer",
                       location === item.href
                         ? "bg-blue-50 text-blue-700"
                         : "text-gray-700 hover:bg-gray-100"
@@ -105,7 +105,7 @@ export default function ModernLayout({ children }: ModernLayoutProps) {
                         {item.count}
                       </span>
                     )}
-                  </a>
+                  </div>
                 </Link>
               ))}
             </nav>
@@ -117,9 +117,9 @@ export default function ModernLayout({ children }: ModernLayoutProps) {
               <nav className="mt-2 space-y-1 px-2">
                 {secondaryNavItems.map((item) => (
                   <Link key={item.href} href={item.href}>
-                    <a
+                    <div
                       className={cn(
-                        "group flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                        "group flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors cursor-pointer",
                         location === item.href
                           ? "bg-blue-50 text-blue-700"
                           : "text-gray-700 hover:bg-gray-100"
@@ -127,7 +127,7 @@ export default function ModernLayout({ children }: ModernLayoutProps) {
                     >
                       <span className="mr-3">{item.icon}</span>
                       {item.label}
-                    </a>
+                    </div>
                   </Link>
                 ))}
               </nav>
