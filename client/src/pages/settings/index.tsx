@@ -680,6 +680,161 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        
+        {/* Gestione Dati Settings */}
+        <TabsContent value="datamgmt">
+          <Card>
+            <CardHeader>
+              <CardTitle>Gestione Dati</CardTitle>
+              <CardDescription>
+                Importa ed esporta dati da e verso il sistema CRM
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium flex items-center">
+                  <FileUp className="h-5 w-5 mr-2" />
+                  Importazione Dati
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <Card className="p-4 border border-dashed hover:border-primary transition-colors cursor-pointer">
+                    <div className="flex flex-col items-center justify-center space-y-2 h-full py-6">
+                      <Upload className="h-8 w-8 text-primary" />
+                      <h4 className="font-medium text-center">Importa Contatti</h4>
+                      <p className="text-sm text-center text-muted-foreground">
+                        Carica un file CSV o Excel con i tuoi contatti
+                      </p>
+                      <Button className="mt-2" size="sm" variant="outline">
+                        Seleziona File
+                      </Button>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Formati supportati: .csv, .xlsx
+                      </p>
+                    </div>
+                  </Card>
+
+                  <Card className="p-4 border border-dashed hover:border-primary transition-colors cursor-pointer">
+                    <div className="flex flex-col items-center justify-center space-y-2 h-full py-6">
+                      <Upload className="h-8 w-8 text-primary" />
+                      <h4 className="font-medium text-center">Importa Aziende</h4>
+                      <p className="text-sm text-center text-muted-foreground">
+                        Carica un file CSV o Excel con le tue aziende
+                      </p>
+                      <Button className="mt-2" size="sm" variant="outline">
+                        Seleziona File
+                      </Button>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Formati supportati: .csv, .xlsx
+                      </p>
+                    </div>
+                  </Card>
+
+                  <Card className="p-4 border border-dashed hover:border-primary transition-colors cursor-pointer">
+                    <div className="flex flex-col items-center justify-center space-y-2 h-full py-6">
+                      <Upload className="h-8 w-8 text-primary" />
+                      <h4 className="font-medium text-center">Importa Opportunità</h4>
+                      <p className="text-sm text-center text-muted-foreground">
+                        Carica un file CSV o Excel con le tue opportunità
+                      </p>
+                      <Button className="mt-2" size="sm" variant="outline">
+                        Seleziona File
+                      </Button>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Formati supportati: .csv, .xlsx
+                      </p>
+                    </div>
+                  </Card>
+                </div>
+              </div>
+              
+              <Separator />
+              
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium flex items-center">
+                  <FileDown className="h-5 w-5 mr-2" />
+                  Esportazione Dati
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <Card className="p-4">
+                    <div className="flex flex-col items-center justify-center space-y-2 h-full py-6">
+                      <Download className="h-8 w-8 text-primary" />
+                      <h4 className="font-medium text-center">Esporta Contatti</h4>
+                      <p className="text-sm text-center text-muted-foreground">
+                        Scarica i tuoi contatti in formato CSV o Excel
+                      </p>
+                      <div className="flex space-x-2 mt-2">
+                        <Button size="sm" variant="outline">CSV</Button>
+                        <Button size="sm" variant="outline">Excel</Button>
+                      </div>
+                    </div>
+                  </Card>
+
+                  <Card className="p-4">
+                    <div className="flex flex-col items-center justify-center space-y-2 h-full py-6">
+                      <Download className="h-8 w-8 text-primary" />
+                      <h4 className="font-medium text-center">Esporta Aziende</h4>
+                      <p className="text-sm text-center text-muted-foreground">
+                        Scarica le tue aziende in formato CSV o Excel
+                      </p>
+                      <div className="flex space-x-2 mt-2">
+                        <Button size="sm" variant="outline">CSV</Button>
+                        <Button size="sm" variant="outline">Excel</Button>
+                      </div>
+                    </div>
+                  </Card>
+
+                  <Card className="p-4">
+                    <div className="flex flex-col items-center justify-center space-y-2 h-full py-6">
+                      <Download className="h-8 w-8 text-primary" />
+                      <h4 className="font-medium text-center">Esporta Opportunità</h4>
+                      <p className="text-sm text-center text-muted-foreground">
+                        Scarica le tue opportunità in formato CSV o Excel
+                      </p>
+                      <div className="flex space-x-2 mt-2">
+                        <Button size="sm" variant="outline">CSV</Button>
+                        <Button size="sm" variant="outline">Excel</Button>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+              </div>
+              
+              <Separator />
+              
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium flex items-center">
+                  <Database className="h-5 w-5 mr-2" />
+                  Strumenti Avanzati
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Card className="p-4">
+                    <div className="flex flex-col space-y-2 h-full py-4">
+                      <h4 className="font-medium">Rilevamento Duplicati</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Trova e unisci contatti o aziende duplicati nel database
+                      </p>
+                      <div className="flex space-x-2 mt-4">
+                        <Button size="sm">Analizza Database</Button>
+                      </div>
+                    </div>
+                  </Card>
+
+                  <Card className="p-4">
+                    <div className="flex flex-col space-y-2 h-full py-4">
+                      <h4 className="font-medium">Arricchimento Dati con AI</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Usa l'IA per migliorare e categorizzare automaticamente i tuoi dati
+                      </p>
+                      <div className="flex space-x-2 mt-4">
+                        <Button size="sm">Avvia Arricchimento</Button>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
       
       {/* Dialog per l'aggiunta di account email */}
