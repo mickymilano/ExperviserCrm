@@ -14,7 +14,7 @@ import { AIEnhancer } from './AIEnhancer';
 import { useToast } from '@/hooks/use-toast';
 import { useImportExport } from '@/hooks/useImportExport';
 import { 
-  Download, Upload, FileCsv, FileSpreadsheet, AlertCircle, 
+  Download, Upload, FileText, FileSpreadsheet, AlertCircle, 
   Check, X, RotateCw, Settings, Brain
 } from 'lucide-react';
 
@@ -434,7 +434,7 @@ export function ImportExportManager() {
                   }`}
                   onClick={() => setExportFormat('csv')}
                 >
-                  <FileCsv className="h-12 w-12 mb-2 text-primary" />
+                  <FileText className="h-12 w-12 mb-2 text-primary" />
                   <h3 className="font-medium">CSV</h3>
                   <p className="text-sm text-gray-500 text-center mt-1">
                     {t('export.csvDescription')}
