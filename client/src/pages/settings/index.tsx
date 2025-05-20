@@ -208,7 +208,7 @@ export default function SettingsPage() {
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="appearance">Appearance</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
-          <TabsTrigger value="datamgmt">Gestione Dati</TabsTrigger>
+          <TabsTrigger value="datamgmt">Dati</TabsTrigger>
         </TabsList>
         
         {/* Account Settings */}
@@ -690,7 +690,7 @@ export default function SettingsPage() {
         <TabsContent value="datamgmt">
           <Card>
             <CardHeader>
-              <CardTitle>Gestione Dati</CardTitle>
+              <CardTitle>Dati</CardTitle>
               <CardDescription>
                 Importa ed esporta dati da e verso il sistema CRM
               </CardDescription>
