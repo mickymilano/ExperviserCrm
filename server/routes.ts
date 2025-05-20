@@ -2564,6 +2564,7 @@ export function registerRoutes(app: any) {
   // Recupera email filtrate per tipo di entità e ID
   app.get('/api/email/filter/:entityType/:entityId', authenticate, async (req, res) => {
     try {
+      console.log(`[DEBUG EMAIL] Ricevuta richiesta per email di ${req.params.entityType} con ID ${req.params.entityId}`);
       const { entityType, entityId } = req.params;
       
       // Assicuriamoci che entityType sia valido
