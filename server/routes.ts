@@ -3199,6 +3199,10 @@ export function registerRoutes(app: any) {
   // Registra le rotte per importazione/esportazione dati
   app.use('/api/import-export', importExportRoutes);
   
+  // Registra le rotte per l'integrazione con Notion
+  import { router as notionRouter } from './routes/notion';
+  app.use('/api/notion', notionRouter);
+  
   // Crea il server HTTP
   const httpServer = createServer(app);
   
