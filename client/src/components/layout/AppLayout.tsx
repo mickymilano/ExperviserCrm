@@ -24,7 +24,7 @@ import {
   CheckSquare,
   Plus
 } from 'lucide-react';
-import { useTheme } from '../../hooks/useTheme';
+import { useTheme } from '../../components/layouts/ThemeProvider';
 import { cn } from '../../lib/utils';
 import DebugConsole from '../../components/debug/DebugConsole';
 import DebugButton from '../../components/debug/DebugButton';
