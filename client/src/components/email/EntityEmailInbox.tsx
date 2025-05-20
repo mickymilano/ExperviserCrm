@@ -18,7 +18,32 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { it } from 'date-fns/locale';
-import { Email, EmailAttachment } from '@/types';
+// Definizione locale delle interfacce per evitare problemi di compilazione
+interface EmailAttachment {
+  id: string;
+  filename: string;
+  contentType: string;
+  size: number;
+}
+
+interface Email {
+  id: string;
+  fromEmail: string;
+  fromName: string;
+  toEmail: string;
+  toName: string;
+  cc?: string[];
+  bcc?: string[];
+  subject: string;
+  body: string;
+  bodyType: 'text' | 'html';
+  receivedAt: string;
+  isRead: boolean;
+  attachments: EmailAttachment[];
+  starred?: boolean;
+  entityId?: string;
+  entityType?: 'contact' | 'company' | 'deal' | 'lead' | 'branch';
+}
 
 interface EmailListProps {
   emails: Email[];
