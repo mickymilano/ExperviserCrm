@@ -1,148 +1,190 @@
-import fs from 'fs';
-import path from 'path';
-import Papa from 'papaparse';
+/**
+ * Modulo principale per l'importazione ed esportazione dei dati
+ */
+
+import { enhanceData, EntityType, EnhancementSetting, defaultEnhancementSettings } from './ai-enhancer';
+import { getDistanceScore } from './duplicate-detector';
+import { normalizePhoneNumber } from './string-utils';
+import { parse as csvParse } from 'papaparse';
 import ExcelJS from 'exceljs';
-import { storage } from '../../storage';
-import { detectDuplicates } from './duplicate-detector';
-import { enhanceWithAI } from './ai-enhancer';
 
 /**
- * Analizza un file importato (CSV o Excel) per estrarre i dati
- * @param filePath Percorso del file caricato
- * @param entityType Tipo di entità (contacts, companies, leads)
- * @returns Dati estratti e informazioni sul file
+ * Tipi di file supportati per l'importazione
  */
-export async function analyzeImportData(filePath: string, entityType: string) {
+export type ImportFileType = 'csv' | 'excel';
+
+/**
+ * Interfaccia per il risultato dell'importazione
+ */
+export interface ImportResult {
+  success: boolean;
+  message: string;
+  totalRecords?: number;
+  importedRecords?: number;
+  errors?: string[];
+  data?: any[];
+}
+
+/**
+ * Interfaccia per il gruppo di duplicati
+ */
+export interface DuplicateGroup {
+  primaryRecord: any;
+  duplicates: any[];
+  similarityScore: number;
+}
+
+/**
+ * Interfaccia per la mappatura dei campi
+ */
+export interface FieldMapping {
+  sourceField: string;
+  targetField: string;
+  required?: boolean;
+  transform?: (value: any) => any;
+}
+
+/**
+ * Impostazioni predefinite per la mappatura dei campi
+ */
+export const defaultFieldMappings: Record<EntityType, FieldMapping[]> = {
+  contacts: [
+    { sourceField: 'Nome', targetField: 'firstName', required: true },
+    { sourceField: 'Cognome', targetField: 'lastName', required: true },
+    { sourceField: 'Email', targetField: 'email', required: true },
+    { sourceField: 'Telefono', targetField: 'phone' },
+    { sourceField: 'Titolo', targetField: 'jobTitle' },
+    { sourceField: 'Note', targetField: 'notes' },
+    { sourceField: 'Tag', targetField: 'tags', transform: (value) => value ? value.split(',').map((t: string) => t.trim()) : [] }
+  ],
+  companies: [
+    { sourceField: 'Nome', targetField: 'name', required: true },
+    { sourceField: 'Email', targetField: 'email' },
+    { sourceField: 'Telefono', targetField: 'phone' },
+    { sourceField: 'Sito Web', targetField: 'website' },
+    { sourceField: 'Settore', targetField: 'industry' },
+    { sourceField: 'Dipendenti', targetField: 'employeeCount', transform: (value) => parseInt(value) || null },
+    { sourceField: 'Fatturato', targetField: 'annualRevenue', transform: (value) => value ? parseFloat(value) : null },
+    { sourceField: 'Sede', targetField: 'location' },
+    { sourceField: 'Anno Fondazione', targetField: 'founded', transform: (value) => parseInt(value) || null },
+    { sourceField: 'Note', targetField: 'notes' },
+    { sourceField: 'Tag', targetField: 'tags', transform: (value) => value ? value.split(',').map((t: string) => t.trim()) : [] }
+  ],
+  deals: [
+    { sourceField: 'Nome', targetField: 'name', required: true },
+    { sourceField: 'Valore', targetField: 'value', transform: (value) => value ? value.toString() : null },
+    { sourceField: 'Stato', targetField: 'status' },
+    { sourceField: 'ID Contatto', targetField: 'contactId', transform: (value) => parseInt(value) || null },
+    { sourceField: 'ID Azienda', targetField: 'companyId', transform: (value) => parseInt(value) || null },
+    { sourceField: 'Fase', targetField: 'stageId', transform: (value) => parseInt(value) || 1 },
+    { sourceField: 'Data Chiusura', targetField: 'expectedCloseDate' },
+    { sourceField: 'Note', targetField: 'notes' },
+    { sourceField: 'Tag', targetField: 'tags', transform: (value) => value ? value.split(',').map((t: string) => t.trim()) : [] }
+  ]
+};
+
+/**
+ * Analizza un file CSV e restituisce i dati strutturati
+ * 
+ * @param fileContent Contenuto del file CSV
+ * @param delimiter Delimitatore dei campi (default: ',')
+ * @returns Dati analizzati come array di oggetti
+ */
+export function parseCSV(fileContent: string, delimiter: string = ','): any[] {
+  const result = csvParse(fileContent, {
+    header: true,
+    skipEmptyLines: true,
+    delimiter
+  });
+  
+  if (result.errors && result.errors.length > 0) {
+    console.error('Errori nell\'analisi del CSV:', result.errors);
+  }
+  
+  return result.data as any[];
+}
+
+/**
+ * Analizza un file Excel e restituisce i dati strutturati
+ * 
+ * @param buffer Buffer del file Excel
+ * @param sheetIndex Indice del foglio (default: 0)
+ * @returns Promise con i dati analizzati come array di oggetti
+ */
+export async function parseExcel(buffer: Buffer, sheetIndex: number = 0): Promise<any[]> {
+  const workbook = new ExcelJS.Workbook();
+  
   try {
-    // Determina il tipo di file dall'estensione
-    const fileExtension = path.extname(filePath).toLowerCase();
+    await workbook.xlsx.load(buffer);
+    const worksheet = workbook.worksheets[sheetIndex];
     
-    let data: any[] = [];
-    let headers: any[];
-    
-    // Elabora in base al tipo di file
-    if (fileExtension === '.csv') {
-      // Leggi il file CSV
-      const fileContent = fs.readFileSync(filePath, 'utf8');
-      
-      // Analizza il file CSV
-      const parseResult = Papa.parse(fileContent, {
-        header: true,
-        skipEmptyLines: true
-      });
-      
-      data = parseResult.data;
-      headers = parseResult.meta.fields || [];
-      
-    } else if (['.xlsx', '.xls'].includes(fileExtension)) {
-      // Leggi il file Excel
-      const workbook = new ExcelJS.Workbook();
-      await workbook.xlsx.readFile(filePath);
-      
-      // Prendi il primo foglio di lavoro
-      const worksheet = workbook.worksheets[0];
-      
-      // Estrai le intestazioni dalla prima riga
-      headers = [];
-      worksheet.getRow(1).eachCell((cell) => {
-        headers.push(cell.value);
-      });
-      
-      // Estrai i dati dalle righe successive
-      data = [];
-      worksheet.eachRow((row, rowNumber) => {
-        if (rowNumber > 1) { // Salta l'intestazione
-          const rowData = {};
-          row.eachCell((cell, colNumber) => {
-            rowData[headers[colNumber - 1]] = cell.value;
-          });
-          data.push(rowData);
-        }
-      });
-    } else {
-      throw new Error('Formato file non supportato');
+    if (!worksheet) {
+      throw new Error(`Foglio di lavoro all'indice ${sheetIndex} non trovato`);
     }
     
-    // Mappa i campi del CSV/Excel ai campi del database
-    const mappedData = mapFieldsToEntity(data, entityType);
+    const data: any[] = [];
+    const headers: string[] = [];
     
-    return {
-      originalData: data,
-      mappedData,
-      totalRows: data.length,
-      headers,
-      entityType,
-      filePath
-    };
+    // Estrai le intestazioni dalla prima riga
+    worksheet.getRow(1).eachCell((cell, colNumber) => {
+      headers[colNumber - 1] = cell.value?.toString() || `Colonna ${colNumber}`;
+    });
+    
+    // Estrai i dati dalle righe successive
+    worksheet.eachRow((row, rowNumber) => {
+      if (rowNumber === 1) return; // Salta la riga di intestazione
+      
+      const rowData: Record<string, any> = {};
+      row.eachCell((cell, colNumber) => {
+        const header = headers[colNumber - 1];
+        
+        if (header) {
+          let value: any = cell.value;
+          
+          // Gestisci i tipi di dati Excel
+          if (cell.type === ExcelJS.ValueType.Date) {
+            value = (cell.value as Date).toISOString().split('T')[0]; // Formato YYYY-MM-DD
+          } else if (typeof value === 'object' && value !== null) {
+            // Se il valore è un oggetto Excel (es. RichText), converti in stringa
+            value = value.toString();
+          }
+          
+          rowData[header] = value;
+        }
+      });
+      
+      data.push(rowData);
+    });
+    
+    return data;
+    
   } catch (error) {
-    console.error('Errore durante l\'analisi del file importato:', error);
+    console.error('Errore nell\'analisi del file Excel:', error);
     throw error;
   }
 }
 
 /**
- * Mappa i campi del file importato ai campi del database
- * @param data Dati grezzi dal file
- * @param entityType Tipo di entità
- * @returns Dati mappati ai campi del database
+ * Applica la mappatura dei campi ai dati importati
+ * 
+ * @param data Dati importati
+ * @param mappings Definizioni di mappatura
+ * @returns Dati mappati secondo lo schema del target
  */
-function mapFieldsToEntity(data: any[], entityType: string) {
+export function applyFieldMapping(data: any[], mappings: FieldMapping[]): any[] {
   return data.map(item => {
-    const mappedItem: any = {};
+    const mappedItem: Record<string, any> = {};
     
-    // Mappa i campi in base al tipo di entità
-    if (entityType === 'contacts') {
-      // Mappa i dati del contatto
-      mappedItem.firstName = item.Nome || item.FirstName || item.first_name || '';
-      mappedItem.lastName = item.Cognome || item.LastName || item.last_name || '';
-      mappedItem.email = item.Email || item.EmailAddress || item.email_address || '';
-      mappedItem.phone = item.Telefono || item.Phone || item.phone_number || '';
-      mappedItem.mobilePhone = item.Cellulare || item.Mobile || item.mobile_phone || '';
-      mappedItem.jobTitle = item.Ruolo || item.JobTitle || item.job_title || '';
-      mappedItem.notes = item.Note || item.Notes || item.notes || '';
-      mappedItem.address = item.Indirizzo || item.Address || item.address || '';
+    // Applica ogni mappatura di campo
+    for (const mapping of mappings) {
+      // Ottieni il valore dal campo di origine
+      const value = item[mapping.sourceField];
       
-      // Aggiungi altri campi standard
-      if (item.Azienda || item.Company) {
-        mappedItem.company = item.Azienda || item.Company || item.company_name || '';
-      }
+      // Applica la trasformazione se definita
+      const transformedValue = mapping.transform ? mapping.transform(value) : value;
       
-      // Gestisci i tag se presenti
-      if (item.Tag || item.Tags) {
-        mappedItem.tags = (item.Tag || item.Tags || '').split(',').map((tag: string) => tag.trim());
-      }
-      
-    } else if (entityType === 'companies') {
-      // Mappa i dati dell'azienda
-      mappedItem.name = item.Nome || item.Name || item.company_name || '';
-      mappedItem.email = item.Email || item.EmailAddress || item.email_address || '';
-      mappedItem.phone = item.Telefono || item.Phone || item.phone_number || '';
-      mappedItem.website = item.SitoWeb || item.Website || item.website || '';
-      mappedItem.address = item.Indirizzo || item.Address || item.address || '';
-      mappedItem.vatNumber = item.PartitaIVA || item.VAT || item.vat_number || '';
-      mappedItem.notes = item.Note || item.Notes || item.notes || '';
-      
-      // Gestisci i tag se presenti
-      if (item.Tag || item.Tags) {
-        mappedItem.tags = (item.Tag || item.Tags || '').split(',').map((tag: string) => tag.trim());
-      }
-      
-    } else if (entityType === 'leads') {
-      // Mappa i dati del lead
-      mappedItem.title = item.Titolo || item.Title || item.title || '';
-      mappedItem.firstName = item.Nome || item.FirstName || item.first_name || '';
-      mappedItem.lastName = item.Cognome || item.LastName || item.last_name || '';
-      mappedItem.email = item.Email || item.EmailAddress || item.email_address || '';
-      mappedItem.phone = item.Telefono || item.Phone || item.phone_number || '';
-      mappedItem.company = item.Azienda || item.Company || item.company_name || '';
-      mappedItem.jobTitle = item.Ruolo || item.JobTitle || item.job_title || '';
-      mappedItem.source = item.Fonte || item.Source || item.source || '';
-      mappedItem.notes = item.Note || item.Notes || item.notes || '';
-      
-      // Gestisci i tag se presenti
-      if (item.Tag || item.Tags) {
-        mappedItem.tags = (item.Tag || item.Tags || '').split(',').map((tag: string) => tag.trim());
-      }
+      // Assegna il valore al campo di destinazione
+      mappedItem[mapping.targetField] = transformedValue;
     }
     
     return mappedItem;
@@ -150,55 +192,183 @@ function mapFieldsToEntity(data: any[], entityType: string) {
 }
 
 /**
- * Trova record simili nel database per individuare potenziali duplicati
- * @param items Lista di elementi da controllare
- * @param entityType Tipo di entità
- * @param field Campo su cui basare la ricerca
- * @returns Array di possibili duplicati
+ * Verifica se i dati sono validi in base ai vincoli definiti
+ * 
+ * @param data Dati da validare
+ * @param mappings Definizioni di mappatura
+ * @returns Risultato della validazione con errori
  */
-async function findSimilarRecords(items: any[], entityType: string, field: string) {
-  try {
-    const results = [];
+export function validateData(data: any[], mappings: FieldMapping[]): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+  
+  // Verifica ciascun record
+  data.forEach((item, index) => {
+    // Verifica i campi obbligatori
+    const requiredMappings = mappings.filter(mapping => mapping.required);
     
-    for (const item of items) {
-      if (item[field]) {
-        let existingRecords;
-        
-        switch (entityType) {
-          case 'contacts':
-            existingRecords = await storage.getContact({ email: item.email }); 
-            break;
-          case 'companies':
-            existingRecords = await storage.getCompany({ name: item.name });
-            break;
-          case 'leads':
-            // Non abbiamo un metodo getLeads specifico, quindi potremmo usare una query più generica
-            // oppure adattare il metodo di storage
-            existingRecords = await storage.getLeads();
-            existingRecords = existingRecords.filter(lead => 
-              lead.email === item.email || 
-              (lead.firstName === item.firstName && lead.lastName === item.lastName)
-            );
-            break;
-          default:
-            existingRecords = [];
-        }
-        
-        if (existingRecords && existingRecords.length > 0) {
-          results.push({
-            item,
-            matches: existingRecords
-          });
-        }
+    for (const mapping of requiredMappings) {
+      // Se il campo obbligatorio è mancante o vuoto, aggiungi un errore
+      if (item[mapping.targetField] === undefined || item[mapping.targetField] === null || item[mapping.targetField] === '') {
+        errors.push(`Record ${index + 1}: Campo obbligatorio "${mapping.sourceField}" mancante o vuoto`);
+      }
+    }
+  });
+  
+  return {
+    valid: errors.length === 0,
+    errors
+  };
+}
+
+/**
+ * Rileva i potenziali duplicati nei dati
+ * 
+ * @param newData Nuovi dati da controllare
+ * @param existingData Dati esistenti nel sistema
+ * @param entityType Tipo di entità
+ * @param similarityThreshold Soglia di similarità (0-1)
+ * @returns Gruppi di duplicati rilevati
+ */
+export function detectDuplicates(
+  newData: any[],
+  existingData: any[],
+  entityType: EntityType,
+  similarityThreshold: number = 0.7
+): DuplicateGroup[] {
+  const duplicateGroups: DuplicateGroup[] = [];
+  
+  // Analizza ciascun nuovo record
+  for (const newItem of newData) {
+    const potentialDuplicates: { item: any; score: number }[] = [];
+    
+    // Confronta con i dati esistenti
+    for (const existingItem of existingData) {
+      const similarityScore = getDistanceScore(newItem, existingItem, entityType);
+      
+      if (similarityScore >= similarityThreshold) {
+        potentialDuplicates.push({
+          item: existingItem,
+          score: similarityScore
+        });
       }
     }
     
-    return results;
-  } catch (error) {
-    console.error('Errore durante la ricerca di record simili:', error);
-    throw error;
+    // Se sono stati trovati potenziali duplicati, crea un gruppo
+    if (potentialDuplicates.length > 0) {
+      // Ordina i duplicati per punteggio (decrescente)
+      potentialDuplicates.sort((a, b) => b.score - a.score);
+      
+      duplicateGroups.push({
+        primaryRecord: newItem,
+        duplicates: potentialDuplicates.map(dup => dup.item),
+        similarityScore: potentialDuplicates[0].score
+      });
+    }
   }
+  
+  return duplicateGroups;
 }
 
-// Esporta le funzioni per l'utilizzo nel router
-export { detectDuplicates, enhanceWithAI };
+/**
+ * Arricchisci i dati con funzionalità AI
+ * 
+ * @param data Dati da arricchire
+ * @param entityType Tipo di entità
+ * @param settings Impostazioni di arricchimento
+ * @param confidenceThreshold Soglia di confidenza
+ * @returns Promise con i dati arricchiti
+ */
+export async function enrichDataWithAI(
+  data: any[],
+  entityType: EntityType,
+  settings: EnhancementSetting[] = defaultEnhancementSettings[entityType],
+  confidenceThreshold: number = 0.7
+): Promise<any[]> {
+  return await enhanceData(data, entityType, settings, confidenceThreshold);
+}
+
+/**
+ * Esporta dati in formato CSV
+ * 
+ * @param data Dati da esportare
+ * @param mappings Mappature dei campi
+ * @returns Stringa CSV
+ */
+export function exportToCSV(data: any[], mappings: FieldMapping[]): string {
+  // Intestazioni CSV (campi di origine)
+  const headers = mappings.map(mapping => mapping.sourceField);
+  
+  // Righe dati
+  const rows = data.map(item => {
+    return mappings.map(mapping => {
+      // Ottieni il valore dal campo di destinazione
+      let value = item[mapping.targetField];
+      
+      // Gestisci i casi speciali
+      if (Array.isArray(value)) {
+        // Converti array in stringa separata da virgole
+        value = value.join(', ');
+      } else if (value === null || value === undefined) {
+        value = '';
+      }
+      
+      return String(value).replace(/"/g, '""'); // Escape delle virgolette
+    });
+  });
+  
+  // Formatta l'intestazione
+  const headerRow = headers.map(header => `"${header}"`).join(',');
+  
+  // Formatta le righe dati
+  const formattedRows = rows.map(row => row.map(cell => `"${cell}"`).join(','));
+  
+  // Unisci tutto
+  return [headerRow, ...formattedRows].join('\n');
+}
+
+/**
+ * Crea un file Excel dai dati
+ * 
+ * @param data Dati da esportare
+ * @param mappings Mappature dei campi
+ * @returns Promise con il buffer del file Excel
+ */
+export async function exportToExcel(data: any[], mappings: FieldMapping[]): Promise<Buffer> {
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('Dati Esportati');
+  
+  // Intestazioni
+  const headers = mappings.map(mapping => mapping.sourceField);
+  worksheet.addRow(headers);
+  
+  // Stile per l'intestazione
+  worksheet.getRow(1).font = { bold: true };
+  
+  // Dati
+  data.forEach(item => {
+    const rowValues = mappings.map(mapping => {
+      // Ottieni il valore dal campo di destinazione
+      let value = item[mapping.targetField];
+      
+      // Gestisci i casi speciali
+      if (Array.isArray(value)) {
+        // Converti array in stringa separata da virgole
+        value = value.join(', ');
+      } else if (value === null || value === undefined) {
+        value = '';
+      }
+      
+      return value;
+    });
+    
+    worksheet.addRow(rowValues);
+  });
+  
+  // Ottimizza la larghezza delle colonne
+  worksheet.columns.forEach(column => {
+    column.width = 20;
+  });
+  
+  // Genera il buffer
+  return await workbook.xlsx.writeBuffer() as Buffer;
+}
