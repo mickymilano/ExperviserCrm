@@ -5,6 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as Papa from 'papaparse';
 import * as ExcelJS from 'exceljs';
+import { enhanceEntity } from '../modules/ai-enhancer';
 
 // Configurazione di multer per l'upload dei file
 const upload = multer({
@@ -291,66 +292,32 @@ router.post('/enhance/:entityType', async (req, res) => {
         message: 'Configurare l\'API key di OpenAI nelle variabili d\'ambiente' 
       });
     }
-
-    // In un'implementazione reale, qui verrebbe utilizzata l'API di OpenAI
-    // per analizzare e arricchire i dati. Per questa demo, simuliamo l'arricchimento
-    // Qui dovrebbe essere integrato il codice del blueprint OpenAI
-    
-    // Simulazione dell'arricchimento
-    const enhance = async (item, enhancementType) => {
-      // Modifica simulata in base al tipo di arricchimento
-      const enhanced = { ...item };
-      
-      if (enhancementType === 'categorization' || enhancementType === 'all') {
-        if (entityType === 'contacts') {
-          enhanced.category = 'Cliente potenziale';
-        } else if (entityType === 'companies') {
-          enhanced.category = 'Partner';
-        } else if (entityType === 'leads') {
-          enhanced.category = 'Alta priorità';
-        }
-      }
-      
-      if (enhancementType === 'tagging' || enhancementType === 'all') {
-        enhanced.tags = enhanced.tags || [];
-        if (entityType === 'contacts') {
-          enhanced.tags.push('nuovo contatto', 'follow-up');
-        } else if (entityType === 'companies') {
-          enhanced.tags.push('nuovo cliente', 'tech');
-        } else if (entityType === 'leads') {
-          enhanced.tags.push('Q2', 'opportunità');
-        }
-      }
-      
-      return enhanced;
-    };
     
     // Arricchisci tutti gli elementi o uno specifico
     let enhancedCount = 0;
-    const enhancementType = options?.enhancementType || 'all';
     
     // Se è specificata un'entità specifica, arricchisci solo quella
     if (entity && entity.id) {
       let originalItem;
       
       if (entityType === 'contacts') {
-        originalItem = await storage.getContactById(entity.id);
+        originalItem = await storage.getContact(entity.id);
         if (originalItem) {
-          const enhancedItem = await enhance(originalItem, enhancementType);
+          const enhancedItem = await enhanceEntity(originalItem, entityType);
           await storage.updateContact(entity.id, enhancedItem);
           enhancedCount = 1;
         }
       } else if (entityType === 'companies') {
-        originalItem = await storage.getCompanyById(entity.id);
+        originalItem = await storage.getCompany(entity.id);
         if (originalItem) {
-          const enhancedItem = await enhance(originalItem, enhancementType);
+          const enhancedItem = await enhanceEntity(originalItem, entityType);
           await storage.updateCompany(entity.id, enhancedItem);
           enhancedCount = 1;
         }
       } else if (entityType === 'leads') {
-        originalItem = await storage.getLeadById(entity.id);
+        originalItem = await storage.getLead(entity.id);
         if (originalItem) {
-          const enhancedItem = await enhance(originalItem, enhancementType);
+          const enhancedItem = await enhanceEntity(originalItem, entityType);
           await storage.updateLead(entity.id, enhancedItem);
           enhancedCount = 1;
         }
@@ -362,21 +329,21 @@ router.post('/enhance/:entityType', async (req, res) => {
       if (entityType === 'contacts') {
         allItems = await storage.getAllContacts();
         for (const item of allItems) {
-          const enhancedItem = await enhance(item, enhancementType);
+          const enhancedItem = await enhanceEntity(item, entityType);
           await storage.updateContact(item.id, enhancedItem);
           enhancedCount++;
         }
       } else if (entityType === 'companies') {
         allItems = await storage.getAllCompanies();
         for (const item of allItems) {
-          const enhancedItem = await enhance(item, enhancementType);
+          const enhancedItem = await enhanceEntity(item, entityType);
           await storage.updateCompany(item.id, enhancedItem);
           enhancedCount++;
         }
       } else if (entityType === 'leads') {
         allItems = await storage.getAllLeads();
         for (const item of allItems) {
-          const enhancedItem = await enhance(item, enhancementType);
+          const enhancedItem = await enhanceEntity(item, entityType);
           await storage.updateLead(item.id, enhancedItem);
           enhancedCount++;
         }
