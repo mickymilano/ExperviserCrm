@@ -82,6 +82,7 @@
     "cross-env": "^7.0.3",
     "cypress": "^14.3.3",
     "date-fns": "^3.6.0",
+    "dotenv": "^16.5.0",
     "drizzle-orm": "^0.39.1",
     "drizzle-zod": "^0.7.0",
     "email-addresses": "^5.0.0",
