@@ -3,6 +3,14 @@ import OpenAI from "openai";
 // Inizializza il client OpenAI
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+// Utility function per gestire i valori null nei prompt
+function safeString(value: any, defaultValue: string = 'N/A'): string {
+  if (value === null || value === undefined) {
+    return defaultValue;
+  }
+  return String(value);
+}
+
 /**
  * Analizza ed arricchisce i dati di un contatto utilizzando OpenAI
  * @param contact Dati del contatto da analizzare
@@ -16,12 +24,12 @@ export async function enhanceContact(contact: any) {
     Rispondi con un oggetto JSON con i campi 'category', 'tags', e 'notes'.
     
     Dati del contatto:
-    Nome: ${contact.firstName} ${contact.lastName}
-    Email: ${contact.email !== null ? contact.email : 'N/A'}
-    Telefono: ${contact.phone !== null ? contact.phone : 'N/A'}
-    Ruolo: ${contact.role !== null ? contact.role : 'N/A'}
-    Azienda: ${contact.company !== null ? contact.company : 'N/A'}
-    Note: ${contact.notes !== null ? contact.notes : 'N/A'}
+    Nome: ${safeString(contact.firstName)} ${safeString(contact.lastName)}
+    Email: ${safeString(contact.email)}
+    Telefono: ${safeString(contact.phone)}
+    Ruolo: ${safeString(contact.role)}
+    Azienda: ${safeString(contact.company)}
+    Note: ${safeString(contact.notes)}
     `;
 
     // Il modello gpt-4o è la versione più recente dell'API OpenAI
@@ -33,6 +41,7 @@ export async function enhanceContact(contact: any) {
         { role: "user", content: prompt }
       ],
       response_format: { type: "json_object" },
+      max_tokens: 500
     });
 
     // Estrai e restituisci la risposta come JSON
@@ -63,12 +72,12 @@ export async function enhanceCompany(company: any) {
     Rispondi con un oggetto JSON con i campi 'industry', 'tags', e 'opportunities'.
     
     Dati aziendali:
-    Nome: ${company.name}
-    Email: ${company.email !== null ? company.email : 'N/A'}
-    Telefono: ${company.phone !== null ? company.phone : 'N/A'}
-    Sito web: ${company.website !== null ? company.website : 'N/A'}
-    Settore attuale: ${company.industry !== null ? company.industry : 'Non specificato'}
-    Descrizione: ${company.description !== null ? company.description : 'N/A'}
+    Nome: ${safeString(company.name)}
+    Email: ${safeString(company.email)}
+    Telefono: ${safeString(company.phone)}
+    Sito web: ${safeString(company.website)}
+    Settore attuale: ${safeString(company.industry, 'Non specificato')}
+    Descrizione: ${safeString(company.description)}
     `;
 
     // Il modello gpt-4o è la versione più recente dell'API OpenAI
@@ -80,6 +89,7 @@ export async function enhanceCompany(company: any) {
         { role: "user", content: prompt }
       ],
       response_format: { type: "json_object" },
+      max_tokens: 500
     });
 
     // Estrai e restituisci la risposta come JSON
@@ -109,11 +119,11 @@ export async function enhanceLead(lead: any) {
     Rispondi con un oggetto JSON con i campi 'priority', 'nextSteps', e 'successProbability' (valore numerico da 0 a 100).
     
     Dati opportunità:
-    Titolo: ${lead.title}
-    Descrizione: ${lead.description !== null ? lead.description : 'N/A'}
-    Stato: ${lead.status !== null ? lead.status : 'N/A'}
-    Valore: ${lead.value !== null ? lead.value : 'Non specificato'}
-    Fonte: ${lead.source !== null ? lead.source : 'N/A'}
+    Titolo: ${safeString(lead.title)}
+    Descrizione: ${safeString(lead.description)}
+    Stato: ${safeString(lead.status)}
+    Valore: ${safeString(lead.value, 'Non specificato')}
+    Fonte: ${safeString(lead.source)}
     `;
 
     // Il modello gpt-4o è la versione più recente dell'API OpenAI
