@@ -2,12 +2,12 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { Handshake, Plus, Filter, RefreshCw, User, Building, DollarSign, ExternalLink } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { SynergyModal } from "@/components/modals/SynergyModal";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
+import { SynergyModal } from "../../components/modals/SynergyModal";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
+import { Separator } from "../../components/ui/separator";
+import { Skeleton } from "../../components/ui/skeleton";
+import { Badge } from "../../components/ui/badge";
 import { format } from "date-fns";
 import { useTranslation } from "react-i18next";
 

@@ -19,10 +19,10 @@ import TaskList from "../../components/tasks/TaskList";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 // Ripristinato: mostra la lista delle sinergie collegate al deal
-import { SynergiesList } from "@/components/synergies/SynergiesList";
+import { SynergiesList } from "../../components/synergies/SynergiesList";
 // Importazione di i18n per le traduzioni
 import { useTranslation } from "react-i18next";
-import EntityEmailInbox from "@/components/email/EntityEmailInbox";
+import EntityEmailInbox from "../../components/email/EntityEmailInbox";
 
 export default function DealDetail() {
   const params = useParams();
