@@ -1,219 +1,57 @@
 import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
-import { useToast } from '@/hooks/use-toast';
-import { queryClient } from '../lib/queryClient';
+import { useToast } from "@/hooks/use-toast";
 
-type EntityType = 'contacts' | 'companies' | 'deals';
-type FileFormat = 'csv' | 'excel';
+type EntityType = 'contacts' | 'companies' | 'leads';
 
-interface ImportOptions {
-  detectDuplicates: boolean;
-  duplicateThreshold: number;
-  skipFirstRow: boolean;
-  dateFormat: string;
-  useAI: boolean;
+interface ImportExportHook {
+  importData: (file: File, entityType: EntityType, fileType: 'csv' | 'excel') => Promise<any>;
+  exportData: (entityType: EntityType, fileType: 'csv' | 'excel') => Promise<any>;
+  checkDuplicates: (entity: any, entityType: EntityType) => Promise<any>;
+  enhanceWithAI: (entity: any, entityType: EntityType, options?: any) => Promise<any>;
+  isLoading: boolean;
 }
 
-/**
- * Hook per gestire l'importazione e l'esportazione dei dati
- */
-export function useImportExport() {
-  const { toast } = useToast();
+export function useImportExport(): ImportExportHook {
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
   /**
-   * Importa contatti da un file
+   * Importa dati da un file nel sistema
    */
-  const importContacts = async (
-    file: File,
-    format: FileFormat,
-    options: ImportOptions
-  ): Promise<{ imported: number; enhanced?: boolean }> => {
+  const importData = async (file: File, entityType: EntityType, fileType: 'csv' | 'excel'): Promise<any> => {
     setIsLoading(true);
-    
     try {
+      // Creiamo un FormData per l'upload del file
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('format', format);
-      formData.append('options', JSON.stringify(options));
-      
-      const response = await fetch('/api/import-export/contacts/import', {
-        method: 'POST',
-        body: formData,
-        // Non includere Content-Type, verrà impostato automaticamente per FormData
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Errore nell'importazione dei contatti: ${response.statusText}`);
-      }
-      
-      const result = await response.json();
-      
-      // Invalida le query dei contatti per aggiornare la UI
-      queryClient.invalidateQueries({ queryKey: ['/api/contacts'] });
-      
-      return {
-        imported: result.importedCount,
-        enhanced: options.useAI && result.enhancedCount > 0
-      };
-    } catch (error) {
-      console.error('Errore durante l\'importazione:', error);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      formData.append('entityType', entityType);
+      formData.append('fileType', fileType);
 
-  /**
-   * Esporta contatti in un file
-   */
-  const exportContacts = async (format: FileFormat): Promise<{
-    blob: Blob;
-    filename: string;
-    exported: number;
-  }> => {
-    setIsLoading(true);
-    
-    try {
-      const response = await fetch(`/api/import-export/contacts/export?format=${format}`, {
-        method: 'GET',
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Errore nell'esportazione dei contatti: ${response.statusText}`);
-      }
-      
-      // Ottiene il nome del file dall'header Content-Disposition
-      const contentDisposition = response.headers.get('Content-Disposition');
-      let filename = `contacts_export.${format}`;
-      
-      if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
-        if (filenameMatch && filenameMatch[1]) {
-          filename = filenameMatch[1];
-        }
-      }
-      
-      // Converti la risposta in un Blob
-      const blob = await response.blob();
-      
-      // Ottieni il conteggio dei contatti esportati
-      const countHeader = response.headers.get('X-Exported-Count');
-      const exportedCount = countHeader ? parseInt(countHeader, 10) : 0;
-      
-      return {
-        blob,
-        filename,
-        exported: exportedCount
-      };
-    } catch (error) {
-      console.error('Errore durante l\'esportazione:', error);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  /**
-   * Analizza un file per rilevare duplicati
-   */
-  const analyzeDuplicates = async (
-    file: File,
-    format: FileFormat,
-    similarityThreshold: number
-  ): Promise<{
-    duplicates: any[];
-    totalPotentialDuplicates: number;
-  }> => {
-    setIsLoading(true);
-    
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('format', format);
-      formData.append('similarityThreshold', similarityThreshold.toString());
-      
-      const response = await fetch('/api/import-export/contacts/analyze-duplicates', {
+      // Inviamo la richiesta al backend
+      const response = await fetch(`/api/import/${entityType}/${fileType}`, {
         method: 'POST',
         body: formData,
       });
-      
-      if (!response.ok) {
-        throw new Error(`Errore nell'analisi dei duplicati: ${response.statusText}`);
-      }
-      
-      return await response.json();
-    } catch (error) {
-      console.error('Errore durante l\'analisi dei duplicati:', error);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  /**
-   * Migliora i dati con l'IA
-   */
-  const enhanceWithAI = async (
-    data: any[]
-  ): Promise<{
-    enhancedData: any[];
-    enhancementStats: {
-      totalEnhanced: number;
-      fieldsEnhanced: Record<string, number>;
-    };
-  }> => {
-    setIsLoading(true);
-    
-    try {
-      const response = await fetch('/api/import-export/ai/enhance', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ data }),
-      });
-      
       if (!response.ok) {
-        throw new Error(`Errore nel miglioramento dei dati con IA: ${response.statusText}`);
+        const error = await response.json();
+        throw new Error(error.message || `Errore durante l'importazione dei dati`);
       }
-      
-      return await response.json();
-    } catch (error) {
-      console.error('Errore durante il miglioramento IA:', error);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  /**
-   * Importazione generica di dati
-   */
-  const importData = async (data: any[], entityType: EntityType): Promise<any> => {
-    setIsLoading(true);
-    
-    try {
-      const response = await fetch(`/api/import-export/${entityType}/import-data`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ data }),
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Errore nell'importazione dei dati: ${response.statusText}`);
-      }
-      
       const result = await response.json();
       
-      // Invalida le query dell'entità per aggiornare la UI
-      queryClient.invalidateQueries({ queryKey: [`/api/${entityType}`] });
+      toast({
+        title: 'Importazione completata',
+        description: `${result.count || 0} elementi importati con successo`,
+      });
       
       return result;
     } catch (error) {
-      console.error('Errore durante l\'importazione dei dati:', error);
+      toast({
+        title: 'Errore di importazione',
+        description: error instanceof Error ? error.message : 'Errore sconosciuto durante l\'importazione',
+        variant: 'destructive',
+      });
       throw error;
     } finally {
       setIsLoading(false);
@@ -221,28 +59,130 @@ export function useImportExport() {
   };
 
   /**
-   * Esportazione generica di dati
+   * Esporta dati dal sistema in un file CSV o Excel
    */
-  const exportData = async (entityType: EntityType, fileType: FileFormat): Promise<any> => {
+  const exportData = async (entityType: EntityType, fileType: 'csv' | 'excel'): Promise<any> => {
     setIsLoading(true);
-    
     try {
-      const response = await fetch(`/api/import-export/${entityType}/export-data?format=${fileType}`, {
+      // Per esportare, facciamo una richiesta GET con un link che scatenerà il download
+      const response = await fetch(`/api/export/${entityType}/${fileType}`, {
         method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
-      
+
       if (!response.ok) {
-        throw new Error(`Errore nell'esportazione dei dati: ${response.statusText}`);
+        const error = await response.json();
+        throw new Error(error.message || `Errore durante l'esportazione dei dati`);
       }
-      
+
+      // Otteniamo il blob dal server
       const blob = await response.blob();
       
-      return {
-        blob,
-        filename: `${entityType}_export.${fileType}`,
-      };
+      // Determiniamo l'estensione del file
+      const extension = fileType === 'csv' ? 'csv' : 'xlsx';
+      
+      // Creiamo un URL per il blob e lo scarichiamo
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${entityType}_export.${extension}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({
+        title: 'Esportazione completata',
+        description: `I dati sono stati esportati in formato ${fileType.toUpperCase()}`,
+      });
+      
+      return { success: true };
     } catch (error) {
-      console.error('Errore durante l\'esportazione dei dati:', error);
+      toast({
+        title: 'Errore di esportazione',
+        description: error instanceof Error ? error.message : 'Errore sconosciuto durante l\'esportazione',
+        variant: 'destructive',
+      });
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /**
+   * Controlla i duplicati per l'entità specificata
+   */
+  const checkDuplicates = async (entity: any, entityType: EntityType): Promise<any> => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/duplicates/${entityType}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(entity),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || `Errore durante l'analisi dei duplicati`);
+      }
+
+      const result = await response.json();
+
+      toast({
+        title: 'Analisi completata',
+        description: `Trovati ${result.duplicates?.length || 0} possibili duplicati`,
+      });
+      
+      return result;
+    } catch (error) {
+      toast({
+        title: 'Errore nell\'analisi dei duplicati',
+        description: error instanceof Error ? error.message : 'Errore sconosciuto durante l\'analisi',
+        variant: 'destructive',
+      });
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /**
+   * Arricchisce i dati con l'intelligenza artificiale
+   */
+  const enhanceWithAI = async (entity: any, entityType: EntityType, options?: any): Promise<any> => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/enhance/${entityType}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ entity, options }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || `Errore durante l'arricchimento dei dati`);
+      }
+
+      const result = await response.json();
+
+      toast({
+        title: 'Arricchimento completato',
+        description: `${result.count || 0} elementi sono stati arricchiti con successo`,
+      });
+      
+      return result;
+    } catch (error) {
+      toast({
+        title: 'Errore nell\'arricchimento dei dati',
+        description: error instanceof Error ? error.message : 'Errore sconosciuto durante l\'arricchimento',
+        variant: 'destructive',
+      });
       throw error;
     } finally {
       setIsLoading(false);
@@ -250,12 +190,10 @@ export function useImportExport() {
   };
 
   return {
-    importContacts,
-    exportContacts,
-    analyzeDuplicates,
-    enhanceWithAI,
     importData,
     exportData,
-    isLoading
+    checkDuplicates,
+    enhanceWithAI,
+    isLoading,
   };
 }

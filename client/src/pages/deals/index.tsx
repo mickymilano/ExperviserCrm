@@ -1,19 +1,19 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { useDeals, usePipelineStages } from "../../hooks/useDeals";
-import { useContacts } from "../../hooks/useContacts";
-import { useCompanies } from "../../hooks/useCompanies";
-import { DealInfo } from "../../types";
-import { Button } from "../../components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
-import { Input } from "../../components/ui/input";
+import { useDeals, usePipelineStages } from "@/hooks/useDeals";
+import { useContacts } from "@/hooks/useContacts";
+import { useCompanies } from "@/hooks/useCompanies";
+import { DealInfo } from "@/types";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Plus, Search, Filter, ChevronRight, TrendingUp, Calendar, DollarSign } from "lucide-react";
-import NewDealModal from "../../components/modals/NewDealModal";
-import { Skeleton } from "../../components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
-import { formatCurrency } from "../../lib/utils";
+import NewDealModal from "@/components/modals/NewDealModal";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { formatCurrency } from "@/lib/utils";
 import { format } from "date-fns";
-import { DealPipelineBoard } from "../../components/deals/DealPipelineBoard";
+import { DealPipelineBoard } from "@/components/deals/DealPipelineBoard";
 import { useTranslation } from "react-i18next";
 
 export default function Deals() {

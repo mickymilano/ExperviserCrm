@@ -1,23 +1,23 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { useContacts } from "../../hooks/useContacts";
-import { useCompanies } from "../../hooks/useCompanies";
-import { Contact, Company } from "../../types";
-import { Button } from "../../components/ui/button";
-import { Card, CardContent } from "../../components/ui/card";
-import { Input } from "../../components/ui/input";
+import { useContacts } from "@/hooks/useContacts";
+import { useCompanies } from "@/hooks/useCompanies";
+import { Contact, Company } from "@/types";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Plus, Search, Filter, Eye, Mail, Trash, Edit } from "lucide-react";
-import ContactModal from "../../components/modals/ContactModal";
-import { Avatar, AvatarFallback } from "../../components/ui/avatar";
-import { Skeleton } from "../../components/ui/skeleton";
+import ContactModal from "@/components/modals/ContactModal";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "../../components/ui/dropdown-menu";
-import { generateAvatarColor, getInitials, formatPhoneNumber } from "../../lib/utils";
-import { Badge } from "../../components/ui/badge";
+} from "@/components/ui/dropdown-menu";
+import { generateAvatarColor, getInitials, formatPhoneNumber } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 export default function Contacts() {
   const [showModal, setShowModal] = useState(false);

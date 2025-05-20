@@ -24,18 +24,18 @@ import {
   CheckSquare,
   Plus
 } from 'lucide-react';
-import { useTheme } from '../../hooks/useTheme';
-import { cn } from '../../lib/utils';
-import DebugConsole from '../../components/debug/DebugConsole';
-import DebugButton from '../../components/debug/DebugButton';
+import { useTheme } from '@/hooks/useTheme';
+import { cn } from '@/lib/utils';
+import DebugConsole from '@/components/debug/DebugConsole';
+import DebugButton from '@/components/debug/DebugButton';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
-} from "../../components/ui/dropdown-menu";
-import { Button } from "../../components/ui/button";
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 // Struttura per le voci di menu
 interface MenuItemProps {
@@ -102,7 +102,7 @@ const getMainMenuItems = (stats?: any): MenuItemProps[] => [
   },
   {
     label: 'Email',
-    path: '/email/inbox',
+    path: '/emails',
     icon: <Mail className="h-5 w-5" />,
     badge: stats?.unreadEmails > 0 ? stats.unreadEmails : null
   },
@@ -143,7 +143,7 @@ function MenuItem({ item, isOpen }: { item: MenuItemProps; isOpen: boolean }) {
             <span className={isActive ? 'font-medium' : ''}>{item.label}</span>
             {item.badge && (
               <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${
-                item.path.startsWith('/email') 
+                item.path === '/emails' 
                 ? 'bg-red-600 text-white' 
                 : 'bg-primary/10 text-primary'
               }`}>
@@ -341,104 +341,102 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="flex-1 flex flex-col h-full overflow-hidden">
         {/* Header */}
         <header className="h-14 border-b border-border px-4 flex items-center justify-between bg-card">
-          <div className="flex items-center w-full justify-between">
-            {/* Pulsante mobile menu */}
-            <button
-              className="md:hidden h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-accent"
-              onClick={() => setIsMobileMenuOpen(true)}
-            >
-              <Menu className="h-5 w-5" />
+          {/* Pulsante mobile menu */}
+          <button
+            className="md:hidden h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-accent"
+            onClick={() => setIsMobileMenuOpen(true)}
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+          
+          {/* Titolo pagina */}
+          <div className="md:hidden font-semibold">EXPERVISER CRM</div>
+          
+          {/* Spazio vuoto per desktop */}
+          <div className="hidden md:block"></div>
+          
+          {/* Azioni header */}
+          <div className="flex items-center gap-2">
+            {/* Pulsante Azione Rapida */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <div className="relative group">
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="h-9 w-9 transition-colors duration-200 hover:bg-primary hover:text-primary-foreground"
+                  >
+                    <Plus className="h-5 w-5" />
+                  </Button>
+                  <span className="absolute -top-9 left-1/2 -translate-x-1/2 bg-secondary text-secondary-foreground text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap shadow-md">
+                    Azione Rapida
+                  </span>
+                </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => {
+                  window.location.href = '/contacts';
+                }} className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  <span>Nuovo Contatto</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => {
+                  window.location.href = '/companies';
+                }} className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4" />
+                  <span>Nuova Azienda</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => {
+                  window.location.href = '/deals/new';
+                }} className="flex items-center gap-2">
+                  <Briefcase className="h-4 w-4" />
+                  <span>Nuova Opportunità</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => {
+                  window.location.href = '/leads';
+                }} className="flex items-center gap-2">
+                  <Target className="h-4 w-4" />
+                  <span>Nuovo Lead</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => {
+                  window.location.href = '/calendar';
+                }} className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  <span>Nuovo Appuntamento</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => {
+                  window.location.href = '/tasks';
+                }} className="flex items-center gap-2">
+                  <CheckSquare className="h-4 w-4" />
+                  <span>Nuova Attività</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            {/* Debug Button */}
+            <div className="h-9 w-9 inline-flex items-center justify-center">
+              <DebugButton />
+            </div>
+            
+            {/* Notifiche */}
+            <button className="h-9 w-9 inline-flex items-center justify-center rounded-md hover:bg-accent relative">
+              <BellRing className="h-5 w-5" />
+              <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-primary"></span>
             </button>
             
-            {/* Titolo pagina */}
-            <div className="md:hidden font-semibold">EXPERVISER CRM</div>
-            
-            {/* Spazio vuoto per desktop */}
-            <div className="hidden md:block"></div>
-            
-            {/* Azioni header */}
-            <div className="flex items-center gap-2">
-              {/* Pulsante Azione Rapida */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <div className="relative group">
-                    <Button 
-                      variant="outline" 
-                      size="icon" 
-                      className="h-9 w-9 transition-colors duration-200 hover:bg-primary hover:text-primary-foreground"
-                    >
-                      <Plus className="h-5 w-5" />
-                    </Button>
-                    <span className="absolute -top-9 left-1/2 -translate-x-1/2 bg-secondary text-secondary-foreground text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap shadow-md z-10">
-                      Azione Rapida
-                    </span>
-                  </div>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => {
-                    window.location.href = '/contacts';
-                  }} className="flex items-center gap-2">
-                    <Users className="h-4 w-4" />
-                    <span>Nuovo Contatto</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => {
-                    window.location.href = '/companies';
-                  }} className="flex items-center gap-2">
-                    <Building2 className="h-4 w-4" />
-                    <span>Nuova Azienda</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => {
-                    window.location.href = '/deals/new';
-                  }} className="flex items-center gap-2">
-                    <Briefcase className="h-4 w-4" />
-                    <span>Nuova Opportunità</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => {
-                    window.location.href = '/leads';
-                  }} className="flex items-center gap-2">
-                    <Target className="h-4 w-4" />
-                    <span>Nuovo Lead</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => {
-                    window.location.href = '/calendar';
-                  }} className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    <span>Nuovo Appuntamento</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => {
-                    window.location.href = '/tasks';
-                  }} className="flex items-center gap-2">
-                    <CheckSquare className="h-4 w-4" />
-                    <span>Nuova Attività</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              
-              {/* Debug Button */}
-              <div className="h-9 w-9 inline-flex items-center justify-center">
-                <DebugButton />
-              </div>
-              
-              {/* Notifiche */}
-              <button className="h-9 w-9 inline-flex items-center justify-center rounded-md hover:bg-accent relative">
-                <BellRing className="h-5 w-5" />
-                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-primary"></span>
+            {/* Profilo utente */}
+            <div className="relative">
+              <button
+                className="flex items-center gap-2 rounded-md hover:bg-accent px-2 py-1.5"
+                onClick={() => {}}
+              >
+                <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                  {user?.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'}
+                </div>
+                <span className="hidden sm:inline font-medium">{user?.fullName || 'Utente'}</span>
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
               </button>
-              
-              {/* Profilo utente */}
-              <div className="relative">
-                <button
-                  className="flex items-center gap-2 rounded-md hover:bg-accent px-2 py-1.5"
-                  onClick={() => {}}
-                >
-                  <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                    {user?.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'}
-                  </div>
-                  <span className="hidden sm:inline font-medium">{user?.fullName || 'Utente'}</span>
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                </button>
-              </div>
             </div>
           </div>
         </header>

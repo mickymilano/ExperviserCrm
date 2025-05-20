@@ -1,203 +1,500 @@
 /**
- * Modulo per il rilevamento di duplicati nei dati importati
- * Implementa algoritmi di fuzzy matching e confronto basato su similarità
+ * Sistema di rilevamento duplicati per contatti, aziende e lead
+ * Supporta diverse strategie di matching e soglie di somiglianza
  */
 
-import { levenshteinDistance } from './string-utils';
+import { Contact, Company, Lead } from '../../../shared/schema';
+import { db } from '../../db';
+import { contacts, companies, leads } from '../../../shared/schema';
+import { eq, or, ilike, and } from 'drizzle-orm';
+
+// Tipi per i risultati di rilevamento duplicati
+export interface DuplicateDetectionResult {
+  hasDuplicates: boolean;
+  duplicates: PotentialDuplicate[];
+  bestMatch?: PotentialDuplicate;
+}
+
+export interface PotentialDuplicate {
+  entity: any; // L'entità esistente (contatto, azienda, lead)
+  score: number; // Punteggio di somiglianza (0-1)
+  matchedFields: string[]; // Campi che hanno generato il match
+}
+
+interface DuplicateDetectionOptions {
+  threshold?: number; // Soglia di similarità (0-1), default 0.8
+  strategy?: 'exact' | 'fuzzy' | 'ai'; // Strategia di matching
+  fields?: string[]; // Campi specifici da controllare
+  maxResults?: number; // Numero massimo di duplicati da restituire
+}
 
 /**
- * Calcola un punteggio di similarità tra due stringhe
- * @param str1 Prima stringa da confrontare
- * @param str2 Seconda stringa da confrontare
- * @returns Punteggio tra 0 (nessuna similarità) e 1 (identiche)
+ * Rileva potenziali duplicati per un nuovo contatto
+ * @param entity La nuova entità da controllare
+ * @param entityType Il tipo di entità (contacts, companies, leads)
+ * @param options Opzioni di rilevamento duplicati
+ * @returns Risultato del rilevamento duplicati
  */
-export function stringSimilarity(str1: string, str2: string): number {
-  if (!str1 && !str2) return 1; // Entrambe vuote sono considerate uguali
-  if (!str1 || !str2) return 0; // Una vuota e l'altra no sono considerate diverse
+export async function detectDuplicates(
+  entity: any,
+  entityType: 'contacts' | 'companies' | 'leads',
+  options: DuplicateDetectionOptions = {}
+): Promise<DuplicateDetectionResult> {
+  // Opzioni di default
+  const defaultOptions: DuplicateDetectionOptions = {
+    threshold: 0.8,
+    strategy: 'fuzzy',
+    maxResults: 5
+  };
   
-  // Normalizza le stringhe per il confronto
-  const s1 = str1.toLowerCase().trim();
-  const s2 = str2.toLowerCase().trim();
+  // Unisci le opzioni fornite con quelle di default
+  const mergedOptions = { ...defaultOptions, ...options };
   
-  if (s1 === s2) return 1; // Stringhe identiche
+  // Inizializza il risultato
+  const result: DuplicateDetectionResult = {
+    hasDuplicates: false,
+    duplicates: []
+  };
   
-  // Calcola la distanza di Levenshtein (numero di modifiche necessarie per trasformare una stringa nell'altra)
-  const distance = levenshteinDistance(s1, s2);
+  try {
+    // Rileva i duplicati in base al tipo di entità
+    switch (entityType) {
+      case 'contacts':
+        await detectContactDuplicates(entity, result, mergedOptions);
+        break;
+      case 'companies':
+        await detectCompanyDuplicates(entity, result, mergedOptions);
+        break;
+      case 'leads':
+        await detectLeadDuplicates(entity, result, mergedOptions);
+        break;
+    }
+    
+    // Se ci sono duplicati, imposta il flag e il miglior match
+    if (result.duplicates.length > 0) {
+      result.hasDuplicates = true;
+      result.bestMatch = result.duplicates[0]; // Il primo ha sempre il punteggio più alto
+    }
+    
+    return result;
+  } catch (error) {
+    console.error('Errore nel rilevamento duplicati:', error);
+    throw new Error(`Errore nel rilevamento duplicati: ${error.message}`);
+  }
+}
+
+/**
+ * Rileva duplicati per un contatto
+ */
+async function detectContactDuplicates(
+  contact: Partial<Contact>,
+  result: DuplicateDetectionResult,
+  options: DuplicateDetectionOptions
+): Promise<void> {
+  // Array di condizioni OR per i vari campi di ricerca
+  const conditions = [];
+  const matchedFields: Record<number, string[]> = {}; // Mappa ID contatto -> campi corrispondenti
   
-  // Normalizza il punteggio in base alla lunghezza della stringa più lunga
-  const maxLength = Math.max(s1.length, s2.length);
-  if (maxLength === 0) return 1; // Entrambe vuote
+  // Controlla email (match esatto)
+  if (contact.email && contact.email.trim() !== '') {
+    conditions.push(eq(contacts.email, contact.email.trim()));
+  }
   
-  // Converte la distanza in un punteggio di similarità (1 - distanza/maxLength)
+  // Controlla telefono (match esatto)
+  if (contact.phone && contact.phone.trim() !== '') {
+    conditions.push(eq(contacts.phone, contact.phone.trim()));
+  }
+  
+  // Controlla cellulare se presente (match esatto)
+  if (contact.mobile && contact.mobile.trim() !== '') {
+    conditions.push(eq(contacts.mobile, contact.mobile.trim()));
+  }
+  
+  // Controlla combinazione nome/cognome (match parziale o esatto in base alla strategia)
+  if ((contact.firstName && contact.firstName.trim() !== '') || 
+      (contact.lastName && contact.lastName.trim() !== '')) {
+    
+    if (options.strategy === 'exact') {
+      if (contact.firstName && contact.lastName) {
+        conditions.push(
+          and(
+            eq(contacts.firstName, contact.firstName.trim()),
+            eq(contacts.lastName, contact.lastName.trim())
+          )
+        );
+      } else if (contact.firstName) {
+        conditions.push(eq(contacts.firstName, contact.firstName.trim()));
+      } else if (contact.lastName) {
+        conditions.push(eq(contacts.lastName, contact.lastName.trim()));
+      }
+    } else {
+      // Strategia fuzzy
+      if (contact.firstName && contact.lastName) {
+        conditions.push(
+          and(
+            ilike(contacts.firstName, `%${contact.firstName.trim()}%`),
+            ilike(contacts.lastName, `%${contact.lastName.trim()}%`)
+          )
+        );
+      } else if (contact.firstName) {
+        conditions.push(ilike(contacts.firstName, `%${contact.firstName.trim()}%`));
+      } else if (contact.lastName) {
+        conditions.push(ilike(contacts.lastName, `%${contact.lastName.trim()}%`));
+      }
+    }
+  }
+  
+  // Esegui la query se ci sono condizioni
+  if (conditions.length > 0) {
+    const potentialDuplicates = await db.select().from(contacts).where(or(...conditions));
+    
+    // Calcola il punteggio di somiglianza per ogni potenziale duplicato
+    const scoredDuplicates: PotentialDuplicate[] = [];
+    
+    for (const dup of potentialDuplicates) {
+      const matchedFields: string[] = [];
+      let score = 0;
+      let totalFields = 0;
+      
+      // Controlla i campi principali
+      if (contact.email && dup.email && 
+          contact.email.toLowerCase() === dup.email.toLowerCase()) {
+        score += 0.4; // Email ha un peso maggiore
+        matchedFields.push('email');
+      }
+      totalFields += 1;
+      
+      if (contact.phone && dup.phone && 
+          normalizePhone(contact.phone) === normalizePhone(dup.phone)) {
+        score += 0.25;
+        matchedFields.push('phone');
+      }
+      totalFields += 1;
+      
+      if (contact.mobile && dup.mobile && 
+          normalizePhone(contact.mobile) === normalizePhone(dup.mobile)) {
+        score += 0.25;
+        matchedFields.push('mobile');
+      }
+      totalFields += 1;
+      
+      if (contact.firstName && dup.firstName && 
+          stringSimilarity(contact.firstName, dup.firstName) > 0.8) {
+        score += 0.15;
+        matchedFields.push('firstName');
+      }
+      totalFields += 1;
+      
+      if (contact.lastName && dup.lastName && 
+          stringSimilarity(contact.lastName, dup.lastName) > 0.8) {
+        score += 0.15;
+        matchedFields.push('lastName');
+      }
+      totalFields += 1;
+      
+      if (contact.companyName && dup.companyName && 
+          stringSimilarity(contact.companyName, dup.companyName) > 0.7) {
+        score += 0.1;
+        matchedFields.push('companyName');
+      }
+      totalFields += 1;
+      
+      // Normalizza il punteggio (0-1)
+      const normalizedScore = score / Math.min(1.3, totalFields); // Cap a 1
+      
+      // Aggiungi solo se supera la soglia
+      if (normalizedScore >= options.threshold) {
+        scoredDuplicates.push({
+          entity: dup,
+          score: normalizedScore,
+          matchedFields
+        });
+      }
+    }
+    
+    // Ordina per punteggio (decrescente) e limita i risultati
+    scoredDuplicates.sort((a, b) => b.score - a.score);
+    result.duplicates = scoredDuplicates.slice(0, options.maxResults || 5);
+  }
+}
+
+/**
+ * Rileva duplicati per un'azienda
+ */
+async function detectCompanyDuplicates(
+  company: Partial<Company>,
+  result: DuplicateDetectionResult,
+  options: DuplicateDetectionOptions
+): Promise<void> {
+  // Array di condizioni OR per i vari campi di ricerca
+  const conditions = [];
+  
+  // Controlla nome (match esatto o fuzzy in base alla strategia)
+  if (company.name && company.name.trim() !== '') {
+    if (options.strategy === 'exact') {
+      conditions.push(eq(companies.name, company.name.trim()));
+    } else {
+      conditions.push(ilike(companies.name, `%${company.name.trim()}%`));
+    }
+  }
+  
+  // Controlla email (match esatto)
+  if (company.email && company.email.trim() !== '') {
+    conditions.push(eq(companies.email, company.email.trim()));
+  }
+  
+  // Controlla telefono (match esatto)
+  if (company.phone && company.phone.trim() !== '') {
+    conditions.push(eq(companies.phone, company.phone.trim()));
+  }
+  
+  // Controlla website (match esatto o normalizzato)
+  if (company.website && company.website.trim() !== '') {
+    const normalizedWebsite = normalizeWebsite(company.website.trim());
+    conditions.push(ilike(companies.website, `%${normalizedWebsite}%`));
+  }
+  
+  // Esegui la query se ci sono condizioni
+  if (conditions.length > 0) {
+    const potentialDuplicates = await db.select().from(companies).where(or(...conditions));
+    
+    // Calcola il punteggio di somiglianza per ogni potenziale duplicato
+    const scoredDuplicates: PotentialDuplicate[] = [];
+    
+    for (const dup of potentialDuplicates) {
+      const matchedFields: string[] = [];
+      let score = 0;
+      let totalFields = 0;
+      
+      // Controlla i campi principali
+      if (company.name && dup.name && 
+          stringSimilarity(company.name, dup.name) > 0.8) {
+        score += 0.4; // Nome ha un peso maggiore
+        matchedFields.push('name');
+      }
+      totalFields += 1;
+      
+      if (company.email && dup.email && 
+          company.email.toLowerCase() === dup.email.toLowerCase()) {
+        score += 0.25;
+        matchedFields.push('email');
+      }
+      totalFields += 1;
+      
+      if (company.phone && dup.phone && 
+          normalizePhone(company.phone) === normalizePhone(dup.phone)) {
+        score += 0.2;
+        matchedFields.push('phone');
+      }
+      totalFields += 1;
+      
+      if (company.website && dup.website) {
+        const normalizedWeb1 = normalizeWebsite(company.website);
+        const normalizedWeb2 = normalizeWebsite(dup.website);
+        if (normalizedWeb1 === normalizedWeb2) {
+          score += 0.25;
+          matchedFields.push('website');
+        }
+      }
+      totalFields += 1;
+      
+      if (company.address && dup.address && 
+          stringSimilarity(company.address, dup.address) > 0.8) {
+        score += 0.15;
+        matchedFields.push('address');
+      }
+      totalFields += 1;
+      
+      // Normalizza il punteggio (0-1)
+      const normalizedScore = score / Math.min(1.25, totalFields); // Cap a 1
+      
+      // Aggiungi solo se supera la soglia
+      if (normalizedScore >= options.threshold) {
+        scoredDuplicates.push({
+          entity: dup,
+          score: normalizedScore,
+          matchedFields
+        });
+      }
+    }
+    
+    // Ordina per punteggio (decrescente) e limita i risultati
+    scoredDuplicates.sort((a, b) => b.score - a.score);
+    result.duplicates = scoredDuplicates.slice(0, options.maxResults || 5);
+  }
+}
+
+/**
+ * Rileva duplicati per un lead
+ */
+async function detectLeadDuplicates(
+  lead: Partial<Lead>,
+  result: DuplicateDetectionResult,
+  options: DuplicateDetectionOptions
+): Promise<void> {
+  // Array di condizioni OR per i vari campi di ricerca
+  const conditions = [];
+  
+  // Controlla nome (match esatto o fuzzy in base alla strategia)
+  if (lead.name && lead.name.trim() !== '') {
+    if (options.strategy === 'exact') {
+      conditions.push(eq(leads.name, lead.name.trim()));
+    } else {
+      conditions.push(ilike(leads.name, `%${lead.name.trim()}%`));
+    }
+  }
+  
+  // Controlla email (match esatto)
+  if (lead.email && lead.email.trim() !== '') {
+    conditions.push(eq(leads.email, lead.email.trim()));
+  }
+  
+  // Controlla telefono (match esatto)
+  if (lead.phone && lead.phone.trim() !== '') {
+    conditions.push(eq(leads.phone, lead.phone.trim()));
+  }
+  
+  // Esegui la query se ci sono condizioni
+  if (conditions.length > 0) {
+    const potentialDuplicates = await db.select().from(leads).where(or(...conditions));
+    
+    // Calcola il punteggio di somiglianza per ogni potenziale duplicato
+    const scoredDuplicates: PotentialDuplicate[] = [];
+    
+    for (const dup of potentialDuplicates) {
+      const matchedFields: string[] = [];
+      let score = 0;
+      let totalFields = 0;
+      
+      // Controlla i campi principali
+      if (lead.name && dup.name && 
+          stringSimilarity(lead.name, dup.name) > 0.8) {
+        score += 0.3; 
+        matchedFields.push('name');
+      }
+      totalFields += 1;
+      
+      if (lead.email && dup.email && 
+          lead.email.toLowerCase() === dup.email.toLowerCase()) {
+        score += 0.35; // Email ha un peso maggiore per i lead
+        matchedFields.push('email');
+      }
+      totalFields += 1;
+      
+      if (lead.phone && dup.phone && 
+          normalizePhone(lead.phone) === normalizePhone(dup.phone)) {
+        score += 0.25;
+        matchedFields.push('phone');
+      }
+      totalFields += 1;
+      
+      if (lead.companyName && dup.companyName && 
+          stringSimilarity(lead.companyName, dup.companyName) > 0.7) {
+        score += 0.2;
+        matchedFields.push('companyName');
+      }
+      totalFields += 1;
+      
+      // Normalizza il punteggio (0-1)
+      const normalizedScore = score / Math.min(1.1, totalFields); // Cap a 1
+      
+      // Aggiungi solo se supera la soglia
+      if (normalizedScore >= options.threshold) {
+        scoredDuplicates.push({
+          entity: dup,
+          score: normalizedScore,
+          matchedFields
+        });
+      }
+    }
+    
+    // Ordina per punteggio (decrescente) e limita i risultati
+    scoredDuplicates.sort((a, b) => b.score - a.score);
+    result.duplicates = scoredDuplicates.slice(0, options.maxResults || 5);
+  }
+}
+
+// Funzioni di utilità
+
+/**
+ * Calcola la similarità tra due stringhe (Levenshtein distance-based)
+ * @returns Valore tra 0 e 1, dove 1 = stringhe identiche
+ */
+function stringSimilarity(str1: string, str2: string): number {
+  if (!str1 && !str2) return 1;
+  if (!str1 || !str2) return 0;
+  
+  // Normalizza le stringhe
+  const a = str1.toLowerCase().trim();
+  const b = str2.toLowerCase().trim();
+  
+  if (a === b) return 1;
+  if (a.length === 0 || b.length === 0) return 0;
+  
+  // Implementazione semplificata della distanza di Levenshtein
+  const matrix = [];
+  
+  // Inizializza la prima riga
+  for (let i = 0; i <= b.length; i++) {
+    matrix[i] = [i];
+  }
+  
+  // Inizializza la prima colonna
+  for (let i = 0; i <= a.length; i++) {
+    matrix[0][i] = i;
+  }
+  
+  // Riempi la matrice
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      if (b.charAt(i - 1) === a.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1, // sostituzione
+          Math.min(
+            matrix[i][j - 1] + 1, // inserimento
+            matrix[i - 1][j] + 1 // cancellazione
+          )
+        );
+      }
+    }
+  }
+  
+  // Calcola la similarità
+  const distance = matrix[b.length][a.length];
+  const maxLength = Math.max(a.length, b.length);
+  
+  // Normalizza la distanza in un punteggio di similarità (0-1)
   return 1 - distance / maxLength;
 }
 
 /**
- * Calcola un punteggio di similarità tra due email
- * @param email1 Prima email da confrontare
- * @param email2 Seconda email da confrontare
- * @returns Punteggio tra 0 (nessuna similarità) e 1 (identiche)
+ * Normalizza un numero di telefono per il confronto
+ * Rimuove spazi, trattini, parentesi e altri caratteri non numerici
  */
-export function emailSimilarity(email1: string, email2: string): number {
-  if (!email1 && !email2) return 1;
-  if (!email1 || !email2) return 0;
+function normalizePhone(phone: string): string {
+  if (!phone) return '';
   
-  const e1 = email1.toLowerCase().trim();
-  const e2 = email2.toLowerCase().trim();
-  
-  if (e1 === e2) return 1;
-  
-  // Estrai le parti dell'email
-  const [username1, domain1] = e1.split('@');
-  const [username2, domain2] = e2.split('@');
-  
-  if (!username1 || !domain1 || !username2 || !domain2) {
-    // Se una delle email non è ben formata, usa la similarità delle stringhe
-    return stringSimilarity(e1, e2);
-  }
-  
-  // Confronta separatamente username e domain
-  const usernameSimilarity = stringSimilarity(username1, username2);
-  const domainSimilarity = stringSimilarity(domain1, domain2);
-  
-  // Il dominio ha un peso maggiore nella similarità delle email
-  return (usernameSimilarity * 0.4) + (domainSimilarity * 0.6);
+  // Rimuovi tutti i caratteri non numerici
+  return phone.replace(/[^0-9]/g, '');
 }
 
 /**
- * Calcola un punteggio di similarità tra due numeri di telefono
- * @param phone1 Primo numero di telefono
- * @param phone2 Secondo numero di telefono
- * @returns Punteggio tra 0 (nessuna similarità) e 1 (identici)
+ * Normalizza un URL per il confronto
+ * Rimuove http/https, www, e trailing slashes
  */
-export function phoneSimilarity(phone1: string, phone2: string): number {
-  if (!phone1 && !phone2) return 1;
-  if (!phone1 || !phone2) return 0;
+function normalizeWebsite(url: string): string {
+  if (!url) return '';
   
-  // Normalizza i numeri di telefono rimuovendo tutti i caratteri non numerici
-  const p1 = phone1.replace(/\D/g, '');
-  const p2 = phone2.replace(/\D/g, '');
+  // Rimuovi protocollo (http://, https://)
+  let normalized = url.toLowerCase().replace(/^https?:\/\//, '');
   
-  if (p1 === p2) return 1;
+  // Rimuovi www.
+  normalized = normalized.replace(/^www\./i, '');
   
-  // Se uno dei numeri è contenuto nell'altro (es. con/senza prefisso)
-  if (p1.includes(p2) || p2.includes(p1)) {
-    const minLength = Math.min(p1.length, p2.length);
-    const maxLength = Math.max(p1.length, p2.length);
-    return minLength / maxLength;
-  }
+  // Rimuovi trailing slash
+  normalized = normalized.replace(/\/+$/, '');
   
-  // Altrimenti usa la distanza di Levenshtein come fallback
-  return stringSimilarity(p1, p2);
-}
-
-/**
- * Calcola un punteggio di similarità generale tra due oggetti
- * @param obj1 Primo oggetto
- * @param obj2 Secondo oggetto
- * @param entityType Tipo di entità (contacts, companies, deals)
- * @returns Punteggio tra 0 (nessuna similarità) e 1 (identici)
- */
-export function getDistanceScore(
-  obj1: Record<string, any>, 
-  obj2: Record<string, any>,
-  entityType: string
-): number {
-  // Differenti campi hanno diversi pesi in base all'importanza
-  let weights: Record<string, number> = {};
-  let scores: Record<string, number> = {};
-  let totalWeight = 0;
-  
-  if (entityType === 'contacts') {
-    // Configura i pesi per i contatti
-    weights = {
-      email: 0.5,       // L'email ha il peso maggiore
-      phone: 0.3,       // Il telefono è abbastanza importante
-      firstName: 0.1,   // Nome e cognome hanno un peso minore
-      lastName: 0.1
-    };
-    
-    // Calcola i punteggi per ciascun campo
-    if (obj1.email && obj2.email) {
-      scores.email = emailSimilarity(obj1.email, obj2.email);
-      totalWeight += weights.email;
-    }
-    
-    if (obj1.phone && obj2.phone) {
-      scores.phone = phoneSimilarity(obj1.phone, obj2.phone);
-      totalWeight += weights.phone;
-    }
-    
-    if (obj1.firstName && obj2.firstName) {
-      scores.firstName = stringSimilarity(obj1.firstName, obj2.firstName);
-      totalWeight += weights.firstName;
-    }
-    
-    if (obj1.lastName && obj2.lastName) {
-      scores.lastName = stringSimilarity(obj1.lastName, obj2.lastName);
-      totalWeight += weights.lastName;
-    }
-  } else if (entityType === 'companies') {
-    // Configura i pesi per le aziende
-    weights = {
-      name: 0.4,       // Il nome dell'azienda ha il peso maggiore
-      website: 0.3,     // Il sito web è molto importante
-      phone: 0.15,      // Telefono e email hanno un peso minore
-      email: 0.15
-    };
-    
-    // Calcola i punteggi per ciascun campo
-    if (obj1.name && obj2.name) {
-      scores.name = stringSimilarity(obj1.name, obj2.name);
-      totalWeight += weights.name;
-    }
-    
-    if (obj1.website && obj2.website) {
-      scores.website = stringSimilarity(obj1.website, obj2.website);
-      totalWeight += weights.website;
-    }
-    
-    if (obj1.phone && obj2.phone) {
-      scores.phone = phoneSimilarity(obj1.phone, obj2.phone);
-      totalWeight += weights.phone;
-    }
-    
-    if (obj1.email && obj2.email) {
-      scores.email = emailSimilarity(obj1.email, obj2.email);
-      totalWeight += weights.email;
-    }
-  } else if (entityType === 'deals') {
-    // Configura i pesi per le opportunità
-    weights = {
-      name: 0.4,        // Il nome dell'opportunità ha il peso maggiore
-      companyId: 0.4,   // L'azienda associata è molto importante
-      contactId: 0.2    // Il contatto associato ha un peso minore
-    };
-    
-    // Calcola i punteggi per ciascun campo
-    if (obj1.name && obj2.name) {
-      scores.name = stringSimilarity(obj1.name, obj2.name);
-      totalWeight += weights.name;
-    }
-    
-    if (obj1.companyId && obj2.companyId) {
-      scores.companyId = obj1.companyId === obj2.companyId ? 1 : 0;
-      totalWeight += weights.companyId;
-    }
-    
-    if (obj1.contactId && obj2.contactId) {
-      scores.contactId = obj1.contactId === obj2.contactId ? 1 : 0;
-      totalWeight += weights.contactId;
-    }
-  }
-  
-  // Calcola il punteggio ponderato complessivo
-  if (totalWeight === 0) return 0;
-  
-  let weightedScore = 0;
-  for (const key in scores) {
-    weightedScore += scores[key] * weights[key];
-  }
-  
-  return weightedScore / totalWeight;
+  return normalized;
 }

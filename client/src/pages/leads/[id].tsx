@@ -1,22 +1,22 @@
 import { useState } from "react";
 import { useParams, useLocation } from "wouter";
-import { Button } from "../../components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
-import { Skeleton } from "../../components/ui/skeleton";
-import { Badge } from "../../components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
-import { Separator } from "../../components/ui/separator";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
 import { 
   ArrowLeft, User, Building2, Mail, Phone, Calendar, Edit,
   FileText, Clock, AlertCircle, CheckCircle, Trash,
 } from "lucide-react";
-import { formatDateToLocal, formatPhoneNumber } from "../../lib/utils";
-import { useLead, useConvertLeadToContact } from "../../hooks/useLeads";
-import LeadModal from "../../components/modals/LeadModal";
-import TaskList from "../../components/tasks/TaskList";
-import EntityEmailInbox from "../../components/email/EntityEmailInbox";
-import { Avatar, AvatarFallback } from "../../components/ui/avatar";
-import { toast } from "../../hooks/use-toast";
+import { formatDateToLocal, formatPhoneNumber } from "@/lib/utils";
+import { useLead, useConvertLeadToContact } from "@/hooks/useLeads";
+import LeadModal from "@/components/modals/LeadModal";
+import TaskList from "@/components/tasks/TaskList";
+import EntityEmailInbox from "@/components/email/EntityEmailInbox";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { toast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 
 export default function LeadDetail() {

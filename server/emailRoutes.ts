@@ -4,21 +4,8 @@
 import express from 'express';
 import { db } from './db';
 import { sql } from 'drizzle-orm';
-import crypto from 'crypto';
-// Importazioni temporaneamente commentate perché le funzioni non sono disponibili
-// import { getEmailAccounts } from './modules/email/emailListener';
-// import { fetchAllEmails, fetchUnreadEmails, saveEmailToDatabase } from './modules/email/emailReceiver';
-
-// Mock functions per sviluppo
-const fetchUnreadEmails = async (accountId: number) => {
-  console.log(`Mock fetchUnreadEmails per account ${accountId}`);
-  return [];
-};
-
-const saveEmailToDatabase = async (accountId: number, email: any) => {
-  console.log(`Mock saveEmailToDatabase per account ${accountId}`);
-  return crypto.randomUUID();
-};
+import { getEmailAccounts } from './modules/email/emailListener';
+import { fetchAllEmails, fetchUnreadEmails, saveEmailToDatabase } from './modules/email/emailReceiver';
 import { EmailAccountDb } from './modules/email/types';
 import { authenticateJWT } from './middleware/auth';
 

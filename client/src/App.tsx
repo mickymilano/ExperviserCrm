@@ -1,44 +1,44 @@
 import { lazy, Suspense } from 'react';
 import { Route, Switch } from 'wouter';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { queryClient } from './lib/queryClient';
-import AppLayout from './components/layout/AppLayout';
-import ProtectedRoute from './components/auth/ProtectedRoute';
-import DebugProvider from './components/debug/DebugProvider';
-import { Toaster } from './components/ui/toaster';
+import { queryClient } from '@/lib/queryClient';
+import AppLayout from '@/components/layout/AppLayout';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import DebugProvider from '@/components/debug/DebugProvider';
+import { Toaster } from '@/components/ui/toaster';
 
 // Lazy loading delle pagine
-const LoginPage = lazy(() => import('./pages/LoginPage'));
-const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const LoginPage = lazy(() => import('@/pages/LoginPage'));
+const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
 
 // Contacts
-const ContactsPage = lazy(() => import('./pages/contacts'));
-const ContactDetailPage = lazy(() => import('./pages/contacts/[id]'));
+const ContactsPage = lazy(() => import('@/pages/contacts'));
+const ContactDetailPage = lazy(() => import('@/pages/contacts/[id]'));
 
 // Companies
-const CompaniesPage = lazy(() => import('./pages/companies'));
-const CompanyDetailPage = lazy(() => import('./pages/companies/[id]'));
+const CompaniesPage = lazy(() => import('@/pages/companies'));
+const CompanyDetailPage = lazy(() => import('@/pages/companies/[id]'));
 
 // Deals
-const DealsPage = lazy(() => import('./pages/deals'));
-const DealDetailPage = lazy(() => import('./pages/deals/[id]'));
+const DealsPage = lazy(() => import('@/pages/deals'));
+const DealDetailPage = lazy(() => import('@/pages/deals/[id]'));
 
 // Email
-const EmailPage = lazy(() => import('./pages/email'));
-const EmailSignaturesPage = lazy(() => import('./pages/email/signatures'));
+const EmailPage = lazy(() => import('@/pages/email'));
+const EmailSignaturesPage = lazy(() => import('@/pages/email/signatures'));
 
 // Other modules
-const LeadsPage = lazy(() => import('./pages/leads'));
-const SynergiesPage = lazy(() => import('./pages/synergies'));
-const TasksPage = lazy(() => import('./pages/tasks'));
-const CalendarPage = lazy(() => import('./pages/calendar'));
-const SettingsPage = lazy(() => import('./pages/settings'));
-const HelpPage = lazy(() => import('./pages/help'));
-const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
+const LeadsPage = lazy(() => import('@/pages/leads'));
+const SynergiesPage = lazy(() => import('@/pages/synergies'));
+const TasksPage = lazy(() => import('@/pages/tasks'));
+const CalendarPage = lazy(() => import('@/pages/calendar'));
+const SettingsPage = lazy(() => import('@/pages/settings'));
+const HelpPage = lazy(() => import('@/pages/help'));
+const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
 // Branches module
-const BranchesPage = lazy(() => import('./pages/branches'));
-const BranchDetailPage = lazy(() => import('./pages/branches/[id]'));
+const BranchesPage = lazy(() => import('@/pages/branches'));
+const BranchDetailPage = lazy(() => import('@/pages/branches/[id]'));
 
 // Componente di caricamento
 function LoadingScreen() {
@@ -118,7 +118,7 @@ export default function App() {
           </Route>
           <Route path="/deals/new">
             <ProtectedRoute>
-              <LayoutPage component={lazy(() => import('./pages/deals/new'))} />
+              <LayoutPage component={lazy(() => import('@/pages/deals/new'))} />
             </ProtectedRoute>
           </Route>
           <Route path="/deals/:id">
@@ -135,7 +135,7 @@ export default function App() {
           </Route>
           <Route path="/leads/:id">
             <ProtectedRoute>
-              <LayoutPage component={lazy(() => import('./pages/leads/[id]'))} />
+              <LayoutPage component={lazy(() => import('@/pages/leads/[id]'))} />
             </ProtectedRoute>
           </Route>
           
@@ -163,12 +163,12 @@ export default function App() {
           {/* Routes for Email */}
           <Route path="/emails/inbox">
             <ProtectedRoute>
-              <LayoutPage component={lazy(() => import('./pages/email/inbox'))} />
+              <LayoutPage component={lazy(() => import('@/pages/email/inbox'))} />
             </ProtectedRoute>
           </Route>
           <Route path="/emails/compose">
             <ProtectedRoute>
-              <LayoutPage component={lazy(() => import('./pages/email/compose'))} />
+              <LayoutPage component={lazy(() => import('@/pages/email/compose'))} />
             </ProtectedRoute>
           </Route>
           <Route path="/emails/signatures">
@@ -178,12 +178,12 @@ export default function App() {
           </Route>
           <Route path="/emails/accounts">
             <ProtectedRoute>
-              <LayoutPage component={lazy(() => import('./pages/email/accounts'))} />
+              <LayoutPage component={lazy(() => import('@/pages/email/accounts'))} />
             </ProtectedRoute>
           </Route>
           <Route path="/emails/settings">
             <ProtectedRoute>
-              <LayoutPage component={lazy(() => import('./pages/email/settings'))} />
+              <LayoutPage component={lazy(() => import('@/pages/email/settings'))} />
             </ProtectedRoute>
           </Route>
           <Route path="/emails">

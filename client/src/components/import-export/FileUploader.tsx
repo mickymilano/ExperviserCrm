@@ -1,95 +1,66 @@
-import React, { useState, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Card } from '@/components/ui/card';
+import React, { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Upload, FileIcon, FileSpreadsheet } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 interface FileUploaderProps {
-  onFileSelected: (file: File) => void;
-  acceptedFormats: string;
+  onFileSelect: (file: File) => void;
+  isLoading?: boolean;
+  accept?: string;
+  buttonText?: string;
+  buttonVariant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
 }
 
-export function FileUploader({ onFileSelected, acceptedFormats }: FileUploaderProps) {
-  const { t } = useTranslation();
+export function FileUploader({
+  onFileSelect,
+  isLoading = false,
+  accept = '.csv, .xlsx, .xls',
+  buttonText = 'Seleziona File',
+  buttonVariant = 'outline'
+}: FileUploaderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
+  const [fileName, setFileName] = useState<string>('');
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (files && files.length > 0) {
-      onFileSelected(files[0]);
-    }
+  const handleButtonClick = () => {
+    fileInputRef.current?.click();
   };
 
-  const handleBrowseClick = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
-
-  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = () => {
-    setIsDragging(false);
-  };
-
-  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    setIsDragging(false);
-    
-    const files = event.dataTransfer.files;
-    if (files && files.length > 0) {
-      // Verifica il formato del file
-      const fileType = files[0].name.split('.').pop()?.toLowerCase();
-      const formatsArray = acceptedFormats.split(',').map(format => 
-        format.trim().replace('.', '').toLowerCase()
-      );
-      
-      if (fileType && formatsArray.includes(fileType)) {
-        onFileSelected(files[0]);
-      } else {
-        // Mostra un errore se il formato non è supportato
-        alert(t('import.unsupportedFormat'));
-      }
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setFileName(file.name);
+      onFileSelect(file);
     }
   };
 
   return (
-    <Card 
-      className={`flex flex-col items-center justify-center border-2 border-dashed p-10 ${
-        isDragging ? 'border-primary bg-primary/5' : 'border-gray-200'
-      }`}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-    >
-      <div className="flex justify-center mb-6 space-x-4">
-        <FileIcon className="h-16 w-16 text-primary opacity-70" />
-        <FileSpreadsheet className="h-16 w-16 text-green-600 opacity-70" />
-      </div>
-      
-      <div className="text-center mb-6">
-        <h3 className="text-lg font-medium mb-1">{t('import.dragAndDrop')}</h3>
-        <p className="text-sm text-gray-500">{t('import.supportedFormats', { formats: acceptedFormats })}</p>
-      </div>
-      
-      <Button onClick={handleBrowseClick} className="mb-2">
-        <Upload className="mr-2 h-4 w-4" />
-        {t('import.browseFiles')}
-      </Button>
-      
-      <p className="text-xs text-gray-400">{t('import.maxFileSize')}</p>
-      
+    <div className="flex flex-col items-center">
       <input
         type="file"
         ref={fileInputRef}
         onChange={handleFileChange}
-        accept={acceptedFormats}
+        accept={accept}
         className="hidden"
       />
-    </Card>
+      <Button 
+        onClick={handleButtonClick} 
+        variant={buttonVariant}
+        disabled={isLoading}
+        size="sm"
+      >
+        {isLoading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Caricamento...
+          </>
+        ) : (
+          buttonText
+        )}
+      </Button>
+      {fileName && (
+        <p className="mt-2 text-xs text-muted-foreground">
+          File selezionato: {fileName}
+        </p>
+      )}
+    </div>
   );
 }

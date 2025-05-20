@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { usePipelineStages } from "../../hooks/useDeals";
-import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
-import { Button } from "../../components/ui/button";
+import { usePipelineStages } from "@/hooks/useDeals";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import DealModal from "../../components/modals/DealModal";
-import { Skeleton } from "../../components/ui/skeleton";
-import { DealInfo } from "../../types";
+import DealModal from "@/components/modals/DealModal";
+import { Skeleton } from "@/components/ui/skeleton";
+import { DealInfo } from "@/types";
 
 export default function NewDeal() {
   const [_, navigate] = useLocation();

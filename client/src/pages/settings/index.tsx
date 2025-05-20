@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import { useEmailAccounts, EmailAccount } from "../../hooks/useEmailAccounts";
-import { Button } from "../../components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
-import { Input } from "../../components/ui/input";
-import { Label } from "../../components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
-import { Switch } from "../../components/ui/switch";
-import { Separator } from "../../components/ui/separator";
+import { useEmailAccounts, EmailAccount } from "@/hooks/useEmailAccounts";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
 import { 
   User, 
   Lock, 
@@ -27,19 +27,19 @@ import {
 } from "lucide-react";
 
 // Import dei componenti per la gestione dati
-import { ImportExportManager } from "../../components/import-export/ImportExportManager";
-import { DuplicateAnalyzer } from "../../components/import-export/DuplicateAnalyzer";
-import { AIEnhancer } from "../../components/import-export/AIEnhancer";
-import { useToast } from "../../hooks/use-toast";
-import { Skeleton } from "../../components/ui/skeleton";
+import { ImportExportManager } from "@/components/import-export/ImportExportManager";
+import { DuplicateAnalyzer } from "@/components/import-export/DuplicateAnalyzer";
+import { AIEnhancer } from "@/components/import-export/AIEnhancer";
+import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Dialog, 
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
   DialogDescription
-} from "../../components/ui/dialog";
-import { useTheme } from "../../components/layouts/ThemeProvider";
+} from "@/components/ui/dialog";
+import { useTheme } from "@/components/layouts/ThemeProvider";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,7 +49,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "../../components/ui/alert-dialog";
+} from "@/components/ui/alert-dialog";
 import {
   Select,
   SelectContent,
@@ -58,9 +58,9 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from "../../components/ui/select";
-import { useUserProfile } from "../../hooks/useUserProfile";
-import { EmailAccountForm } from "../../components/email/EmailAccountForm";
+} from "@/components/ui/select";
+import { useUserProfile } from "@/hooks/useUserProfile";
+import { EmailAccountForm } from "@/components/email/EmailAccountForm";
 
 export default function SettingsPage() {
   const { toast } = useToast();
@@ -208,7 +208,7 @@ export default function SettingsPage() {
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="appearance">Appearance</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
-          <TabsTrigger value="datamgmt">Dati</TabsTrigger>
+          <TabsTrigger value="datamgmt">Gestione Dati</TabsTrigger>
         </TabsList>
         
         {/* Account Settings */}
@@ -690,14 +690,46 @@ export default function SettingsPage() {
         <TabsContent value="datamgmt">
           <Card>
             <CardHeader>
-              <CardTitle>Dati</CardTitle>
+              <CardTitle>Gestione Dati</CardTitle>
               <CardDescription>
                 Importa ed esporta dati da e verso il sistema CRM
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Componente unificato di importazione/esportazione */}
-              <ImportExportManager />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Colonna Contatti */}
+                <Card className="p-6">
+                  <CardContent className="p-0">
+                    <h3 className="text-lg font-medium mb-4">Contatti</h3>
+                    <ImportExportManager
+                      entityType="contacts"
+                      title="Contatti"
+                    />
+                  </CardContent>
+                </Card>
+
+                {/* Colonna Aziende */}
+                <Card className="p-6">
+                  <CardContent className="p-0">
+                    <h3 className="text-lg font-medium mb-4">Aziende</h3>
+                    <ImportExportManager
+                      entityType="companies"
+                      title="Aziende"
+                    />
+                  </CardContent>
+                </Card>
+
+                {/* Colonna Opportunità */}
+                <Card className="p-6">
+                  <CardContent className="p-0">
+                    <h3 className="text-lg font-medium mb-4">Opportunità</h3>
+                    <ImportExportManager
+                      entityType="leads"
+                      title="Opportunità"
+                    />
+                  </CardContent>
+                </Card>
+              </div>
               
               <Separator />
               
@@ -706,16 +738,18 @@ export default function SettingsPage() {
                   <Database className="h-5 w-5 mr-2" />
                   Strumenti Avanzati
                 </h3>
-                {/* Questi strumenti sono presenti solo a scopo dimostrativo 
-                    e verranno utilizzati nel flusso completo di importazione/esportazione */}
-                <div className="grid grid-cols-1 gap-6">
-                  <div className="p-4 border rounded-md bg-muted/30">
-                    <p className="text-sm text-muted-foreground italic text-center px-4">
-                      Gli strumenti avanzati di analisi duplicati e arricchimento AI sono integrati 
-                      nel flusso di importazione dati completo. Seleziona "Importa" nel modulo sopra 
-                      per utilizzarli.
-                    </p>
-                  </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Card className="p-6">
+                    <CardContent className="p-0">
+                      <DuplicateAnalyzer entityType="contacts" />
+                    </CardContent>
+                  </Card>
+
+                  <Card className="p-6">
+                    <CardContent className="p-0">
+                      <AIEnhancer entityType="contacts" />
+                    </CardContent>
+                  </Card>
                 </div>
               </div>
             </CardContent>

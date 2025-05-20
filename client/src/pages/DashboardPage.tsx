@@ -9,7 +9,7 @@ import {
   Clock,
   Calendar
 } from 'lucide-react';
-import { SynergiesOverview } from '../components/dashboard/SynergiesOverview';
+import { SynergiesOverview } from '@/components/dashboard/SynergiesOverview';
 import { useTranslation } from 'react-i18next';
 
 // Componente per mostrare lo stato di caricamento

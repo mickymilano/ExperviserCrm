@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useDebugConsoleStore } from "../../stores/debugConsoleStore";
-import { useDebugLogs } from "../../hooks/useDebugLogs";
+import { useDebugConsoleStore } from "@/stores/debugConsoleStore";
+import { useDebugLogs } from "@/hooks/useDebugLogs";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   XIcon, 
@@ -13,13 +13,13 @@ import {
   InfoIcon, 
   AlertCircleIcon
 } from "lucide-react";
-import { Button } from "../ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { ScrollArea } from "../ui/scroll-area";
-import { Badge } from "../ui/badge";
-import { Card } from "../ui/card";
-import { Separator } from "../ui/separator";
-import { type LogEntry, type LogLevel } from "../../lib/debugContext";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { type LogEntry, type LogLevel } from "@/lib/debugContext";
 
 export default function DebugConsole() {
   const { 

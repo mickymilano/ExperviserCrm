@@ -1,28 +1,28 @@
 import { useState } from "react";
 import { useParams, useLocation } from "wouter";
-import { useDeal, usePipelineStages } from "../../hooks/useDeals";
-import { useCompanies } from "../../hooks/useCompanies";
-import { useContacts } from "../../hooks/useContacts";
-import { Button } from "../../components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
-import { Skeleton } from "../../components/ui/skeleton";
-import { Badge } from "../../components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
-import { Separator } from "../../components/ui/separator";
+import { useDeal, usePipelineStages } from "@/hooks/useDeals";
+import { useCompanies } from "@/hooks/useCompanies";
+import { useContacts } from "@/hooks/useContacts";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
 import { 
   ArrowLeft, Briefcase, CircleDollarSign, Calendar, Edit,
   Building2, User, Clock, AlertCircle, CheckCircle, Trash, FileText, Handshake
 } from "lucide-react";
-import { formatCurrency, formatDateToLocal } from "../../lib/utils";
-import DealModal from "../../components/modals/DealModal";
-import TaskList from "../../components/tasks/TaskList";
+import { formatCurrency, formatDateToLocal } from "@/lib/utils";
+import DealModal from "@/components/modals/DealModal";
+import TaskList from "@/components/tasks/TaskList";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 // Ripristinato: mostra la lista delle sinergie collegate al deal
-import { SynergiesList } from "../../components/synergies/SynergiesList";
+import { SynergiesList } from "@/components/synergies/SynergiesList";
 // Importazione di i18n per le traduzioni
 import { useTranslation } from "react-i18next";
-import EntityEmailInbox from "../../components/email/EntityEmailInbox";
+import { EntityEmailInbox } from "@/components/email/EntityEmailInbox";
 
 export default function DealDetail() {
   const params = useParams();

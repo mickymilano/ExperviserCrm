@@ -1,4 +1,4 @@
-import { debugContext } from './debugContext';
+import { debugContext } from '@/lib/debugContext';
 
 /**
  * Wrapper per fetch che aggiunge il monitoraggio degli errori delle chiamate API.

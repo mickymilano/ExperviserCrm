@@ -10,14 +10,14 @@ import {
   FormItem,
   FormLabel,
   FormMessage
-} from '../ui/form';
-import { Card } from '../ui/card';
-import { Input } from '../ui/input';
-import { Button } from '../ui/button';
-import { Textarea } from '../ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { useToast } from '../../hooks/use-toast';
-import { apiRequest } from '../../lib/queryClient';
+} from '@/components/ui/form';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 import { useQuery } from '@tanstack/react-query';
 
 interface ContactOption {

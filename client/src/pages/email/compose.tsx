@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { NewEmailComposer } from '../../components/email/NewEmailComposer';
+import { NewEmailComposer } from '@/components/email/NewEmailComposer';
 import { useTranslation } from 'react-i18next';
 
 export function EmailComposePage() {

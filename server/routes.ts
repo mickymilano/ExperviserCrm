@@ -16,7 +16,7 @@ import {
   insertContactEmailSchema, 
   insertBranchSchema,
   areasOfActivity  // Importiamo la tabella areasOfActivity
-} from '../shared/schema';
+} from '@shared/schema';
 import { 
   listLeads, 
   getLead, 
@@ -26,12 +26,9 @@ import {
   convertLead 
 } from './controllers/leadController.js';
 import branchRoutes from './branchRoutes';
-// Importazione corretta delle rotte email
-import emailRoutes from './mockEmailRoutes';
-import emailModuleRoutes from './routes/emailRoutes';
+import mockEmailRoutes from './mockEmailRoutes';
+import emailRoutes from './emailRoutes';
 import importExportRoutes from './routes/import-export';
-import debugConsoleRouter from './modules/debug-console';
-import testDataRouter from './routes/test-data';
 import { getSectors, createSector } from './controllers/sectorController';
 import { getSubSectors, createSubSector } from './controllers/subSectorController';
 import { getJobTitles, getJobTitle, createJobTitle, updateJobTitle, deleteJobTitle } from './controllers/jobTitleController';
@@ -2879,208 +2876,13 @@ export function registerRoutes(app: any) {
   app.use('/api/branches', branchRoutes);
   
   // Integrazione API Email
-  // Vecchio sistema email (legacy)
-  // Commentato temporaneamente
-  // app.use('/api/email-legacy', authenticate, emailRoutes);
-  
-  // Nuovo sistema email con supporto per l'associazione alle entità
-  // Utilizza un mock temporaneo integrato direttamente qui
-  const emailEntityRouter = express.Router();
-  
-  // Ottieni le email associate a un'entità
-  emailEntityRouter.get('/entity/:entityType/:entityId', (req, res) => {
-    try {
-      const { entityType, entityId } = req.params;
-      
-      if (!['contact', 'company', 'deal', 'lead'].includes(entityType)) {
-        return res.status(400).json({ error: 'Tipo di entità non valido' });
-      }
-      
-      console.log(`Cercando email per ${entityType} con ID ${entityId}`);
-      
-      // Email di esempio
-      const mockEmails = [
-        {
-          id: "1",
-          fromEmail: 'cliente@esempio.com',
-          fromName: 'Mario Rossi',
-          toEmail: 'me@azienda.com',
-          toName: 'Il Mio CRM',
-          subject: 'Richiesta informazioni',
-          body: 'Buongiorno,\n\nVorrei sapere di più sui vostri servizi. Potreste inviarmi un preventivo per il pacchetto completo?\n\nCordiali saluti,\nMario Rossi',
-          bodyType: 'text',
-          isRead: false,
-          receivedAt: new Date().toISOString(),
-          attachments: [],
-          entityId: entityId,
-          entityType: entityType,
-          starred: false
-        },
-        {
-          id: "2",
-          fromEmail: 'me@azienda.com',
-          fromName: 'Il Mio CRM',
-          toEmail: 'cliente@esempio.com',
-          toName: 'Mario Rossi',
-          subject: 'Re: Richiesta informazioni',
-          body: 'Gentile Mario,\n\nGrazie per il suo interesse nei nostri servizi. Allego il preventivo richiesto.\n\nRestiamo a disposizione per qualsiasi chiarimento.\n\nCordiali saluti,\nIl Mio CRM',
-          bodyType: 'text',
-          isRead: true,
-          receivedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-          attachments: [
-            {
-              id: "att1",
-              filename: "preventivo.pdf",
-              contentType: "application/pdf",
-              size: 1024 * 1024 * 1.5 // 1.5 MB
-            }
-          ],
-          entityId: entityId,
-          entityType: entityType,
-          starred: true
-        },
-        {
-          id: "3",
-          fromEmail: 'fornitore@esempio.com',
-          fromName: 'Fornitore Spa',
-          toEmail: 'me@azienda.com',
-          toName: 'Il Mio CRM',
-          subject: 'Offerta commerciale',
-          body: '<p>Gentile cliente,</p><p>Vi inviamo la nostra <strong>migliore offerta</strong> per i prodotti richiesti.</p><p>Sono disponibili sconti speciali per ordini superiori a €5000.</p><p>Cordiali saluti,<br/>Fornitore Spa</p>',
-          bodyType: 'html',
-          isRead: false,
-          receivedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-          attachments: [
-            {
-              id: "att2",
-              filename: "catalogo_2025.pdf",
-              contentType: "application/pdf",
-              size: 1024 * 1024 * 3.2 // 3.2 MB
-            },
-            {
-              id: "att3",
-              filename: "listino_prezzi.xlsx",
-              contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-              size: 1024 * 512 // 512 KB
-            }
-          ],
-          entityId: entityId,
-          entityType: entityType,
-          starred: false
-        }
-      ];
-      
-      return res.json(mockEmails);
-    } catch (error) {
-      console.error('Errore nel recupero delle email dell\'entità:', error);
-      return res.status(500).json({ error: 'Errore nel recupero delle email dell\'entità' });
-    }
-  });
-  
-  // Conteggio email non lette
-  emailEntityRouter.get('/unread-count', (req, res) => {
-    return res.json({ count: 4 }); // Mock count
-  });
-  
-  // Segna un'email come letta
-  emailEntityRouter.patch('/:emailId/read', (req, res) => {
-    try {
-      const { emailId } = req.params;
-      console.log(`Segnando email ${emailId} come letta`);
-      
-      // In produzione, questo codice salverebbe le modifiche nel database
-      return res.json({ 
-        success: true, 
-        message: 'Email segnata come letta con successo' 
-      });
-    } catch (error) {
-      console.error('Errore nel segnare l\'email come letta:', error);
-      return res.status(500).json({ 
-        error: 'Errore nel segnare l\'email come letta' 
-      });
-    }
-  });
-  
-  // Invia una risposta a un'email
-  emailEntityRouter.post('/:emailId/reply', (req, res) => {
-    try {
-      const { emailId } = req.params;
-      const { content } = req.body;
-      
-      if (!content || content.trim() === '') {
-        return res.status(400).json({ 
-          error: 'Il contenuto della risposta non può essere vuoto' 
-        });
-      }
-      
-      console.log(`Inviando risposta all'email ${emailId}:`, content.substring(0, 50) + '...');
-      
-      // In produzione, questo codice invierebbe effettivamente la risposta
-      return res.json({ 
-        success: true, 
-        message: 'Risposta inviata con successo' 
-      });
-    } catch (error) {
-      console.error('Errore nell\'invio della risposta:', error);
-      return res.status(500).json({ 
-        error: 'Errore nell\'invio della risposta' 
-      });
-    }
-  });
-  
-  // Invia una nuova email
-  emailEntityRouter.post('/send', (req, res) => {
-    try {
-      const { to, subject, body, entityId, entityType } = req.body;
-      
-      // Validazione dei dati richiesti
-      if (!to || !subject || !body) {
-        return res.status(400).json({ 
-          error: 'Destinatario, oggetto e corpo dell\'email sono obbligatori' 
-        });
-      }
-      
-      console.log(`Inviando nuova email a ${to}:`, subject);
-      
-      // In produzione, questo codice invierebbe effettivamente l'email
-      return res.json({ 
-        success: true, 
-        message: 'Email inviata con successo' 
-      });
-    } catch (error) {
-      console.error('Errore nell\'invio dell\'email:', error);
-      return res.status(500).json({ 
-        error: 'Errore nell\'invio dell\'email' 
-      });
-    }
-  });
-  
-  // Gestisce il download degli allegati
-  emailEntityRouter.get('/attachment/:attachmentId', (req, res) => {
-    try {
-      const { attachmentId } = req.params;
-      
-      console.log(`Richiesta di download dell'allegato ${attachmentId}`);
-      
-      // Per ora, restituiamo un messaggio informativo
-      res.set('Content-Type', 'text/plain');
-      return res.send(`Questa è una simulazione di download dell'allegato con ID ${attachmentId}`);
-    } catch (error) {
-      console.error('Errore nel download dell\'allegato:', error);
-      return res.status(500).json({ 
-        error: 'Errore nel download dell\'allegato' 
-      });
-    }
-  });
-  
-  app.use('/api/email', authenticate, emailEntityRouter);
+  app.use('/api/email', authenticate, emailRoutes);
   
   // Integrazione API Importazione/Esportazione
   app.use('/api/import-export', authenticate, importExportRoutes);
   
   // Integrazione API Email di test
-  // Commentato temporaneamente per risolvere problemi di build
-  // app.use('/api', authenticate, mockEmailRoutes);
+  app.use('/api', authenticate, mockEmailRoutes);
   
   // API per gestire le email reali
   app.post('/api/email/accounts/test-connection', authenticate, async (req, res) => {
@@ -3192,11 +2994,10 @@ export function registerRoutes(app: any) {
   app.delete('/api/subsectors/:subSectorId/jobtitles/:id', authenticate, isAdmin, deleteJobTitle);
   
   // Registra le rotte email per l'integrazione con le pagine di dettaglio
-  // Temporaneamente commentato in attesa di integrazione
-  // app.use('/', emailRoutes);
+  app.use('/', emailRoutes);
   
   // Registra le rotte per importazione/esportazione dati
-  app.use('/api/import-export', importExportRoutes);
+  app.use('/', importExportRoutes);
   
   // Crea il server HTTP
   const httpServer = createServer(app);

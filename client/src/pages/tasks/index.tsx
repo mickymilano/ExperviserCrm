@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { useTasks } from "../../hooks/useTasks";
-import { useContacts } from "../../hooks/useContacts";
-import { useCompanies } from "../../hooks/useCompanies";
-import { Task } from "../../types";
-import { Button } from "../../components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
-import { Input } from "../../components/ui/input";
-import { Checkbox } from "../../components/ui/checkbox";
+import { useTasks } from "@/hooks/useTasks";
+import { useContacts } from "@/hooks/useContacts";
+import { useCompanies } from "@/hooks/useCompanies";
+import { Task } from "@/types";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   Plus, 
   Search, 
@@ -21,18 +21,18 @@ import {
   Edit,
   Trash
 } from "lucide-react";
-import TaskModal from "../../components/modals/TaskModal";
-import { Skeleton } from "../../components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
+import TaskModal from "@/components/modals/TaskModal";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatDistanceToNow, isPast, isToday, isTomorrow, format } from "date-fns";
-import { Badge } from "../../components/ui/badge";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "../../components/ui/dropdown-menu";
-import { cn } from "../../lib/utils";
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
 export default function Tasks() {
   const [showModal, setShowModal] = useState(false);

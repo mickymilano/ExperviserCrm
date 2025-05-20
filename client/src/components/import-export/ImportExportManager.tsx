@@ -1,493 +1,142 @@
-import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Upload, Download } from 'lucide-react';
 import { FileUploader } from './FileUploader';
-import { DuplicateAnalyzer } from './DuplicateAnalyzer';
-import { AIEnhancer } from './AIEnhancer';
-import { useToast } from '@/hooks/use-toast';
 import { useImportExport } from '@/hooks/useImportExport';
-import { 
-  Download, Upload, FileText, FileSpreadsheet, AlertCircle, 
-  Check, X, RotateCw, Settings, Brain
-} from 'lucide-react';
 
-/**
- * Componente principale per la gestione dell'importazione/esportazione dei contatti
- */
-export function ImportExportManager() {
-  const { t } = useTranslation();
-  const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('import');
+interface ImportExportManagerProps {
+  entityType: 'contacts' | 'companies' | 'leads';
+  title: string;
+  importTitle?: string;
+  exportTitle?: string;
+}
+
+export function ImportExportManager({ entityType, title, importTitle, exportTitle }: ImportExportManagerProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [importFormat, setImportFormat] = useState<'csv' | 'excel'>('csv');
-  const [exportFormat, setExportFormat] = useState<'csv' | 'excel'>('csv');
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [progressValue, setProgressValue] = useState(0);
-  const [duplicatesFound, setDuplicatesFound] = useState<any[]>([]);
-  const [showAIEnhancer, setShowAIEnhancer] = useState(false);
-  const [importSettings, setImportSettings] = useState({
-    detectDuplicates: true,
-    duplicateThreshold: 75, // percentuale di somiglianza per considerare un duplicato
-    skipFirstRow: true, // salta la prima riga (intestazioni)
-    dateFormat: 'DD/MM/YYYY',
-    useAI: false
-  });
+  const [importing, setImporting] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const { importData, exportData } = useImportExport();
 
-  const { 
-    importContacts, 
-    exportContacts, 
-    analyzeDuplicates,
-    enhanceWithAI
-  } = useImportExport();
-
-  // Gestisce il caricamento di un file
-  const handleFileSelected = (file: File) => {
+  // Gestione dell'importazione
+  const handleFileSelect = (file: File) => {
     setSelectedFile(file);
-    
-    // Determina il formato dal tipo di file
-    const fileType = file.name.split('.').pop()?.toLowerCase();
-    if (fileType === 'csv') {
-      setImportFormat('csv');
-    } else if (fileType === 'xlsx' || fileType === 'xls') {
-      setImportFormat('excel');
-    }
-    
-    // Reset dello stato
-    setDuplicatesFound([]);
-    setProgressValue(0);
   };
 
-  // Gestisce l'analisi dei duplicati
-  const handleAnalyzeDuplicates = async () => {
+  const handleImport = async (fileType: 'csv' | 'excel') => {
     if (!selectedFile) return;
     
-    setIsProcessing(true);
-    
+    setImporting(true);
     try {
-      // Simulazione del progresso
-      const progressInterval = setInterval(() => {
-        setProgressValue(prev => {
-          if (prev >= 95) {
-            clearInterval(progressInterval);
-            return prev;
-          }
-          return prev + 5;
-        });
-      }, 200);
+      const fileExtension = selectedFile.name.split('.').pop()?.toLowerCase();
+      const correctFileType = fileType === 'csv' ? 'csv' : 'xlsx,xls';
       
-      // Chiamata API per analizzare i duplicati
-      const result = await analyzeDuplicates(
-        selectedFile, 
-        importFormat, 
-        importSettings.duplicateThreshold
-      );
-      
-      clearInterval(progressInterval);
-      setProgressValue(100);
-      
-      if (result.duplicates.length > 0) {
-        setDuplicatesFound(result.duplicates);
-        toast({
-          title: t('duplicateAnalysis.duplicatesFound', { count: result.duplicates.length }),
-          description: t('duplicateAnalysis.pleaseReview'),
-          variant: 'default'
-        });
-      } else {
-        toast({
-          title: t('duplicateAnalysis.noDuplicates'),
-          description: t('duplicateAnalysis.proceedWithImport'),
-          variant: 'default'
-        });
+      // Verifica che il file sia del tipo corretto
+      if (fileType === 'csv' && fileExtension !== 'csv') {
+        throw new Error('Il file selezionato non è un file CSV');
+      } else if (fileType === 'excel' && !['xlsx', 'xls'].includes(fileExtension)) {
+        throw new Error('Il file selezionato non è un file Excel');
       }
-    } catch (error) {
-      console.error('Errore nell\'analisi dei duplicati:', error);
-      toast({
-        title: t('duplicateAnalysis.error'),
-        description: t('duplicateAnalysis.errorDescription'),
-        variant: 'destructive'
-      });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  // Gestisce l'importazione dei contatti
-  const handleImport = async () => {
-    if (!selectedFile) return;
-    
-    setIsProcessing(true);
-    
-    try {
-      // Simulazione del progresso
-      const progressInterval = setInterval(() => {
-        setProgressValue(prev => {
-          if (prev >= 95) {
-            clearInterval(progressInterval);
-            return prev;
-          }
-          return prev + 2;
-        });
-      }, 100);
       
-      // Chiamata API per importare i contatti
-      const result = await importContacts(
-        selectedFile, 
-        importFormat, 
-        importSettings
-      );
-      
-      clearInterval(progressInterval);
-      setProgressValue(100);
-      
-      toast({
-        title: t('import.success'),
-        description: t('import.successDescription', { count: result.imported }),
-        variant: 'default'
-      });
-      
-      // Reset dello stato
+      await importData(selectedFile, entityType, fileType);
       setSelectedFile(null);
-      setProgressValue(0);
-      setDuplicatesFound([]);
-      
-      // Se è stata utilizzata l'AI, mostra il report di miglioramento
-      if (importSettings.useAI && result.enhanced) {
-        setShowAIEnhancer(true);
-      }
     } catch (error) {
-      console.error('Errore nell\'importazione dei contatti:', error);
-      toast({
-        title: t('import.error'),
-        description: t('import.errorDescription'),
-        variant: 'destructive'
-      });
+      console.error(`Errore durante l'importazione ${fileType}:`, error);
     } finally {
-      setIsProcessing(false);
+      setImporting(false);
     }
   };
 
-  // Gestisce l'esportazione dei contatti
-  const handleExport = async () => {
-    setIsProcessing(true);
-    
+  // Gestione dell'esportazione
+  const handleExport = async (fileType: 'csv' | 'excel') => {
+    setExporting(true);
     try {
-      // Simulazione del progresso
-      const progressInterval = setInterval(() => {
-        setProgressValue(prev => {
-          if (prev >= 95) {
-            clearInterval(progressInterval);
-            return prev;
-          }
-          return prev + 5;
-        });
-      }, 100);
-      
-      // Chiamata API per esportare i contatti
-      const result = await exportContacts(exportFormat);
-      
-      clearInterval(progressInterval);
-      setProgressValue(100);
-      
-      // Crea un link per il download e lo clicca automaticamente
-      const url = window.URL.createObjectURL(result.blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = result.filename || `contatti_export_${new Date().toISOString().slice(0, 10)}.${exportFormat}`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      
-      toast({
-        title: t('export.success'),
-        description: t('export.successDescription', { count: result.exported }),
-        variant: 'default'
-      });
+      await exportData(entityType, fileType);
     } catch (error) {
-      console.error('Errore nell\'esportazione dei contatti:', error);
-      toast({
-        title: t('export.error'),
-        description: t('export.errorDescription'),
-        variant: 'destructive'
-      });
+      console.error(`Errore durante l'esportazione ${fileType}:`, error);
     } finally {
-      setIsProcessing(false);
-      setProgressValue(0);
+      setExporting(false);
     }
-  };
-
-  // Gestisce l'applicazione dei miglioramenti AI
-  const handleApplyAIEnhancements = async (enhancedData: any) => {
-    // Implementazione da completare
-    console.log('Applicazione miglioramenti AI:', enhancedData);
-    setShowAIEnhancer(false);
-    
-    toast({
-      title: t('ai.enhancementsApplied'),
-      description: t('ai.enhancementsAppliedDescription'),
-      variant: 'default'
-    });
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>{t('importExport.title')}</CardTitle>
-        <CardDescription>{t('importExport.description')}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="import">
-              <Upload className="mr-2 h-4 w-4" />
-              {t('importExport.import')}
-            </TabsTrigger>
-            <TabsTrigger value="export">
-              <Download className="mr-2 h-4 w-4" />
-              {t('importExport.export')}
-            </TabsTrigger>
-          </TabsList>
-          
-          {/* Tab Importazione */}
-          <TabsContent value="import" className="space-y-4">
-            {!selectedFile ? (
-              <FileUploader 
-                onFileSelected={handleFileSelected} 
-                acceptedFormats=".csv,.xlsx,.xls"
-              />
-            ) : (
-              <>
-                <Alert className="mb-4">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>{t('import.fileSelected')}</AlertTitle>
-                  <AlertDescription>
-                    {selectedFile.name} ({Math.round(selectedFile.size / 1024)} KB)
-                  </AlertDescription>
-                </Alert>
-                
-                <div className="grid gap-4 mb-4">
-                  <div className="space-y-2">
-                    <Label>{t('import.options')}</Label>
-                    
-                    <div className="flex items-center space-x-2 mt-2">
-                      <input
-                        type="checkbox"
-                        id="detectDuplicates"
-                        checked={importSettings.detectDuplicates}
-                        onChange={(e) => setImportSettings({
-                          ...importSettings,
-                          detectDuplicates: e.target.checked
-                        })}
-                        className="h-4 w-4 rounded border-gray-300"
-                      />
-                      <Label htmlFor="detectDuplicates" className="text-sm font-normal">
-                        {t('import.detectDuplicates')}
-                      </Label>
-                    </div>
-                    
-                    {importSettings.detectDuplicates && (
-                      <div className="ml-6 mt-2">
-                        <Label htmlFor="duplicateThreshold" className="text-xs">
-                          {t('import.similarityThreshold')}: {importSettings.duplicateThreshold}%
-                        </Label>
-                        <input
-                          type="range"
-                          id="duplicateThreshold"
-                          min="50"
-                          max="100"
-                          value={importSettings.duplicateThreshold}
-                          onChange={(e) => setImportSettings({
-                            ...importSettings,
-                            duplicateThreshold: parseInt(e.target.value)
-                          })}
-                          className="w-full"
-                        />
-                      </div>
-                    )}
-                    
-                    <div className="flex items-center space-x-2 mt-2">
-                      <input
-                        type="checkbox"
-                        id="skipFirstRow"
-                        checked={importSettings.skipFirstRow}
-                        onChange={(e) => setImportSettings({
-                          ...importSettings,
-                          skipFirstRow: e.target.checked
-                        })}
-                        className="h-4 w-4 rounded border-gray-300"
-                      />
-                      <Label htmlFor="skipFirstRow" className="text-sm font-normal">
-                        {t('import.skipHeaderRow')}
-                      </Label>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2 mt-2">
-                      <input
-                        type="checkbox"
-                        id="useAI"
-                        checked={importSettings.useAI}
-                        onChange={(e) => setImportSettings({
-                          ...importSettings,
-                          useAI: e.target.checked
-                        })}
-                        className="h-4 w-4 rounded border-gray-300"
-                      />
-                      <Label htmlFor="useAI" className="text-sm font-normal flex items-center">
-                        <Brain className="h-4 w-4 mr-1 text-blue-500" />
-                        {t('import.useAI')}
-                      </Label>
-                    </div>
-                    
-                    {importSettings.useAI && (
-                      <Alert className="mt-2 bg-blue-50">
-                        <AlertTitle className="text-blue-700">
-                          {t('ai.howItWorks')}
-                        </AlertTitle>
-                        <AlertDescription className="text-blue-600 text-sm">
-                          {t('ai.description')}
-                        </AlertDescription>
-                      </Alert>
-                    )}
-                  </div>
-                </div>
-                
-                {duplicatesFound.length > 0 && (
-                  <DuplicateAnalyzer 
-                    duplicates={duplicatesFound} 
-                    onResolve={(resolvedData) => {
-                      console.log('Duplicati risolti:', resolvedData);
-                      setDuplicatesFound([]);
-                    }}
-                  />
-                )}
-                
-                {isProcessing && (
-                  <div className="space-y-2 py-4">
-                    <Label>{t('import.importing')}</Label>
-                    <Progress value={progressValue} className="h-2" />
-                    <p className="text-sm text-gray-500 text-right">{progressValue}%</p>
-                  </div>
-                )}
-                
-                <div className="flex space-x-2 justify-end">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => {
-                      setSelectedFile(null);
-                      setDuplicatesFound([]);
-                    }}
-                    disabled={isProcessing}
-                  >
-                    <X className="h-4 w-4 mr-2" />
-                    {t('common.cancel')}
-                  </Button>
-                  
-                  {importSettings.detectDuplicates && duplicatesFound.length === 0 && (
-                    <Button 
-                      variant="secondary"
-                      onClick={handleAnalyzeDuplicates}
-                      disabled={isProcessing}
-                    >
-                      <AlertCircle className="h-4 w-4 mr-2" />
-                      {t('import.analyzeDuplicates')}
-                    </Button>
-                  )}
-                  
-                  <Button 
-                    onClick={handleImport}
-                    disabled={isProcessing}
-                  >
-                    {isProcessing ? (
-                      <RotateCw className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <Upload className="h-4 w-4 mr-2" />
-                    )}
-                    {t('import.importContacts')}
-                  </Button>
-                </div>
-              </>
-            )}
-          </TabsContent>
-          
-          {/* Tab Esportazione */}
-          <TabsContent value="export" className="space-y-4">
-            <div className="space-y-4">
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>{t('export.selectFormat')}</AlertTitle>
-                <AlertDescription>
-                  {t('export.formatDescription')}
-                </AlertDescription>
-              </Alert>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div 
-                  className={`border rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-all ${
-                    exportFormat === 'csv' ? 'border-primary bg-primary/5' : 'border-gray-200'
-                  }`}
-                  onClick={() => setExportFormat('csv')}
-                >
-                  <FileText className="h-12 w-12 mb-2 text-primary" />
-                  <h3 className="font-medium">CSV</h3>
-                  <p className="text-sm text-gray-500 text-center mt-1">
-                    {t('export.csvDescription')}
-                  </p>
-                </div>
-                
-                <div 
-                  className={`border rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-all ${
-                    exportFormat === 'excel' ? 'border-primary bg-primary/5' : 'border-gray-200'
-                  }`}
-                  onClick={() => setExportFormat('excel')}
-                >
-                  <FileSpreadsheet className="h-12 w-12 mb-2 text-green-600" />
-                  <h3 className="font-medium">Excel</h3>
-                  <p className="text-sm text-gray-500 text-center mt-1">
-                    {t('export.excelDescription')}
-                  </p>
-                </div>
-              </div>
-              
-              {isProcessing && (
-                <div className="space-y-2 py-4">
-                  <Label>{t('export.exporting')}</Label>
-                  <Progress value={progressValue} className="h-2" />
-                  <p className="text-sm text-gray-500 text-right">{progressValue}%</p>
-                </div>
-              )}
-              
-              <div className="flex justify-end">
+    <div className="space-y-8">
+      {/* Importazione */}
+      <div>
+        <h3 className="text-lg font-medium flex items-center mb-4">
+          <Upload className="h-5 w-5 mr-2" />
+          {importTitle || `Importa ${title}`}
+        </h3>
+        <Card className="p-4 border border-dashed hover:border-primary transition-colors">
+          <CardContent className="p-0 flex flex-col items-center justify-center space-y-4 h-full py-6">
+            <Upload className="h-8 w-8 text-primary" />
+            <h4 className="font-medium text-center">{`Carica ${title}`}</h4>
+            <p className="text-sm text-center text-muted-foreground">
+              Carica un file CSV o Excel con i tuoi {title.toLowerCase()}
+            </p>
+            <FileUploader
+              onFileSelect={handleFileSelect}
+              isLoading={importing}
+              accept=".csv, .xlsx, .xls"
+              buttonText="Seleziona File"
+            />
+            
+            {selectedFile && (
+              <div className="flex space-x-2 mt-4">
                 <Button 
-                  onClick={handleExport}
-                  disabled={isProcessing}
+                  onClick={() => handleImport('csv')} 
+                  disabled={importing || !selectedFile.name.endsWith('.csv')}
+                  size="sm"
                 >
-                  {isProcessing ? (
-                    <RotateCw className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Download className="h-4 w-4 mr-2" />
-                  )}
-                  {t('export.exportContacts')}
+                  Importa CSV
+                </Button>
+                <Button 
+                  onClick={() => handleImport('excel')} 
+                  disabled={importing || !(selectedFile.name.endsWith('.xlsx') || selectedFile.name.endsWith('.xls'))}
+                  size="sm"
+                >
+                  Importa Excel
                 </Button>
               </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Esportazione */}
+      <div>
+        <h3 className="text-lg font-medium flex items-center mb-4">
+          <Download className="h-5 w-5 mr-2" />
+          {exportTitle || `Esporta ${title}`}
+        </h3>
+        <Card className="p-4">
+          <CardContent className="p-0 flex flex-col items-center justify-center space-y-4 h-full py-6">
+            <Download className="h-8 w-8 text-primary" />
+            <h4 className="font-medium text-center">{`Scarica ${title}`}</h4>
+            <p className="text-sm text-center text-muted-foreground">
+              Scarica i tuoi {title.toLowerCase()} in formato CSV o Excel
+            </p>
+            <div className="flex space-x-2 mt-2">
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={() => handleExport('csv')}
+                disabled={exporting}
+              >
+                CSV
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => handleExport('excel')}
+                disabled={exporting}
+              >
+                Excel
+              </Button>
             </div>
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-      
-      {/* Componente AI Enhancer (mostrato solo quando necessario) */}
-      {showAIEnhancer && (
-        <AIEnhancer 
-          onApply={handleApplyAIEnhancements}
-          onClose={() => setShowAIEnhancer(false)}
-        />
-      )}
-    </Card>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 }
