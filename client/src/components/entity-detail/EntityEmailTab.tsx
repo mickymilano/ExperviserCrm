@@ -15,7 +15,8 @@ interface EntityEmailTabProps {
 export const EntityEmailTab: React.FC<EntityEmailTabProps> = ({
   entityId,
   entityType,
-  entityName
+  entityName,
+  entityEmail
 }) => {
   return (
     <div className="w-full">
@@ -23,6 +24,7 @@ export const EntityEmailTab: React.FC<EntityEmailTabProps> = ({
         entityId={entityId}
         entityType={entityType}
         entityName={entityName}
+        entityEmail={entityEmail}
       />
     </div>
   );
