@@ -24,7 +24,7 @@ import {
   CheckSquare,
   Plus
 } from 'lucide-react';
-import { useTheme } from '../../components/layouts/ThemeProvider';
+import { useTheme } from '../../hooks/useTheme';
 import { cn } from '../../lib/utils';
 import DebugConsole from '../../components/debug/DebugConsole';
 import DebugButton from '../../components/debug/DebugButton';
@@ -102,7 +102,7 @@ const getMainMenuItems = (stats?: any): MenuItemProps[] => [
   },
   {
     label: 'Email',
-    path: '/emails/inbox',
+    path: '/email/inbox',
     icon: <Mail className="h-5 w-5" />,
     badge: stats?.unreadEmails > 0 ? stats.unreadEmails : null
   },

@@ -32,21 +32,18 @@ export function SynergiesOverview() {
   
   // Funzioni di utilità per recuperare i nomi dalle liste
   const getContactName = (contactId: number) => {
-    if (!contactId) return t('synergies.unknown_contact');
     const contact = contacts.find((c: any) => c.id === contactId);
-    return contact ? contact.fullName || `${contact.firstName || ''} ${contact.lastName || ''}`.trim() : t('synergies.contact_fallback', { id: contactId });
+    return contact ? `${contact.firstName} ${contact.lastName}` : t('synergies.contact_fallback', { id: contactId });
   };
   
   const getCompanyName = (companyId: number) => {
-    if (!companyId) return t('synergies.unknown_company');
     const company = companies.find((c: any) => c.id === companyId);
-    return company ? (company.name || company.companyName) : t('synergies.company_fallback', { id: companyId });
+    return company ? company.name : t('synergies.company_fallback', { id: companyId });
   };
   
   const getDealName = (dealId: number) => {
-    if (!dealId) return t('synergies.unknown_deal');
     const deal = deals.find((d: any) => d.id === dealId);
-    return deal ? deal.title || deal.name || t('synergies.deal_fallback', { id: dealId }) : t('synergies.deal_fallback', { id: dealId });
+    return deal ? deal.title || t('synergies.deal_fallback', { id: dealId }) : t('synergies.deal_fallback', { id: dealId });
   };
 
   const getSynergyStatusColor = (status: string) => {

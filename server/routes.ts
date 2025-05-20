@@ -6,7 +6,6 @@ import { storage } from './storage';
 import { pool, db } from './db'; // Importiamo il pool di connessione PostgreSQL
 import { z } from 'zod';
 import emailRoutes from './routes/emailRoutes';
-import notionRouter from './routes/notion';
 import { 
   insertUserSchema, 
   insertContactSchema, 
@@ -33,7 +32,6 @@ import emailRoutes from './emailRoutes';
 import importExportRoutes from './routes/import-export';
 import debugConsoleRouter from './modules/debug-console';
 import testDataRouter from './routes/test-data';
-import notionRoutes from './routes/notion';
 import { getSectors, createSector } from './controllers/sectorController';
 import { getSubSectors, createSubSector } from './controllers/subSectorController';
 import { getJobTitles, getJobTitle, createJobTitle, updateJobTitle, deleteJobTitle } from './controllers/jobTitleController';
@@ -3079,9 +3077,6 @@ export function registerRoutes(app: any) {
   // Integrazione API Importazione/Esportazione
   app.use('/api/import-export', authenticate, importExportRoutes);
   
-  // Integrazione Notion
-  app.use('/api/notion', authenticate, notionRoutes);
-  
   // Integrazione API Email di test
   app.use('/api', authenticate, mockEmailRoutes);
   
@@ -3199,9 +3194,6 @@ export function registerRoutes(app: any) {
   
   // Registra le rotte per importazione/esportazione dati
   app.use('/api/import-export', importExportRoutes);
-  
-  // Registra le rotte per l'integrazione con Notion
-  app.use('/api/notion', notionRouter);
   
   // Crea il server HTTP
   const httpServer = createServer(app);
