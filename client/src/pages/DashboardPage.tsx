@@ -222,10 +222,16 @@ export default function DashboardPage() {
     queryKey: ['/api/deals/recent'],
   });
   
-  // Mostra scheletro durante il caricamento
+  // Mostra scheletro durante il caricamento 
   if (statsLoading || activitiesLoading || contactsLoading || dealsLoading) {
     return <DashboardSkeleton />;
   }
+  
+  // Prepara dati sicuri per evitare errori
+  const safeStats = stats || {};
+  const safeContacts = Array.isArray(contacts) ? contacts : [];
+  const safeActivities = Array.isArray(activities) ? activities : [];
+  const safeDeals = Array.isArray(deals) ? deals : [];
   
   return (
     <div className="p-6 space-y-6">
@@ -238,36 +244,36 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
         <StatCard
           title={t('dashboard.stats.contacts', 'Contatti')}
-          value={stats && typeof stats === 'object' && stats.contacts && typeof stats.contacts === 'object' ? stats.contacts.count || 0 : 0}
-          percentChange={stats && typeof stats === 'object' && stats.contacts && typeof stats.contacts === 'object' ? stats.contacts.percentChange || 0 : 0}
+          value={safeStats.contacts?.count || 0}
+          percentChange={safeStats.contacts?.percentChange || 0}
           icon={<User className="h-5 w-5 text-blue-500" />}
           color="bg-blue-100 dark:bg-blue-900/20"
         />
         <StatCard
           title={t('dashboard.stats.companies', 'Aziende')}
-          value={stats && typeof stats === 'object' && stats.companies && typeof stats.companies === 'object' ? stats.companies.count || 0 : 0}
-          percentChange={stats && typeof stats === 'object' && stats.companies && typeof stats.companies === 'object' ? stats.companies.percentChange || 0 : 0}
+          value={safeStats.companies?.count || 0}
+          percentChange={safeStats.companies?.percentChange || 0}
           icon={<Building2 className="h-5 w-5 text-violet-500" />}
           color="bg-violet-100 dark:bg-violet-900/20"
         />
         <StatCard
           title={t('dashboard.stats.branches', 'Filiali')}
-          value={stats && typeof stats === 'object' && stats.branches && typeof stats.branches === 'object' ? stats.branches.count || 0 : 0}
-          percentChange={stats && typeof stats === 'object' && stats.branches && typeof stats.branches === 'object' ? stats.branches.percentChange || 0 : 0}
+          value={safeStats.branches?.count || 0}
+          percentChange={safeStats.branches?.percentChange || 0}
           icon={<Building2 className="h-5 w-5 text-cyan-500" />}
           color="bg-cyan-100 dark:bg-cyan-900/20"
         />
         <StatCard
           title={t('dashboard.stats.opportunities', 'Opportunità')}
-          value={stats && typeof stats === 'object' && stats.deals && typeof stats.deals === 'object' ? stats.deals.count || 0 : 0}
-          percentChange={stats && typeof stats === 'object' && stats.deals && typeof stats.deals === 'object' ? stats.deals.percentChange || 0 : 0}
+          value={safeStats.deals?.count || 0}
+          percentChange={safeStats.deals?.percentChange || 0}
           icon={<Briefcase className="h-5 w-5 text-green-500" />}
           color="bg-green-100 dark:bg-green-900/20"
         />
         <StatCard
           title={t('dashboard.stats.leads', 'Lead')}
-          value={stats && typeof stats === 'object' && stats.leads && typeof stats.leads === 'object' ? stats.leads.count || 0 : 0}
-          percentChange={stats && typeof stats === 'object' && stats.leads && typeof stats.leads === 'object' ? stats.leads.percentChange || 0 : 0}
+          value={safeStats.leads?.count || 0}
+          percentChange={safeStats.leads?.percentChange || 0}
           icon={<Target className="h-5 w-5 text-orange-500" />}
           color="bg-orange-100 dark:bg-orange-900/20"
         />
@@ -281,10 +287,10 @@ export default function DashboardPage() {
             <h2 className="text-lg font-medium">{t('dashboard.recent_activities', 'Attività recenti')}</h2>
           </div>
           <div className="p-4">
-            {Array.isArray(activities) && activities.length > 0 ? (
-              activities.map((activity: any) => (
+            {safeActivities.length > 0 ? (
+              safeActivities.map((activity: any) => (
                 <ActivityItem
-                  key={activity.id}
+                  key={activity.id || Math.random().toString()}
                   title={activity.title || t('dashboard.activity_default', 'Attività')}
                   description={activity.description || t('dashboard.no_description', 'Nessuna descrizione')}
                   type={activity.type || "note"}
@@ -303,10 +309,10 @@ export default function DashboardPage() {
             <h2 className="text-lg font-medium">{t('dashboard.recent_contacts', 'Contatti recenti')}</h2>
           </div>
           <div className="p-4">
-            {Array.isArray(contacts) && contacts.length > 0 ? (
-              contacts.map((contact: any) => (
+            {safeContacts.length > 0 ? (
+              safeContacts.map((contact: any) => (
                 <ContactItem
-                  key={contact.id}
+                  key={contact.id || Math.random().toString()}
                   id={contact.id || 0}
                   fullName={contact.fullName || ""}
                   email={contact.email || ""}
@@ -325,10 +331,10 @@ export default function DashboardPage() {
             <h2 className="text-lg font-medium">{t('dashboard.recent_deals', 'Opportunità recenti')}</h2>
           </div>
           <div className="p-4">
-            {Array.isArray(deals) && deals.length > 0 ? (
-              deals.map((deal: any) => (
+            {safeDeals.length > 0 ? (
+              safeDeals.map((deal: any) => (
                 <DealItem
-                  key={deal.id}
+                  key={deal.id || Math.random().toString()}
                   id={deal.id || 0}
                   title={deal.title || t('dashboard.unnamed_deal', 'Opportunità senza titolo')}
                   value={deal.value || 0}
