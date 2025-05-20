@@ -118,7 +118,7 @@ export default function App() {
           </Route>
           <Route path="/deals/new">
             <ProtectedRoute>
-              <LayoutPage component={lazy(() => import('@/pages/deals/new'))} />
+              <LayoutPage component={lazy(() => import('./pages/deals/new'))} />
             </ProtectedRoute>
           </Route>
           <Route path="/deals/:id">
@@ -135,7 +135,7 @@ export default function App() {
           </Route>
           <Route path="/leads/:id">
             <ProtectedRoute>
-              <LayoutPage component={lazy(() => import('@/pages/leads/[id]'))} />
+              <LayoutPage component={lazy(() => import('./pages/leads/[id]'))} />
             </ProtectedRoute>
           </Route>
           
@@ -178,12 +178,12 @@ export default function App() {
           </Route>
           <Route path="/emails/accounts">
             <ProtectedRoute>
-              <LayoutPage component={lazy(() => import('@/pages/email/accounts'))} />
+              <LayoutPage component={lazy(() => import('./pages/email/accounts'))} />
             </ProtectedRoute>
           </Route>
           <Route path="/emails/settings">
             <ProtectedRoute>
-              <LayoutPage component={lazy(() => import('@/pages/email/settings'))} />
+              <LayoutPage component={lazy(() => import('./pages/email/settings'))} />
             </ProtectedRoute>
           </Route>
           <Route path="/emails">
