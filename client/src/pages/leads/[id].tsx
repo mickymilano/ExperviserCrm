@@ -14,7 +14,7 @@ import { formatDateToLocal, formatPhoneNumber } from "@/lib/utils";
 import { useLead, useConvertLeadToContact } from "@/hooks/useLeads";
 import LeadModal from "@/components/modals/LeadModal";
 import TaskList from "@/components/tasks/TaskList";
-import EntityEmailInbox from "@/components/email/EntityEmailInbox";
+import { EntityEmailInbox } from "@/components/email/EntityEmailInbox";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
