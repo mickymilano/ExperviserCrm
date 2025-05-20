@@ -24,18 +24,18 @@ import {
   CheckSquare,
   Plus
 } from 'lucide-react';
-import { useTheme } from '@/hooks/useTheme';
-import { cn } from '@/lib/utils';
-import DebugConsole from '@/components/debug/DebugConsole';
-import DebugButton from '@/components/debug/DebugButton';
+import { useTheme } from '../../hooks/useTheme';
+import { cn } from '../../lib/utils';
+import DebugConsole from '../../components/debug/DebugConsole';
+import DebugButton from '../../components/debug/DebugButton';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
+} from "../../components/ui/dropdown-menu";
+import { Button } from "../../components/ui/button";
 
 // Struttura per le voci di menu
 interface MenuItemProps {
