@@ -3,12 +3,43 @@ import OpenAI from "openai";
 // Inizializza il client OpenAI
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+// Interfacce per tipizzare le risposte di OpenAI
+interface ContactAnalysisResult {
+  category?: string;
+  tags?: string[];
+  notes?: string;
+}
+
+interface CompanyAnalysisResult {
+  industry?: string;
+  tags?: string[];
+  opportunities?: string[];
+}
+
+interface LeadAnalysisResult {
+  priority?: string;
+  nextSteps?: string;
+  successProbability?: number;
+}
+
 // Utility function per gestire i valori null nei prompt
 function safeString(value: any, defaultValue: string = 'N/A'): string {
   if (value === null || value === undefined) {
     return defaultValue;
   }
   return String(value);
+}
+
+// Utility function per il parsing sicuro delle risposte OpenAI
+function safeJsonParse<T>(content: string | null, defaultValue: T): T {
+  if (!content) return defaultValue;
+  
+  try {
+    return JSON.parse(content) as T;
+  } catch (error) {
+    console.error("Errore nel parsing JSON:", error);
+    return defaultValue;
+  }
 }
 
 /**
@@ -45,13 +76,22 @@ export async function enhanceContact(contact: any) {
     });
 
     // Estrai e restituisci la risposta come JSON
-    const analysis = JSON.parse(response.choices[0].message.content);
+    const defaultAnalysis: ContactAnalysisResult = { 
+      category: "Non categorizzato", 
+      tags: [], 
+      notes: "" 
+    };
+    
+    const analysis = safeJsonParse<ContactAnalysisResult>(
+      response.choices[0].message.content,
+      defaultAnalysis
+    );
     
     return {
       ...contact,
-      category: analysis.category,
+      category: analysis.category || "Non categorizzato",
       tags: [...(contact.tags || []), ...(analysis.tags || [])],
-      suggestedNotes: analysis.notes
+      suggestedNotes: analysis.notes || ""
     };
   } catch (error) {
     console.error("Errore durante l'arricchimento del contatto:", error);
@@ -93,14 +133,20 @@ export async function enhanceCompany(company: any) {
     });
 
     // Estrai e restituisci la risposta come JSON
-    const analysis = JSON.parse(response.choices[0].message.content);
-    
-    return {
-      ...company,
-      industry: analysis.industry || company.industry,
-      tags: [...(company.tags || []), ...(analysis.tags || [])],
-      opportunities: analysis.opportunities
-    };
+    try {
+      const content = response.choices[0].message.content || "{}";
+      const analysis = JSON.parse(content);
+      
+      return {
+        ...company,
+        industry: analysis.industry || company.industry,
+        tags: [...(company.tags || []), ...(analysis.tags || [])],
+        opportunities: analysis.opportunities || []
+      };
+    } catch (parseError) {
+      console.error("Errore nel parsing della risposta JSON:", parseError);
+      return company;
+    }
   } catch (error) {
     console.error("Errore durante l'arricchimento dell'azienda:", error);
     return company;
@@ -135,17 +181,24 @@ export async function enhanceLead(lead: any) {
         { role: "user", content: prompt }
       ],
       response_format: { type: "json_object" },
+      max_tokens: 500
     });
 
     // Estrai e restituisci la risposta come JSON
-    const analysis = JSON.parse(response.choices[0].message.content);
-    
-    return {
-      ...lead,
-      priority: analysis.priority,
-      nextSteps: analysis.nextSteps,
-      successProbability: analysis.successProbability
-    };
+    try {
+      const content = response.choices[0].message.content || "{}";
+      const analysis = JSON.parse(content);
+      
+      return {
+        ...lead,
+        priority: analysis.priority || "Media",
+        nextSteps: analysis.nextSteps || "",
+        successProbability: analysis.successProbability || 50
+      };
+    } catch (parseError) {
+      console.error("Errore nel parsing della risposta JSON:", parseError);
+      return lead;
+    }
   } catch (error) {
     console.error("Errore durante l'arricchimento dell'opportunità:", error);
     return lead;
