@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Upload, FileCsv, FileSpreadsheet } from 'lucide-react';
+import { Upload, FileIcon, FileSpreadsheet } from 'lucide-react';
 
 interface FileUploaderProps {
   onFileSelected: (file: File) => void;
@@ -67,7 +67,7 @@ export function FileUploader({ onFileSelected, acceptedFormats }: FileUploaderPr
       onDrop={handleDrop}
     >
       <div className="flex justify-center mb-6 space-x-4">
-        <FileCsv className="h-16 w-16 text-primary opacity-70" />
+        <FileIcon className="h-16 w-16 text-primary opacity-70" />
         <FileSpreadsheet className="h-16 w-16 text-green-600 opacity-70" />
       </div>
       
