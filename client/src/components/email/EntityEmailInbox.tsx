@@ -93,23 +93,12 @@ export function EntityEmailInbox({ entityId, entityType, entityEmail, entityName
     const currentDate = new Date();
     
     // Genera un mittente in modo semplificato
-    let senderName = 'Info';
-    let senderEmail = 'info@example.com';
-    let domain = 'example.com';
-    
-    // Se abbiamo un nome dell'entità lo usiamo
-    if (entityName) {
-      senderName = `${entityName} Info`;
-      const simplifiedName = entityName.toString().toLowerCase().replace(/\s+/g, '');
-      domain = `${simplifiedName}.com`;
-      senderEmail = `info@${domain}`;
-    }
-    
-    // Se abbiamo un dominio aziendale specifico, usiamo quello
-    if (companyDomain) {
-      domain = companyDomain;
-      senderEmail = `info@${domain}`;
-    }
+    const senderName = entityName ? `${entityName} Info` : 'Info';
+    const defaultDomain = entityName ? 
+      `${entityName.toString().toLowerCase().replace(/\s+/g, '')}.com` : 
+      'example.com';
+    const domain = companyDomain || defaultDomain;
+    const senderEmail = `info@${domain}`;
     
     return [
       {
