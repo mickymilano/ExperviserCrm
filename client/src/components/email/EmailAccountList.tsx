@@ -13,15 +13,15 @@ import {
   ToggleRight,
   Trash
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Badge } from '../ui/badge';
+import { Button } from '../ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
 import type { EmailAccount } from '@shared/schema';
-import { useEmailAccounts, useDeleteEmailAccount, useSyncEmailAccount, useSyncAllEmailAccounts } from '@/hooks/useEmailAccounts';
-import { useSetPrimaryEmailAccount, useToggleEmailAccountActive, useAccountStatusColor } from '@/hooks/useEmailSettings';
-import { useToast } from '@/hooks/use-toast';
+import { useEmailAccounts, useDeleteEmailAccount, useSyncEmailAccount, useSyncAllEmailAccounts } from '../../hooks/useEmailAccounts';
+import { useSetPrimaryEmailAccount, useToggleEmailAccountActive, useAccountStatusColor } from '../../hooks/useEmailSettings';
+import { useToast } from '../../hooks/use-toast';
 
 export function EmailAccountList() {
   const { toast } = useToast();

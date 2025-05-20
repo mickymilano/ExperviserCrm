@@ -2,10 +2,10 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Handshake, ArrowRight } from 'lucide-react';
 import { useLocation } from 'wouter';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../ui/card';
+import { Button } from '../ui/button';
+import { Skeleton } from '../ui/skeleton';
+import { Badge } from '../ui/badge';
 import { useTranslation } from 'react-i18next';
 
 export function SynergiesOverview() {

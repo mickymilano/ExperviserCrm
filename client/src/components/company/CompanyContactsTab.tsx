@@ -2,8 +2,8 @@ import { useState, useMemo } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui/card";
+import { Button } from "../ui/button";
 import { 
   Dialog, 
   DialogContent, 
@@ -11,16 +11,16 @@ import {
   DialogTitle, 
   DialogDescription,
   DialogFooter
-} from "@/components/ui/dialog";
+} from "../ui/dialog";
 import AsyncSelect from "react-select/async";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback } from "../ui/avatar";
+import { Skeleton } from "../ui/skeleton";
 import { Users, Mail, Phone, Plus, X, UserPlus, Star, StarOff, Loader2 } from "lucide-react";
-import { Label } from "@/components/ui/label";
-import { toast } from "@/hooks/use-toast";
-import { formatPhoneNumber } from "@/lib/utils";
-import ContactModal from "@/components/modals/ContactModal";
-import BranchContactsSection from "@/components/company/BranchContactsSection";
+import { Label } from "../ui/label";
+import { toast } from "../../hooks/use-toast";
+import { formatPhoneNumber } from "../../lib/utils";
+import ContactModal from "../modals/ContactModal";
+import BranchContactsSection from "./BranchContactsSection";
 
 interface Contact {
   id: number;

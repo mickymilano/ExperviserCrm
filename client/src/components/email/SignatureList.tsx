@@ -9,12 +9,12 @@ import {
   MailCheck,
   RefreshCw
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '../ui/card';
+import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import {
   Form,
   FormControl,
@@ -23,16 +23,16 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { toast } from '@/hooks/use-toast';
+} from '../ui/form';
+import { Input } from '../ui/input';
+import { Textarea } from '../ui/textarea';
+import { Checkbox } from '../ui/checkbox';
+import { ScrollArea } from '../ui/scroll-area';
+import { toast } from '../../hooks/use-toast';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { RichTextEditor } from '@/components/ui/rich-text-editor';
+import { RichTextEditor } from '../ui/rich-text-editor';
 
 import { 
   useSignatures, 
@@ -43,8 +43,8 @@ import {
   useAccountSignatures,
   useAssignSignatureToAccount,
   useRemoveSignatureFromAccount
-} from '@/hooks/useSignatures';
-import { useEmailAccounts } from '@/hooks/useEmailAccounts';
+} from '../../hooks/useSignatures';
+import { useEmailAccounts } from '../../hooks/useEmailAccounts';
 import { insertSignatureSchema, Signature, InsertSignature, EmailAccount } from '@shared/schema';
 
 // Validation schema for signature form

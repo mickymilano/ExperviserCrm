@@ -3,14 +3,14 @@ import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Checkbox } from "../ui/checkbox";
+import { Skeleton } from "../ui/skeleton";
 import { Calendar, Clock, Euro, Plus } from "lucide-react";
 import TaskModal from "../modals/TaskModal";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "../../lib/utils";
 
 interface TaskListProps {
   entityId?: number;

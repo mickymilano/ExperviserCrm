@@ -4,16 +4,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { PlacesAutocomplete } from "@/components/ui/PlacesAutocomplete";
-import { queryClient } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import { logError, withErrorHandling } from "@/lib/errorTracking";
-import { toSnakeCase } from "@/../../shared/mappers";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../ui/dialog";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Textarea } from "../ui/textarea";
+import { PlacesAutocomplete } from "../ui/PlacesAutocomplete";
+import { queryClient } from "../../lib/queryClient";
+import { useToast } from "../../hooks/use-toast";
+import { logError, withErrorHandling } from "../../lib/errorTracking";
+import { toSnakeCase } from "../../../../shared/mappers";
 import Select from 'react-select';
 
 interface CompanyModalProps {
@@ -22,7 +22,7 @@ interface CompanyModalProps {
   initialData?: Company | null;
 }
 
-import { Company } from "@/types";
+import { Company } from "../../types";
 
 const companySchema = z.object({
   // Campi principali

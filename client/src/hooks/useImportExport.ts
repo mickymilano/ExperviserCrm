@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from './use-toast';
 import { queryClient } from '../lib/queryClient';
 
 type EntityType = 'contacts' | 'companies' | 'deals';

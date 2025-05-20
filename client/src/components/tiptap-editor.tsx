@@ -7,8 +7,8 @@ import TextStyle from '@tiptap/extension-text-style';
 import Color from '@tiptap/extension-color';
 import TextAlign from '@tiptap/extension-text-align';
 import FontFamily from '@tiptap/extension-font-family';
-import { Toggle } from '@/components/ui/toggle';
-import { cn } from '@/lib/utils';
+import { Toggle } from './ui/toggle';
+import { cn } from '../lib/utils';
 import {
   Bold,
   Italic,

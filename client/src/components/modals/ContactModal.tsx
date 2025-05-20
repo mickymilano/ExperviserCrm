@@ -4,14 +4,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
-import AreasOfActivityManager from "@/components/forms/AreasOfActivityManager";
-import { ContactEmailsPanel } from "@/components/modals/ContactEmailsPanel";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../ui/dialog";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Textarea } from "../ui/textarea";
+import { useToast } from "../../hooks/use-toast";
+import AreasOfActivityManager from "../forms/AreasOfActivityManager";
+import { ContactEmailsPanel } from "./ContactEmailsPanel";
 import { InsertAreaOfActivity } from "@shared/schema";
 
 interface ContactModalProps {

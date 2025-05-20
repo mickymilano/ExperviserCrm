@@ -2,14 +2,14 @@ import React, { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui/card";
+import { Button } from "../ui/button";
+import { Skeleton } from "../ui/skeleton";
+import { Avatar, AvatarFallback } from "../ui/avatar";
 import { Map, Building, Mail, Phone, ChevronRight, Users, X } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { formatPhoneNumber } from "@/lib/utils";
+import { Badge } from "../ui/badge";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
+import { formatPhoneNumber } from "../../lib/utils";
 
 interface BranchContact {
   id: number;

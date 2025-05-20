@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { useBranches } from "@/hooks/useBranches";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useBranches } from "../../hooks/useBranches";
+import { Button } from "../ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { 
   Building, 
   Mail, 
@@ -14,7 +14,7 @@ import {
   Linkedin,
   Instagram
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "../ui/badge";
 import { 
   Table, 
   TableBody, 
@@ -22,10 +22,10 @@ import {
   TableHead, 
   TableHeader, 
   TableRow 
-} from "@/components/ui/table";
-import { Branch } from "@/types";
-import BranchModal from "@/components/modals/BranchModal";
-import { useToast } from "@/hooks/use-toast";
+} from "../ui/table";
+import { Branch } from "../../types";
+import BranchModal from "../modals/BranchModal";
+import { useToast } from "../../hooks/use-toast";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,7 +36,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+} from "../ui/alert-dialog";
 
 interface CompanyBranchesListProps {
   companyId: number;

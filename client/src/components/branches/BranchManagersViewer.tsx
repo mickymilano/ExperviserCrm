@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
+import { useToast } from "../../hooks/use-toast";
+import { Button } from "../ui/button";
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "../ui/card";
 import { 
   Dialog, 
   DialogContent, 
@@ -11,10 +11,10 @@ import {
   DialogTitle, 
   DialogFooter,
   DialogDescription
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+} from "../ui/dialog";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { 
   Table, 
   TableBody, 
@@ -22,11 +22,11 @@ import {
   TableHead, 
   TableHeader, 
   TableRow 
-} from "@/components/ui/table";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+} from "../ui/table";
+import { Avatar, AvatarFallback } from "../ui/avatar";
 import { Briefcase, Edit, Plus, Trash2, User, Users } from "lucide-react";
-import { ContactCombobox } from "@/components/ui/ContactCombobox";
-import { Branch, BranchManager, Contact } from "@/types";
+import { ContactCombobox } from "../ui/ContactCombobox";
+import { Branch, BranchManager, Contact } from "../../types";
 
 interface BranchManagersViewerProps {
   branch: Branch;

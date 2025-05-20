@@ -3,15 +3,15 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Handshake, Plus, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { SynergyModal } from '@/components/modals/SynergyModal';
+import { Button } from '../ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
+import { Badge } from '../ui/badge';
+import { Skeleton } from '../ui/skeleton';
+import { SynergyModal } from '../modals/SynergyModal';
 import { Link } from 'wouter';
-import { useContacts } from '@/hooks/useContacts';
-import { useCompanies } from '@/hooks/useCompanies';
-import { useDeals } from '@/hooks/useDeals';
+import { useContacts } from '../../hooks/useContacts';
+import { useCompanies } from '../../hooks/useCompanies';
+import { useDeals } from '../../hooks/useDeals';
 
 interface SynergiesListProps {
   entityId: number;

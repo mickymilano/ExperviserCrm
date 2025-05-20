@@ -1,11 +1,11 @@
 import React from "react";
 import { X, Check } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { Label } from "@/components/ui/label";
+import { Badge } from "./badge";
+import { Button } from "./button";
+import { cn } from "../../lib/utils";
+import { Label } from "./label";
 import { Control, Controller } from "react-hook-form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./select";
 import { useTranslation } from "react-i18next";
 
 // Tipo per rappresentare un contatto selezionabile nelle sinergie

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Activity } from "@/types";
+import { Activity } from "../types";
 
 export const useActivities = () => {
   const {

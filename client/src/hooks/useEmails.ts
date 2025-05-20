@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { generateMockEmails } from '@/mock/mockEmailData';
+import { generateMockEmails } from '../mock/mockEmailData';
 
 export interface Email {
   id: number;

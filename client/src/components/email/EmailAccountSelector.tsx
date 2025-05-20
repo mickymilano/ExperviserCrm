@@ -9,11 +9,11 @@ import {
   SelectLabel, 
   SelectTrigger, 
   SelectValue 
-} from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { useEmailAccounts } from '@/hooks/useEmailAccounts';
-import { useToast } from '@/hooks/use-toast';
-import { T } from '@/lib/translationHelper';
+} from '../ui/select';
+import { Button } from '../ui/button';
+import { useEmailAccounts } from '../../hooks/useEmailAccounts';
+import { useToast } from '../../hooks/use-toast';
+import { T } from '../../lib/translationHelper';
 
 interface EmailAccountSelectorProps {
   value: number;

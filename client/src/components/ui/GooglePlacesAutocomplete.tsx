@@ -1,6 +1,6 @@
 import React from 'react';
 import GooglePlacesAutocomplete from 'react-google-places-autocomplete';
-import { getGoogleMapsApiKey } from '@/lib/environment';
+import { getGoogleMapsApiKey } from '../../lib/environment';
 
 interface Props {
   value: any;

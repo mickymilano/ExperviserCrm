@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
-import { debugContext } from '@/lib/debugContext';
+import { debugContext } from '../../lib/debugContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;

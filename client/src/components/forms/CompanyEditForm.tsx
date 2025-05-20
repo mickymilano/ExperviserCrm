@@ -3,16 +3,16 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Company } from "@/types";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { PlacesAutocomplete } from "@/components/ui/PlacesAutocomplete";
-import { MultiCombobox, ComboboxOption } from "@/components/ui/multi-combobox";
+import { Company } from "../../types";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Textarea } from "../ui/textarea";
+import { Label } from "../ui/label";
+import { Checkbox } from "../ui/checkbox";
+import { useToast } from "../../hooks/use-toast";
+import { apiRequest } from "../../lib/queryClient";
+import { PlacesAutocomplete } from "../ui/PlacesAutocomplete";
+import { MultiCombobox, ComboboxOption } from "../ui/multi-combobox";
 import { 
   Select,
   SelectContent,
@@ -21,7 +21,7 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "../ui/select";
 
 // Schema for form validation
 const companySchema = z.object({

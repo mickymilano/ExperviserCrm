@@ -1,10 +1,10 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { DealInfo } from '@/types';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { DealInfo } from '../../types';
+import { Card, CardContent } from '../ui/card';
+import { Button } from '../ui/button';
 import { DollarSign, Calendar, MoreHorizontal, Building2, User } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency } from '../../lib/utils';
 import { format } from 'date-fns';
 import { Link } from 'wouter';
 

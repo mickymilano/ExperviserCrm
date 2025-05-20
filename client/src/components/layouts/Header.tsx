@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { Menu, Bell, Search, Plus, ChevronDown, User, LogOut, Settings } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
+import { Button } from "../ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,13 +10,13 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import ContactModal from "@/components/modals/ContactModal";
-import LeadModal from "@/components/modals/LeadModal";
-import CompanyModal from "@/components/modals/CompanyModal";
-import ImprovedDealModal from "@/components/modals/ImprovedDealModal";
-import { useAuth } from "@/hooks/useAuth";
+} from "../ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import ContactModal from "../modals/ContactModal";
+import LeadModal from "../modals/LeadModal";
+import CompanyModal from "../modals/CompanyModal";
+import ImprovedDealModal from "../modals/ImprovedDealModal";
+import { useAuth } from "../../hooks/useAuth";
 
 // User Profile Menu Component
 function UserProfileMenu() {

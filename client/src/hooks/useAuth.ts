@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "./use-toast";
 import { User } from "@shared/schema";
 
 // Augment the User type to remove the password field in the frontend

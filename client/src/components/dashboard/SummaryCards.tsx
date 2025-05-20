@@ -1,7 +1,7 @@
 import { TrendingUp, Users, Building2, CheckSquare } from "lucide-react";
-import { DashboardSummary } from "@/types";
-import { Card, CardContent } from "@/components/ui/card";
-import { formatCurrency } from "@/lib/utils";
+import { DashboardSummary } from "../../types";
+import { Card, CardContent } from "../ui/card";
+import { formatCurrency } from "../../lib/utils";
 import { useLocation } from "wouter";
 
 interface SummaryCardsProps {

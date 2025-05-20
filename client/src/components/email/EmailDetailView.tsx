@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Avatar } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import { Button } from '../ui/button';
+import { Card } from '../ui/card';
+import { Avatar } from '../ui/avatar';
+import { Badge } from '../ui/badge';
+import { Separator } from '../ui/separator';
 import { format } from 'date-fns';
 import { ArrowLeft, Download, Forward, Reply, Trash2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '../../hooks/use-toast';
+import { apiRequest } from '../../lib/queryClient';
 import { NewEmailComposer } from './NewEmailComposer';
 
 interface Attachment {

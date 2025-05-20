@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
+import { toast } from './use-toast';
+import { apiRequest } from '../lib/queryClient';
 import { useTranslation } from 'react-i18next';
 
 export interface EmailAccount {

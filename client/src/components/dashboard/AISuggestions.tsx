@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "../ui/card";
+import { Button } from "../ui/button";
 import { Sparkles, RefreshCw } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "../ui/skeleton";
+import { useToast } from "../../hooks/use-toast";
 
 interface AISuggestion {
   id: number;

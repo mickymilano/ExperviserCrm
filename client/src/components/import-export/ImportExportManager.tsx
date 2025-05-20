@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '../ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Progress } from '../ui/progress';
+import { ScrollArea } from '../ui/scroll-area';
 import { FileUploader } from './FileUploader';
 import { DuplicateAnalyzer } from './DuplicateAnalyzer';
 import { AIEnhancer } from './AIEnhancer';
-import { useToast } from '@/hooks/use-toast';
-import { useImportExport } from '@/hooks/useImportExport';
+import { useToast } from '../../hooks/use-toast';
+import { useImportExport } from '../../hooks/useImportExport';
 import { 
   Download, Upload, FileText, FileSpreadsheet, AlertCircle, 
   Check, X, RotateCw, Settings, Brain

@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
-import { DealInfo, PipelineStage } from '@/types';
-import { Card, CardContent } from '@/components/ui/card';
+import { DealInfo, PipelineStage } from '../../types';
+import { Card, CardContent } from '../ui/card';
 import { Calendar, DollarSign, MoreHorizontal, Building2, User } from 'lucide-react';
 import { Link } from 'wouter';
-import { useDeals } from '@/hooks/useDeals';
-import { formatCurrency } from '@/lib/utils';
+import { useDeals } from '../../hooks/useDeals';
+import { formatCurrency } from '../../lib/utils';
 import { format } from 'date-fns';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
+import { Button } from '../ui/button';
+import { Separator } from '../ui/separator';
+import { useToast } from '../../hooks/use-toast';
+import { cn } from '../../lib/utils';
 
 interface DealPipelineBoardProps {
   stages: PipelineStage[];

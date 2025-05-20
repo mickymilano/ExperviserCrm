@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { DealInfo, PipelineStage } from '@/types';
-import { Card, CardContent } from '@/components/ui/card';
+import { DealInfo, PipelineStage } from '../../types';
+import { Card, CardContent } from '../ui/card';
 import { Calendar, DollarSign, MoreHorizontal, Building2, User } from 'lucide-react';
 import { Link } from 'wouter';
 import { 
@@ -22,9 +22,9 @@ import {
 } from '@dnd-kit/sortable';
 import { SortableDealCard } from './SortableDealCard';
 import { restrictToWindowEdges } from '@dnd-kit/modifiers';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency } from '../../lib/utils';
 import { format } from 'date-fns';
-import { useDeals } from '@/hooks/useDeals';
+import { useDeals } from '../../hooks/useDeals';
 import { Button } from '../ui/button';
 import { Separator } from '../ui/separator';
 

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Branch } from "@/types";
-import { apiRequest } from "@/lib/queryClient";
+import { Branch } from "../types";
+import { apiRequest } from "../lib/queryClient";
 
 export const useBranches = (companyId?: number) => {
   const queryClient = useQueryClient();

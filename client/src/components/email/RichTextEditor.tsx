@@ -12,16 +12,16 @@ import {
   Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, 
   Link as LinkIcon, Image as ImageIcon, TypeIcon, RefreshCw, Eye
 } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { Button } from '../ui/button';
+import { useToast } from '../../hooks/use-toast';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from '../ui/popover';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
 
 interface RichTextEditorProps {
   content: string;

@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { toast } from '@/hooks/use-toast';
+import { toast } from './use-toast';
 import { Signature, InsertSignature } from '@shared/schema';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { apiRequest, queryClient } from '../lib/queryClient';
 
 // Get all signatures
 export const useSignatures = () => {

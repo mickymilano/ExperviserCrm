@@ -1,4 +1,4 @@
-import { Json } from "@/types/json";
+import { Json } from "./types/json";
 
 export interface User {
   id: number;

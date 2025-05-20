@@ -9,7 +9,7 @@ import {
   DialogHeader, 
   DialogTitle, 
   DialogFooter 
-} from "@/components/ui/dialog";
+} from "../ui/dialog";
 import { 
   Form, 
   FormControl, 
@@ -17,26 +17,26 @@ import {
   FormItem, 
   FormLabel, 
   FormMessage 
-} from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+} from "../ui/form";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Textarea } from "../ui/textarea";
 import { 
   Select, 
   SelectContent, 
   SelectItem, 
   SelectTrigger, 
   SelectValue 
-} from "@/components/ui/select";
-import { Email, Contact, Company, EmailAccount } from "@/types";
+} from "../ui/select";
+import { Email, Contact, Company, EmailAccount } from "../../types";
 import { Deal } from "@shared/schema";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import { useContacts } from "@/hooks/useContacts";
-import { useCompanies } from "@/hooks/useCompanies";
-import { useDeals } from "@/hooks/useDeals";
-import { useEmailAccounts } from "@/hooks/useEmailAccounts";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { apiRequest } from "../../lib/queryClient";
+import { useToast } from "../../hooks/use-toast";
+import { useContacts } from "../../hooks/useContacts";
+import { useCompanies } from "../../hooks/useCompanies";
+import { useDeals } from "../../hooks/useDeals";
+import { useEmailAccounts } from "../../hooks/useEmailAccounts";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { 
   Paperclip, 
   Bold, 

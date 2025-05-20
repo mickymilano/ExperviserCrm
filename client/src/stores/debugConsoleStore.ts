@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { debugContext } from '@/lib/debugContext';
+import { debugContext } from '../lib/debugContext';
 
 interface DebugConsoleState {
   isVisible: boolean;

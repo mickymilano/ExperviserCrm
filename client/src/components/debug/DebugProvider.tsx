@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
-import { useDebugLogs } from '@/hooks/useDebugLogs';
-import { useDebugConsoleStore } from '@/stores/debugConsoleStore';
-import { initializeApiMonitoring } from '@/lib/monitoredFetch';
-import { debugContext } from '@/lib/debugContext';
+import { useDebugLogs } from '../../hooks/useDebugLogs';
+import { useDebugConsoleStore } from '../../stores/debugConsoleStore';
+import { initializeApiMonitoring } from '../../lib/monitoredFetch';
+import { debugContext } from '../../lib/debugContext';
 
 interface DebugProviderProps {
   children: React.ReactNode;

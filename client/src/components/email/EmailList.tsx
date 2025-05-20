@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { useEmails, useMarkEmailAsRead } from "@/hooks/useEmails";
+import { useEmails, useMarkEmailAsRead } from "../../hooks/useEmails";
 import { 
   Card, 
   CardContent 
-} from "@/components/ui/card";
+} from "../ui/card";
 import { 
   Table, 
   TableBody, 
@@ -11,7 +11,7 @@ import {
   TableHead, 
   TableHeader, 
   TableRow 
-} from "@/components/ui/table";
+} from "../ui/table";
 import { 
   Star, 
   Mail, 
@@ -20,12 +20,12 @@ import {
   AlertCircle,
   Tag
 } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "../ui/checkbox";
+import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
+import { Skeleton } from "../ui/skeleton";
 import { format, formatDistanceToNow } from "date-fns";
-import { cn } from "@/lib/utils";
+import { cn } from "../../lib/utils";
 
 interface EmailListProps {
   folder?: string;

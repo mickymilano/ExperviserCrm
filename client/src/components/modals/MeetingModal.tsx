@@ -9,7 +9,7 @@ import {
   DialogHeader, 
   DialogTitle, 
   DialogFooter 
-} from "@/components/ui/dialog";
+} from "../ui/dialog";
 import { 
   Form, 
   FormControl, 
@@ -17,28 +17,28 @@ import {
   FormItem, 
   FormLabel, 
   FormMessage 
-} from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+} from "../ui/form";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Textarea } from "../ui/textarea";
 import { 
   Select, 
   SelectContent, 
   SelectItem, 
   SelectTrigger, 
   SelectValue 
-} from "@/components/ui/select";
-import { Meeting, Contact, Company, Deal } from "@/types";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import { useContacts } from "@/hooks/useContacts";
-import { useCompanies } from "@/hooks/useCompanies";
-import { useDeals } from "@/hooks/useDeals";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+} from "../ui/select";
+import { Meeting, Contact, Company, Deal } from "../../types";
+import { apiRequest } from "../../lib/queryClient";
+import { useToast } from "../../hooks/use-toast";
+import { useContacts } from "../../hooks/useContacts";
+import { useCompanies } from "../../hooks/useCompanies";
+import { useDeals } from "../../hooks/useDeals";
+import { Calendar } from "../ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { CalendarIcon, Clock } from "lucide-react";
 import { format, addHours, parse, set } from "date-fns";
-import { cn } from "@/lib/utils";
+import { cn } from "../../lib/utils";
 
 interface MeetingModalProps {
   open: boolean;
