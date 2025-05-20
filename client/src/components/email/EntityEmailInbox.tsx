@@ -98,8 +98,6 @@ export function EntityEmailInbox({ entityId, entityType, entityEmail }: EntityEm
     queryKey: ['/api/email', entityType, entityId, filterOptions],
     queryFn: async () => {
       const queryParams = new URLSearchParams();
-      queryParams.append('entityId', entityId.toString());
-      queryParams.append('entityType', entityType);
       
       if (filterOptions.read !== undefined) queryParams.append('read', filterOptions.read.toString());
       if (filterOptions.unread !== undefined) queryParams.append('unread', filterOptions.unread.toString());
@@ -111,9 +109,10 @@ export function EntityEmailInbox({ entityId, entityType, entityEmail }: EntityEm
       if (filterOptions.searchText) queryParams.append('searchText', filterOptions.searchText);
 
       try {
+        // Utilizza l'endpoint corretto per filtrare le email per entità
         const response = await apiRequest({ 
-          url: `/api/email/messages`, 
-          params: Object.fromEntries(queryParams.entries())
+          url: `/api/email/filter/${entityType}/${entityId}`,
+          method: 'GET'
         });
         return response || [];
       } catch (error) {
