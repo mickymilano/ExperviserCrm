@@ -57,12 +57,11 @@ router.get('/email/messages/e2e-test', authenticateJWT, async (req, res) => {
     // Prima email di test
     const email1Result = await db.execute<{id: number}>(
       sql`INSERT INTO emails (
-        account_id, message_id, subject, from_address, to_addresses, 
-        body_html, body_text, date, is_read, has_attachments, folder
+        account_id, message_id, subject, "from", "to", 
+        body, date, is_read, has_attachments, folder
       ) VALUES (
         ${accountId}, 'test-id-1', '[TEST] Email di test 1', 'test@example.com', '["user@yourcompany.com"]', 
         '<p>Questa è un''email di test per verificare la funzionalità del modulo email.</p>', 
-        'Questa è un''email di test per verificare la funzionalità del modulo email.', 
         ${now}, false, false, 'inbox'
       ) RETURNING id`
     );
@@ -70,12 +69,11 @@ router.get('/email/messages/e2e-test', authenticateJWT, async (req, res) => {
     // Seconda email di test (con allegato)
     const email2Result = await db.execute<{id: number}>(
       sql`INSERT INTO emails (
-        account_id, message_id, subject, from_address, to_addresses, 
-        body_html, body_text, date, is_read, has_attachments, folder
+        account_id, message_id, subject, "from", "to", 
+        body, date, is_read, has_attachments, folder
       ) VALUES (
         ${accountId}, 'test-id-2', '[TEST] Email di test 2 con allegato', 'client@example.com', '["user@yourcompany.com"]', 
         '<p>Questa è un''altra email di test con allegato simulato.</p>', 
-        'Questa è un''altra email di test con allegato simulato.', 
         ${hourAgo}, true, true, 'inbox'
       ) RETURNING id`
     );

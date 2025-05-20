@@ -203,7 +203,7 @@ export async function saveEmailToDatabase(accountId: number, emailData: any): Pr
       messageId: emailData.messageId,
       subject: emailData.subject,
       body: emailData.html || emailData.text,
-      bodyType: emailData.html ? 'text/html' : 'text/plain',
+      // Rimuoviamo bodyType che sta causando errori
       from: emailData.from,
       to: toRecipients,
       cc: ccRecipients,
