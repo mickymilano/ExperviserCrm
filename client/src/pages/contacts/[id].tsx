@@ -1,29 +1,29 @@
 import { useState } from "react";
 import { useParams, useLocation } from "wouter";
-import { useContact } from "@/hooks/useContacts";
-import { useCompanies } from "@/hooks/useCompanies";
-import { useDeals } from "@/hooks/useDeals";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useContact } from "../../hooks/useContacts";
+import { useCompanies } from "../../hooks/useCompanies";
+import { useDeals } from "../../hooks/useDeals";
+import { Button } from "../../components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
+import { Skeleton } from "../../components/ui/skeleton";
+import { Badge } from "../../components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
+import { Separator } from "../../components/ui/separator";
+import { Avatar, AvatarFallback } from "../../components/ui/avatar";
 import { 
   ArrowLeft, User, Building2, Mail, Phone, Calendar, Edit,
   Briefcase, MessageCircle, Clock, FileText, Trash, Linkedin,
   Facebook, Instagram, AlertCircle, CheckCircle, Link as LinkIcon,
   Handshake
 } from "lucide-react";
-import { formatDateToLocal, getInitials, formatPhoneNumber, generateAvatarColor } from "@/lib/utils";
-import ContactModal from "@/components/modals/ContactModal";
-import TaskList from "@/components/tasks/TaskList";
-import { SynergiesList } from "@/components/synergies/SynergiesList";
+import { formatDateToLocal, getInitials, formatPhoneNumber, generateAvatarColor } from "../../lib/utils";
+import ContactModal from "../../components/modals/ContactModal";
+import TaskList from "../../components/tasks/TaskList";
+import { SynergiesList } from "../../components/synergies/SynergiesList";
 import { Link } from "wouter";
-import { LinkCompanyButton } from "@/components/forms/LinkCompanyButton";
+import { LinkCompanyButton } from "../../components/forms/LinkCompanyButton";
 import { useTranslation } from "react-i18next";
-import EntityEmailInbox from "@/components/email/EntityEmailInbox";
+import EntityEmailInbox from "../../components/email/EntityEmailInbox";
 
 export default function ContactDetail() {
   const params = useParams();

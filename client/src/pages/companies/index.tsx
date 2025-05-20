@@ -1,25 +1,25 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
-import { useCompanies } from "@/hooks/useCompanies";
-import { Company } from "@/types";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { useCompanies } from "../../hooks/useCompanies";
+import { Company } from "../../types";
+import { Button } from "../../components/ui/button";
+import { Card, CardContent } from "../../components/ui/card";
+import { Input } from "../../components/ui/input";
 import { 
   Plus, Search, Filter, Eye, Trash, Edit, Globe, Phone, Mail, MapPin,
   Calendar, Hash, Building, Flag, Users
 } from "lucide-react";
-import CompanyModal from "@/components/modals/CompanyModal";
-import { Skeleton } from "@/components/ui/skeleton";
+import CompanyModal from "../../components/modals/CompanyModal";
+import { Skeleton } from "../../components/ui/skeleton";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
-import { formatPhoneNumber } from "@/lib/utils";
+} from "../../components/ui/dropdown-menu";
+import { Badge } from "../../components/ui/badge";
+import { formatPhoneNumber } from "../../lib/utils";
 
 export default function Companies() {
   const { t } = useTranslation();
