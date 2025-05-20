@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { Branch } from "../../types";
-import { Button } from "../ui/button";
-import { Card, CardContent } from "../ui/card";
-import { formatDate } from "../../lib/utils";
+import { Branch } from "@/types";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { formatDate } from "@/lib/utils";
 import { 
   Eye, Trash, Edit, Globe, Phone, Mail, MapPin, Building
 } from "lucide-react";
@@ -12,9 +12,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
-import { Badge } from "../ui/badge";
-import { useBranches } from "../../hooks/useBranches";
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import { useBranches } from "@/hooks/useBranches";
 
 interface BranchListProps {
   branches: Branch[];

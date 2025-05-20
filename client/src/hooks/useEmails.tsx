@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Email } from '../../../shared/schema';
-import { apiRequest, queryClient } from '../lib/queryClient';
-import { useToast } from './use-toast';
+import { Email } from '@shared/schema';
+import { apiRequest, queryClient } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 
 export const useEmails = () => {
   return useQuery<Email[]>({

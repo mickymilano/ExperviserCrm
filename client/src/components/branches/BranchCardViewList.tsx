@@ -1,4 +1,4 @@
-import { Branch } from "../../types";
+import { Branch } from "@/types";
 import BranchCardView from "./BranchCardView";
 
 interface BranchCardViewListProps {

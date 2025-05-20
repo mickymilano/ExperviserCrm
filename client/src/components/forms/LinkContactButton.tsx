@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { toast } from "../../hooks/use-toast";
-import { Button } from "../ui/button";
-import { queryClient } from "../../lib/queryClient";
+import { toast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { queryClient } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
-import { Contact } from "../../../../shared/schema";
+import { Contact } from "@shared/schema";
 import {
   Dialog,
   DialogContent,
@@ -11,16 +11,16 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
-} from "../ui/dialog";
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
-import { Label } from "../ui/label";
-import { Input } from "../ui/input";
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 interface LinkContactButtonProps {
   companyId: number;

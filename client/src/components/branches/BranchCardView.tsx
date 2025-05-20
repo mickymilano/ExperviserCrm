@@ -1,11 +1,11 @@
-import { Branch } from "../../types";
+import { Branch } from "@/types";
 import {
   Card,
   CardContent,
-} from "../ui/card";
-import { Button } from "../ui/button";
-import { Badge } from "../ui/badge";
-import { formatDate } from "../../lib/utils";
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { formatDate } from "@/lib/utils";
 import { Eye, Phone, Mail, Calendar, MapPin } from "lucide-react";
 import { useLocation } from "wouter";
 

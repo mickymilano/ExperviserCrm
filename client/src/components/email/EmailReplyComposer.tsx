@@ -5,21 +5,21 @@ import { z } from 'zod';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Mail, Send, MoreHorizontal, Loader2, Sparkles, Paperclip } from 'lucide-react';
-import { Button } from '../ui/button';
-import { Form, FormControl, FormField, FormItem } from '../ui/form';
-import { Input } from '../ui/input';
+import { Button } from '@/components/ui/button';
+import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import { 
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription 
-} from '../ui/dialog';
-import { Tiptap } from '../tiptap-editor';
-import { Textarea } from '../ui/textarea';
-import { Separator } from '../ui/separator';
-import { useToast } from '../../hooks/use-toast';
-import { T } from '../../lib/translationHelper';
-import { apiRequest } from '../../lib/queryClient';
+} from '@/components/ui/dialog';
+import { Tiptap } from '@/components/tiptap-editor';
+import { Textarea } from '@/components/ui/textarea';
+import { Separator } from '@/components/ui/separator';
+import { useToast } from '@/hooks/use-toast';
+import { T } from '@/lib/translationHelper';
+import { apiRequest } from '@/lib/queryClient';
 import { EmailAccountSelector } from './EmailAccountSelector';
 import { EmailSignatureDropdown } from './EmailSignatureDropdown';
-import { useEmailAccounts } from '../../hooks/useEmailAccounts';
+import { useEmailAccounts } from '@/hooks/useEmailAccounts';
 
 // Schema per validare il form
 const formSchema = z.object({

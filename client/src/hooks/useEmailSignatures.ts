@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '../lib/queryClient';
-import { mockEmailSignatures } from '../mock/mockEmailData';
+import { apiRequest } from '@/lib/queryClient';
+import { mockEmailSignatures } from '@/mock/mockEmailData';
 
 export interface EmailSignature {
   id: number;

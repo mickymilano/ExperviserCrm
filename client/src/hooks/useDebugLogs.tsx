@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { debugContext, type LogEntry } from '../lib/debugContext';
+import { debugContext, type LogEntry } from '@/lib/debugContext';
 
 // Hook che espone le funzionalità di logging alla UI React
 export function useDebugLogs() {

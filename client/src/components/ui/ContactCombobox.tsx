@@ -1,14 +1,14 @@
 import * as React from "react";
 import { Check, ChevronsUpDown, Search } from "lucide-react";
-import { cn } from "../../lib/utils";
-import { Button } from "./button";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "./popover";
-import { Input } from "./input";
-import { Contact } from "../../types";
+} from "@/components/ui/popover";
+import { Input } from "@/components/ui/input";
+import { Contact } from "@/types";
 
 interface ContactComboboxProps {
   contacts: Contact[];

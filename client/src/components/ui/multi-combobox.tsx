@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useRef } from "react"
-import { Badge } from "./badge"
+import { Badge } from "@/components/ui/badge"
 
 export interface ComboboxOption {
   value: string

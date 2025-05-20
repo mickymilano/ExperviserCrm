@@ -24,12 +24,12 @@ import {
   ListOrdered,
   Palette
 } from 'lucide-react';
-import { ToggleGroup, ToggleGroupItem } from './toggle-group';
-import { Popover, PopoverTrigger, PopoverContent } from './popover';
-import { Input } from './input';
-import { Button } from './button';
-import { Label } from './label';
-import { cn } from '../../lib/utils';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 
 export interface RichTextEditorProps {
   content: string;

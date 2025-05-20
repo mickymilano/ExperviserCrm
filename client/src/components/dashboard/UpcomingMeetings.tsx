@@ -1,7 +1,7 @@
 import { format } from "date-fns";
-import { Meeting } from "../../types";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Button } from "../ui/button";
+import { Meeting } from "@/types";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Clock } from "lucide-react";
 
 interface UpcomingMeetingsProps {

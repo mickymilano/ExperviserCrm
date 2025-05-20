@@ -8,9 +8,9 @@ import {
   DropdownMenuLabel, 
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
-} from '../ui/dropdown-menu';
-import { Button } from '../ui/button';
-import { T } from '../../lib/translationHelper';
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { T } from '@/lib/translationHelper';
 
 interface EmailSignature {
   id: number;

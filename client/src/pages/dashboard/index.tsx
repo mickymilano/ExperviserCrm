@@ -1,13 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
-import SummaryCards from "../../components/dashboard/SummaryCards";
-import DealPipeline from "../../components/dashboard/DealPipeline";
-import ActivityFeed from "../../components/dashboard/ActivityFeed";
-import UpcomingMeetings from "../../components/dashboard/UpcomingMeetings";
-import RecentContacts from "../../components/dashboard/RecentContacts";
-import AISuggestions from "../../components/dashboard/AISuggestions";
-import { Skeleton } from "../../components/ui/skeleton";
-import { DashboardData } from "../../types";
-import { debugContext } from "../../lib/debugContext";
+import SummaryCards from "@/components/dashboard/SummaryCards";
+import DealPipeline from "@/components/dashboard/DealPipeline";
+import ActivityFeed from "@/components/dashboard/ActivityFeed";
+import UpcomingMeetings from "@/components/dashboard/UpcomingMeetings";
+import RecentContacts from "@/components/dashboard/RecentContacts";
+import AISuggestions from "@/components/dashboard/AISuggestions";
+import { Skeleton } from "@/components/ui/skeleton";
+import { DashboardData } from "@/types";
+import { debugContext } from "@/lib/debugContext";
 import { useEffect } from "react";
 
 export default function Dashboard() {

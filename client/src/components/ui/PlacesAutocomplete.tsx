@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Input } from './input';
-import { getGoogleMapsApiKey } from '../../lib/environment';
-import { debugContext } from '../../lib/debugContext';
+import { Input } from '@/components/ui/input';
+import { getGoogleMapsApiKey } from '@/lib/environment';
+import { debugContext } from '@/lib/debugContext';
 
 // Definisce le proprietà del componente
 interface PlacesAutocompleteProps {

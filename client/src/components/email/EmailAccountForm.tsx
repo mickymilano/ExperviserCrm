@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { T } from "../../lib/translationHelper";
+import { T } from "@/lib/translationHelper";
 
 import {
   Form,
@@ -12,24 +12,24 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "../ui/form";
-import { Input } from "../ui/input";
-import { Button } from "../ui/button";
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
+} from "@/components/ui/select";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "../ui/accordion";
-import { Switch } from "../ui/switch";
-import { useEmailAccounts, EmailAccount } from "../../hooks/useEmailAccounts";
+} from "@/components/ui/accordion";
+import { Switch } from "@/components/ui/switch";
+import { useEmailAccounts, EmailAccount } from "@/hooks/useEmailAccounts";
 import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({

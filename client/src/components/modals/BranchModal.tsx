@@ -9,7 +9,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "../ui/dialog";
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -17,24 +17,24 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "../ui/form";
-import { Input } from "../ui/input";
-import { Button } from "../ui/button";
-import { Textarea } from "../ui/textarea";
-import { Checkbox } from "../ui/checkbox";
-import { useToast } from "../../hooks/use-toast";
-import { useCompanies } from "../../hooks/useCompanies";
-import { useContacts } from "../../hooks/useContacts";
-import { useCreateBranch, useUpdateBranch } from "../../hooks/useBranches";
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/hooks/use-toast";
+import { useCompanies } from "@/hooks/useCompanies";
+import { useContacts } from "@/hooks/useContacts";
+import { useCreateBranch, useUpdateBranch } from "@/hooks/useBranches";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
-import { Branch, BranchManager, Contact } from "../../types";
-import { ContactCombobox } from "../ui/ContactCombobox";
+} from "@/components/ui/select";
+import { Branch, BranchManager, Contact } from "@/types";
+import { ContactCombobox } from "@/components/ui/ContactCombobox";
 
 // Schema di validazione per un manager
 const managerSchema = z.object({

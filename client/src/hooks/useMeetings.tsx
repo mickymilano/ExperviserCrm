@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "../lib/queryClient";
-import { Meeting } from "../types";
-import { useToast } from "./use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { Meeting } from "@/types";
+import { useToast } from "@/hooks/use-toast";
 
 export const useMeetings = () => {
   const { toast } = useToast();
