@@ -3210,9 +3210,9 @@ export class PostgresStorage implements IStorage {
 
   async getEmail(id: number): Promise<Email | undefined> {
     try {
-      // Implementazione temporanea che restituisce null
-      // ma potrebbe essere aggiornata in futuro quando il modulo email sarà implementato
-      return undefined;
+      // Implementazione temporanea che restituisce l'email richiesta dai dati di esempio
+      const emails = await this.getEmails();
+      return emails.find(email => email.id === id);
     } catch (error) {
       console.error("Error in getEmail:", error);
       return undefined;
