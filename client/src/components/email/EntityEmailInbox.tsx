@@ -53,7 +53,7 @@ interface EntityEmailInboxProps {
   className?: string;
 }
 
-export function EntityEmailInbox({ 
+function EntityEmailInbox({ 
   entityId, 
   entityType, 
   entityName,
@@ -432,55 +432,49 @@ export function EntityEmailInbox({
                     </div>
                     
                     {selectedEmail.attachments.length > 0 && (
-                      <div className="mb-3">
-                        <span className="text-sm font-medium block mb-1">
-                          {t('email.attachments')} ({selectedEmail.attachments.length}):
-                        </span>
+                      <div className="mb-4">
+                        <h4 className="text-sm font-medium mb-2 flex items-center">
+                          <Paperclip className="h-4 w-4 mr-1" />
+                          {t('email.attachments')} ({selectedEmail.attachments.length})
+                        </h4>
                         <div className="flex flex-wrap gap-2">
                           {selectedEmail.attachments.map(attachment => (
-                            <Badge 
-                              key={attachment.id}
-                              variant="outline"
-                              className="flex items-center cursor-pointer hover:bg-gray-100"
-                              onClick={() => {
-                                // Logica per scaricare l'allegato
-                                window.open(`/api/email/attachment/${attachment.id}`, '_blank');
-                              }}
-                            >
-                              <Paperclip className="h-3 w-3 mr-1" />
-                              {attachment.filename}
-                              <Download className="h-3 w-3 ml-1 text-gray-500" />
-                            </Badge>
+                            <div key={attachment.id} className="flex items-center gap-2 p-2 border rounded-md text-sm">
+                              <span className="truncate max-w-[150px]">{attachment.filename}</span>
+                              <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                                <Download className="h-4 w-4" />
+                              </Button>
+                            </div>
                           ))}
                         </div>
                       </div>
                     )}
                   </div>
                   
-                  <ScrollArea className="flex-grow mb-4 border p-3 rounded">
+                  <Separator className="mb-4" />
+                  
+                  <div className="flex-grow mb-4 overflow-auto">
                     {selectedEmail.bodyType === 'html' ? (
                       <div 
+                        className="prose prose-sm max-w-none" 
                         dangerouslySetInnerHTML={{ __html: selectedEmail.body }} 
-                        className="email-body prose max-w-none"
                       />
                     ) : (
-                      <div className="whitespace-pre-wrap">
+                      <div className="whitespace-pre-wrap text-sm">
                         {selectedEmail.body}
                       </div>
                     )}
-                  </ScrollArea>
+                  </div>
                   
-                  <Separator className="my-4" />
+                  <Separator className="mb-4" />
                   
-                  <div>
-                    <div className="mb-2 text-sm font-medium">
-                      {t('email.reply')}:
-                    </div>
+                  <div className="mt-auto">
+                    <h4 className="text-sm font-medium mb-2">{t('email.reply')}:</h4>
                     <Textarea
                       value={replyContent}
                       onChange={e => setReplyContent(e.target.value)}
                       placeholder={t('email.replyPlaceholder')}
-                      className="min-h-[100px] mb-2"
+                      className="mb-2 min-h-[100px]"
                     />
                     <div className="flex justify-end">
                       <Button 
@@ -503,7 +497,7 @@ export function EntityEmailInbox({
                   <h3 className="text-lg font-medium text-gray-500">
                     {t('email.selectOrComposeEmail')}
                   </h3>
-                  <p className="text-sm text-gray-400 max-w-md">
+                  <p className="text-sm text-gray-400 max-w-md mt-2">
                     {t('email.emailInboxDescription')}
                   </p>
                   <Button 
@@ -523,3 +517,7 @@ export function EntityEmailInbox({
     </Card>
   );
 }
+
+// Esporta sia come default che come named export per garantire compatibilità
+export default EntityEmailInbox;
+export { EntityEmailInbox };
