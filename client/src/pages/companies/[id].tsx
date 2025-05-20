@@ -648,13 +648,15 @@ export default function CompanyDetail() {
         
         {/* Email Tab */}
         <TabsContent value="email" className="space-y-4">
-          <EntityEmailInbox
-            entityId={companyId}
-            entityType="company"
-            entityName={company.name}
-            entityEmail={company.email}
-            companyDomain={company.website ? company.website.replace(/^https?:\/\//i, '') : undefined}
-          />
+          {company && (
+            <EntityEmailInbox
+              entityId={companyId}
+              entityType="company"
+              entityName={company.name || ''}
+              entityEmail={company.email || ''}
+              companyDomain={company.website ? company.website.replace(/^https?:\/\//i, '') : ''}
+            />
+          )}
         </TabsContent>
       </Tabs>
     </div>
