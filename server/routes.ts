@@ -2341,8 +2341,9 @@ export function registerRoutes(app: any) {
       // Aggiunto conteggio delle filiali
       const branchesCount = await storage.getBranchesCount();
       
-      // Per le email manteniamo l'approccio originale per ora
+      // Recupera tutte le email e conta quelle non lette
       const emails = await storage.getEmails();
+      const unreadEmails = emails.filter(email => !email.read).length;
       
       res.json({
         contacts: contactsCount,
@@ -2352,7 +2353,7 @@ export function registerRoutes(app: any) {
         synergies: synergiesCount,
         branches: branchesCount,
         emails: emails.length,
-        unreadEmails: 3 // Valore temporaneo fisso per i test
+        unreadEmails: unreadEmails
       });
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
