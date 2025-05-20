@@ -28,6 +28,7 @@ import {
 import branchRoutes from './branchRoutes';
 import mockEmailRoutes from './mockEmailRoutes';
 import emailRoutes from './emailRoutes';
+import importExportRoutes from './routes/import-export';
 import { getSectors, createSector } from './controllers/sectorController';
 import { getSubSectors, createSubSector } from './controllers/subSectorController';
 import { getJobTitles, getJobTitle, createJobTitle, updateJobTitle, deleteJobTitle } from './controllers/jobTitleController';
@@ -2876,6 +2877,9 @@ export function registerRoutes(app: any) {
   
   // Integrazione API Email
   app.use('/api/email', authenticate, emailRoutes);
+  
+  // Integrazione API Importazione/Esportazione
+  app.use('/api/import-export', authenticate, importExportRoutes);
   
   // Integrazione API Email di test
   app.use('/api', authenticate, mockEmailRoutes);
