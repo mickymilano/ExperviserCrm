@@ -2,13 +2,13 @@ import { lazy, Suspense } from 'react';
 import { Route, Switch } from 'wouter';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './lib/queryClient';
-import AppLayout from '@/components/layout/AppLayout';
-import ProtectedRoute from '@/components/auth/ProtectedRoute';
-import DebugProvider from '@/components/debug/DebugProvider';
-import { Toaster } from '@/components/ui/toaster';
+import AppLayout from './components/layout/AppLayout';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import DebugProvider from './components/debug/DebugProvider';
+import { Toaster } from './components/ui/toaster';
 
 // Lazy loading delle pagine
-const LoginPage = lazy(() => import('@/pages/LoginPage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
 
 // Contacts

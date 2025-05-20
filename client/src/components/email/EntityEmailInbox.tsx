@@ -232,7 +232,8 @@ function EntityEmailInbox({
   // Marca l'email come letta quando viene selezionata
   useEffect(() => {
     if (selectedEmail && !selectedEmail.isRead) {
-      markAsReadMutation.mutate(selectedEmail.id);
+      // Converti l'ID in stringa per evitare errori di tipo
+      markAsReadMutation.mutate(String(selectedEmail.id));
     }
   }, [selectedEmail]);
 
