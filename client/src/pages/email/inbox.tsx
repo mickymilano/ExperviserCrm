@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { EmailInbox } from '@/components/email/EmailInbox';
+import { EmailInbox } from '../../components/email/EmailInbox';
 import { useTranslation } from 'react-i18next';
 
 export function EmailInboxPage() {

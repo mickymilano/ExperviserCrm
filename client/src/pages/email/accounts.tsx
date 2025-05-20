@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { EmailAccountList } from '@/components/email/EmailAccountList';
+import { EmailAccountList } from '../../components/email/EmailAccountList';
 import { useTranslation } from 'react-i18next';
 
 export function EmailAccountsPage() {
