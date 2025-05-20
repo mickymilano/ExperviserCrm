@@ -12,8 +12,8 @@ import {
   emailAccounts,
   leads,
   sectors,
-  subSectors,
-  jobTitles,
+  sub_sectors as subSectors,
+  job_titles as jobTitles,
   contactEmails
 } from '@shared/schema';
 import bcrypt from 'bcrypt';
