@@ -6,7 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { Trash, Edit, Star, StarOff } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { queryClient } from '@/lib/queryClient';
+import { queryClient } from '../../lib/queryClient';
 import { useTranslation } from 'react-i18next';
 import NewEmailSignatureModal from '@/components/email/NewEmailSignatureModal';
 
