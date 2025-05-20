@@ -3090,9 +3090,118 @@ export class PostgresStorage implements IStorage {
   // EMAILS
   async getEmails(): Promise<Email[]> {
     try {
-      // Implementazione temporanea che restituisce un array vuoto
-      // ma potrebbe essere aggiornata in futuro quando il modulo email sarà implementato
-      return [];
+      // Implementazione temporanea che restituisce email di esempio
+      // Sarà sostituita dall'implementazione reale quando il database delle email sarà completo
+      const accountId = 1; // ID account di test
+      
+      // Genera alcune email di test, con un mix di lette e non lette
+      return [
+        {
+          id: 1,
+          accountId,
+          subject: "Proposta commerciale per nuovo progetto",
+          body: "<p>Buongiorno,</p><p>Le invio in allegato la proposta commerciale per il nuovo progetto discusso durante il nostro ultimo incontro.</p><p>Rimango a disposizione per qualsiasi chiarimento.</p><p>Cordiali saluti</p>",
+          bodyType: "text/html",
+          from: "cliente@example.com",
+          fromName: "Mario Rossi",
+          to: JSON.stringify(["info@experviser.com"]),
+          date: new Date(),
+          isRead: false,
+          isSent: false,
+          isDraft: false,
+          isStarred: false,
+          isTrash: false,
+          isSpam: false,
+          folder: "inbox",
+          hasAttachments: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        {
+          id: 2,
+          accountId,
+          subject: "Conferma appuntamento di domani",
+          body: "<p>Gentile cliente,</p><p>confermo l'appuntamento di domani alle ore 15:00 presso la vostra sede.</p><p>Cordiali saluti</p>",
+          bodyType: "text/html",
+          from: "segreteria@aziendacliente.com",
+          fromName: "Segreteria Azienda Cliente",
+          to: JSON.stringify(["info@experviser.com"]),
+          date: new Date(Date.now() - 86400000), // 1 giorno fa
+          isRead: true,
+          isSent: false,
+          isDraft: false,
+          isStarred: true,
+          isTrash: false,
+          isSpam: false,
+          folder: "inbox",
+          hasAttachments: false,
+          createdAt: new Date(Date.now() - 86400000),
+          updatedAt: new Date(Date.now() - 86400000)
+        },
+        {
+          id: 3,
+          accountId,
+          subject: "Richiesta preventivo servizi consulenza",
+          body: "<p>Buongiorno,</p><p>sarei interessato a ricevere un preventivo per i vostri servizi di consulenza.</p><p>Grazie e buona giornata</p>",
+          bodyType: "text/html",
+          from: "nuovo.cliente@example.com",
+          fromName: "Nuovo Cliente Potenziale",
+          to: JSON.stringify(["info@experviser.com"]),
+          date: new Date(Date.now() - 2 * 86400000), // 2 giorni fa
+          isRead: false,
+          isSent: false,
+          isDraft: false,
+          isStarred: false,
+          isTrash: false,
+          isSpam: false,
+          folder: "inbox",
+          hasAttachments: false,
+          createdAt: new Date(Date.now() - 2 * 86400000),
+          updatedAt: new Date(Date.now() - 2 * 86400000)
+        },
+        {
+          id: 4,
+          accountId,
+          subject: "Aggiornamento progetto XYZ",
+          body: "<p>Gentile Cliente,</p><p>le invio in allegato l'aggiornamento sullo stato di avanzamento del progetto XYZ.</p><p>Distinti saluti</p>",
+          bodyType: "text/html",
+          from: "pm@experviser.com",
+          fromName: "Project Manager",
+          to: JSON.stringify(["cliente@example.com"]),
+          date: new Date(Date.now() - 3 * 86400000), // 3 giorni fa
+          isRead: true,
+          isSent: true,
+          isDraft: false,
+          isStarred: false,
+          isTrash: false,
+          isSpam: false,
+          folder: "sent",
+          hasAttachments: true,
+          createdAt: new Date(Date.now() - 3 * 86400000),
+          updatedAt: new Date(Date.now() - 3 * 86400000)
+        },
+        {
+          id: 5,
+          accountId,
+          subject: "Newsletter mensile",
+          body: "<p>Scopri le ultime novità del settore nella nostra newsletter mensile.</p>",
+          bodyType: "text/html",
+          from: "newsletter@sectornews.com",
+          fromName: "Sector News",
+          to: JSON.stringify(["info@experviser.com"]),
+          date: new Date(Date.now() - 4 * 86400000), // 4 giorni fa
+          isRead: false,
+          isSent: false,
+          isDraft: false,
+          isStarred: false,
+          isTrash: false,
+          isSpam: false,
+          folder: "inbox",
+          hasAttachments: false,
+          createdAt: new Date(Date.now() - 4 * 86400000),
+          updatedAt: new Date(Date.now() - 4 * 86400000)
+        }
+      ];
     } catch (error) {
       console.error("Error in getEmails:", error);
       return [];
