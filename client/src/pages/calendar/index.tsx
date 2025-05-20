@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Calendar as CalendarComponent } from "../../components/ui/calendar";
+import { Button } from "../../components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
+import { Skeleton } from "../../components/ui/skeleton";
 import { 
   Plus, 
   ChevronLeft, 
@@ -13,20 +13,20 @@ import {
 } from "lucide-react";
 import { format, startOfWeek, endOfWeek, addDays, isSameDay, parseISO } from "date-fns";
 import { it } from "date-fns/locale";
-import { useMeetings } from "@/hooks/useMeetings";
-import { useContacts } from "@/hooks/useContacts";
-import { useCompanies } from "@/hooks/useCompanies";
-import MeetingModal from "@/components/modals/MeetingModal";
-import { Meeting } from "@/types";
-import { cn, generateAvatarColor, getInitials } from "@/lib/utils";
+import { useMeetings } from "../../hooks/useMeetings";
+import { useContacts } from "../../hooks/useContacts";
+import { useCompanies } from "../../hooks/useCompanies";
+import MeetingModal from "../../components/modals/MeetingModal";
+import { Meeting } from "../../types";
+import { cn, generateAvatarColor, getInitials } from "../../lib/utils";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+} from "../../components/ui/select";
+import { Avatar, AvatarFallback } from "../../components/ui/avatar";
 import { useTranslation } from "react-i18next";
 
 type ViewType = "month" | "week" | "day";
