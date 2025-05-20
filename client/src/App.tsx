@@ -2,39 +2,8 @@ import React from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './lib/queryClient';
 import { Toaster } from './components/ui/toaster';
-import { ThemeProvider, useTheme } from './theme/ThemeProvider';
-import { Sun, Moon, Monitor } from 'lucide-react';
-
-// Selettore del tema
-function ThemeSelector() {
-  const { theme, setTheme } = useTheme();
-  
-  return (
-    <div className="flex items-center space-x-2 bg-white dark:bg-gray-800 p-2 rounded-lg shadow">
-      <button
-        onClick={() => setTheme("light")}
-        className={`p-2 rounded-lg ${theme === "light" ? "bg-blue-100 text-blue-700" : "hover:bg-gray-100 dark:hover:bg-gray-700"}`}
-        title="Tema chiaro"
-      >
-        <Sun size={20} />
-      </button>
-      <button
-        onClick={() => setTheme("dark")}
-        className={`p-2 rounded-lg ${theme === "dark" ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300" : "hover:bg-gray-100 dark:hover:bg-gray-700"}`}
-        title="Tema scuro"
-      >
-        <Moon size={20} />
-      </button>
-      <button
-        onClick={() => setTheme("system")}
-        className={`p-2 rounded-lg ${theme === "system" ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300" : "hover:bg-gray-100 dark:hover:bg-gray-700"}`}
-        title="Tema di sistema"
-      >
-        <Monitor size={20} />
-      </button>
-    </div>
-  );
-}
+import { ThemeProvider } from './theme/ThemeProvider';
+import { ThemeToggle } from './components/theme/ThemeToggle';
 
 // Dashboard ultra-semplificata
 function SimpleDashboard() {
@@ -45,7 +14,7 @@ function SimpleDashboard() {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">EXPERVISER CRM</h1>
           <p className="text-gray-600 dark:text-gray-400">Versione semplificata</p>
         </div>
-        <ThemeSelector />
+        <ThemeToggle />
       </header>
       
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
