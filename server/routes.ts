@@ -2981,6 +2981,97 @@ export function registerRoutes(app: any) {
     return res.json({ count: 4 }); // Mock count
   });
   
+  // Segna un'email come letta
+  emailEntityRouter.patch('/:emailId/read', (req, res) => {
+    try {
+      const { emailId } = req.params;
+      console.log(`Segnando email ${emailId} come letta`);
+      
+      // In produzione, questo codice salverebbe le modifiche nel database
+      return res.json({ 
+        success: true, 
+        message: 'Email segnata come letta con successo' 
+      });
+    } catch (error) {
+      console.error('Errore nel segnare l\'email come letta:', error);
+      return res.status(500).json({ 
+        error: 'Errore nel segnare l\'email come letta' 
+      });
+    }
+  });
+  
+  // Invia una risposta a un'email
+  emailEntityRouter.post('/:emailId/reply', (req, res) => {
+    try {
+      const { emailId } = req.params;
+      const { content } = req.body;
+      
+      if (!content || content.trim() === '') {
+        return res.status(400).json({ 
+          error: 'Il contenuto della risposta non può essere vuoto' 
+        });
+      }
+      
+      console.log(`Inviando risposta all'email ${emailId}:`, content.substring(0, 50) + '...');
+      
+      // In produzione, questo codice invierebbe effettivamente la risposta
+      return res.json({ 
+        success: true, 
+        message: 'Risposta inviata con successo' 
+      });
+    } catch (error) {
+      console.error('Errore nell\'invio della risposta:', error);
+      return res.status(500).json({ 
+        error: 'Errore nell\'invio della risposta' 
+      });
+    }
+  });
+  
+  // Invia una nuova email
+  emailEntityRouter.post('/send', (req, res) => {
+    try {
+      const { to, subject, body, entityId, entityType } = req.body;
+      
+      // Validazione dei dati richiesti
+      if (!to || !subject || !body) {
+        return res.status(400).json({ 
+          error: 'Destinatario, oggetto e corpo dell\'email sono obbligatori' 
+        });
+      }
+      
+      console.log(`Inviando nuova email a ${to}:`, subject);
+      
+      // In produzione, questo codice invierebbe effettivamente l'email
+      return res.json({ 
+        success: true, 
+        message: 'Email inviata con successo' 
+      });
+    } catch (error) {
+      console.error('Errore nell\'invio dell\'email:', error);
+      return res.status(500).json({ 
+        error: 'Errore nell\'invio dell\'email' 
+      });
+    }
+  });
+  
+  // Gestisce il download degli allegati
+  emailEntityRouter.get('/attachment/:attachmentId', (req, res) => {
+    try {
+      const { attachmentId } = req.params;
+      
+      console.log(`Richiesta di download dell'allegato ${attachmentId}`);
+      
+      // Per ora, restituiamo un messaggio informativo
+      res.set('Content-Type', 'text/plain');
+      return res.send(`Questa è una simulazione di download dell'allegato con ID ${attachmentId}`);
+    } catch (error) {
+      console.error('Errore nel download dell\'allegato:', error);
+      return res.status(500).json({ 
+        error: 'Errore nel download dell\'allegato' 
+      });
+    }
+  });
+  
   app.use('/api/email', authenticate, emailEntityRouter);
   
   // Integrazione API Importazione/Esportazione
