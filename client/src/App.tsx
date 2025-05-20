@@ -163,12 +163,12 @@ export default function App() {
           {/* Routes for Email */}
           <Route path="/emails/inbox">
             <ProtectedRoute>
-              <LayoutPage component={lazy(() => import('@/pages/email/inbox'))} />
+              <LayoutPage component={lazy(() => import('./pages/email/inbox'))} />
             </ProtectedRoute>
           </Route>
           <Route path="/emails/compose">
             <ProtectedRoute>
-              <LayoutPage component={lazy(() => import('@/pages/email/compose'))} />
+              <LayoutPage component={lazy(() => import('./pages/email/compose'))} />
             </ProtectedRoute>
           </Route>
           <Route path="/emails/signatures">
