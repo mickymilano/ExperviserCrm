@@ -4,8 +4,9 @@ import { Card } from '@/components/ui/card';
 
 interface EntityEmailTabProps {
   entityId: string;
-  entityType: 'contact' | 'company' | 'deal' | 'lead';
+  entityType: 'contact' | 'company' | 'deal' | 'lead' | 'branch';
   entityName: string;
+  entityEmail?: string;
 }
 
 /**

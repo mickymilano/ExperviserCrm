@@ -47,8 +47,9 @@ interface Email {
 
 interface EntityEmailInboxProps {
   entityId: string;
-  entityType: 'contact' | 'company' | 'deal' | 'lead';
+  entityType: 'contact' | 'company' | 'deal' | 'lead' | 'branch';
   entityName: string;
+  entityEmail?: string;
   className?: string;
 }
 
@@ -56,6 +57,7 @@ export function EntityEmailInbox({
   entityId, 
   entityType, 
   entityName,
+  entityEmail,
   className = "" 
 }: EntityEmailInboxProps) {
   const { t } = useTranslation();
@@ -286,7 +288,7 @@ export function EntityEmailInbox({
                     {t('email.unread')}
                     {emails && (
                       <Badge variant="secondary" className="ml-1">
-                        {emails.filter(e => !e.isRead).length}
+                        {emails.filter((e: Email) => !e.isRead).length}
                       </Badge>
                     )}
                   </TabsTrigger>
