@@ -29,6 +29,8 @@ import branchRoutes from './branchRoutes';
 import mockEmailRoutes from './mockEmailRoutes';
 import emailRoutes from './emailRoutes';
 import importExportRoutes from './routes/import-export';
+import debugConsoleRouter from './modules/debug-console';
+import testDataRouter from './routes/test-data';
 import { getSectors, createSector } from './controllers/sectorController';
 import { getSubSectors, createSubSector } from './controllers/subSectorController';
 import { getJobTitles, getJobTitle, createJobTitle, updateJobTitle, deleteJobTitle } from './controllers/jobTitleController';
