@@ -5,7 +5,6 @@ import bcrypt from 'bcrypt';
 import { storage } from './storage';
 import { pool, db } from './db'; // Importiamo il pool di connessione PostgreSQL
 import { z } from 'zod';
-import emailRoutes from './routes/emailRoutes';
 import { 
   insertUserSchema, 
   insertContactSchema, 
@@ -17,7 +16,7 @@ import {
   insertContactEmailSchema, 
   insertBranchSchema,
   areasOfActivity  // Importiamo la tabella areasOfActivity
-} from '@shared/schema';
+} from '../shared/schema';
 import { 
   listLeads, 
   getLead, 
@@ -28,7 +27,7 @@ import {
 } from './controllers/leadController.js';
 import branchRoutes from './branchRoutes';
 import mockEmailRoutes from './mockEmailRoutes';
-import emailRoutes from './emailRoutes';
+import emailModuleRoutes from './routes/emailRoutes';
 import importExportRoutes from './routes/import-export';
 import debugConsoleRouter from './modules/debug-console';
 import testDataRouter from './routes/test-data';
