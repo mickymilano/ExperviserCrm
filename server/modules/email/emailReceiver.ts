@@ -1,7 +1,7 @@
 import Imap from 'imap';
 import { simpleParser } from 'mailparser';
 import { db } from '../../db';
-import { emails, emailAttachments, emailAccounts } from '../../../shared/schema';
+import { emails, emailAccounts } from '../../../shared/schema';
 import { eq, and } from 'drizzle-orm';
 import { generateId } from '../../utils';
 

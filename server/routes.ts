@@ -2882,7 +2882,7 @@ export function registerRoutes(app: any) {
   app.use('/api/email-legacy', authenticate, emailRoutes);
   
   // Nuovo sistema email con supporto per l'associazione alle entità
-  app.use('/api/email', authenticate, require('./routes/email').default);
+  app.use('/api/email', authenticate, require('./routes/email-entity').default);
   
   // Integrazione API Importazione/Esportazione
   app.use('/api/import-export', authenticate, importExportRoutes);
