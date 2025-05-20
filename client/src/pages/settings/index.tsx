@@ -696,40 +696,8 @@ export default function SettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Colonna Contatti */}
-                <Card className="p-6">
-                  <CardContent className="p-0">
-                    <h3 className="text-lg font-medium mb-4">Contatti</h3>
-                    <ImportExportManager
-                      entityType="contacts"
-                      title="Contatti"
-                    />
-                  </CardContent>
-                </Card>
-
-                {/* Colonna Aziende */}
-                <Card className="p-6">
-                  <CardContent className="p-0">
-                    <h3 className="text-lg font-medium mb-4">Aziende</h3>
-                    <ImportExportManager
-                      entityType="companies"
-                      title="Aziende"
-                    />
-                  </CardContent>
-                </Card>
-
-                {/* Colonna Opportunità */}
-                <Card className="p-6">
-                  <CardContent className="p-0">
-                    <h3 className="text-lg font-medium mb-4">Opportunità</h3>
-                    <ImportExportManager
-                      entityType="leads"
-                      title="Opportunità"
-                    />
-                  </CardContent>
-                </Card>
-              </div>
+              {/* Componente unificato di importazione/esportazione */}
+              <ImportExportManager />
               
               <Separator />
               
@@ -738,18 +706,16 @@ export default function SettingsPage() {
                   <Database className="h-5 w-5 mr-2" />
                   Strumenti Avanzati
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card className="p-6">
-                    <CardContent className="p-0">
-                      <DuplicateAnalyzer entityType="contacts" />
-                    </CardContent>
-                  </Card>
-
-                  <Card className="p-6">
-                    <CardContent className="p-0">
-                      <AIEnhancer entityType="contacts" />
-                    </CardContent>
-                  </Card>
+                {/* Questi strumenti sono presenti solo a scopo dimostrativo 
+                    e verranno utilizzati nel flusso completo di importazione/esportazione */}
+                <div className="grid grid-cols-1 gap-6">
+                  <div className="p-4 border rounded-md bg-muted/30">
+                    <p className="text-sm text-muted-foreground italic text-center px-4">
+                      Gli strumenti avanzati di analisi duplicati e arricchimento AI sono integrati 
+                      nel flusso di importazione dati completo. Seleziona "Importa" nel modulo sopra 
+                      per utilizzarli.
+                    </p>
+                  </div>
                 </div>
               </div>
             </CardContent>

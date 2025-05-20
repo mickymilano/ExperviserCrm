@@ -1,12 +1,32 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle, 
+  CardFooter 
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Slider } from '@/components/ui/slider';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertCircle, Check, X } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/components/ui/table';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle, ChevronDown, Users } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 
 interface DuplicateAnalyzerProps {
   data: any[];
@@ -14,248 +34,411 @@ interface DuplicateAnalyzerProps {
   onDuplicatesProcessed: (processedData: any[]) => void;
 }
 
+interface DuplicateGroup {
+  primaryRecord: any;
+  duplicates: any[];
+  similarityScore: number;
+}
+
 export function DuplicateAnalyzer({ 
-  data,
-  entityType,
-  onDuplicatesProcessed
+  data, 
+  entityType, 
+  onDuplicatesProcessed 
 }: DuplicateAnalyzerProps) {
   const { t } = useTranslation();
-  const { toast } = useToast();
-  const [threshold, setThreshold] = useState(0.7);
-  const [duplicates, setDuplicates] = useState<any[]>([]);
-  const [selectedItems, setSelectedItems] = useState<{[key: string]: boolean}>({});
-  const [activeTab, setActiveTab] = useState('potential');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-
-  // Avvia l'analisi dei duplicati
-  const analyzeDuplicates = async () => {
-    setIsAnalyzing(true);
-    try {
-      const response = await fetch('/api/import/detect-duplicates', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          items: data,
-          entityType,
-          threshold,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(t('importExport.duplicateAnalysisError'));
-      }
-
-      const result = await response.json();
-      setDuplicates(result.duplicates || []);
+  
+  const [analyzingState, setAnalyzingState] = useState<'idle' | 'analyzing' | 'completed'>('idle');
+  const [analyzingProgress, setAnalyzingProgress] = useState(0);
+  const [duplicateGroups, setDuplicateGroups] = useState<DuplicateGroup[]>([]);
+  const [selectedRecords, setSelectedRecords] = useState<{ [id: string]: boolean }>({});
+  const [actionMode, setActionMode] = useState<'keep-all' | 'resolve-manually' | 'auto-merge'>('keep-all');
+  
+  // Simula l'analisi dei duplicati
+  useEffect(() => {
+    if (analyzingState === 'idle') {
+      setAnalyzingState('analyzing');
       
-      // Inizializza il selectedItems con tutti i duplicati selezionati
-      const initialSelected: {[key: string]: boolean} = {};
-      result.duplicates.forEach((group: any) => {
-        group.items.forEach((item: any, index: number) => {
-          if (index === 0) { // Seleziona solo il primo elemento di ogni gruppo
-            initialSelected[item.id || `temp-${group.groupId}-${index}`] = true;
-          }
+      // In una versione reale, qui invieremmo una richiesta API per analizzare i duplicati
+      // Per esempio, utilizzeremmo un algoritmo di fuzzy matching per confrontare record
+      
+      // Simuliamo un'analisi progressiva
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += 10;
+        setAnalyzingProgress(progress);
+        
+        if (progress >= 100) {
+          clearInterval(interval);
+          
+          // Genera gruppi di duplicati di esempio
+          // In una versione reale, questi verrebbero restituiti dall'API
+          const mockDuplicateGroups: DuplicateGroup[] = generateMockDuplicateGroups(data);
+          
+          setDuplicateGroups(mockDuplicateGroups);
+          setAnalyzingState('completed');
+          
+          // Pre-seleziona i record primari
+          const initialSelection: { [id: string]: boolean } = {};
+          mockDuplicateGroups.forEach(group => {
+            initialSelection[group.primaryRecord.id] = true;
+          });
+          setSelectedRecords(initialSelection);
+        }
+      }, 300);
+      
+      return () => clearInterval(interval);
+    }
+  }, [analyzingState, data]);
+  
+  // Funzione per simulare la generazione di gruppi di duplicati
+  const generateMockDuplicateGroups = (data: any[]): DuplicateGroup[] => {
+    // In una versione reale, questa logica sarebbe sul server
+    const groups: DuplicateGroup[] = [];
+    
+    // Un esempio semplice per simulare duplicati
+    // Raggruppiamo per email simili per i contatti, per nome per le aziende, ecc.
+    if (data.length > 5) {
+      // Prendiamo i primi 2-3 elementi e creiamo un gruppo
+      const primaryRecord = data[0];
+      const duplicates = data.slice(1, 3);
+      
+      groups.push({
+        primaryRecord,
+        duplicates,
+        similarityScore: 0.85
+      });
+      
+      // Se ci sono abbastanza elementi, creiamo un secondo gruppo
+      if (data.length > 8) {
+        const primaryRecord2 = data[4];
+        const duplicates2 = data.slice(5, 7);
+        
+        groups.push({
+          primaryRecord: primaryRecord2,
+          duplicates: duplicates2,
+          similarityScore: 0.75
         });
-      });
-      setSelectedItems(initialSelected);
+      }
+    }
+    
+    return groups;
+  };
+  
+  // Gestione cambio selezione record
+  const handleRecordSelection = (recordId: string) => {
+    setSelectedRecords(prev => {
+      const updated = { ...prev };
       
-      // Passa alla tab dei potenziali duplicati
-      setActiveTab('potential');
+      if (updated[recordId]) {
+        delete updated[recordId];
+      } else {
+        updated[recordId] = true;
+      }
       
-      toast({
-        title: t('importExport.duplicatesFound', { count: result.duplicates.length }),
-        description: t('importExport.reviewDuplicatesDescription'),
+      return updated;
+    });
+  };
+  
+  // Gestione azione di risoluzione duplicati
+  const handleDuplicateResolution = () => {
+    // Se non ci sono duplicati, passa semplicemente i dati originali
+    if (duplicateGroups.length === 0) {
+      onDuplicatesProcessed(data);
+      return;
+    }
+    
+    let processedData: any[] = [];
+    
+    if (actionMode === 'keep-all') {
+      // Mantieni tutti i record, eliminando solo quelli non selezionati
+      processedData = data.filter(record => {
+        // Controlla se il record fa parte di un gruppo di duplicati
+        for (const group of duplicateGroups) {
+          // Se è un record primario non selezionato, salta
+          if (group.primaryRecord.id === record.id && !selectedRecords[record.id]) {
+            return false;
+          }
+          
+          // Se è un duplicato e non è selezionato, salta
+          if (group.duplicates.some(dup => dup.id === record.id) && !selectedRecords[record.id]) {
+            return false;
+          }
+        }
+        
+        // Se non fa parte di nessun gruppo di duplicati o è selezionato, mantieni
+        return true;
       });
-    } catch (error) {
-      toast({
-        title: t('importExport.duplicateAnalysisError'),
-        description: error instanceof Error ? error.message : t('importExport.unknownError'),
-        variant: 'destructive',
+    } else if (actionMode === 'auto-merge') {
+      // Mantieni solo i record primari selezionati, scartando i duplicati
+      processedData = data.filter(record => {
+        // Se non fa parte di nessun gruppo di duplicati, mantieni
+        let isPartOfDuplicateGroup = false;
+        
+        for (const group of duplicateGroups) {
+          // Se è un record primario selezionato, mantieni
+          if (group.primaryRecord.id === record.id && selectedRecords[record.id]) {
+            return true;
+          }
+          
+          // Se è un duplicato, segnala che fa parte di un gruppo
+          if (group.duplicates.some(dup => dup.id === record.id)) {
+            isPartOfDuplicateGroup = true;
+          }
+        }
+        
+        // Se non fa parte di nessun gruppo, mantieni
+        return !isPartOfDuplicateGroup;
       });
-    } finally {
-      setIsAnalyzing(false);
+    } else {
+      // Risoluzione manuale: mantieni solo i record selezionati esplicitamente
+      processedData = data.filter(record => selectedRecords[record.id]);
+    }
+    
+    onDuplicatesProcessed(processedData);
+  };
+  
+  // Restituisce il nome dell'entità in base al tipo
+  const getEntityName = (type: string): string => {
+    switch (type) {
+      case 'contacts':
+        return t('importExport.contactEntityName');
+      case 'companies':
+        return t('importExport.companyEntityName');
+      case 'deals':
+        return t('importExport.dealEntityName');
+      default:
+        return type;
     }
   };
-
-  // Gestisce la selezione/deselezione di un elemento
-  const toggleSelect = (itemId: string) => {
-    setSelectedItems(prev => ({
-      ...prev,
-      [itemId]: !prev[itemId]
-    }));
-  };
-
-  // Procede con i dati dopo aver gestito i duplicati
-  const processDuplicates = () => {
-    // Filtra i dati originali rimuovendo quelli non selezionati
-    const processedData = data.filter(item => {
-      const itemId = item.id || `temp-${item.tempId}`;
-      // Se l'ID non è presente in selectedItems, significa che non è un duplicato
-      return selectedItems[itemId] !== false;
-    });
-
-    onDuplicatesProcessed(processedData);
-    
-    toast({
-      title: t('importExport.duplicatesProcessed'),
-      description: t('importExport.dataReadyForImport'),
-    });
-  };
-
-  // Rende un elemento per la revisione
-  const renderItem = (item: any, index: number, groupId: string) => {
-    const itemId = item.id || `temp-${groupId}-${index}`;
-    
-    return (
-      <div 
-        key={itemId} 
-        className="flex items-start p-3 border-b last:border-0 hover:bg-muted/20"
-      >
-        <Checkbox 
-          checked={selectedItems[itemId] !== false}
-          onCheckedChange={() => toggleSelect(itemId)}
-          className="mt-1 mr-3"
-        />
-        <div className="flex-1">
-          <div className="font-medium">
-            {entityType === 'contacts' && `${item.firstName || ''} ${item.lastName || ''}`}
-            {entityType === 'companies' && item.name}
-            {entityType === 'deals' && item.name}
-          </div>
-          <div className="text-sm text-muted-foreground mt-1">
-            {entityType === 'contacts' && item.email}
-            {entityType === 'companies' && item.email || item.website}
-            {entityType === 'deals' && `${item.value || '0'} € - ${item.status || 'n/a'}`}
-          </div>
-          {entityType === 'contacts' && (
-            <div className="text-xs text-muted-foreground mt-1">
-              {item.phone || item.mobile} {item.company && `- ${item.company}`}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
+  
   return (
-    <Card className="mb-6">
+    <Card>
       <CardHeader>
         <CardTitle>{t('importExport.duplicateAnalysis')}</CardTitle>
         <CardDescription>
-          {t('importExport.duplicateAnalysisDescription')}
+          {t('importExport.duplicateAnalysisDescription', { entityType: getEntityName(entityType) })}
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-6">
-          {duplicates.length === 0 ? (
-            <div className="space-y-4">
-              <div className="flex flex-col gap-2">
-                <div className="flex justify-between">
-                  <span className="text-sm font-medium">
-                    {t('importExport.similarityThreshold')}
-                  </span>
-                  <span className="text-sm text-muted-foreground">
-                    {Math.round(threshold * 100)}%
-                  </span>
+        {analyzingState === 'analyzing' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium">
+                {t('importExport.analyzingData')}
+              </span>
+              <span className="text-sm text-muted-foreground">
+                {analyzingProgress}%
+              </span>
+            </div>
+            <Progress value={analyzingProgress} className="h-2 w-full" />
+          </div>
+        )}
+        
+        {analyzingState === 'completed' && (
+          <>
+            {duplicateGroups.length === 0 ? (
+              <Alert className="mb-6">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>{t('importExport.noDuplicatesFound')}</AlertTitle>
+                <AlertDescription>
+                  {t('importExport.noDuplicatesFoundDescription')}
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <>
+                <div className="mb-6">
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>
+                      {t('importExport.duplicatesFoundTitle', { count: duplicateGroups.length })}
+                    </AlertTitle>
+                    <AlertDescription>
+                      {t('importExport.duplicatesFoundDescription')}
+                    </AlertDescription>
+                  </Alert>
                 </div>
-                <Slider
-                  value={[threshold * 100]}
-                  min={50}
-                  max={95}
-                  step={5}
-                  onValueChange={(value) => setThreshold(value[0] / 100)}
-                  className="w-full"
-                />
-                <span className="text-xs text-muted-foreground">
-                  {t('importExport.thresholdDescription')}
-                </span>
-              </div>
-              
-              <Button 
-                onClick={analyzeDuplicates} 
-                disabled={isAnalyzing}
-                className="w-full"
-              >
-                {isAnalyzing 
-                  ? t('importExport.analyzingDuplicates') 
-                  : t('importExport.analyzeDuplicates')}
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="w-full grid grid-cols-2">
-                  <TabsTrigger value="potential">
+                
+                <div className="mb-4 flex justify-between items-center">
+                  <h3 className="text-lg font-medium flex items-center">
+                    <Users className="h-5 w-5 mr-2" />
                     {t('importExport.potentialDuplicates')}
-                  </TabsTrigger>
-                  <TabsTrigger value="unique">
-                    {t('importExport.uniqueItems')}
-                  </TabsTrigger>
-                </TabsList>
-                <TabsContent value="potential" className="border rounded-md">
-                  {duplicates.length > 0 ? (
-                    <div className="divide-y">
-                      {duplicates.map((group, groupIndex) => (
-                        <div key={group.groupId || groupIndex} className="p-2">
-                          <div className="flex items-center justify-between p-2 bg-muted/30 rounded mb-2">
-                            <span className="text-sm font-medium">
-                              {t('importExport.duplicateGroup', { number: groupIndex + 1 })}
-                            </span>
-                            <span className="text-xs bg-primary/10 text-primary rounded-full px-2 py-0.5">
-                              {t('importExport.similarityScore', { score: Math.round(group.similarity * 100) })}%
-                            </span>
-                          </div>
-                          <div className="divide-y">
-                            {group.items.map((item: any, itemIndex: number) => 
-                              renderItem(item, itemIndex, group.groupId || `group-${groupIndex}`)
-                            )}
-                          </div>
+                  </h3>
+                  
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline">
+                        {actionMode === 'keep-all' && t('importExport.keepAllRecords')}
+                        {actionMode === 'resolve-manually' && t('importExport.resolveManually')}
+                        {actionMode === 'auto-merge' && t('importExport.autoMergeDuplicates')}
+                        <ChevronDown className="ml-2 h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => setActionMode('keep-all')}>
+                        {t('importExport.keepAllRecords')}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setActionMode('resolve-manually')}>
+                        {t('importExport.resolveManually')}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setActionMode('auto-merge')}>
+                        {t('importExport.autoMergeDuplicates')}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+                
+                {duplicateGroups.map((group, groupIndex) => (
+                  <div key={groupIndex} className="mb-6 border rounded-lg">
+                    <div className="bg-muted/40 p-3 rounded-t-lg border-b">
+                      <div className="flex justify-between items-center">
+                        <h4 className="font-medium">
+                          {t('importExport.duplicateGroup', { index: groupIndex + 1 })}
+                        </h4>
+                        <div className="text-sm text-muted-foreground">
+                          {t('importExport.similarityScore')}: {(group.similarityScore * 100).toFixed(0)}%
                         </div>
-                      ))}
+                      </div>
                     </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center p-8 text-center">
-                      <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
-                      <h3 className="font-medium text-lg mb-2">
-                        {t('importExport.noDuplicatesFound')}
-                      </h3>
-                      <p className="text-muted-foreground">
-                        {t('importExport.noDuplicatesDescription')}
-                      </p>
-                    </div>
-                  )}
-                </TabsContent>
-                <TabsContent value="unique" className="border rounded-md">
-                  <div className="p-4 text-center">
-                    <p className="text-muted-foreground">
-                      {t('importExport.uniqueItemsDescription')}
-                    </p>
+                    
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-12">{t('importExport.select')}</TableHead>
+                          <TableHead className="w-12">{t('importExport.status')}</TableHead>
+                          {entityType === 'contacts' && (
+                            <>
+                              <TableHead>{t('importExport.name')}</TableHead>
+                              <TableHead>{t('importExport.email')}</TableHead>
+                              <TableHead>{t('importExport.phone')}</TableHead>
+                              <TableHead>{t('importExport.company')}</TableHead>
+                            </>
+                          )}
+                          {entityType === 'companies' && (
+                            <>
+                              <TableHead>{t('importExport.name')}</TableHead>
+                              <TableHead>{t('importExport.location')}</TableHead>
+                              <TableHead>{t('importExport.website')}</TableHead>
+                              <TableHead>{t('importExport.industry')}</TableHead>
+                            </>
+                          )}
+                          {entityType === 'deals' && (
+                            <>
+                              <TableHead>{t('importExport.name')}</TableHead>
+                              <TableHead>{t('importExport.value')}</TableHead>
+                              <TableHead>{t('importExport.stage')}</TableHead>
+                              <TableHead>{t('importExport.company')}</TableHead>
+                            </>
+                          )}
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {/* Record primario */}
+                        <TableRow>
+                          <TableCell>
+                            <Checkbox 
+                              checked={!!selectedRecords[group.primaryRecord.id]} 
+                              onCheckedChange={() => handleRecordSelection(group.primaryRecord.id)}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary font-medium inline-block">
+                              {t('importExport.primary')}
+                            </div>
+                          </TableCell>
+                          {entityType === 'contacts' && (
+                            <>
+                              <TableCell>
+                                {group.primaryRecord.firstName} {group.primaryRecord.lastName}
+                              </TableCell>
+                              <TableCell>{group.primaryRecord.email}</TableCell>
+                              <TableCell>{group.primaryRecord.phone}</TableCell>
+                              <TableCell>{group.primaryRecord.company}</TableCell>
+                            </>
+                          )}
+                          {entityType === 'companies' && (
+                            <>
+                              <TableCell>{group.primaryRecord.name}</TableCell>
+                              <TableCell>{group.primaryRecord.location}</TableCell>
+                              <TableCell>{group.primaryRecord.website}</TableCell>
+                              <TableCell>{group.primaryRecord.industry}</TableCell>
+                            </>
+                          )}
+                          {entityType === 'deals' && (
+                            <>
+                              <TableCell>{group.primaryRecord.name}</TableCell>
+                              <TableCell>{group.primaryRecord.value}</TableCell>
+                              <TableCell>{group.primaryRecord.stage}</TableCell>
+                              <TableCell>{group.primaryRecord.company}</TableCell>
+                            </>
+                          )}
+                        </TableRow>
+                        
+                        {/* Record duplicati */}
+                        {group.duplicates.map((duplicate, dupIndex) => (
+                          <TableRow key={dupIndex}>
+                            <TableCell>
+                              <Checkbox 
+                                checked={!!selectedRecords[duplicate.id]} 
+                                onCheckedChange={() => handleRecordSelection(duplicate.id)}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-xs px-2 py-1 rounded-full bg-amber-500/10 text-amber-600 font-medium inline-block">
+                                {t('importExport.duplicate')}
+                              </div>
+                            </TableCell>
+                            {entityType === 'contacts' && (
+                              <>
+                                <TableCell>
+                                  {duplicate.firstName} {duplicate.lastName}
+                                </TableCell>
+                                <TableCell>{duplicate.email}</TableCell>
+                                <TableCell>{duplicate.phone}</TableCell>
+                                <TableCell>{duplicate.company}</TableCell>
+                              </>
+                            )}
+                            {entityType === 'companies' && (
+                              <>
+                                <TableCell>{duplicate.name}</TableCell>
+                                <TableCell>{duplicate.location}</TableCell>
+                                <TableCell>{duplicate.website}</TableCell>
+                                <TableCell>{duplicate.industry}</TableCell>
+                              </>
+                            )}
+                            {entityType === 'deals' && (
+                              <>
+                                <TableCell>{duplicate.name}</TableCell>
+                                <TableCell>{duplicate.value}</TableCell>
+                                <TableCell>{duplicate.stage}</TableCell>
+                                <TableCell>{duplicate.company}</TableCell>
+                              </>
+                            )}
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
                   </div>
-                </TabsContent>
-              </Tabs>
-              
-              <div className="flex justify-end gap-2">
-                <Button 
-                  variant="outline" 
-                  onClick={() => {
-                    setDuplicates([]);
-                    setSelectedItems({});
-                  }}
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  {t('common.cancel')}
-                </Button>
-                <Button onClick={processDuplicates}>
-                  <Check className="h-4 w-4 mr-2" />
-                  {t('importExport.processDuplicates')}
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
+                ))}
+              </>
+            )}
+          </>
+        )}
       </CardContent>
+      <CardFooter className="flex justify-between">
+        <div className="text-sm text-muted-foreground">
+          {analyzingState === 'completed' && 
+            t('importExport.recordsToImport', { 
+              count: Object.keys(selectedRecords).length 
+            })
+          }
+        </div>
+        <Button 
+          onClick={handleDuplicateResolution}
+          disabled={analyzingState !== 'completed'}
+        >
+          {t('importExport.continue')}
+        </Button>
+      </CardFooter>
     </Card>
   );
 }

@@ -1,11 +1,8 @@
 import { useState, useRef } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Upload, FileX, FileCheck, FileSpreadsheet } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useToast } from '@/hooks/use-toast';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { UploadCloud, File, X } from 'lucide-react';
 
 interface FileUploaderProps {
   onFileUploaded: (file: File) => void;
@@ -14,131 +11,165 @@ interface FileUploaderProps {
 }
 
 export function FileUploader({ 
-  onFileUploaded,
-  supportedFormats = ['.csv', '.xlsx', '.xls'],
-  maxSizeInMB = 10
+  onFileUploaded, 
+  supportedFormats = ['.csv', '.xlsx', '.xls'], 
+  maxSizeInMB = 10 
 }: FileUploaderProps) {
   const { t } = useTranslation();
-  const { toast } = useToast();
-  const [dragActive, setDragActive] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
-
-  const handleFileChange = (file: File | null) => {
-    if (!file) return;
-
-    // Verifica estensione
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      validateAndSetFile(files[0]);
+    }
+  };
+  
+  const validateAndSetFile = (file: File) => {
+    // Verifica formato file
     const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
-    if (!supportedFormats.includes(fileExtension)) {
-      toast({
-        title: t('importExport.invalidFileType'),
-        description: t('importExport.supportedFormats', { formats: supportedFormats.join(', ') }),
-        variant: 'destructive',
-      });
+    const isValidFormat = supportedFormats.some(format => 
+      format.toLowerCase() === fileExtension
+    );
+    
+    if (!isValidFormat) {
+      setError(t('importExport.invalidFormat', { 
+        formats: supportedFormats.join(', ') 
+      }));
       return;
     }
-
-    // Verifica dimensione
+    
+    // Verifica dimensione file
+    const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
     if (file.size > maxSizeInBytes) {
-      toast({
-        title: t('importExport.fileTooLarge'),
-        description: t('importExport.maxFileSize', { size: maxSizeInMB }),
-        variant: 'destructive',
-      });
+      setError(t('importExport.fileTooLarge', { maxSize: maxSizeInMB }));
       return;
     }
-
-    setSelectedFile(file);
-    onFileUploaded(file);
+    
+    setFile(file);
+    setError(null);
   };
-
-  const handleDrag = (e: React.DragEvent) => {
+  
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') {
-      setDragActive(true);
-    } else if (e.type === 'dragleave') {
-      setDragActive(false);
+    setIsDragging(true);
+  };
+  
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+  
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      validateAndSetFile(files[0]);
     }
   };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFileChange(e.dataTransfer.files[0]);
+  
+  const openFileDialog = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
     }
   };
-
-  const handleSelectClick = () => {
-    inputRef.current?.click();
-  };
-
+  
   const removeFile = () => {
-    setSelectedFile(null);
+    setFile(null);
+    setError(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
-
+  
+  const confirmFile = () => {
+    if (file) {
+      onFileUploaded(file);
+    }
+  };
+  
   return (
-    <Card className="mb-6">
+    <Card>
       <CardHeader>
         <CardTitle>{t('importExport.uploadFile')}</CardTitle>
         <CardDescription>
-          {t('importExport.uploadDescription', { formats: supportedFormats.join(', ') })}
+          {t('importExport.uploadFileDescription', { 
+            formats: supportedFormats.join(', '), 
+            maxSize: maxSizeInMB 
+          })}
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {!selectedFile ? (
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          className="hidden"
+          accept={supportedFormats.join(',')}
+        />
+        
+        {!file ? (
           <div
-            className={`border-2 border-dashed rounded-lg p-8 text-center ${
-              dragActive ? 'border-primary bg-primary/5' : 'border-border'
+            className={`border-2 border-dashed rounded-lg p-10 text-center cursor-pointer transition-colors ${
+              isDragging 
+                ? 'border-primary bg-primary/5' 
+                : 'border-muted-foreground/25 hover:border-primary/50'
             }`}
-            onDragEnter={handleDrag}
-            onDragLeave={handleDrag}
-            onDragOver={handleDrag}
+            onClick={openFileDialog}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
             onDrop={handleDrop}
           >
-            <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="font-medium text-lg mb-2">{t('importExport.dragAndDrop')}</h3>
-            <p className="text-muted-foreground mb-4">
-              {t('importExport.selectOrDrag', { maxSize: maxSizeInMB })}
+            <UploadCloud className="h-10 w-10 mx-auto mb-4 text-muted-foreground" />
+            <p className="text-muted-foreground mb-2">
+              {t('importExport.dragAndDrop')}
             </p>
-            <Button onClick={handleSelectClick} variant="outline">
+            <p className="text-xs text-muted-foreground/70 mb-6">
+              {t('importExport.supportedFormats', { formats: supportedFormats.join(', ') })}
+            </p>
+            <Button type="button" variant="outline" onClick={(e) => {
+              e.stopPropagation();
+              openFileDialog();
+            }}>
               {t('importExport.selectFile')}
             </Button>
-            <input
-              ref={inputRef}
-              type="file"
-              className="hidden"
-              accept={supportedFormats.join(',')}
-              onChange={(e) => {
-                if (e.target.files && e.target.files[0]) {
-                  handleFileChange(e.target.files[0]);
-                }
-              }}
-            />
           </div>
         ) : (
-          <div className="flex items-center gap-4 p-4 border rounded-lg bg-muted/30">
-            <div className="flex-shrink-0 h-12 w-12 flex items-center justify-center bg-primary/10 rounded-md">
-              <FileSpreadsheet className="h-6 w-6 text-primary" />
+          <div className="rounded-lg p-6 border">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center">
+                <File className="h-8 w-8 mr-3 text-primary" />
+                <div>
+                  <p className="font-medium">{file.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {(file.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={removeFile}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </Button>
             </div>
-            <div className="flex-1 min-w-0">
-              <h4 className="text-sm font-medium truncate">{selectedFile.name}</h4>
-              <p className="text-xs text-muted-foreground">
-                {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-              </p>
+            
+            <div className="mt-6 flex justify-end">
+              <Button onClick={confirmFile}>{t('importExport.continue')}</Button>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="flex-shrink-0 h-8 w-8 text-destructive"
-              onClick={removeFile}
-            >
-              <FileX className="h-5 w-5" />
-            </Button>
+          </div>
+        )}
+        
+        {error && (
+          <div className="mt-4 p-3 bg-destructive/10 text-destructive rounded-md text-sm">
+            {error}
           </div>
         )}
       </CardContent>
