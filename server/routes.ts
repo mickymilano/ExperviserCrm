@@ -5,6 +5,7 @@ import bcrypt from 'bcrypt';
 import { storage } from './storage';
 import { pool, db } from './db'; // Importiamo il pool di connessione PostgreSQL
 import { z } from 'zod';
+import emailRoutes from './routes/emailRoutes';
 import { 
   insertUserSchema, 
   insertContactSchema, 
