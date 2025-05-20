@@ -352,18 +352,20 @@ async function createSampleData() {
     }
 }
 
-// Esegui la configurazione
-if (require.main === module) {
-    setupNotionDatabases()
-        .then(() => createSampleData())
-        .then(() => {
-            console.log("Setup Notion completato!");
-            process.exit(0);
-        })
-        .catch(error => {
-            console.error("Setup Notion fallito:", error);
-            process.exit(1);
-        });
+// Nei moduli ES non possiamo usare require.main === module
+// Quindi esportiamo semplicemente le funzioni per l'uso esterno
+
+// Funzione principale per eseguire il setup e la creazione di dati di esempio
+export async function runNotionSetup() {
+    try {
+        await setupNotionDatabases();
+        await createSampleData();
+        console.log("Setup Notion completato!");
+        return true;
+    } catch (error) {
+        console.error("Setup Notion fallito:", error);
+        return false;
+    }
 }
 
 export { setupNotionDatabases, createSampleData };

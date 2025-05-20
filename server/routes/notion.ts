@@ -1,7 +1,24 @@
 import { Router } from 'express';
-import { authenticate } from '../routes';
+import jwt from 'jsonwebtoken';
 import { getNotionConfigStatus, isNotionConfigured } from '../notion';
 import { setupNotionDatabases, createSampleData } from '../setup-notion';
+
+// Implementiamo direttamente il middleware di autenticazione per evitare dipendenze circolari
+function authenticate(req: any, res: any, next: any) {
+  const token = req.cookies?.token || req.headers.authorization?.split(' ')[1];
+  
+  if (!token) {
+    return res.status(401).json({ message: 'Autenticazione richiesta' });
+  }
+  
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret');
+    req.user = decoded;
+    next();
+  } catch (error) {
+    return res.status(401).json({ message: 'Token non valido' });
+  }
+}
 
 interface Request {
   user?: any;
