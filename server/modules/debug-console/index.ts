@@ -7,23 +7,10 @@
  */
 
 import express from 'express';
-// Utilizziamo un'implementazione semplificata dell'autenticazione per evitare dipendenze circolari
-const authenticate = (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  // In modalità sviluppo, bypassiamo l'autenticazione
-  if (process.env.NODE_ENV === 'development') {
-    return next();
-  }
-  
-  // In produzione, controlliamo il token di autenticazione
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'Autenticazione richiesta' });
-  }
-  
-  next();
-};
+import { isAdmin } from '../../routes';
+import os from 'os';
+import process from 'process';
 
-// Log storage per conservare i messaggi di debug
 interface LogEntry {
   timestamp: Date;
   level: 'info' | 'warning' | 'error' | 'debug';
@@ -32,32 +19,45 @@ interface LogEntry {
   source?: string;
 }
 
-// Classe che gestisce la funzionalità della Debug Console
+interface LogOptions {
+  level?: 'info' | 'warning' | 'error' | 'debug';
+  startTime?: Date;
+  endTime?: Date;
+  source?: string;
+  limit?: number;
+}
+
+/**
+ * Classe Debug Console per la registrazione e il monitoraggio degli eventi di sistema
+ */
 class DebugConsole {
   private logs: LogEntry[] = [];
   private maxLogEntries: number = 1000; // Numero massimo di log da conservare in memoria
-  
+  private startTime: Date;
+
   constructor() {
-    // Inizializza con un messaggio di avvio
-    this.addLog('info', 'Debug Console inizializzata', { module: 'debug-console' });
+    this.startTime = new Date();
+    this.addLog('info', 'Debug Console inizializzata', { startTime: this.startTime });
     
-    // Intercetta gli errori non gestiti per registrarli
+    // Intercetta gli errori non gestiti a livello di processo
     process.on('uncaughtException', (error) => {
-      this.addLog('error', `Uncaught Exception: ${error.message}`, { 
-        stack: error.stack,
-        module: 'global-error-handler' 
+      this.addLog('error', 'Eccezione non gestita', { 
+        error: error.message,
+        stack: error.stack 
       });
     });
-    
+
     process.on('unhandledRejection', (reason, promise) => {
-      this.addLog('error', `Unhandled Rejection: ${reason}`, { 
-        module: 'global-error-handler',
-        promise: String(promise)
+      this.addLog('error', 'Promise rejection non gestita', { 
+        reason: String(reason),
+        promise: String(promise) 
       });
     });
   }
-  
-  // Aggiunge un nuovo messaggio di log
+
+  /**
+   * Aggiunge un log alla console di debug
+   */
   public addLog(level: 'info' | 'warning' | 'error' | 'debug', message: string, context?: Record<string, any>, source?: string): void {
     const entry: LogEntry = {
       timestamp: new Date(),
@@ -66,202 +66,166 @@ class DebugConsole {
       context,
       source
     };
+
+    this.logs.unshift(entry); // Aggiungi all'inizio per avere i log più recenti in cima
     
-    // Aggiungi il log all'inizio dell'array (più recenti in cima)
-    this.logs.unshift(entry);
-    
-    // Se superiamo il limite, rimuovi i log più vecchi
+    // Limita il numero di log in memoria
     if (this.logs.length > this.maxLogEntries) {
       this.logs = this.logs.slice(0, this.maxLogEntries);
     }
     
-    // Stampa anche sulla console del server per il debugging locale
-    const formattedMessage = `[${entry.timestamp.toISOString()}] [${level.toUpperCase()}] ${message}`;
-    
-    switch (level) {
-      case 'error':
-        console.error(formattedMessage, context);
-        break;
-      case 'warning':
-        console.warn(formattedMessage, context);
-        break;
-      case 'debug':
-        console.debug(formattedMessage, context);
-        break;
-      default:
-        console.log(formattedMessage, context);
-    }
-  }
-  
-  // Recupera i log, con possibilità di filtraggio
-  public getLogs(options?: { 
-    level?: 'info' | 'warning' | 'error' | 'debug',
-    limit?: number,
-    startTime?: Date,
-    endTime?: Date,
-    source?: string
-  }): LogEntry[] {
-    let filtered = [...this.logs];
-    
-    if (options) {
-      if (options.level) {
-        filtered = filtered.filter(log => log.level === options.level);
+    // Log console solo per errori e warning in ambiente di produzione
+    if (process.env.NODE_ENV === 'production' && (level === 'error' || level === 'warning')) {
+      console.error(`[${entry.timestamp.toISOString()}] [${level.toUpperCase()}] ${message}`);
+      if (context) {
+        console.error('Context:', JSON.stringify(context, null, 2));
       }
-      
-      if (options.startTime) {
-        filtered = filtered.filter(log => log.timestamp >= options.startTime!);
-      }
-      
-      if (options.endTime) {
-        filtered = filtered.filter(log => log.timestamp <= options.endTime!);
-      }
-      
-      if (options.source) {
-        filtered = filtered.filter(log => log.source === options.source);
-      }
-      
-      if (options.limit && options.limit > 0) {
-        filtered = filtered.slice(0, options.limit);
+    } else if (process.env.NODE_ENV !== 'production') {
+      // In ambiente di sviluppo, mostra tutti i log
+      console.log(`[${entry.timestamp.toISOString()}] [${level.toUpperCase()}] ${message}`);
+      if (context) {
+        console.log('Context:', JSON.stringify(context, null, 2));
       }
     }
-    
-    return filtered;
   }
-  
-  // Cancella tutti i log
+
+  /**
+   * Ottiene i log in base ai filtri specificati
+   */
+  public getLogs(options?: LogOptions): LogEntry[] {
+    let filteredLogs = this.logs;
+
+    // Filtra per livello
+    if (options?.level) {
+      filteredLogs = filteredLogs.filter(log => log.level === options.level);
+    }
+
+    // Filtra per data di inizio
+    if (options?.startTime) {
+      filteredLogs = filteredLogs.filter(log => log.timestamp >= options.startTime!);
+    }
+
+    // Filtra per data di fine
+    if (options?.endTime) {
+      filteredLogs = filteredLogs.filter(log => log.timestamp <= options.endTime!);
+    }
+
+    // Filtra per sorgente
+    if (options?.source) {
+      filteredLogs = filteredLogs.filter(log => log.source === options.source);
+    }
+
+    // Limita il numero di risultati
+    if (options?.limit && options.limit > 0) {
+      filteredLogs = filteredLogs.slice(0, options.limit);
+    }
+
+    return filteredLogs;
+  }
+
+  /**
+   * Pulisce tutti i log
+   */
   public clearLogs(): void {
     this.logs = [];
-    this.addLog('info', 'Log cancellati', { module: 'debug-console' });
+    this.addLog('info', 'Log cancellati');
   }
-  
-  // Registra lo stato attuale del sistema
+
+  /**
+   * Cattura lo stato del sistema
+   */
   public captureSystemState(additionalInfo?: Record<string, any>): Record<string, any> {
-    const systemState = {
+    const state = {
       timestamp: new Date(),
-      environment: process.env.NODE_ENV || 'not-set',
-      nodeVersion: process.version,
-      memory: process.memoryUsage(),
       uptime: process.uptime(),
-      ...additionalInfo
+      memory: {
+        total: os.totalmem(),
+        free: os.freemem(),
+        process: process.memoryUsage()
+      },
+      cpu: {
+        load: os.loadavg(),
+        cores: os.cpus().length
+      },
+      platform: {
+        type: os.type(),
+        release: os.release(),
+        platform: os.platform()
+      },
+      processInfo: {
+        pid: process.pid,
+        version: process.version,
+        nodeEnv: process.env.NODE_ENV || 'development',
+        argv: process.argv
+      },
+      additionalInfo
     };
-    
-    this.addLog('info', 'Stato del sistema catturato', systemState, 'system-monitor');
-    
-    return systemState;
+
+    this.addLog('info', 'Stato del sistema catturato', { systemState: state });
+    return state;
   }
 }
 
-// Istanza singleton della debug console
+// Istanza singleton del DebugConsole
 export const debugConsole = new DebugConsole();
 
-// Router Express per esporre le API della Debug Console
+// Router Express per le API di debug
 const router = express.Router();
 
-// Middleware per controllare se la Debug Console è abilitata
-const checkDebugEnabled = (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  // In produzione, puoi aggiungere controlli addizionali
-  // Ad esempio, richiedere un token speciale o limitare l'accesso a certi IP
-  if (process.env.NODE_ENV === 'production' && !process.env.DEBUG_CONSOLE_ENABLED) {
-    return res.status(403).json({ 
-      success: false, 
-      message: 'Debug Console non è abilitata in produzione. Imposta DEBUG_CONSOLE_ENABLED=true per attivarla.' 
-    });
-  }
-  
-  next();
-};
+// Ottieni tutti i log con filtri opzionali
+router.get('/logs', isAdmin, (req, res) => {
+  const level = req.query.level as 'info' | 'warning' | 'error' | 'debug' | undefined;
+  const startTime = req.query.startTime ? new Date(req.query.startTime as string) : undefined;
+  const endTime = req.query.endTime ? new Date(req.query.endTime as string) : undefined;
+  const source = req.query.source as string | undefined;
+  const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
 
-// Ottiene tutti i log (con opzioni di filtro)
-router.get('/logs', authenticate, checkDebugEnabled, (req, res) => {
-  const options: any = {};
-  
-  if (req.query.level) {
-    options.level = req.query.level;
-  }
-  
-  if (req.query.limit) {
-    options.limit = parseInt(req.query.limit as string, 10);
-  }
-  
-  if (req.query.source) {
-    options.source = req.query.source;
-  }
-  
-  if (req.query.startTime) {
-    options.startTime = new Date(req.query.startTime as string);
-  }
-  
-  if (req.query.endTime) {
-    options.endTime = new Date(req.query.endTime as string);
-  }
-  
-  const logs = debugConsole.getLogs(options);
-  
-  res.json({
-    success: true,
-    count: logs.length,
-    logs
+  const logs = debugConsole.getLogs({
+    level,
+    startTime,
+    endTime,
+    source,
+    limit
   });
+
+  res.json(logs);
 });
 
-// Aggiunge un log manualmente
-router.post('/logs', authenticate, checkDebugEnabled, (req, res) => {
+// Aggiungi un nuovo log
+router.post('/logs', isAdmin, (req, res) => {
   const { level, message, context, source } = req.body;
   
   if (!level || !message) {
-    return res.status(400).json({
-      success: false,
-      message: 'I campi level e message sono obbligatori'
-    });
+    return res.status(400).json({ error: 'Livello e messaggio richiesti' });
   }
   
-  if (!['info', 'warning', 'error', 'debug'].includes(level)) {
-    return res.status(400).json({
-      success: false,
-      message: 'Il livello di log deve essere uno tra: info, warning, error, debug'
-    });
-  }
-  
-  debugConsole.addLog(level as any, message, context, source);
-  
-  res.json({
-    success: true,
-    message: 'Log aggiunto con successo'
-  });
+  debugConsole.addLog(level, message, context, source);
+  res.status(201).json({ success: true });
 });
 
 // Cancella tutti i log
-router.delete('/logs', authenticate, checkDebugEnabled, (req, res) => {
+router.delete('/logs', isAdmin, (req, res) => {
   debugConsole.clearLogs();
-  
-  res.json({
-    success: true,
-    message: 'Tutti i log sono stati cancellati'
-  });
+  res.json({ success: true });
 });
 
-// Cattura lo stato del sistema
-router.get('/system-state', authenticate, checkDebugEnabled, (req, res) => {
-  const systemState = debugConsole.captureSystemState();
+// Ottieni lo stato del sistema
+router.get('/system-state', isAdmin, (req, res) => {
+  const additionalInfo = req.query.additionalInfo ? 
+    JSON.parse(req.query.additionalInfo as string) : undefined;
   
-  res.json({
-    success: true,
-    systemState
-  });
+  const systemState = debugConsole.captureSystemState(additionalInfo);
+  res.json(systemState);
 });
 
-// Utilità per verificare il funzionamento della Debug Console
-router.get('/ping', authenticate, checkDebugEnabled, (req, res) => {
-  debugConsole.addLog('info', 'Ping ricevuto', { 
-    ip: req.ip, 
-    userAgent: req.headers['user-agent'] 
-  }, 'api-endpoint');
-  
-  res.json({
-    success: true,
-    message: 'Debug Console è funzionante',
-    timestamp: new Date()
-  });
+// API di controllo
+router.get('/health', (req, res) => {
+  const health = {
+    status: 'online',
+    timestamp: new Date(),
+    uptime: process.uptime()
+  };
+  res.json(health);
 });
 
 export default router;

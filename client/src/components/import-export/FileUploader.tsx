@@ -1,178 +1,95 @@
-import { useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { UploadCloud, File, X } from 'lucide-react';
+import { Upload, FileCsv, FileSpreadsheet } from 'lucide-react';
 
 interface FileUploaderProps {
-  onFileUploaded: (file: File) => void;
-  supportedFormats?: string[];
-  maxSizeInMB?: number;
+  onFileSelected: (file: File) => void;
+  acceptedFormats: string;
 }
 
-export function FileUploader({ 
-  onFileUploaded, 
-  supportedFormats = ['.csv', '.xlsx', '.xls'], 
-  maxSizeInMB = 10 
-}: FileUploaderProps) {
+export function FileUploader({ onFileSelected, acceptedFormats }: FileUploaderProps) {
   const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [file, setFile] = useState<File | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
     if (files && files.length > 0) {
-      validateAndSetFile(files[0]);
+      onFileSelected(files[0]);
     }
   };
-  
-  const validateAndSetFile = (file: File) => {
-    // Verifica formato file
-    const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
-    const isValidFormat = supportedFormats.some(format => 
-      format.toLowerCase() === fileExtension
-    );
-    
-    if (!isValidFormat) {
-      setError(t('importExport.invalidFormat', { 
-        formats: supportedFormats.join(', ') 
-      }));
-      return;
-    }
-    
-    // Verifica dimensione file
-    const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
-    if (file.size > maxSizeInBytes) {
-      setError(t('importExport.fileTooLarge', { maxSize: maxSizeInMB }));
-      return;
-    }
-    
-    setFile(file);
-    setError(null);
-  };
-  
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-  
-  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(false);
-  };
-  
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(false);
-    
-    const files = e.dataTransfer.files;
-    if (files && files.length > 0) {
-      validateAndSetFile(files[0]);
-    }
-  };
-  
-  const openFileDialog = () => {
+
+  const handleBrowseClick = () => {
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
   };
-  
-  const removeFile = () => {
-    setFile(null);
-    setError(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+    
+    const files = event.dataTransfer.files;
+    if (files && files.length > 0) {
+      // Verifica il formato del file
+      const fileType = files[0].name.split('.').pop()?.toLowerCase();
+      const formatsArray = acceptedFormats.split(',').map(format => 
+        format.trim().replace('.', '').toLowerCase()
+      );
+      
+      if (fileType && formatsArray.includes(fileType)) {
+        onFileSelected(files[0]);
+      } else {
+        // Mostra un errore se il formato non è supportato
+        alert(t('import.unsupportedFormat'));
+      }
     }
   };
-  
-  const confirmFile = () => {
-    if (file) {
-      onFileUploaded(file);
-    }
-  };
-  
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t('importExport.uploadFile')}</CardTitle>
-        <CardDescription>
-          {t('importExport.uploadFileDescription', { 
-            formats: supportedFormats.join(', '), 
-            maxSize: maxSizeInMB 
-          })}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleFileChange}
-          className="hidden"
-          accept={supportedFormats.join(',')}
-        />
-        
-        {!file ? (
-          <div
-            className={`border-2 border-dashed rounded-lg p-10 text-center cursor-pointer transition-colors ${
-              isDragging 
-                ? 'border-primary bg-primary/5' 
-                : 'border-muted-foreground/25 hover:border-primary/50'
-            }`}
-            onClick={openFileDialog}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-          >
-            <UploadCloud className="h-10 w-10 mx-auto mb-4 text-muted-foreground" />
-            <p className="text-muted-foreground mb-2">
-              {t('importExport.dragAndDrop')}
-            </p>
-            <p className="text-xs text-muted-foreground/70 mb-6">
-              {t('importExport.supportedFormats', { formats: supportedFormats.join(', ') })}
-            </p>
-            <Button type="button" variant="outline" onClick={(e) => {
-              e.stopPropagation();
-              openFileDialog();
-            }}>
-              {t('importExport.selectFile')}
-            </Button>
-          </div>
-        ) : (
-          <div className="rounded-lg p-6 border">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center">
-                <File className="h-8 w-8 mr-3 text-primary" />
-                <div>
-                  <p className="font-medium">{file.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {(file.size / 1024 / 1024).toFixed(2)} MB
-                  </p>
-                </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={removeFile}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            
-            <div className="mt-6 flex justify-end">
-              <Button onClick={confirmFile}>{t('importExport.continue')}</Button>
-            </div>
-          </div>
-        )}
-        
-        {error && (
-          <div className="mt-4 p-3 bg-destructive/10 text-destructive rounded-md text-sm">
-            {error}
-          </div>
-        )}
-      </CardContent>
+    <Card 
+      className={`flex flex-col items-center justify-center border-2 border-dashed p-10 ${
+        isDragging ? 'border-primary bg-primary/5' : 'border-gray-200'
+      }`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      <div className="flex justify-center mb-6 space-x-4">
+        <FileCsv className="h-16 w-16 text-primary opacity-70" />
+        <FileSpreadsheet className="h-16 w-16 text-green-600 opacity-70" />
+      </div>
+      
+      <div className="text-center mb-6">
+        <h3 className="text-lg font-medium mb-1">{t('import.dragAndDrop')}</h3>
+        <p className="text-sm text-gray-500">{t('import.supportedFormats', { formats: acceptedFormats })}</p>
+      </div>
+      
+      <Button onClick={handleBrowseClick} className="mb-2">
+        <Upload className="mr-2 h-4 w-4" />
+        {t('import.browseFiles')}
+      </Button>
+      
+      <p className="text-xs text-gray-400">{t('import.maxFileSize')}</p>
+      
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept={acceptedFormats}
+        className="hidden"
+      />
     </Card>
   );
 }

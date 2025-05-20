@@ -1,562 +1,313 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle, 
-  CardFooter 
-} from '@/components/ui/card';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Progress } from '@/components/ui/progress';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
-  AlertCircle, 
-  Sparkles, 
-  RotateCw, 
-  CheckCircle2, 
-  Lightbulb, 
-  BadgeInfo 
+  Brain, Check, RotateCw, AlertCircle, UserCog, Building, TagIcon
 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
+
+interface EnhancementResult {
+  id: string;
+  originalContact: any;
+  enhancedContact: any;
+  changes: {
+    field: string;
+    original: string | null;
+    enhanced: string | null;
+    confidence: number;
+  }[];
+  overallConfidence: number;
+}
 
 interface AIEnhancerProps {
-  data: any[];
-  entityType: string;
-  onDataEnriched: (enhancedData: any[]) => void;
-  onSkip: () => void;
+  onApply: (enhancedData: EnhancementResult[]) => Promise<void>;
+  onClose: () => void;
 }
 
-interface EnhancementSetting {
-  id: string;
-  name: string;
-  description: string;
-  active: boolean;
-}
-
-export function AIEnhancer({
-  data,
-  entityType,
-  onDataEnriched,
-  onSkip
-}: AIEnhancerProps) {
+export function AIEnhancer({ onApply, onClose }: AIEnhancerProps) {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const [isOpen, setIsOpen] = useState(true);
+  const [isProcessing, setIsProcessing] = useState(true);
+  const [progress, setProgress] = useState(0);
+  const [enhancementResults, setEnhancementResults] = useState<EnhancementResult[]>([]);
   
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [processProgress, setProcessProgress] = useState(0);
-  const [enhancedData, setEnhancedData] = useState<any[] | null>(null);
-  const [confidenceThreshold, setConfidenceThreshold] = useState<string>("medium");
-  
-  // Impostazioni di miglioramento per tipo di entità
-  const [enhancementSettings, setEnhancementSettings] = useState<EnhancementSetting[]>([]);
-  
-  // Carica le impostazioni di miglioramento in base al tipo di entità
+  // Simula l'elaborazione dell'IA e la generazione di risultati
   useEffect(() => {
-    let settings: EnhancementSetting[] = [];
+    // Simula un ritardo di elaborazione e aggiornamenti di progresso
+    const interval = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 95) {
+          clearInterval(interval);
+          
+          // Genera risultati di esempio
+          setTimeout(() => {
+            generateMockResults();
+            setIsProcessing(false);
+          }, 500);
+          
+          return 100;
+        }
+        return prev + 5;
+      });
+    }, 300);
     
-    if (entityType === 'contacts') {
-      settings = [
-        {
-          id: 'fix-names',
-          name: t('importExport.fixNames'),
-          description: t('importExport.fixNamesDescription'),
-          active: true
-        },
-        {
-          id: 'detect-gender',
-          name: t('importExport.detectGender'),
-          description: t('importExport.detectGenderDescription'),
-          active: false
-        },
-        {
-          id: 'suggest-tags',
-          name: t('importExport.suggestTags'),
-          description: t('importExport.suggestTagsDescription'),
-          active: true
-        },
-        {
-          id: 'normalize-phones',
-          name: t('importExport.normalizePhones'),
-          description: t('importExport.normalizePhonesDescription'),
-          active: true
-        },
-        {
-          id: 'enrich-social',
-          name: t('importExport.enrichSocial'),
-          description: t('importExport.enrichSocialDescription'),
-          active: false
-        }
-      ];
-    } else if (entityType === 'companies') {
-      settings = [
-        {
-          id: 'normalize-names',
-          name: t('importExport.normalizeNames'),
-          description: t('importExport.normalizeNamesDescription'),
-          active: true
-        },
-        {
-          id: 'detect-industry',
-          name: t('importExport.detectIndustry'),
-          description: t('importExport.detectIndustryDescription'),
-          active: true
-        },
-        {
-          id: 'suggest-tags',
-          name: t('importExport.suggestTags'),
-          description: t('importExport.suggestTagsDescription'),
-          active: true
-        },
-        {
-          id: 'enrich-web',
-          name: t('importExport.enrichWeb'),
-          description: t('importExport.enrichWebDescription'),
-          active: false
-        }
-      ];
-    } else if (entityType === 'deals') {
-      settings = [
-        {
-          id: 'estimate-value',
-          name: t('importExport.estimateValue'),
-          description: t('importExport.estimateValueDescription'),
-          active: false
-        },
-        {
-          id: 'suggest-stage',
-          name: t('importExport.suggestStage'),
-          description: t('importExport.suggestStageDescription'),
-          active: true
-        },
-        {
-          id: 'suggest-tags',
-          name: t('importExport.suggestTags'),
-          description: t('importExport.suggestTagsDescription'),
-          active: true
-        }
-      ];
-    }
-    
-    setEnhancementSettings(settings);
-  }, [entityType, t]);
+    return () => clearInterval(interval);
+  }, []);
   
-  // Aggiorna lo stato di attivazione di un'impostazione di miglioramento
-  const toggleEnhancementSetting = (settingId: string) => {
-    setEnhancementSettings(prevSettings => 
-      prevSettings.map(setting => 
-        setting.id === settingId 
-          ? { ...setting, active: !setting.active } 
-          : setting
-      )
-    );
+  // Genera risultati di esempio per la simulazione
+  const generateMockResults = () => {
+    const mockResults: EnhancementResult[] = [
+      {
+        id: '1',
+        originalContact: {
+          id: 'new-1',
+          firstName: 'Marco',
+          lastName: 'Rossi',
+          email: 'marco.rossi@example.com',
+          phone: '+39 123 4567890',
+          title: 'sviluppatore',
+          companyName: 'tech solutions srl',
+          tags: ['developer']
+        },
+        enhancedContact: {
+          id: 'new-1',
+          firstName: 'Marco',
+          lastName: 'Rossi',
+          email: 'marco.rossi@example.com',
+          phone: '+39 123 4567890',
+          title: 'Sviluppatore Software Senior',
+          companyName: 'Tech Solutions S.r.l.',
+          tags: ['developer', 'software', 'senior']
+        },
+        changes: [
+          {
+            field: 'title',
+            original: 'sviluppatore',
+            enhanced: 'Sviluppatore Software Senior',
+            confidence: 0.89
+          },
+          {
+            field: 'companyName',
+            original: 'tech solutions srl',
+            enhanced: 'Tech Solutions S.r.l.',
+            confidence: 0.95
+          },
+          {
+            field: 'tags',
+            original: 'developer',
+            enhanced: 'developer, software, senior',
+            confidence: 0.82
+          }
+        ],
+        overallConfidence: 0.88
+      },
+      {
+        id: '2',
+        originalContact: {
+          id: 'new-2',
+          firstName: 'giulia',
+          lastName: 'bianchi',
+          email: 'g.bianchi@example.org',
+          phone: '3897654321',
+          title: 'marketing',
+          companyName: 'promo italia',
+          tags: []
+        },
+        enhancedContact: {
+          id: 'new-2',
+          firstName: 'Giulia',
+          lastName: 'Bianchi',
+          email: 'g.bianchi@example.org',
+          phone: '+39 389 7654321',
+          title: 'Marketing Manager',
+          companyName: 'Promo Italia S.p.A.',
+          tags: ['marketing', 'digital', 'management']
+        },
+        changes: [
+          {
+            field: 'firstName',
+            original: 'giulia',
+            enhanced: 'Giulia',
+            confidence: 0.99
+          },
+          {
+            field: 'lastName',
+            original: 'bianchi',
+            enhanced: 'Bianchi',
+            confidence: 0.99
+          },
+          {
+            field: 'phone',
+            original: '3897654321',
+            enhanced: '+39 389 7654321',
+            confidence: 0.93
+          },
+          {
+            field: 'title',
+            original: 'marketing',
+            enhanced: 'Marketing Manager',
+            confidence: 0.78
+          },
+          {
+            field: 'companyName',
+            original: 'promo italia',
+            enhanced: 'Promo Italia S.p.A.',
+            confidence: 0.86
+          },
+          {
+            field: 'tags',
+            original: null,
+            enhanced: 'marketing, digital, management',
+            confidence: 0.75
+          }
+        ],
+        overallConfidence: 0.88
+      }
+    ];
+    
+    setEnhancementResults(mockResults);
   };
   
-  // Avvia il processo di miglioramento dati con AI
-  const startEnhancement = () => {
+  // Gestisce l'applicazione dei miglioramenti
+  const handleApply = async () => {
     setIsProcessing(true);
     
-    // Controlla se l'API key di OpenAI è configurata
-    const hasAPIKey = true; // Nella versione reale, controllerebbe se è disponibile l'API key
-    
-    if (!hasAPIKey) {
-      toast({
-        title: t('importExport.noAPIKey'),
-        description: t('importExport.noAPIKeyDescription'),
-        variant: "destructive",
-      });
+    try {
+      await onApply(enhancementResults);
+      setIsOpen(false);
+    } catch (error) {
+      console.error('Errore nell\'applicazione dei miglioramenti:', error);
+    } finally {
       setIsProcessing(false);
-      return;
-    }
-    
-    // In un'implementazione reale, invieremmo i dati a un endpoint API
-    // che utilizzerebbe OpenAI per elaborare i dati
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += 5;
-      setProcessProgress(progress);
-      
-      if (progress >= 100) {
-        clearInterval(interval);
-        
-        // Simula il risultato dell'elaborazione AI
-        const enhanced = simulateAIEnhancement(data, enhancementSettings, confidenceThreshold);
-        setEnhancedData(enhanced);
-        setIsProcessing(false);
-        
-        toast({
-          title: t('importExport.enhancementComplete'),
-          description: t('importExport.enhancementCompleteDescription'),
-        });
-      }
-    }, 200);
-  };
-  
-  // Funzione di simulazione del miglioramento AI
-  const simulateAIEnhancement = (
-    data: any[], 
-    settings: EnhancementSetting[],
-    threshold: string
-  ): any[] => {
-    // In un'implementazione reale, questi dati verrebbero elaborati da OpenAI
-    return data.map(record => {
-      const enhanced = { ...record };
-      
-      // Applica i miglioramenti in base alle impostazioni attive
-      settings.forEach(setting => {
-        if (!setting.active) return;
-        
-        if (setting.id === 'suggest-tags' && !enhanced.tags) {
-          // Simula l'aggiunta di tag suggeriti
-          const sampleTags = [
-            'importato', 
-            'da-verificare', 
-            'nuovo-cliente', 
-            'potenziale', 
-            'lead-qualificato'
-          ];
-          enhanced.tags = [sampleTags[Math.floor(Math.random() * sampleTags.length)]];
-        }
-        
-        if (setting.id === 'normalize-phones' && enhanced.phone) {
-          // Simula la normalizzazione del numero di telefono
-          if (!enhanced.phone.startsWith('+')) {
-            enhanced.phone = '+39' + enhanced.phone.replace(/\D/g, '');
-          }
-        }
-        
-        if (setting.id === 'detect-industry' && enhanced.name && !enhanced.industry) {
-          // Simula il rilevamento del settore
-          const industries = ['Tecnologia', 'Finanza', 'Sanità', 'Educazione', 'Manifattura'];
-          enhanced.industry = industries[Math.floor(Math.random() * industries.length)];
-          enhanced._ai_confidence = { industry: 0.85 };
-        }
-      });
-      
-      // Aggiungi campo di arricchimento AI
-      enhanced._enriched_by_ai = true;
-      
-      return enhanced;
-    });
-  };
-  
-  // Completa il processo di miglioramento
-  const completeEnhancement = () => {
-    if (enhancedData) {
-      onDataEnriched(enhancedData);
-    } else {
-      onDataEnriched(data);
     }
   };
   
-  // Formatta il valore di confidenza in percentuale
-  const formatConfidence = (value: number): string => {
-    return `${(value * 100).toFixed(0)}%`;
+  // Gestisce la chiusura della finestra di dialogo
+  const handleClose = () => {
+    setIsOpen(false);
+    onClose();
   };
   
-  // Colore CSS per il livello di confidenza
-  const getConfidenceColor = (value: number): string => {
-    if (value >= 0.8) return 'text-green-600';
-    if (value >= 0.6) return 'text-amber-600';
-    return 'text-red-600';
+  // Ottiene il colore di sfondo in base al livello di confidenza
+  const getConfidenceColor = (confidence: number) => {
+    if (confidence >= 0.9) return 'bg-green-100 text-green-800 border-green-200';
+    if (confidence >= 0.7) return 'bg-blue-100 text-blue-800 border-blue-200';
+    return 'bg-orange-100 text-orange-800 border-orange-200';
   };
-  
-  // Restituisce il nome dell'entità in base al tipo
-  const getEntityName = (type: string): string => {
-    switch (type) {
-      case 'contacts':
-        return t('importExport.contactEntityName');
-      case 'companies':
-        return t('importExport.companyEntityName');
-      case 'deals':
-        return t('importExport.dealEntityName');
-      default:
-        return type;
-    }
-  };
-  
-  // Numero massimo di elementi da mostrare nell'anteprima
-  const MAX_PREVIEW_ITEMS = 5;
-  
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>
-          <div className="flex items-center">
-            <Sparkles className="h-5 w-5 mr-2 text-primary" />
-            {t('importExport.aiEnhancement')}
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogContent className="sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center">
+            <Brain className="h-5 w-5 mr-2 text-blue-600" />
+            {t('ai.enhancementResults')}
+          </DialogTitle>
+        </DialogHeader>
+        
+        {isProcessing ? (
+          <div className="py-6">
+            <div className="flex items-center justify-center mb-4">
+              <Brain className="h-16 w-16 text-blue-500 animate-pulse" />
+            </div>
+            <h3 className="text-center font-medium mb-4">{t('ai.processingData')}</h3>
+            <Progress value={progress} className="h-2 mb-2" />
+            <p className="text-sm text-gray-500 text-center">{progress}%</p>
           </div>
-        </CardTitle>
-        <CardDescription>
-          {t('importExport.aiEnhancementDescription', { entityType: getEntityName(entityType) })}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {!isProcessing && !enhancedData && (
-          <div className="space-y-6">
-            <Alert>
-              <BadgeInfo className="h-4 w-4" />
-              <AlertTitle>{t('importExport.aiEnhancementInfo')}</AlertTitle>
-              <AlertDescription>
-                {t('importExport.aiEnhancementInfoDescription')}
+        ) : (
+          <>
+            <Alert className="mb-4 bg-blue-50 border-blue-200">
+              <AlertDescription className="text-blue-700">
+                {t('ai.enhancementDescription', { count: enhancementResults.length })}
               </AlertDescription>
             </Alert>
             
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium flex items-center">
-                <Lightbulb className="h-5 w-5 mr-2 text-amber-500" />
-                {t('importExport.enhancementOptions')}
-              </h3>
-              
-              <div className="rounded-lg border">
-                <div className="p-4 border-b">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="confidence-threshold">
-                        {t('importExport.confidenceThreshold')}
-                      </Label>
-                      <p className="text-sm text-muted-foreground">
-                        {t('importExport.confidenceThresholdDescription')}
-                      </p>
-                    </div>
-                    <Select
-                      value={confidenceThreshold}
-                      onValueChange={setConfidenceThreshold}
+            <ScrollArea className="h-[350px] rounded-md border p-4">
+              {enhancementResults.map(result => (
+                <div 
+                  key={result.id} 
+                  className="mb-6 pb-6 border-b last:border-b-0 last:pb-0 last:mb-0"
+                >
+                  <div className="flex justify-between items-center mb-3">
+                    <h3 className="font-medium">
+                      {result.enhancedContact.firstName} {result.enhancedContact.lastName}
+                    </h3>
+                    <Badge 
+                      variant="outline" 
+                      className={getConfidenceColor(result.overallConfidence)}
                     >
-                      <SelectTrigger className="w-32">
-                        <SelectValue placeholder={t('importExport.selectThreshold')} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="low">{t('importExport.lowThreshold')}</SelectItem>
-                        <SelectItem value="medium">{t('importExport.mediumThreshold')}</SelectItem>
-                        <SelectItem value="high">{t('importExport.highThreshold')}</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      {t('ai.confidence')}: {Math.round(result.overallConfidence * 100)}%
+                    </Badge>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {result.changes.map((change, index) => (
+                      <div key={index} className="border rounded p-2">
+                        <div className="flex justify-between items-center mb-1">
+                          <div className="flex items-center">
+                            {change.field === 'title' && <UserCog className="h-4 w-4 mr-1 text-gray-600" />}
+                            {change.field === 'companyName' && <Building className="h-4 w-4 mr-1 text-gray-600" />}
+                            {change.field === 'tags' && <TagIcon className="h-4 w-4 mr-1 text-gray-600" />}
+                            <span className="font-medium text-sm text-gray-700">
+                              {t(`contact.${change.field}`)}
+                            </span>
+                          </div>
+                          <Badge 
+                            variant="outline" 
+                            className={`text-xs ${getConfidenceColor(change.confidence)}`}
+                          >
+                            {Math.round(change.confidence * 100)}%
+                          </Badge>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div className="bg-gray-50 p-1 rounded">
+                            <span className="text-xs text-gray-500">{t('ai.original')}:</span>{' '}
+                            <span className={change.original ? '' : 'italic text-gray-400'}>
+                              {change.original || t('ai.noValue')}
+                            </span>
+                          </div>
+                          <div className="bg-blue-50 p-1 rounded">
+                            <span className="text-xs text-blue-500">{t('ai.enhanced')}:</span>{' '}
+                            <span className="font-medium">
+                              {change.enhanced}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-                
-                <div className="divide-y">
-                  {enhancementSettings.map((setting) => (
-                    <div key={setting.id} className="p-4 flex items-center justify-between">
-                      <div>
-                        <h4 className="font-medium">{setting.name}</h4>
-                        <p className="text-sm text-muted-foreground">{setting.description}</p>
-                      </div>
-                      <Switch
-                        checked={setting.active}
-                        onCheckedChange={() => toggleEnhancementSetting(setting.id)}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
+              ))}
+            </ScrollArea>
+          </>
         )}
         
-        {isProcessing && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center">
-                <RotateCw className="h-4 w-4 mr-2 animate-spin" />
-                <span className="text-sm font-medium">
-                  {t('importExport.enhancingData')}
-                </span>
-              </div>
-              <span className="text-sm text-muted-foreground">
-                {processProgress}%
-              </span>
-            </div>
-            <Progress value={processProgress} className="h-2 w-full" />
-            <p className="text-sm text-muted-foreground">
-              {t('importExport.enhancingProgress', { current: Math.floor(data.length * processProgress / 100), total: data.length })}
-            </p>
-          </div>
-        )}
-        
-        {enhancedData && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium flex items-center">
-                <CheckCircle2 className="h-5 w-5 mr-2 text-green-500" />
-                {t('importExport.enhancementPreview')}
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                {t('importExport.showingPreview', { count: Math.min(enhancedData.length, MAX_PREVIEW_ITEMS) })}
-              </p>
-            </div>
-            
-            <div className="border rounded-lg overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    {entityType === 'contacts' && (
-                      <>
-                        <TableHead>{t('importExport.name')}</TableHead>
-                        <TableHead>{t('importExport.email')}</TableHead>
-                        <TableHead>{t('importExport.phone')}</TableHead>
-                        <TableHead>{t('importExport.tags')}</TableHead>
-                        <TableHead>{t('importExport.aiConfidence')}</TableHead>
-                      </>
-                    )}
-                    {entityType === 'companies' && (
-                      <>
-                        <TableHead>{t('importExport.name')}</TableHead>
-                        <TableHead>{t('importExport.industry')}</TableHead>
-                        <TableHead>{t('importExport.website')}</TableHead>
-                        <TableHead>{t('importExport.tags')}</TableHead>
-                        <TableHead>{t('importExport.aiConfidence')}</TableHead>
-                      </>
-                    )}
-                    {entityType === 'deals' && (
-                      <>
-                        <TableHead>{t('importExport.name')}</TableHead>
-                        <TableHead>{t('importExport.value')}</TableHead>
-                        <TableHead>{t('importExport.stage')}</TableHead>
-                        <TableHead>{t('importExport.tags')}</TableHead>
-                        <TableHead>{t('importExport.aiConfidence')}</TableHead>
-                      </>
-                    )}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {enhancedData.slice(0, MAX_PREVIEW_ITEMS).map((record, index) => (
-                    <TableRow key={index}>
-                      {entityType === 'contacts' && (
-                        <>
-                          <TableCell>
-                            {record.firstName} {record.lastName}
-                          </TableCell>
-                          <TableCell>{record.email}</TableCell>
-                          <TableCell>{record.phone}</TableCell>
-                          <TableCell>
-                            {record.tags && record.tags.map((tag: string, i: number) => (
-                              <span key={i} className="inline-block px-2 py-1 text-xs rounded-full bg-primary/10 text-primary mr-1 mb-1">
-                                {tag}
-                              </span>
-                            ))}
-                          </TableCell>
-                          <TableCell>
-                            {record._ai_confidence ? (
-                              Object.entries(record._ai_confidence).map(([key, value]: [string, any]) => (
-                                <div key={key} className="text-xs">
-                                  <span className="text-muted-foreground">{key}: </span>
-                                  <span className={getConfidenceColor(value as number)}>
-                                    {formatConfidence(value as number)}
-                                  </span>
-                                </div>
-                              ))
-                            ) : (
-                              <span className="text-xs text-muted-foreground">-</span>
-                            )}
-                          </TableCell>
-                        </>
-                      )}
-                      {entityType === 'companies' && (
-                        <>
-                          <TableCell>{record.name}</TableCell>
-                          <TableCell>{record.industry || '-'}</TableCell>
-                          <TableCell>{record.website || '-'}</TableCell>
-                          <TableCell>
-                            {record.tags && record.tags.map((tag: string, i: number) => (
-                              <span key={i} className="inline-block px-2 py-1 text-xs rounded-full bg-primary/10 text-primary mr-1 mb-1">
-                                {tag}
-                              </span>
-                            ))}
-                          </TableCell>
-                          <TableCell>
-                            {record._ai_confidence ? (
-                              Object.entries(record._ai_confidence).map(([key, value]: [string, any]) => (
-                                <div key={key} className="text-xs">
-                                  <span className="text-muted-foreground">{key}: </span>
-                                  <span className={getConfidenceColor(value as number)}>
-                                    {formatConfidence(value as number)}
-                                  </span>
-                                </div>
-                              ))
-                            ) : (
-                              <span className="text-xs text-muted-foreground">-</span>
-                            )}
-                          </TableCell>
-                        </>
-                      )}
-                      {entityType === 'deals' && (
-                        <>
-                          <TableCell>{record.name}</TableCell>
-                          <TableCell>€{record.value || '-'}</TableCell>
-                          <TableCell>{record.stage || '-'}</TableCell>
-                          <TableCell>
-                            {record.tags && record.tags.map((tag: string, i: number) => (
-                              <span key={i} className="inline-block px-2 py-1 text-xs rounded-full bg-primary/10 text-primary mr-1 mb-1">
-                                {tag}
-                              </span>
-                            ))}
-                          </TableCell>
-                          <TableCell>
-                            {record._ai_confidence ? (
-                              Object.entries(record._ai_confidence).map(([key, value]: [string, any]) => (
-                                <div key={key} className="text-xs">
-                                  <span className="text-muted-foreground">{key}: </span>
-                                  <span className={getConfidenceColor(value as number)}>
-                                    {formatConfidence(value as number)}
-                                  </span>
-                                </div>
-                              ))
-                            ) : (
-                              <span className="text-xs text-muted-foreground">-</span>
-                            )}
-                          </TableCell>
-                        </>
-                      )}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
-        )}
-      </CardContent>
-      <CardFooter className="flex justify-between">
-        <Button 
-          variant="outline" 
-          onClick={onSkip}
-          disabled={isProcessing}
-        >
-          {t('importExport.skip')}
-        </Button>
-        
-        {!enhancedData ? (
+        <DialogFooter>
           <Button 
-            onClick={startEnhancement} 
-            disabled={isProcessing || !enhancementSettings.some(s => s.active)}
+            variant="outline" 
+            onClick={handleClose}
+            disabled={isProcessing}
           >
-            <Sparkles className="mr-2 h-4 w-4" />
-            {t('importExport.startEnhancement')}
+            {t('common.cancel')}
           </Button>
-        ) : (
-          <Button onClick={completeEnhancement}>
-            {t('importExport.continue')}
+          <Button 
+            onClick={handleApply}
+            disabled={isProcessing || enhancementResults.length === 0}
+          >
+            {isProcessing ? (
+              <RotateCw className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Check className="h-4 w-4 mr-2" />
+            )}
+            {t('ai.applyEnhancements')}
           </Button>
-        )}
-      </CardFooter>
-    </Card>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
