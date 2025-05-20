@@ -34,7 +34,8 @@ export function ImportExportManager() {
   
   // Stati generali
   const [activeTab, setActiveTab] = useState<'import' | 'export'>('import');
-  const [entityType, setEntityType] = useState<string>('contacts');
+  // Utilizziamo un tipo più specifico per entityType
+  const [entityType, setEntityType] = useState<'contacts' | 'companies' | 'deals'>('contacts');
   const [fileFormat, setFileFormat] = useState<'csv' | 'excel'>('csv');
   
   // Stati per il flusso di importazione
@@ -168,7 +169,7 @@ export function ImportExportManager() {
                   </Label>
                   <Select 
                     value={entityType}
-                    onValueChange={setEntityType}
+                    onValueChange={(value) => setEntityType(value as 'contacts' | 'companies' | 'deals')}
                     disabled={importStep !== 'upload'}
                   >
                     <SelectTrigger id="entity-type" className="mt-1">
@@ -277,7 +278,7 @@ export function ImportExportManager() {
                   </Label>
                   <Select 
                     value={entityType}
-                    onValueChange={setEntityType}
+                    onValueChange={(value) => setEntityType(value as 'contacts' | 'companies' | 'deals')}
                   >
                     <SelectTrigger id="export-entity-type" className="mt-1">
                       <SelectValue placeholder={t('importExport.selectEntityType')} />

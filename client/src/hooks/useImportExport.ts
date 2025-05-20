@@ -12,7 +12,7 @@ export function useImportExport() {
   /**
    * Importa dati nel sistema
    */
-  const importData = async (data: any[], entityType: string): Promise<any> => {
+  const importData = async (data: any[], entityType: EntityType): Promise<any> => {
     setIsLoading(true);
     try {
       const response = await fetch(`/api/import/${entityType}`, {
