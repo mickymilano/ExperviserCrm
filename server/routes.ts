@@ -2343,7 +2343,7 @@ export function registerRoutes(app: any) {
       
       // Recupera tutte le email e conta quelle non lette
       const emails = await storage.getEmails();
-      const unreadEmails = emails.filter(email => !email.read).length;
+      const unreadEmails = emails.filter(email => !email.isRead).length;
       
       res.json({
         contacts: contactsCount,
