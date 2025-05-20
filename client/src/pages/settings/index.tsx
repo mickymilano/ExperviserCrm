@@ -18,7 +18,12 @@ import {
   Trash2, 
   Plus,
   Info,
-  Edit
+  Edit,
+  Database,
+  Upload,
+  Download,
+  FileDown,
+  FileUp
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
