@@ -1,6 +1,6 @@
 import { QueryClient } from '@tanstack/react-query';
 import type { QueryFunction } from '@tanstack/react-query';
-import { showSuccessNotification, showErrorNotification } from '@/lib/notification';
+import { showSuccessNotification, showErrorNotification } from './notification';
 
 // Funzione per fare le chiamate API
 export async function apiRequest(
