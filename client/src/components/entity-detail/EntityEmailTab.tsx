@@ -1,5 +1,5 @@
 import React from 'react';
-import { EntityEmailInbox } from '@/components/email/EntityEmailInbox';
+import EntityEmailInbox from '@/components/email/EntityEmailInbox';
 import { Card } from '@/components/ui/card';
 
 interface EntityEmailTabProps {

@@ -18,32 +18,65 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { it } from 'date-fns/locale';
+import { Email, EmailAttachment } from '@/types';
 
-interface EmailAttachment {
-  id: string;
-  filename: string;
-  contentType: string;
-  size: number;
+interface EmailListProps {
+  emails: Email[];
+  onSelect: (email: Email) => void;
+  selectedEmail: Email | null;
+  isLoading: boolean;
 }
 
-interface Email {
-  id: string;
-  fromEmail: string;
-  fromName: string;
-  toEmail: string;
-  toName: string;
-  cc?: string[];
-  bcc?: string[];
-  subject: string;
-  body: string;
-  bodyType: 'text' | 'html';
-  receivedAt: string;
-  isRead: boolean;
-  attachments: EmailAttachment[];
-  starred?: boolean;
-  entityId?: string;
-  entityType?: 'contact' | 'company' | 'deal' | 'lead';
-}
+// Componente EmailList per mostrare l'elenco delle email
+const EmailList: React.FC<EmailListProps> = ({ emails, onSelect, selectedEmail, isLoading }) => {
+  const { t } = useTranslation();
+  
+  if (isLoading) {
+    return (
+      <div className="space-y-2">
+        {[...Array(5)].map((_, i) => (
+          <Skeleton key={i} className="h-16 w-full" />
+        ))}
+      </div>
+    );
+  }
+  
+  if (emails.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <div className="text-sm text-muted-foreground">{t('email.noEmails')}</div>
+      </div>
+    );
+  }
+  
+  return (
+    <ScrollArea className="h-[400px]">
+      {emails.map(email => (
+        <div
+          key={email.id}
+          className={`border-b p-2 cursor-pointer hover:bg-primary/5 ${
+            selectedEmail?.id === email.id ? 'bg-primary/10' : ''
+          } ${!email.isRead ? 'font-medium' : ''}`}
+          onClick={() => onSelect(email)}
+        >
+          <div className="flex justify-between items-start mb-1">
+            <div className="text-sm truncate font-medium">{email.fromName}</div>
+            <div className="text-xs text-muted-foreground">
+              {formatDistanceToNow(new Date(email.receivedAt), { 
+                addSuffix: false, 
+                locale: it 
+              })}
+            </div>
+          </div>
+          <div className="text-sm truncate">{email.subject}</div>
+          <div className="text-xs text-muted-foreground truncate">
+            {email.body.replace(/<[^>]*>/g, '').substring(0, 60)}...
+          </div>
+        </div>
+      ))}
+    </ScrollArea>
+  );
+};
 
 interface EntityEmailInboxProps {
   entityId: string;
@@ -53,6 +86,7 @@ interface EntityEmailInboxProps {
   className?: string;
 }
 
+// Componente principale per visualizzare le email relative a un'entità
 function EntityEmailInbox({ 
   entityId, 
   entityType, 
@@ -228,7 +262,9 @@ function EntityEmailInbox({
     setSelectedEmail(null);
     
     // Se è un contatto, prepopola il campo "A" con l'email del contatto
-    if (entityType === 'contact' && emails && emails.length > 0) {
+    if (entityType === 'contact' && entityEmail) {
+      setNewEmail(prev => ({ ...prev, to: entityEmail }));
+    } else if (emails && emails.length > 0 && entityType === 'contact') {
       const contactEmail = emails[0].toEmail;
       setNewEmail(prev => ({ ...prev, to: contactEmail }));
     }
@@ -303,56 +339,51 @@ function EntityEmailInbox({
                   </TabsTrigger>
                 </TabsList>
                 
-                {isLoading ? (
-                  <div className="flex justify-center py-8">
-                    <Spinner />
-                  </div>
-                ) : filteredEmails.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    {t('email.noEmailsFound')}
-                  </div>
-                ) : (
-                  <ScrollArea className="h-[400px]">
-                    {filteredEmails.map((email: Email) => (
-                      <div 
-                        key={email.id}
-                        className={`p-2 mb-2 border-b cursor-pointer transition-colors hover:bg-gray-50 ${
-                          selectedEmail?.id === email.id ? 'bg-blue-50 border-blue-100' : ''
-                        } ${!email.isRead ? 'font-semibold' : ''}`}
-                        onClick={() => handleSelectEmail(email)}
-                      >
-                        <div className="flex justify-between items-start">
-                          <span className="text-sm truncate">
-                            {email.fromName || email.fromEmail}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            {formatEmailDate(email.receivedAt)}
-                          </span>
-                        </div>
-                        <div className="text-sm font-medium truncate">
-                          {email.subject || t('email.noSubject')}
-                        </div>
-                        <div className="text-xs text-gray-500 truncate">
-                          {email.body.replace(/<[^>]*>/g, '').substring(0, 50)}
-                          {email.body.length > 50 ? '...' : ''}
-                        </div>
-                        <div className="flex items-center mt-1">
-                          {!email.isRead && (
-                            <Badge variant="secondary" className="mr-1 h-1.5 w-1.5 rounded-full p-0" />
-                          )}
-                          {email.attachments.length > 0 && (
-                            <Paperclip className="h-3 w-3 text-gray-400" />
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </ScrollArea>
-                )}
+                <TabsContent value="inbox" className="mt-0">
+                  <EmailList 
+                    emails={filteredEmails} 
+                    onSelect={handleSelectEmail}
+                    selectedEmail={selectedEmail}
+                    isLoading={isLoading}
+                  />
+                </TabsContent>
+                <TabsContent value="read" className="mt-0">
+                  <EmailList 
+                    emails={filteredEmails} 
+                    onSelect={handleSelectEmail}
+                    selectedEmail={selectedEmail}
+                    isLoading={isLoading}
+                  />
+                </TabsContent>
+                <TabsContent value="all" className="mt-0">
+                  <EmailList 
+                    emails={filteredEmails} 
+                    onSelect={handleSelectEmail}
+                    selectedEmail={selectedEmail}
+                    isLoading={isLoading}
+                  />
+                </TabsContent>
+                <TabsContent value="starred" className="mt-0">
+                  <EmailList 
+                    emails={filteredEmails} 
+                    onSelect={handleSelectEmail}
+                    selectedEmail={selectedEmail}
+                    isLoading={isLoading}
+                  />
+                </TabsContent>
               </Tabs>
             </div>
             
             <div className="w-2/3 pl-4">
-              {composeMode ? (
+              {isLoading ? (
+                <div className="flex flex-col space-y-4 p-4">
+                  <Skeleton className="h-8 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+                  <Skeleton className="h-32 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                </div>
+              ) : composeMode ? (
                 <div className="h-full flex flex-col">
                   <div className="mb-4">
                     <div className="mb-2">
@@ -517,6 +548,16 @@ function EntityEmailInbox({
     </Card>
   );
 }
+
+// Componente Skeleton
+const Skeleton = ({ className, ...props }: { className?: string } & React.HTMLAttributes<HTMLDivElement>) => {
+  return (
+    <div
+      className={`animate-pulse rounded-md bg-primary/10 ${className}`}
+      {...props}
+    />
+  );
+};
 
 // Esporta sia come default che come named export per garantire compatibilità
 export default EntityEmailInbox;
