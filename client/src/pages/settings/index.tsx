@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import { useEmailAccounts, EmailAccount } from "@/hooks/useEmailAccounts";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
+import { useEmailAccounts, EmailAccount } from "../../hooks/useEmailAccounts";
+import { Button } from "../../components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
+import { Input } from "../../components/ui/input";
+import { Label } from "../../components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
+import { Switch } from "../../components/ui/switch";
+import { Separator } from "../../components/ui/separator";
 import { 
   User, 
   Lock, 
@@ -27,19 +27,19 @@ import {
 } from "lucide-react";
 
 // Import dei componenti per la gestione dati
-import { ImportExportManager } from "@/components/import-export/ImportExportManager";
-import { DuplicateAnalyzer } from "@/components/import-export/DuplicateAnalyzer";
-import { AIEnhancer } from "@/components/import-export/AIEnhancer";
-import { useToast } from "@/hooks/use-toast";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ImportExportManager } from "../../components/import-export/ImportExportManager";
+import { DuplicateAnalyzer } from "../../components/import-export/DuplicateAnalyzer";
+import { AIEnhancer } from "../../components/import-export/AIEnhancer";
+import { useToast } from "../../hooks/use-toast";
+import { Skeleton } from "../../components/ui/skeleton";
 import { 
   Dialog, 
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
   DialogDescription
-} from "@/components/ui/dialog";
-import { useTheme } from "@/components/layouts/ThemeProvider";
+} from "../../components/ui/dialog";
+import { useTheme } from "../../components/layouts/ThemeProvider";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,7 +49,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "../../components/ui/alert-dialog";
 import {
   Select,
   SelectContent,
@@ -58,7 +58,7 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "../../components/ui/select";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { EmailAccountForm } from "@/components/email/EmailAccountForm";
 

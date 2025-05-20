@@ -1,13 +1,13 @@
 import { useState } from "react";
-import { useBranches } from "@/hooks/useBranches";
-import { Branch } from "@/types";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { useBranches } from "../../hooks/useBranches";
+import { Branch } from "../../types";
+import { Button } from "../../components/ui/button";
+import { Card, CardContent } from "../../components/ui/card";
+import { Input } from "../../components/ui/input";
 import { Plus, Search, Filter } from "lucide-react";
-import BranchModal from "@/components/modals/BranchModal";
-import { Skeleton } from "@/components/ui/skeleton";
-import BranchCardViewList from "@/components/branches/BranchCardViewList";
+import BranchModal from "../../components/modals/BranchModal";
+import { Skeleton } from "../../components/ui/skeleton";
+import BranchCardViewList from "../../components/branches/BranchCardViewList";
 
 export default function Branches() {
   const [showModal, setShowModal] = useState(false);
