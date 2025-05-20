@@ -3,7 +3,7 @@ import { toast } from "../../hooks/use-toast";
 import { Button } from "../ui/button";
 import { queryClient } from "../../lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
-import { Company } from "@shared/schema";
+import { Company } from "../../../../shared/schema";
 import {
   Dialog,
   DialogContent,

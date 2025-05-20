@@ -18,7 +18,7 @@ import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
-import type { EmailAccount } from '@shared/schema';
+import type { EmailAccount } from '../../../../shared/schema';
 import { useEmailAccounts, useDeleteEmailAccount, useSyncEmailAccount, useSyncAllEmailAccounts } from '../../hooks/useEmailAccounts';
 import { useSetPrimaryEmailAccount, useToggleEmailAccountActive, useAccountStatusColor } from '../../hooks/useEmailSettings';
 import { useToast } from '../../hooks/use-toast';

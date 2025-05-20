@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { PlusCircle, X, Check, AlertTriangle } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AreaOfActivity, Company } from "@shared/schema";
+import { AreaOfActivity, Company } from "../../../../shared/schema";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";

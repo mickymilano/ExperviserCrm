@@ -45,7 +45,7 @@ import {
   useRemoveSignatureFromAccount
 } from '../../hooks/useSignatures';
 import { useEmailAccounts } from '../../hooks/useEmailAccounts';
-import { insertSignatureSchema, Signature, InsertSignature, EmailAccount } from '@shared/schema';
+import { insertSignatureSchema, Signature, InsertSignature, EmailAccount } from '../../../../shared/schema';
 
 // Validation schema for signature form
 const signatureFormSchema = insertSignatureSchema.extend({

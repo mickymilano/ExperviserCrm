@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useToast } from "../../hooks/use-toast";
 import { useAuth } from "../../hooks/useAuth";
 import { Label } from "../../components/ui/label";
-import experviserLogoPath from "@assets/experviser_logo.png";
+import experviserLogoPath from "../../../../attached_assets/experviser_logo.png";
 
 const loginSchema = z.object({
   email: z.string().min(1, { message: "Email is required" }),

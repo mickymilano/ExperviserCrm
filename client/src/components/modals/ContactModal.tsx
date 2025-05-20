@@ -12,7 +12,7 @@ import { Textarea } from "../ui/textarea";
 import { useToast } from "../../hooks/use-toast";
 import AreasOfActivityManager from "../forms/AreasOfActivityManager";
 import { ContactEmailsPanel } from "./ContactEmailsPanel";
-import { InsertAreaOfActivity } from "@shared/schema";
+import { InsertAreaOfActivity } from "../../../../shared/schema";
 
 interface ContactModalProps {
   open: boolean;

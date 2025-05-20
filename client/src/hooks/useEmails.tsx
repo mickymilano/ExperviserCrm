@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Email } from '@shared/schema';
+import { Email } from '../../../shared/schema';
 import { apiRequest, queryClient } from '../lib/queryClient';
 import { useToast } from './use-toast';
 

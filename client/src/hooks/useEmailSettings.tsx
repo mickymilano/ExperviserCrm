@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from './use-toast';
-import { EmailAccount } from '@shared/schema';
+import { EmailAccount } from '../../../shared/schema';
 import { apiRequest } from '../lib/queryClient';
 
 interface ApiResponse<T> {

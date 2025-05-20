@@ -29,7 +29,7 @@ import {
   SelectValue 
 } from "../ui/select";
 import { Email, Contact, Company, EmailAccount } from "../../types";
-import { Deal } from "@shared/schema";
+import { Deal } from "../../../../shared/schema";
 import { apiRequest } from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
 import { useContacts } from "../../hooks/useContacts";
