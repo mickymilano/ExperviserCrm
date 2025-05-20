@@ -148,30 +148,21 @@ async function processEmail(message: ImapSimple.Message, accountId: number, conn
     // Estrai i dati dalla firma
     const signatureData = extractSignatureData(parsed.text || '', parsed.html || '');
     
-    // Prepara i dati per l'inserimento dell'email
+    // Prepara i dati per l'inserimento dell'email - campi adattati allo schema attuale
     const emailData = {
       accountId: accountId,
       messageId,
-      conversationId: parsed.messageId || '',  // Usa messageId come base per conversationId
-      from: JSON.stringify(from),
-      to: JSON.stringify(parsed.to?.value || []),
-      cc: JSON.stringify(parsed.cc?.value || []),
-      bcc: JSON.stringify(parsed.bcc?.value || []),
+      from: from.address,
+      to: parsed.to?.value || [],
+      cc: parsed.cc?.value || [],
+      bcc: parsed.bcc?.value || [],
       subject: parsed.subject || '(No Subject)',
-      textBody: parsed.text || '',
-      htmlBody: parsed.html || '',
+      body: parsed.html || parsed.text || '',
       receivedDate: parsed.date || new Date(),
       isRead: false,
       hasAttachments: parsed.attachments.length > 0,
-      attachments: JSON.stringify(parsed.attachments.map(att => ({
-        filename: att.filename,
-        contentType: att.contentType,
-        size: att.size
-      }))),
-      extractedData: JSON.stringify(signatureData),
-      rawHeaders: JSON.stringify(parsed.headers),
-      direction: 'inbound',
-      status: 'received'
+      folder: 'inbox',
+      date: new Date()
     };
     
     // Inserisci l'email nel database
