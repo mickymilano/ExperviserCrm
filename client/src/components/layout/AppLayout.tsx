@@ -102,7 +102,7 @@ const getMainMenuItems = (stats?: any): MenuItemProps[] => [
   },
   {
     label: 'Email',
-    path: '/emails',
+    path: '/email/inbox',
     icon: <Mail className="h-5 w-5" />,
     badge: stats?.unreadEmails > 0 ? stats.unreadEmails : null
   },
@@ -143,7 +143,7 @@ function MenuItem({ item, isOpen }: { item: MenuItemProps; isOpen: boolean }) {
             <span className={isActive ? 'font-medium' : ''}>{item.label}</span>
             {item.badge && (
               <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${
-                item.path === '/emails' 
+                item.path.startsWith('/email') 
                 ? 'bg-red-600 text-white' 
                 : 'bg-primary/10 text-primary'
               }`}>
