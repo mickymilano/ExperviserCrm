@@ -6,6 +6,7 @@ import { storage } from './storage';
 import { pool, db } from './db'; // Importiamo il pool di connessione PostgreSQL
 import { z } from 'zod';
 import emailRoutes from './routes/emailRoutes';
+import notionRouter from './routes/notion';
 import { 
   insertUserSchema, 
   insertContactSchema, 
@@ -3200,7 +3201,6 @@ export function registerRoutes(app: any) {
   app.use('/api/import-export', importExportRoutes);
   
   // Registra le rotte per l'integrazione con Notion
-  import { router as notionRouter } from './routes/notion';
   app.use('/api/notion', notionRouter);
   
   // Crea il server HTTP

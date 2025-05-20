@@ -33,6 +33,7 @@ const SynergiesPage = lazy(() => import('./pages/synergies'));
 const TasksPage = lazy(() => import('./pages/tasks'));
 const CalendarPage = lazy(() => import('./pages/calendar'));
 const SettingsPage = lazy(() => import('./pages/settings'));
+const NotionIntegrationPage = lazy(() => import('./pages/settings/notion-integration'));
 const HelpPage = lazy(() => import('./pages/help'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
@@ -205,6 +206,11 @@ export default function App() {
           </Route>
           
           {/* Route for Settings */}
+          <Route path="/settings/notion-integration">
+            <ProtectedRoute>
+              <LayoutPage component={NotionIntegrationPage} />
+            </ProtectedRoute>
+          </Route>
           <Route path="/settings">
             <ProtectedRoute>
               <LayoutPage component={SettingsPage} />
