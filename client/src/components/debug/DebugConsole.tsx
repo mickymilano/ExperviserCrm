@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useDebugConsoleStore } from "@/stores/debugConsoleStore";
-import { useDebugLogs } from "@/hooks/useDebugLogs";
+import { useDebugConsoleStore } from "../../stores/debugConsoleStore";
+import { useDebugLogs } from "../../hooks/useDebugLogs";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   XIcon, 
