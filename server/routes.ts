@@ -2996,6 +2996,9 @@ export function registerRoutes(app: any) {
   // Registra le rotte email per l'integrazione con le pagine di dettaglio
   app.use('/', emailRoutes);
   
+  // Registra le rotte per importazione/esportazione dati
+  app.use('/', importExportRoutes);
+  
   // Crea il server HTTP
   const httpServer = createServer(app);
   
