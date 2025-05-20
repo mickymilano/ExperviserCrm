@@ -1,112 +1,93 @@
 import { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from "@/hooks/use-toast";
 
 type EntityType = 'contacts' | 'companies' | 'leads';
-type FileType = 'csv' | 'excel';
 
-interface UseImportExportOptions {
-  onSuccess?: (data: any) => void;
-  onError?: (error: any) => void;
+interface ImportExportHook {
+  importData: (file: File, entityType: EntityType, fileType: 'csv' | 'excel') => Promise<any>;
+  exportData: (entityType: EntityType, fileType: 'csv' | 'excel') => Promise<any>;
+  checkDuplicates: (entity: any, entityType: EntityType) => Promise<any>;
+  enhanceWithAI: (entity: any, entityType: EntityType, options?: any) => Promise<any>;
+  isLoading: boolean;
 }
 
-export function useImportExport(options?: UseImportExportOptions) {
+export function useImportExport(): ImportExportHook {
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const [isImporting, setIsImporting] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
-  const [isDuplicateChecking, setIsDuplicateChecking] = useState(false);
-  const [isEnhancing, setIsEnhancing] = useState(false);
 
-  // Funzione per importare dati
-  const importData = async (file: File, entityType: EntityType, fileType: FileType, importOptions = {}) => {
-    if (!file) {
-      toast({
-        title: 'Errore',
-        description: 'Nessun file selezionato',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setIsImporting(true);
-
+  /**
+   * Importa dati da un file nel sistema
+   */
+  const importData = async (file: File, entityType: EntityType, fileType: 'csv' | 'excel'): Promise<any> => {
+    setIsLoading(true);
     try {
+      // Creiamo un FormData per l'upload del file
       const formData = new FormData();
       formData.append('file', file);
-      
-      if (Object.keys(importOptions).length > 0) {
-        formData.append('options', JSON.stringify(importOptions));
-      }
+      formData.append('entityType', entityType);
+      formData.append('fileType', fileType);
 
-      const response = await fetch(`/api/import-export/import/${fileType}/${entityType}`, {
+      // Inviamo la richiesta al backend
+      const response = await fetch(`/api/import/${entityType}/${fileType}`, {
         method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Errore durante l'importazione: ${response.statusText}`);
+        const error = await response.json();
+        throw new Error(error.message || `Errore durante l'importazione dei dati`);
       }
 
       const result = await response.json();
       
       toast({
         title: 'Importazione completata',
-        description: `${result.imported} record importati con successo.`,
+        description: `${result.count || 0} elementi importati con successo`,
       });
-
-      if (options?.onSuccess) {
-        options.onSuccess(result);
-      }
-
+      
       return result;
     } catch (error) {
-      console.error('Errore di importazione:', error);
-      
       toast({
         title: 'Errore di importazione',
-        description: error.message || 'Si è verificato un errore durante l\'importazione.',
+        description: error instanceof Error ? error.message : 'Errore sconosciuto durante l\'importazione',
         variant: 'destructive',
       });
-
-      if (options?.onError) {
-        options.onError(error);
-      }
+      throw error;
     } finally {
-      setIsImporting(false);
+      setIsLoading(false);
     }
   };
 
-  // Funzione per esportare dati
-  const exportData = async (entityType: EntityType, fileType: FileType, ids = [], exportOptions = {}) => {
-    setIsExporting(true);
-
+  /**
+   * Esporta dati dal sistema in un file CSV o Excel
+   */
+  const exportData = async (entityType: EntityType, fileType: 'csv' | 'excel'): Promise<any> => {
+    setIsLoading(true);
     try {
-      // Per il download del file, dobbiamo gestire la risposta in modo diverso
-      const response = await fetch(`/api/import-export/export/${fileType}/${entityType}`, {
-        method: 'POST',
+      // Per esportare, facciamo una richiesta GET con un link che scatenerà il download
+      const response = await fetch(`/api/export/${entityType}/${fileType}`, {
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ ids, options: exportOptions }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Errore durante l'esportazione: ${response.statusText}`);
+        const error = await response.json();
+        throw new Error(error.message || `Errore durante l'esportazione dei dati`);
       }
 
-      // Ottieni il blob dalla risposta
+      // Otteniamo il blob dal server
       const blob = await response.blob();
       
-      // Crea un URL per il blob
-      const url = window.URL.createObjectURL(blob);
+      // Determiniamo l'estensione del file
+      const extension = fileType === 'csv' ? 'csv' : 'xlsx';
       
-      // Crea un elemento "a" per il download
+      // Creiamo un URL per il blob e lo scarichiamo
+      const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${entityType}_export.${fileType === 'csv' ? 'csv' : 'xlsx'}`;
-      
-      // Aggiungi l'elemento al DOM, attiva il click e rimuovilo
+      a.download = `${entityType}_export.${extension}`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -114,129 +95,97 @@ export function useImportExport(options?: UseImportExportOptions) {
       
       toast({
         title: 'Esportazione completata',
-        description: `I dati sono stati esportati con successo.`,
+        description: `I dati sono stati esportati in formato ${fileType.toUpperCase()}`,
       });
-
-      if (options?.onSuccess) {
-        options.onSuccess(true);
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Errore di esportazione:', error);
       
+      return { success: true };
+    } catch (error) {
       toast({
         title: 'Errore di esportazione',
-        description: error.message || 'Si è verificato un errore durante l\'esportazione.',
+        description: error instanceof Error ? error.message : 'Errore sconosciuto durante l\'esportazione',
         variant: 'destructive',
       });
-
-      if (options?.onError) {
-        options.onError(error);
-      }
+      throw error;
     } finally {
-      setIsExporting(false);
+      setIsLoading(false);
     }
   };
 
-  // Funzione per verificare duplicati
-  const checkDuplicates = async (entity: any, entityType: EntityType, checkOptions = {}) => {
-    setIsDuplicateChecking(true);
-
+  /**
+   * Controlla i duplicati per l'entità specificata
+   */
+  const checkDuplicates = async (entity: any, entityType: EntityType): Promise<any> => {
+    setIsLoading(true);
     try {
-      const response = await fetch(`/api/import-export/check-duplicates/${entityType}`, {
+      const response = await fetch(`/api/duplicates/${entityType}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ entity, options: checkOptions }),
+        body: JSON.stringify(entity),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Errore durante la verifica dei duplicati: ${response.statusText}`);
+        const error = await response.json();
+        throw new Error(error.message || `Errore durante l'analisi dei duplicati`);
       }
 
       const result = await response.json();
+
+      toast({
+        title: 'Analisi completata',
+        description: `Trovati ${result.duplicates?.length || 0} possibili duplicati`,
+      });
       
-      if (result.duplicates?.length > 0) {
-        toast({
-          title: 'Duplicati trovati',
-          description: `Trovati ${result.duplicates.length} possibili duplicati.`,
-        });
-      } else {
-        toast({
-          title: 'Verifica completata',
-          description: 'Nessun duplicato trovato.',
-        });
-      }
-
-      if (options?.onSuccess) {
-        options.onSuccess(result);
-      }
-
       return result;
     } catch (error) {
-      console.error('Errore nella verifica dei duplicati:', error);
-      
       toast({
-        title: 'Errore nella verifica',
-        description: error.message || 'Si è verificato un errore durante la verifica dei duplicati.',
+        title: 'Errore nell\'analisi dei duplicati',
+        description: error instanceof Error ? error.message : 'Errore sconosciuto durante l\'analisi',
         variant: 'destructive',
       });
-
-      if (options?.onError) {
-        options.onError(error);
-      }
+      throw error;
     } finally {
-      setIsDuplicateChecking(false);
+      setIsLoading(false);
     }
   };
 
-  // Funzione per migliorare i dati con AI
-  const enhanceWithAI = async (entity: any, entityType: EntityType, enhanceOptions = {}) => {
-    setIsEnhancing(true);
-
+  /**
+   * Arricchisce i dati con l'intelligenza artificiale
+   */
+  const enhanceWithAI = async (entity: any, entityType: EntityType, options?: any): Promise<any> => {
+    setIsLoading(true);
     try {
-      const response = await fetch(`/api/import-export/enhance/${entityType}`, {
+      const response = await fetch(`/api/enhance/${entityType}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ entity, options: enhanceOptions }),
+        body: JSON.stringify({ entity, options }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Errore durante il miglioramento con AI: ${response.statusText}`);
+        const error = await response.json();
+        throw new Error(error.message || `Errore durante l'arricchimento dei dati`);
       }
 
       const result = await response.json();
-      
+
       toast({
-        title: 'Miglioramento completato',
-        description: 'I dati sono stati arricchiti con successo tramite AI.',
+        title: 'Arricchimento completato',
+        description: `${result.count || 0} elementi sono stati arricchiti con successo`,
       });
-
-      if (options?.onSuccess) {
-        options.onSuccess(result);
-      }
-
+      
       return result;
     } catch (error) {
-      console.error('Errore nel miglioramento con AI:', error);
-      
       toast({
-        title: 'Errore nel miglioramento',
-        description: error.message || 'Si è verificato un errore durante il miglioramento con AI.',
+        title: 'Errore nell\'arricchimento dei dati',
+        description: error instanceof Error ? error.message : 'Errore sconosciuto durante l\'arricchimento',
         variant: 'destructive',
       });
-
-      if (options?.onError) {
-        options.onError(error);
-      }
+      throw error;
     } finally {
-      setIsEnhancing(false);
+      setIsLoading(false);
     }
   };
 
@@ -245,9 +194,6 @@ export function useImportExport(options?: UseImportExportOptions) {
     exportData,
     checkDuplicates,
     enhanceWithAI,
-    isImporting,
-    isExporting,
-    isDuplicateChecking,
-    isEnhancing
+    isLoading,
   };
 }

@@ -25,14 +25,8 @@ export function AIEnhancer({ entityType, onEnhancementComplete }: AIEnhancerProp
 
   const handleEnhance = async () => {
     // Verificare prima se API key OpenAI è disponibile
-    if (!process.env.OPENAI_API_KEY) {
-      toast({
-        title: 'API Key mancante',
-        description: 'L\'API key di OpenAI non è configurata nel sistema.',
-        variant: 'destructive',
-      });
-      return;
-    }
+    // Non controlliamo qui la chiave, lasciamo che sia il server a verificarla
+    // poiché non vogliamo esporre la chiave API nel frontend
 
     setEnhancing(true);
     try {
