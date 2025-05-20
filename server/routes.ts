@@ -26,7 +26,8 @@ import {
   convertLead 
 } from './controllers/leadController.js';
 import branchRoutes from './branchRoutes';
-import mockEmailRoutes from './mockEmailRoutes';
+// Importazione corretta delle rotte email
+import emailRoutes from './mockEmailRoutes';
 import emailModuleRoutes from './routes/emailRoutes';
 import importExportRoutes from './routes/import-export';
 import debugConsoleRouter from './modules/debug-console';
@@ -3078,7 +3079,8 @@ export function registerRoutes(app: any) {
   app.use('/api/import-export', authenticate, importExportRoutes);
   
   // Integrazione API Email di test
-  app.use('/api', authenticate, mockEmailRoutes);
+  // Commentato temporaneamente per risolvere problemi di build
+  // app.use('/api', authenticate, mockEmailRoutes);
   
   // API per gestire le email reali
   app.post('/api/email/accounts/test-connection', authenticate, async (req, res) => {
