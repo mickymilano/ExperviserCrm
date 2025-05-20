@@ -9,36 +9,36 @@ import { Toaster } from './components/ui/toaster';
 
 // Lazy loading delle pagine
 const LoginPage = lazy(() => import('./pages/LoginPage'));
-const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 
 // Contacts
-const ContactsPage = lazy(() => import('@/pages/contacts'));
-const ContactDetailPage = lazy(() => import('@/pages/contacts/[id]'));
+const ContactsPage = lazy(() => import('./pages/contacts'));
+const ContactDetailPage = lazy(() => import('./pages/contacts/[id]'));
 
 // Companies
-const CompaniesPage = lazy(() => import('@/pages/companies'));
-const CompanyDetailPage = lazy(() => import('@/pages/companies/[id]'));
+const CompaniesPage = lazy(() => import('./pages/companies'));
+const CompanyDetailPage = lazy(() => import('./pages/companies/[id]'));
 
 // Deals
-const DealsPage = lazy(() => import('@/pages/deals'));
-const DealDetailPage = lazy(() => import('@/pages/deals/[id]'));
+const DealsPage = lazy(() => import('./pages/deals'));
+const DealDetailPage = lazy(() => import('./pages/deals/[id]'));
 
 // Email
-const EmailPage = lazy(() => import('@/pages/email'));
-const EmailSignaturesPage = lazy(() => import('@/pages/email/signatures'));
+const EmailPage = lazy(() => import('./pages/email'));
+const EmailSignaturesPage = lazy(() => import('./pages/email/signatures'));
 
 // Other modules
-const LeadsPage = lazy(() => import('@/pages/leads'));
-const SynergiesPage = lazy(() => import('@/pages/synergies'));
-const TasksPage = lazy(() => import('@/pages/tasks'));
-const CalendarPage = lazy(() => import('@/pages/calendar'));
-const SettingsPage = lazy(() => import('@/pages/settings'));
-const HelpPage = lazy(() => import('@/pages/help'));
-const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
+const LeadsPage = lazy(() => import('./pages/leads'));
+const SynergiesPage = lazy(() => import('./pages/synergies'));
+const TasksPage = lazy(() => import('./pages/tasks'));
+const CalendarPage = lazy(() => import('./pages/calendar'));
+const SettingsPage = lazy(() => import('./pages/settings'));
+const HelpPage = lazy(() => import('./pages/help'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 // Branches module
-const BranchesPage = lazy(() => import('@/pages/branches'));
-const BranchDetailPage = lazy(() => import('@/pages/branches/[id]'));
+const BranchesPage = lazy(() => import('./pages/branches'));
+const BranchDetailPage = lazy(() => import('./pages/branches/[id]'));
 
 // Componente di caricamento
 function LoadingScreen() {
