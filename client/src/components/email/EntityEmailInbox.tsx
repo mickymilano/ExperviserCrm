@@ -74,7 +74,7 @@ interface EmailFilterOptions {
   searchText?: string;
 }
 
-function EntityEmailInbox({ entityId, entityType, entityEmail, entityName, companyDomain }: EntityEmailInboxProps) {
+export function EntityEmailInbox({ entityId, entityType, entityEmail, entityName, companyDomain }: EntityEmailInboxProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -703,3 +703,5 @@ function EntityEmailInbox({ entityId, entityType, entityEmail, entityName, compa
     </div>
   );
 }
+
+export default EntityEmailInbox;
