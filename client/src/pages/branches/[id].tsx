@@ -2,15 +2,15 @@ import { useState } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "../../components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "../../components/ui/tabs";
+import { Separator } from "../../components/ui/separator";
+import { Skeleton } from "../../components/ui/skeleton";
 import { ArrowLeft, Building, Phone, Mail, MapPin, Info, Users, Edit } from "lucide-react";
-import BranchModal from "@/components/modals/BranchModal";
-import BranchManagersViewer from "@/components/branches/BranchManagersViewer";
-import EntityEmailInbox from "@/components/email/EntityEmailInbox";
+import BranchModal from "../../components/modals/BranchModal";
+import BranchManagersViewer from "../../components/branches/BranchManagersViewer";
+import EntityEmailInbox from "../../components/email/EntityEmailInbox";
 
 export default function BranchDetail() {
   const { t } = useTranslation();
