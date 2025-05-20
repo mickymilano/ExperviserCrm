@@ -7,7 +7,7 @@ import { eq, and } from 'drizzle-orm';
 const router = Router();
 
 // Ottiene le email associate a un'entità
-router.get('/entity/:entityType/:entityId', requireAuth, async (req, res) => {
+router.get('/entity/:entityType/:entityId', async (req, res) => {
   try {
     const { entityType, entityId } = req.params;
     
@@ -60,7 +60,7 @@ router.get('/entity/:entityType/:entityId', requireAuth, async (req, res) => {
 });
 
 // Altri endpoint per gestire le email
-router.get('/unread-count', requireAuth, async (req, res) => {
+router.get('/unread-count', async (req, res) => {
   return res.json({ count: 4 }); // Mock count per sviluppo
 });
 

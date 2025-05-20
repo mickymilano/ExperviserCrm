@@ -3,7 +3,7 @@ import { simpleParser } from 'mailparser';
 import { db } from '../../db';
 import { emails, emailAccounts } from '../../../shared/schema';
 import { eq, and } from 'drizzle-orm';
-import { generateId } from '../../utils';
+import crypto from 'crypto';
 
 /**
  * Gestisce la ricezione delle email tramite IMAP
