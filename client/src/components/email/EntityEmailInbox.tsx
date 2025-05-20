@@ -17,7 +17,7 @@ interface EntityEmailInboxProps {
   entityId: number;
 }
 
-export default function EntityEmailInbox({ entityType, entityId }: EntityEmailInboxProps) {
+export function EntityEmailInbox({ entityType, entityId }: EntityEmailInboxProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
