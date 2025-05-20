@@ -2899,34 +2899,72 @@ export function registerRoutes(app: any) {
       // Email di esempio
       const mockEmails = [
         {
-          id: 1,
-          from: 'cliente@esempio.com',
-          to: ['me@azienda.com'],
+          id: "1",
+          fromEmail: 'cliente@esempio.com',
+          fromName: 'Mario Rossi',
+          toEmail: 'me@azienda.com',
+          toName: 'Il Mio CRM',
           subject: 'Richiesta informazioni',
-          body: 'Vorrei sapere di più sui vostri servizi.',
+          body: 'Buongiorno,\n\nVorrei sapere di più sui vostri servizi. Potreste inviarmi un preventivo per il pacchetto completo?\n\nCordiali saluti,\nMario Rossi',
+          bodyType: 'text',
           isRead: false,
-          date: new Date().toISOString(),
-          receivedAt: new Date().toISOString()
+          receivedAt: new Date().toISOString(),
+          attachments: [],
+          entityId: entityId,
+          entityType: entityType,
+          starred: false
         },
         {
-          id: 2,
-          from: 'me@azienda.com',
-          to: ['cliente@esempio.com'],
+          id: "2",
+          fromEmail: 'me@azienda.com',
+          fromName: 'Il Mio CRM',
+          toEmail: 'cliente@esempio.com',
+          toName: 'Mario Rossi',
           subject: 'Re: Richiesta informazioni',
-          body: 'Grazie per il suo interesse. Ecco le informazioni richieste...',
+          body: 'Gentile Mario,\n\nGrazie per il suo interesse nei nostri servizi. Allego il preventivo richiesto.\n\nRestiamo a disposizione per qualsiasi chiarimento.\n\nCordiali saluti,\nIl Mio CRM',
+          bodyType: 'text',
           isRead: true,
-          date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-          receivedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+          receivedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+          attachments: [
+            {
+              id: "att1",
+              filename: "preventivo.pdf",
+              contentType: "application/pdf",
+              size: 1024 * 1024 * 1.5 // 1.5 MB
+            }
+          ],
+          entityId: entityId,
+          entityType: entityType,
+          starred: true
         },
         {
-          id: 3,
-          from: 'fornitore@esempio.com',
-          to: ['me@azienda.com'],
+          id: "3",
+          fromEmail: 'fornitore@esempio.com',
+          fromName: 'Fornitore Spa',
+          toEmail: 'me@azienda.com',
+          toName: 'Il Mio CRM',
           subject: 'Offerta commerciale',
-          body: 'Vi inviamo la nostra migliore offerta per i prodotti richiesti.',
+          body: '<p>Gentile cliente,</p><p>Vi inviamo la nostra <strong>migliore offerta</strong> per i prodotti richiesti.</p><p>Sono disponibili sconti speciali per ordini superiori a €5000.</p><p>Cordiali saluti,<br/>Fornitore Spa</p>',
+          bodyType: 'html',
           isRead: false,
-          date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-          receivedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
+          receivedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+          attachments: [
+            {
+              id: "att2",
+              filename: "catalogo_2025.pdf",
+              contentType: "application/pdf",
+              size: 1024 * 1024 * 3.2 // 3.2 MB
+            },
+            {
+              id: "att3",
+              filename: "listino_prezzi.xlsx",
+              contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+              size: 1024 * 512 // 512 KB
+            }
+          ],
+          entityId: entityId,
+          entityType: entityType,
+          starred: false
         }
       ];
       
