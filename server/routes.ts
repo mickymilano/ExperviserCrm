@@ -2878,11 +2878,11 @@ export function registerRoutes(app: any) {
   app.use('/api/branches', branchRoutes);
   
   // Integrazione API Email
-  // Usa le nuove rotte email che supportano l'associazione alle entità
-  app.use('/api/email', authenticate, emailRoutes);
+  // Vecchio sistema email (legacy)
+  app.use('/api/email-legacy', authenticate, emailRoutes);
   
-  // Aggiungi anche le rotte email dal nuovo modulo
-  app.use('/api/email-new', authenticate, require('./routes/email').default);
+  // Nuovo sistema email con supporto per l'associazione alle entità
+  app.use('/api/email', authenticate, require('./routes/email').default);
   
   // Integrazione API Importazione/Esportazione
   app.use('/api/import-export', authenticate, importExportRoutes);
