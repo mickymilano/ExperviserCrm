@@ -1,10 +1,14 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, lazy } from 'react';
 import { Route, Switch } from 'wouter';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './lib/queryClient';
 import { Toaster } from './components/ui/toaster';
+import ModernLayout from './components/layout/ModernLayout';
 
-// Pagina di caricamento semplice
+// Caricamento pigro delle pagine
+const ModernDashboard = lazy(() => import('./pages/ModernDashboard'));
+
+// Pagina di caricamento
 function LoadingScreen() {
   return (
     <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -16,72 +20,63 @@ function LoadingScreen() {
   );
 }
 
-// Layout base semplificato
-function BasicLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="min-h-screen bg-gray-100">
-      <header className="bg-white shadow-sm py-4">
-        <div className="container mx-auto px-4">
-          <h1 className="text-xl font-bold text-gray-800">EXPERVISER CRM</h1>
-        </div>
-      </header>
-      <main className="container mx-auto px-4 py-8">
-        {children}
-      </main>
-    </div>
-  );
-}
-
-// Dashboard semplificata
-function SimpleDashboard() {
-  return (
-    <div className="p-6 bg-white rounded-lg shadow-sm">
-      <h2 className="text-2xl font-bold mb-6">Dashboard</h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
-          <h3 className="font-medium text-blue-800">Contatti</h3>
-          <p className="text-2xl font-bold mt-2">94</p>
-        </div>
-        <div className="p-4 bg-green-50 rounded-lg border border-green-100">
-          <h3 className="font-medium text-green-800">Aziende</h3>
-          <p className="text-2xl font-bold mt-2">18</p>
-        </div>
-        <div className="p-4 bg-purple-50 rounded-lg border border-purple-100">
-          <h3 className="font-medium text-purple-800">Opportunità</h3>
-          <p className="text-2xl font-bold mt-2">8</p>
-        </div>
-      </div>
-      <div className="mt-8 p-4 bg-yellow-50 rounded-lg border border-yellow-100">
-        <p className="text-center text-amber-700">
-          Interfaccia temporanea. L'applicazione sta attraversando una manutenzione.
-        </p>
-      </div>
-    </div>
-  );
-}
-
 // Pagina di login semplificata
-function SimpleLoginPage() {
+function LoginPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-md">
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold">EXPERVISER CRM</h1>
-          <p className="text-gray-600">Accedi alla piattaforma</p>
+          <h1 className="text-2xl font-bold text-blue-700">EXPERVISER CRM</h1>
+          <p className="text-gray-600 mt-2">La piattaforma avanzata per la gestione delle relazioni con i clienti</p>
         </div>
-        <div className="rounded-lg bg-white p-6 shadow-md">
-          <p className="mb-4 text-center text-gray-700">
-            Login temporaneamente semplificato per manutenzione
-          </p>
-          <button
-            className="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-            onClick={() => {
-              // Semplice reindirizzamento alla dashboard senza autenticazione
-              window.location.href = '/';
-            }}
-          >
-            Accedi
-          </button>
+        <div className="rounded-lg bg-white p-8 shadow-md">
+          <h2 className="text-xl font-semibold mb-6 text-gray-800">Accedi al tuo account</h2>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <input 
+                type="email" 
+                id="email" 
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                defaultValue="admin@experviser.com"
+              />
+            </div>
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+              <input 
+                type="password" 
+                id="password" 
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                defaultValue="********"
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <input 
+                  type="checkbox" 
+                  id="remember" 
+                  className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  defaultChecked 
+                />
+                <label htmlFor="remember" className="ml-2 block text-sm text-gray-700">Ricordami</label>
+              </div>
+              <a href="#" className="text-sm text-blue-600 hover:text-blue-500">Password dimenticata?</a>
+            </div>
+            <button
+              className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition duration-150 ease-in-out"
+              onClick={() => {
+                // Semplice reindirizzamento alla dashboard senza autenticazione
+                window.location.href = '/';
+              }}
+            >
+              Accedi
+            </button>
+          </div>
+          <div className="mt-6 pt-6 border-t border-gray-200 text-center">
+            <p className="text-sm text-gray-600">
+              Modalità sviluppo attiva - Accesso diretto alla dashboard
+            </p>
+          </div>
         </div>
       </div>
     </div>
@@ -95,11 +90,11 @@ export default function App() {
       <Toaster />
       <Suspense fallback={<LoadingScreen />}>
         <Switch>
-          <Route path="/login" component={SimpleLoginPage} />
+          <Route path="/login" component={LoginPage} />
           <Route path="/">
-            <BasicLayout>
-              <SimpleDashboard />
-            </BasicLayout>
+            <ModernLayout>
+              <ModernDashboard />
+            </ModernLayout>
           </Route>
         </Switch>
       </Suspense>
