@@ -74,7 +74,7 @@ interface EmailFilterOptions {
   searchText?: string;
 }
 
-export function EntityEmailInbox({ entityId, entityType, entityEmail }: EntityEmailInboxProps) {
+export function EntityEmailInbox({ entityId, entityType, entityEmail, entityName, companyDomain }: EntityEmailInboxProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -132,13 +132,13 @@ export function EntityEmailInbox({ entityId, entityType, entityEmail }: EntityEm
       {
         id: 20000 + entityId,
         subject: `Conferma appuntamento per ${entityType}`,
-        from: sender.email,
-        fromName: sender.name,
+        from: senderEmail,
+        fromName: senderName,
         to: ['cliente@example.com'],
         date: new Date(currentDate.getTime() - 48 * 60 * 60 * 1000).toISOString(), // 2 giorni fa
         read: true,
         hasAttachments: true,
-        body: `<p>Gentile Cliente,</p><p>confermiamo l'appuntamento per il giorno 25/05/2025 alle ore 15:00.</p><p>Cordiali saluti,<br>${sender.name}</p>`,
+        body: `<p>Gentile Cliente,</p><p>confermiamo l'appuntamento per il giorno 25/05/2025 alle ore 15:00.</p><p>Cordiali saluti,<br>${senderName}</p>`,
         folder: 'sent',
         accountId: 1,
         accountInfo: {
@@ -188,10 +188,7 @@ export function EntityEmailInbox({ entityId, entityType, entityEmail }: EntityEm
 
       try {
         // Prima prova a ottenere le email dall'API
-        const response = await apiRequest({ 
-          url: `/api/email/filter/${entityType}/${entityId}`,
-          method: 'GET'
-        });
+        const response = await apiRequest('GET', `/api/email/filter/${entityType}/${entityId}`);
         
         // Se l'API restituisce risultati, usali
         if (Array.isArray(response) && response.length > 0) {
@@ -229,7 +226,7 @@ export function EntityEmailInbox({ entityId, entityType, entityEmail }: EntityEm
       // Per ora gestiamo solo una email alla volta
       if (emailIds.length === 0) return null;
       const emailId = emailIds[0];
-      return await apiRequest('PATCH', `/api/email/messages/${emailId}/read`, {});
+      return await apiRequest('PATCH', `/api/email/messages/${emailId}/read`, {}, {});
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/emails'] });
@@ -250,9 +247,9 @@ export function EntityEmailInbox({ entityId, entityType, entityEmail }: EntityEm
   // Mutation per eliminare le email
   const deleteEmailsMutation = useMutation({
     mutationFn: async (emailIds: number[]) => {
-      return await apiRequest('/api/email/delete', 'POST', { 
+      return await apiRequest('POST', '/api/email/delete', { 
         emailIds 
-      });
+      }, {});
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/emails'] });
