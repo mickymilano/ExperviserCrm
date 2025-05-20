@@ -2879,7 +2879,8 @@ export function registerRoutes(app: any) {
   
   // Integrazione API Email
   // Vecchio sistema email (legacy)
-  app.use('/api/email-legacy', authenticate, emailRoutes);
+  // Commentato temporaneamente
+  // app.use('/api/email-legacy', authenticate, emailRoutes);
   
   // Nuovo sistema email con supporto per l'associazione alle entità
   // Utilizza un mock temporaneo integrato direttamente qui
@@ -3189,7 +3190,8 @@ export function registerRoutes(app: any) {
   app.delete('/api/subsectors/:subSectorId/jobtitles/:id', authenticate, isAdmin, deleteJobTitle);
   
   // Registra le rotte email per l'integrazione con le pagine di dettaglio
-  app.use('/', emailRoutes);
+  // Temporaneamente commentato in attesa di integrazione
+  // app.use('/', emailRoutes);
   
   // Registra le rotte per importazione/esportazione dati
   app.use('/api/import-export', importExportRoutes);
